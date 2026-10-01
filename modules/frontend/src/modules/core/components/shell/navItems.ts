@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Boxes, FolderKanban, LayoutDashboard, Users } from "lucide-react";
+import { Boxes, ClipboardList, FolderKanban, LayoutDashboard, Users } from "lucide-react";
 import { canAccess, sectionById, type SectionId } from "@/modules/core/config/sections";
 import type { Role } from "@/store/useSessionStore";
 
@@ -29,6 +29,7 @@ const navEntries: readonly NavEntry[] = [
   { sectionId: "home", label: "Inicio", icon: LayoutDashboard },
   { sectionId: "moduleA", label: "Módulo A", icon: FolderKanban },
   { sectionId: "moduleB", label: "Módulo B", icon: Boxes },
+  { sectionId: "records", label: "Historias clínicas", icon: ClipboardList },
   { sectionId: "users", label: "Usuarios", icon: Users },
 ];
 

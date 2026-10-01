@@ -2,7 +2,7 @@ import type { Role } from "@/store/useSessionStore";
 import { PATHS } from "@/routes/paths";
 
 /** Secciones de la zona privada (cada proyecto derivado sustituye las de ejemplo). */
-export type SectionId = "home" | "moduleA" | "moduleB" | "users";
+export type SectionId = "home" | "moduleA" | "moduleB" | "users" | "records";
 
 /**
  * Política de una sección: dónde vive y quién la ve. Sin `roles` = cualquier usuario
@@ -25,6 +25,8 @@ export const sections: readonly SectionConfig[] = [
   { id: "moduleB", path: PATHS.MODULE_B, roles: ["ADMIN"] },
   // Gestión de cuentas (capacidad users).
   { id: "users", path: PATHS.USERS, roles: ["ADMIN"] },
+  // Historias clínicas: todos los autenticados; el alcance (las propias / todas) lo aplica el backend.
+  { id: "records", path: PATHS.RECORDS },
 ];
 
 export function sectionById(id: SectionId): SectionConfig {

@@ -1,0 +1,69 @@
+import { useFormContext, useWatch } from "react-hook-form";
+import { TextField } from "@/modules/core/components/form/TextField";
+import { TextAreaField } from "@/modules/core/components/form/TextAreaField";
+import { ChoiceField } from "@/modules/core/components/form/ChoiceField";
+import { FormField } from "@/modules/core/components/form/FormField";
+import { Input } from "@/modules/core/ui/input";
+import type { RecordFormValues } from "../../schemas/record";
+import { LONG_TEXT } from "../../schemas/record";
+import { cooperationOptions, documentTypeOptions, sexOptions, yesNoOptions } from "../../config/options";
+import { ageYears } from "../../utils/age";
+import { formatAge } from "../../utils/recordDisplay";
+
+interface Step1PatientProps {
+  /** Número asignado (solo lectura); vacío mientras la historia no se crea. */
+  recordNumber?: string;
+}
+
+/** Paso 1 (pág. 1): datos del paciente y anamnesis. La edad se calcula (no se teclea). */
+export function Step1Patient({ recordNumber }: Step1PatientProps) {
+  const { control } = useFormContext<RecordFormValues>();
+  const [birthDate, startDate, sex] = useWatch({ control, name: ["birthDate", "treatmentStartDate", "patientSex"] });
+  const age = ageYears(birthDate, startDate);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <section aria-labelledby="s1-patient" className="grid gap-4 md:grid-cols-2">
+        <h3 id="s1-patient" className="text-lg font-semibold md:col-span-2">Paciente</h3>
+        <FormField id="f-recordNumber" label="Nro. de historia">
+          <Input id="f-recordNumber" value={recordNumber ?? "Se asigna al guardar"} readOnly disabled />
+        </FormField>
+        <TextField name="treatingDentist" label="Odontólogo tratante" />
+        <TextField name="patientName" label="Paciente" className="md:col-span-2" autoComplete="off" />
+        <ChoiceField name="patientSex" label="Sexo" options={sexOptions} />
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+          <ChoiceField name="documentType" label="Documento" options={documentTypeOptions} vertical />
+          <TextField name="documentNumber" label="Número" inputMode="numeric" autoComplete="off" />
+        </div>
+        <TextField name="birthPlace" label="Lugar de nacimiento" />
+        <TextField name="birthDate" label="Fecha de nacimiento" type="date" />
+        <FormField id="f-age" label="Edad">
+          <Input id="f-age" value={formatAge(age) || "—"} readOnly disabled />
+        </FormField>
+        <TextField name="treatmentStartDate" label="Fecha de inicio de tratamiento" type="date" />
+        <TextField name="address" label="Domicilio" className="md:col-span-2" />
+        <TextField name="phone" label="Celular" inputMode="tel" />
+      </section>
+
+      <section aria-labelledby="s1-anamnesis" className="flex flex-col gap-4">
+        <h3 id="s1-anamnesis" className="text-lg font-semibold">Anamnesis</h3>
+        <TextAreaField name="content.anamnesis.chiefComplaint" label="Queja principal – ¿Por qué buscó tratamiento?" maxLength={LONG_TEXT} />
+        <TextAreaField name="content.anamnesis.personalPreferences" label="Gustos personales (color, canal preferido en YouTube, juguetes)" maxLength={LONG_TEXT} />
+        <ChoiceField name="content.anamnesis.cooperation" label="Índice de colaboración / cooperación" options={cooperationOptions} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <ChoiceField name="content.anamnesis.oralHygiene" label="Higiene oral" options={yesNoOptions} />
+          <ChoiceField name="content.anamnesis.suckingHabits" label="Hábitos de succión" options={yesNoOptions}
+            hint="El detalle (dedos, lengua…) se marca en el análisis funcional." />
+        </div>
+        {sex === "FEMALE" ? (
+          <ChoiceField name="content.anamnesis.menarche" label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} />
+        ) : null}
+        <TextAreaField name="content.anamnesis.medicalHistory" label="Historia médica / medicación de uso continuo" maxLength={LONG_TEXT} />
+        <TextAreaField name="content.anamnesis.accidentsHistory" label="Histórico de accidentes o traumas" maxLength={LONG_TEXT} />
+        <TextAreaField name="content.anamnesis.familyStructure" label="Estructura familiar" maxLength={LONG_TEXT} />
+        <TextAreaField name="content.anamnesis.generalTreatmentNeeds" label="Necesidad de tratamiento general (caries, endodoncia, exodoncia)" maxLength={LONG_TEXT} />
+        <TextAreaField name="content.anamnesis.heredity" label="Características importantes de la herencia" maxLength={LONG_TEXT} />
+      </section>
+    </div>
+  );
+}
