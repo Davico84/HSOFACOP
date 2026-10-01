@@ -8,11 +8,11 @@ Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimo
 
 ## 1. Producto ✏️
 
-**HS FACOP** es _[qué es el producto en una frase: para quién y qué problema resuelve]_.
+**HS FACOP** es el sistema de historias clínicas de ortodoncia de la Escuela de Post-grado AEO / FACOP: los tratantes llenan la historia desde un formulario por pasos (en vez de a mano sobre el PDF) y la imprimen con la presentación oficial; los supervisores revisan y corrigen cualquiera.
 
 **Objetivos:**
-- _[objetivo de negocio 1]_
-- _[objetivo de negocio 2]_
+- Historias legibles, completas y reimprimibles: se llenan, guardan y corrigen sin rehacer la hoja.
+- Revisión por supervisores: el ADMIN ve y corrige las historias de todos los tratantes.
 - Seguridad y trazabilidad: identidad + rol en toda operación.
 
 ---

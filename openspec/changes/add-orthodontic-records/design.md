@@ -46,7 +46,7 @@ Tabla `orthodontic_records`:
 **Por qué**: nada consulta los campos clínicos (solo se leen e imprimen con la historia completa), son ~110 y van a cambiar a medida que se afine el PDF. **Alternativas**: (a) una columna por campo → ~110 columnas y una migración por cada ajuste de etiqueta u opción; (b) una tabla por sección → 7+ tablas 1:1 y joins sin beneficio. JSONB mantiene el esquema físico estable y el contrato sigue tipado (D2).
 
 ### D2. Contenido tipado de punta a punta
-`content` se mapea con `@JdbcTypeCode(SqlTypes.JSON)` a un record Java `RecordContent` con un record por paso (`Anamnesis`, `FacialAnalysis`, `FunctionalAnalysis`, `OcclusalAnalysis`, `RadiographicAnalysis`, `Diagnosis`, `Signatures`) y enums para cada selección. Los mismos records (como DTO en `presentation.dto`) llevan Bean Validation (`@Size`, `@DecimalMin/Max`) y springdoc los publica en el contrato, así que orval genera los tipos del front y el schema Zod refleja las mismas reglas. Lleva `schemaVersion: 1` para migrar el JSON en fases futuras (un componente de lectura que actualice versiones antiguas, si llega a hacer falta).
+`content` es JSONB; en la entidad es un `String` con `@JdbcTypeCode(SqlTypes.JSON)` (la persistencia no conoce su forma, regla de ArchUnit) y el service lo convierte con el `JsonMapper` de Spring a un record Java `RecordContent` con un record por paso (`Anamnesis`, `FacialAnalysis`, `FunctionalAnalysis`, `OcclusalAnalysis`, `RadiographicAnalysis`, `Diagnosis`, `Signatures`) y enums para cada selección. Los mismos records (como DTO en `presentation.dto`) llevan Bean Validation (`@Size`, `@DecimalMin/Max`) y springdoc los publica en el contrato, así que orval genera los tipos del front y el schema Zod refleja las mismas reglas. Lleva `schemaVersion: 1` para migrar el JSON en fases futuras (un componente de lectura que actualice versiones antiguas, si llega a hacer falta).
 - Nuevas secciones (fase 2: `modelAnalysis`; fase 3: evolución en tabla propia porque es una lista que crece) se añaden como campos opcionales: las historias existentes las leen como `null`.
 - Límites: texto corto ≤ 200, texto largo ≤ 4000, porcentaje 0–100, milímetros 0–30 con un decimal (desviación de línea media: mínimo 0,5 mm).
 
@@ -91,11 +91,12 @@ Los requests no llevan `recordNumber` ni `authorId` (los asigna el servidor).
 `ageYears = Period.between(birthDate, treatmentStartDate ?? hoy).getYears()`, `null` sin fecha de nacimiento. Se calcula en un único sitio (service) y se devuelve; el front la muestra al recargar tras guardar. Mientras se edita, el wizard la previsualiza con la misma fórmula (función pura con test).
 
 ### D9. Frontend: un formulario, siete pasos
-- `modules/records/`: `schemas/` (Zod por paso, compuesto en uno), `hooks/` (`useRecords`, `useRecord`, `useCreateRecord`, `useSaveRecord`), `components/steps/Step1…Step7`, `components/print/`, `config/options.ts`.
+- Campos genéricos en `core/components/form/` (`ChoiceField` con tarjetas de imagen, `MultiChoiceField`, `MeasureField`, `ChoiceMatrix`, `ItemListField`, `CheckboxField`, `TextField`, `TextAreaField`); los del dominio (`ToothPickerField`, `RelationsField`, `MidlineField`) en `modules/records/components/fields/`.
+- `modules/records/`: `schemas/` (Zod de toda la historia; cada paso valida sus campos con `trigger`), `hooks/` (`useRecords`, `useRecord`, `useSaveRecord`, `useLeaveGuard`), `components/steps/Step1…Step7`, `components/print/`, `config/options.ts`.
 - `screens/records/`: `RecordsListScreen` (`/historias`), `RecordFormScreen` (`/historias/nueva` y `/historias/:id?paso=N`), `RecordPrintScreen` (`/historias/:id/imprimir`).
 - Un único `useForm` para toda la historia; cada paso valida solo sus campos (`trigger(stepFields)`) y "Siguiente/Anterior/indicador" ejecuta `save` solo si `formState.isDirty`; tras guardar, `reset(response)` deja la nueva `version` y limpia el dirty. El paso actual va en la URL (`?paso=`) para recargar sin perderlo.
 - Salida con cambios: `useBlocker` de react-router v7 + `beforeunload`, con `AlertDialog` de `core/ui`.
-- `409` de versión: banner con "Recargar historia" (refetch + `reset`) o "Seguir editando".
+- `409` de versión: banner con "Recargar historia" (refetch y se vuelve a montar el formulario con la versión del servidor) o "Seguir editando".
 - Sección `{ id: "records", path: PATHS.RECORDS }` sin `roles` (todos los autenticados); el alcance real lo aplica el backend (D6).
 
 ### D10. Impresión con CSS de impresión, ruta fuera del shell

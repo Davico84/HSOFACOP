@@ -27,34 +27,34 @@
 
 ## 4. Frontend — base del módulo (D3, D9)
 
-- [ ] 4.1 `pnpm generate:api` (`orthodontic-records.ts` + modelos) — commit aparte con el contrato
-- [ ] 4.2 Sección "Historias clínicas": `PATHS.RECORDS`, `sections.ts` (sin `roles`), `navItems` (icono lucide `ClipboardList`), rutas de lista, formulario e impresión (esta última fuera del layout privado, protegida)
-- [ ] 4.3 `modules/records/config/options.ts`: etiquetas en español de cada enum (única fuente para wizard e impresión) + test de que cubre todos los valores del modelo generado
-- [ ] 4.4 Schemas Zod por paso y compuesto, con paridad de límites con el backend (docs/coding-style.md §7) + tests de los límites y de las reglas de fechas
-- [ ] 4.5 `utils/age.ts` (misma fórmula que el backend) + test con los scenarios de edad
-- [ ] 4.6 Hooks React Query: `recordKeys`, `useRecords(q, page)`, `useRecord(id)`, `useCreateRecord`, `useSaveRecord` (invalida lista y detalle; distingue 409 de número y de versión por `type`)
+- [x] 4.1 `pnpm generate:api` (`orthodontic-records.ts` + modelos) — commit aparte con el contrato
+- [x] 4.2 Sección "Historias clínicas": `PATHS.RECORDS`, `sections.ts` (sin `roles`), `navItems` (icono lucide `ClipboardList`), rutas de lista, formulario e impresión (esta última fuera del layout privado, protegida)
+- [x] 4.3 `modules/records/config/options.ts`: etiquetas en español de cada enum (única fuente para wizard e impresión) + test de que cubre todos los valores del modelo generado
+- [x] 4.4 Schemas Zod por paso y compuesto, con paridad de límites con el backend (docs/coding-style.md §7) + tests de los límites y de las reglas de fechas
+- [x] 4.5 `utils/age.ts` (misma fórmula que el backend) + test con los scenarios de edad
+- [x] 4.6 Hooks React Query: `recordKeys`, `useRecords(q, page)`, `useRecord(id)`, `useSaveRecord` (crea o guarda; actualiza el detalle e invalida la lista; el 409 de versión se distingue por `type`), `useLeaveGuard`
 
 ## 5. Frontend — listado y wizard (spec: listado, formulario por pasos, secciones, concurrencia)
 
-- [ ] 5.1 `RecordsListScreen`: tabla paginada (número, paciente, documento, tratante, inicio, modificado; "Autor" solo para ADMIN), búsqueda con debounce, estados de carga, error con "Reintentar", vacío inicial ("Nueva historia") y vacío de búsqueda ("Limpiar búsqueda")
-- [ ] 5.2 `RecordFormScreen`: crear (`/historias/nueva` → POST → `/historias/:id?paso=1`) y editar; indicador de 7 pasos clicable; paso en `?paso=`; "Anterior/Siguiente" validan el paso y guardan solo si hay cambios (`isDirty`), `reset(response)` tras guardar; se queda en el paso si falla
-- [ ] 5.3 Componentes de campo reutilizables: `ChoiceField` (única, con deseleccionar), `ImageChoiceField` (tarjetas con imagen de la guía), `FieldHint` (valor de referencia), `MultiChoiceField`, `NoteField` (texto largo con contador), `MeasureField` (número + unidad), `SidePairField` (derecho/izquierdo), `ChoiceMatrix` (filas × opciones, musculatura), `ToothPicker` (FDI permanentes 11–48 + temporales 51–85), `ItemListField` (agregar/quitar/reordenar ítems; lista de problemas y metas)
-- [ ] 5.4 Pasos 1–7 (`Step1Patient` … `Step7Signatures`) con el catálogo de D3; condicionados ocultos (menarquia, lado de mordida cruzada, piezas con desgaste, % / mm de mordida, detalle de Spee); edad de solo lectura
-- [ ] 5.5 Salida con cambios sin guardar: `useBlocker` + `beforeunload` + `AlertDialog`; banner de 409 por versión con "Recargar historia" / "Seguir editando"; "Historia no encontrada" con enlace al listado ante 404
-- [ ] 5.6 Tests Vitest + MSW: listado (USER sin columna Autor, ADMIN con ella, búsqueda, ambos vacíos, error); wizard (avanzar guarda, sin cambios no hay petición, saltar desde el indicador, error de validación y de red se queda en el paso, selección única y múltiple, condicionados aparecen y se ocultan, salir con cambios pide confirmación, 409 muestra el banner, 404 muestra el aviso)
+- [x] 5.1 `RecordsListScreen`: tabla paginada (número, paciente, documento, tratante, inicio, modificado; "Autor" solo para ADMIN), búsqueda con debounce, estados de carga, error con "Reintentar", vacío inicial ("Nueva historia") y vacío de búsqueda ("Limpiar búsqueda")
+- [x] 5.2 `RecordFormScreen`: crear (`/historias/nueva` → POST → `/historias/:id?paso=1`) y editar; indicador de 7 pasos clicable; paso en `?paso=`; "Anterior/Siguiente" validan el paso y guardan solo si hay cambios (`isDirty`), `reset(response)` tras guardar; se queda en el paso si falla
+- [x] 5.3 Componentes de campo reutilizables: `ChoiceField` (única, con deseleccionar), `ImageChoiceField` (tarjetas con imagen de la guía), `FieldHint` (valor de referencia), `MultiChoiceField`, `NoteField` (texto largo con contador), `MeasureField` (número + unidad), `SidePairField` (derecho/izquierdo), `ChoiceMatrix` (filas × opciones, musculatura), `ToothPicker` (FDI permanentes 11–48 + temporales 51–85), `ItemListField` (agregar/quitar/reordenar ítems; lista de problemas y metas)
+- [x] 5.4 Pasos 1–7 (`Step1Patient` … `Step7Signatures`) con el catálogo de D3; condicionados ocultos (menarquia, lado de mordida cruzada, piezas con desgaste, % / mm de mordida, detalle de Spee); edad de solo lectura
+- [x] 5.5 Salida con cambios sin guardar: `useBlocker` + `beforeunload` + `AlertDialog`; banner de 409 por versión con "Recargar historia" / "Seguir editando"; "Historia no encontrada" con enlace al listado ante 404
+- [x] 5.6 Tests Vitest + MSW: listado (USER sin columna Autor, ADMIN con ella, búsqueda, ambos vacíos, error); wizard (avanzar guarda, sin cambios no hay petición, saltar desde el indicador, error de validación y de red se queda en el paso, selección única y múltiple, condicionados aparecen y se ocultan, salir con cambios pide confirmación, 409 muestra el banner, 404 muestra el aviso)
 
 ## 6. Frontend — impresión (D10, spec: impresión)
 
-- [ ] 6.1 Copiar a `src/assets/records/` los logos (`logo-aeo.png` recortado del PDF, `logo-facop.webp` oficial) y las ilustraciones de la guía facial (`facial-guide/*.png`), ya extraídas en `docs/pdf/` durante la revisión (D12)
-- [ ] 6.2 Componentes `PrintPage` (cabecera con logos y "HISTORIA CLÍNICA ORTODONCIA Nro."), `PrintField` (valor o línea en blanco), `PrintChoice` (☒/☐ con todas las opciones), `PrintLines` (texto largo con líneas mínimas)
-- [ ] 6.3 `RecordPrintScreen` con las 7 secciones en el orden y títulos del PDF; CSS `@page A4`, `break-before: page` por sección, texto largo que fluye; `window.print()` al terminar de cargar; botón "Imprimir" en el formulario y en el listado
-- [ ] 6.4 Tests Vitest: opción marcada (☒ Mesofacial ☐ …), vacíos como línea sin "null/undefined", menarquia oculta si no aplica, 404 sin contenido
-- [ ] 6.5 E2E Playwright: crear una historia, llenar campos de varios pasos, abrir la impresión y generar `page.pdf()` comprobando número de páginas y textos clave
-- [ ] 6.6 `pnpm validate` verde
+- [x] 6.1 Copiar a `src/assets/records/` los logos (`logo-aeo.png` recortado del PDF, `logo-facop.webp` oficial) y las ilustraciones de la guía facial (`facial-guide/*.png`), ya extraídas en `docs/pdf/` durante la revisión (D12)
+- [x] 6.2 Componentes `PrintPage` (cabecera con logos y "HISTORIA CLÍNICA ORTODONCIA Nro."), `PrintField` (valor o línea en blanco), `PrintChoice` (☒/☐ con todas las opciones), `PrintLines` (texto largo con líneas mínimas)
+- [x] 6.3 `RecordPrintScreen` con las 7 secciones en el orden y títulos del PDF; CSS `@page A4`, `break-before: page` por sección, texto largo que fluye; `window.print()` al terminar de cargar; botón "Imprimir" en el formulario y en el listado
+- [x] 6.4 Tests Vitest: opción marcada (☒ Mesofacial ☐ …), vacíos como línea sin "null/undefined", menarquia oculta si no aplica, 404 sin contenido
+- [ ] 6.5 ⏸ (Playwright no está instalado en el repo: pendiente de decisión) E2E Playwright: crear una historia, llenar campos de varios pasos, abrir la impresión y generar `page.pdf()` comprobando número de páginas y textos clave
+- [x] 6.6 `pnpm validate` verde
 
 ## 7. Docs y cierre
 
-- [ ] 7.1 `docs/vision.md`: producto (historia clínica de ortodoncia FACOP/ARO), roadmap con `orthodontic-records` y las fases 2–3, estado 🚧 enlazando este change
+- [x] 7.1 `docs/vision.md`: producto (historia clínica de ortodoncia FACOP/ARO), roadmap con `orthodontic-records` y las fases 2–3, estado 🚧 enlazando este change
 - [ ] 7.2 Al archivar — `docs/domain.md`: actores tratante (`USER`) y supervisor (`ADMIN`), glosario (anamnesis, overjet, Brodie, curva de Spee…), entidad `OrthodonticRecord` en texto y ER
 - [ ] 7.3 Prueba manual: llenar una historia real del PDF de punta a punta, imprimirla en Chrome y Edge y compararla con el PDF; USER no ve historias de otro; ADMIN sí
-- [ ] 7.4 `openspec validate add-orthodontic-records --strict`
+- [x] 7.4 `openspec validate add-orthodontic-records --strict`
