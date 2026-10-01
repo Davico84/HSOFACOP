@@ -1,0 +1,41 @@
+{
+  "empty_object": {},
+  "empty_array": [],
+  "nested": {
+    "a": [
+      1,
+      {
+        "b": []
+      }
+    ],
+    "c": {}
+  },
+  "numbers": [
+    0,
+    0,
+    1,
+    1,
+    -2.5,
+    0.1,
+    1e+21,
+    1e-7,
+    123456789012345680,
+    3.14159
+  ],
+  "strings": [
+    "plain",
+    "comillas \" y \\ barra",
+    "tabs\t nl\n cr\r bs\b ff\f",
+    "ctrl\u0001\u001f",
+    "slash /",
+    "acentos áéíóú ñ",
+    "emoji 😀",
+    "lone \ud800 surrogate",
+    "ls   ps  "
+  ],
+  "bools": [
+    true,
+    false,
+    null
+  ]
+}

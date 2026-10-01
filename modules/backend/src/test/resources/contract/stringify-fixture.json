@@ -1,0 +1,1 @@
+{"empty_object":{},"empty_array":[],"nested":{"a":[1,{"b":[]}],"c":{}},"numbers":[0,-0,1,1.0,-2.5,0.1,1e21,1e-7,123456789012345678,3.14159],"strings":["plain","comillas \" y \\ barra","tabs\t nl\n cr\r bs\b ff\f","ctrl\u0001\u001f","slash /","acentos áéíóú ñ","emoji \ud83d\ude00","lone \ud800 surrogate","ls \u2028 ps \u2029"],"bools":[true,false,null]}

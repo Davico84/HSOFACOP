@@ -1,0 +1,66 @@
+# Configuración única de la aplicación (sin perfiles).
+# TODOS los valores configurables se externalizan como secretos:
+#  - en local se cargan de ./secrets.properties (ignorado por git)
+#  - en despliegue se inyectan como variables de entorno
+# Solo se versiona secrets.properties.example. No poner valores sensibles aquí.
+spring:
+  application:
+    name: odontorisas
+  config:
+    import: "optional:file:./secrets.properties"
+
+  mvc:
+    problemdetails:
+      enabled: true          # errores en formato RFC 9457 (ProblemDetail) de forma nativa
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: none        # el esquema lo gestiona Flyway
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  # Identidad visible (OpenAPI). La escribe `pnpm project:apply` desde project.config.json.
+  name: "Mi Proyecto"
+  description: "Plantilla base con autenticación, panel privado y configuración del proyecto."
+  auth:
+    lockout:
+      max-attempts: ${AUTH_LOCKOUT_MAX_ATTEMPTS:5}   # fallos consecutivos que bloquean la cuenta
+      window: ${AUTH_LOCKOUT_WINDOW:PT15M}           # ISO-8601 Duration del bloqueo
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      issuer: ${JWT_ISSUER:mi-proyecto}
+      access-ttl: ${JWT_ACCESS_TTL:PT15M}      # ISO-8601 Duration (15 min)
+      refresh-ttl: ${JWT_REFRESH_TTL:P7D}      # ISO-8601 Duration (7 días)
+    cookie:
+      refresh-name: ${REFRESH_COOKIE_NAME:refresh_token}
+      secure: ${COOKIE_SECURE:true}            # true en despliegue; false para http local si hace falta
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# Documentación de la API (Swagger UI + /v3/api-docs): APAGADA por defecto, así un despliegue
+# que no configure nada no la expone. En local: SWAGGER_ENABLED=true en secrets.properties.
+# Los tests de contrato la activan por su cuenta (@TestPropertySource).
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}

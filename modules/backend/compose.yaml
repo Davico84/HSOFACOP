@@ -1,0 +1,32 @@
+# PostgreSQL para desarrollo local.
+# Ejecutar con la misma fuente de secretos que la app:
+#   docker compose --env-file secrets.properties up -d
+# Nombre del proyecto de Compose = nombre del contenedor: cada copia de la plantilla
+# tiene su propio volumen (<nombre>_pgdata) y no reutiliza el de otro proyecto.
+# `-p <nombre>` en la línea de comandos tiene prioridad sobre este valor.
+name: ${DB_CONTAINER_NAME:-app-db}
+
+services:
+  db:
+    image: postgres:16
+    # Nombre configurable para poder tener varias instancias locales.
+    container_name: ${DB_CONTAINER_NAME:-app-db}
+    # Arranca solo al abrir Docker Desktop; `docker compose stop` lo deja parado.
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      # Puerto del host configurable (evita choque con un PostgreSQL nativo en 5432).
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
