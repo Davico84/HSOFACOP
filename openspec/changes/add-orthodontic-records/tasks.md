@@ -3,27 +3,27 @@
 
 ## 1. Backend — modelo y persistencia (D1, D2, D5)
 
-- [ ] 1.1 `V8__orthodontic_records.sql`: tabla `orthodontic_records` (columnas de D1, `content JSONB NOT NULL DEFAULT '{}'`, `version`, FK `author_id`), `UNIQUE (author_id, record_seq)`, `CHECK` de `document_type` e índices `(author_id, updated_at DESC)` y `(updated_at DESC)`
-- [ ] 1.2 Records de contenido + enums por paso (`RecordContent` con `schemaVersion`, `Anamnesis`, `FacialAnalysis`, `FunctionalAnalysis`, `OcclusalAnalysis`, `RadiographicAnalysis`, `Diagnosis`, `Signatures`) con el catálogo de D3; comentario en los enums: "solo añadir valores"
-- [ ] 1.3 Entidad `OrthodonticRecord` (`@JdbcTypeCode(SqlTypes.JSON)` en `content`, `@Version`, `author` `@ManyToOne(fetch = LAZY)`), `OrthodonticRecordRepository` y `OrthodonticRecordSpecifications` (alcance por autor + `search_text LIKE`)
-- [ ] 1.4 `common.text.SearchNormalizer` (minúsculas, sin diacríticos) + test unitario
-- [ ] 1.5 Test de repositorio (Testcontainers): ida y vuelta del JSONB, `UNIQUE (author_id, record_seq)` (mismo correlativo en otro autor sí se permite), búsqueda sin tildes ("quispe" ↔ "QUÍSPE"), alcance por autor y orden por `updated_at`
+- [x] 1.1 `V8__orthodontic_records.sql`: tabla `orthodontic_records` (columnas de D1, `content JSONB NOT NULL DEFAULT '{}'`, `version`, FK `author_id`), `UNIQUE (author_id, record_seq)`, `CHECK` de `document_type` e índices `(author_id, updated_at DESC)` y `(updated_at DESC)`
+- [x] 1.2 Records de contenido + enums por paso (`RecordContent` con `schemaVersion`, `Anamnesis`, `FacialAnalysis`, `FunctionalAnalysis`, `OcclusalAnalysis`, `RadiographicAnalysis`, `Diagnosis`, `Signatures`) con el catálogo de D3; comentario en los enums: "solo añadir valores"
+- [x] 1.3 Entidad `OrthodonticRecord` (`@JdbcTypeCode(SqlTypes.JSON)` en `content`, `@Version`, `author` `@ManyToOne(fetch = LAZY)`), `OrthodonticRecordRepository` y `OrthodonticRecordSpecifications` (alcance por autor + `search_text LIKE`)
+- [x] 1.4 `common.text.SearchNormalizer` (minúsculas, sin diacríticos) + test unitario
+- [x] 1.5 Test de repositorio (Testcontainers): ida y vuelta del JSONB, `UNIQUE (author_id, record_seq)` (mismo correlativo en otro autor sí se permite), búsqueda sin tildes ("quispe" ↔ "QUÍSPE"), alcance por autor y orden por `updated_at`
 
 ## 2. Backend — servicio (D4, D6, D8)
 
-- [ ] 2.1 `service.records.RecordAgeCalculator` (edad a la fecha de inicio o a hoy, `null` sin nacimiento; `Clock` inyectable) + test con los scenarios de "Datos del paciente con edad calculada"
-- [ ] 2.2 `service.records.RecordNormalizer`: recorta, `""` → `null`, descarta condicionados (menarquia si sexo ≠ FEMALE, `facialThirdsAffected`, lados de asimetría, rasgos de Patrón II/III, `tongueLateralSides`, hábitos de succión si la anamnesis dice "no" → solo "no", `crossbiteSide`, `bruxismTeeth` (solo FDI 11–48 / 51–85), overjet y mordida cruzada anterior si AP = normal, `deviationMm` si centrada, relaciones en RC si no se marcó MI/MIH ≠ RC, `familyMalocclusionWho`, firmante (apoderado si < 18, paciente si no), ítems vacíos de las listas, `deepBitePercent`, `openBiteMm`, detalle de Spee) + test por cada condición
-- [ ] 2.3 `service.records.OrthodonticRecordService`: `create` (autor = usuario actual, tratante = `fullName` por defecto), `get`, `update` (comprueba `version` antes de copiar → conflicto; normaliza; recalcula `search_text`), `list` (paginado, `ADMIN` sin filtro / `USER` por autor); reglas de fechas (nacimiento no futuro, inicio ≥ nacimiento)
-- [ ] 2.4 Excepciones con su `ProblemDetail`: `RecordNotFoundException` (404), `StaleRecordException` (409, `/errors/stale-record`, también desde `ObjectOptimisticLockingFailureException`)
-- [ ] 2.5 `OrthodonticRecordServiceTest`: creación, alcance USER/ADMIN (ajena → 404), versión desactualizada → 409, correlativo (`AEO-001` primero, independiente por autor, `AEO-1000`, número enviado ignorado), documento por tipo, fechas inválidas → 400, autor conservado cuando guarda un ADMIN
+- [x] 2.1 `service.records.RecordAgeCalculator` (edad a la fecha de inicio o a hoy, `null` sin nacimiento; `Clock` inyectable) + test con los scenarios de "Datos del paciente con edad calculada"
+- [x] 2.2 `service.records.RecordNormalizer`: recorta, `""` → `null`, descarta condicionados (menarquia si sexo ≠ FEMALE, `facialThirdsAffected`, lados de asimetría, rasgos de Patrón II/III, `tongueLateralSides`, hábitos de succión si la anamnesis dice "no" → solo "no", `crossbiteSide`, `bruxismTeeth` (solo FDI 11–48 / 51–85), overjet y mordida cruzada anterior si AP = normal, `deviationMm` si centrada, relaciones en RC si no se marcó MI/MIH ≠ RC, `familyMalocclusionWho`, firmante (apoderado si < 18, paciente si no), ítems vacíos de las listas, `deepBitePercent`, `openBiteMm`, detalle de Spee) + test por cada condición
+- [x] 2.3 `service.records.OrthodonticRecordService`: `create` (autor = usuario actual, tratante = `fullName` por defecto), `get`, `update` (comprueba `version` antes de copiar → conflicto; normaliza; recalcula `search_text`), `list` (paginado, `ADMIN` sin filtro / `USER` por autor); las reglas de fechas y documento son validación del request (3.1)
+- [x] 2.4 Excepciones con su `ProblemDetail`: `RecordNotFoundException` (404), `StaleRecordException` (409, `/errors/stale-record`, también desde `ObjectOptimisticLockingFailureException`)
+- [x] 2.5 `OrthodonticRecordServiceTest`: creación, alcance USER/ADMIN (ajena → 404), versión desactualizada → 409, correlativo (`AEO-001` primero, independiente por autor, `AEO-1000`, número enviado ignorado), autor conservado cuando guarda un ADMIN
 
 ## 3. Backend — API y contrato (D7)
 
-- [ ] 3.1 DTOs en `presentation.dto`: `CreateRecordRequest`, `UpdateRecordRequest` (con `version`), `RecordResponse` (con `ageYears`), `RecordSummaryResponse` (con `authorName`); Bean Validation con los límites de D2 (≤ 200 / ≤ 4000 / 0–100 % / 0–30 mm)
-- [ ] 3.2 `OrthodonticRecordsController` (`/api/orthodontic-records`: `GET` lista con `q` + `@ParameterObject @PageableDefault(sort = "updatedAt", direction = DESC)`, `POST`, `GET /{id}`, `PUT /{id}`), `@PreAuthorize("isAuthenticated()")`, `operationId` y `@ApiResponse` 200/201/400/404/409
-- [ ] 3.3 `OrthodonticRecordsControllerTest` (`@WebMvcTest`): 401 sin sesión, 400 por campo (nombre vacío, longitudes, rangos, fechas), 201/200, 404, 409 con su `type`
-- [ ] 3.4 `OrthodonticRecordsIT` (flujo completo con Testcontainers): USER crea, edita y lista solo las suyas; otro USER recibe 404 al leer y al guardar; ADMIN lista todas con autor y guarda conservando el autor; dos guardados con la misma versión → el segundo 409 sin modificar; condicionados descartados al guardar
-- [ ] 3.5 `OpenApiContractIT`: operationIds y schemas nuevos; regenerar `contracts/openapi.json`; `ContractDriftIT` verde; `./mvnw -B verify` verde, `Skipped: 0`
+- [x] 3.1 DTOs en `presentation.dto`: `CreateRecordRequest`, `UpdateRecordRequest` (con `version`), `RecordResponse` (con `ageYears`), `RecordSummaryResponse` (con `authorName`); Bean Validation con los límites de D2 (≤ 200 / ≤ 4000 / 0–100 % / 0–30 mm) + restricciones de clase: documento según su tipo, nacimiento no futuro, inicio ≥ nacimiento
+- [x] 3.2 `OrthodonticRecordsController` (`/api/orthodontic-records`: `GET` lista con `q`, `page` y `size` explícitos y orden fijo `updatedAt DESC` (como `UsersController`), `POST`, `GET /{id}`, `PUT /{id}`), `@PreAuthorize("isAuthenticated()")`, `operationId` y `@ApiResponse` 200/201/400/404/409
+- [x] 3.3 `OrthodonticRecordsControllerTest` (`@WebMvcTest`): 401 sin sesión, 400 por campo (nombre vacío, longitudes, rangos, fechas), 201/200, 404, 409 con su `type`
+- [x] 3.4 `OrthodonticRecordsIT` (flujo completo con Testcontainers): USER crea, edita y lista solo las suyas; otro USER recibe 404 al leer y al guardar; ADMIN lista todas con autor y guarda conservando el autor; dos guardados con la misma versión → el segundo 409 sin modificar; condicionados descartados al guardar
+- [x] 3.5 `OpenApiContractIT`: operationIds y schemas nuevos; regenerar `contracts/openapi.json`; `ContractDriftIT` verde; `./mvnw -B verify` verde, `Skipped: 0`
 
 ## 4. Frontend — base del módulo (D3, D9)
 
