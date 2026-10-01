@@ -38,14 +38,14 @@ class StartupReadyBannerTest {
     @Test
     void listener_writes_the_block_in_a_single_log_entry(CapturedOutput output) {
         MockEnvironment env = new MockEnvironment()
-            .withProperty("app.name", "Mi Proyecto")
+            .withProperty("app.name", "Acme CRM")
             .withProperty("local.server.port", "8080");
 
         new StartupReadyBanner(env).onReady();
 
         // Una sola entrada: la línea del aviso no lleva el prefijo del logger delante.
         String out = output.getOut() + output.getErr();
-        assertThat(out).containsPattern("(?m)^  >> Mi Proyecto API lista en http://localhost:8080$");
+        assertThat(out).containsPattern("(?m)^  >> Acme CRM API lista en http://localhost:8080$");
         assertThat(out).containsPattern("(?m)^={60}$");
     }
 
@@ -77,20 +77,20 @@ class StartupReadyBannerTest {
     @Test
     void listener_writes_the_banner_when_the_server_listens(CapturedOutput output) {
         MockEnvironment env = new MockEnvironment()
-            .withProperty("app.name", "Mi Proyecto")
+            .withProperty("app.name", "Acme CRM")
             .withProperty("local.server.port", "8080")
             .withProperty("springdoc.swagger-ui.enabled", "true");
 
         new StartupReadyBanner(env).onReady();
 
         assertThat(output.getOut() + output.getErr())
-            .contains("Mi Proyecto API lista en http://localhost:8080")
+            .contains("Acme CRM API lista en http://localhost:8080")
             .contains("Swagger UI: http://localhost:8080/swagger-ui.html");
     }
 
     @Test
     void listener_writes_nothing_without_a_web_server(CapturedOutput output) {
-        new StartupReadyBanner(new MockEnvironment().withProperty("app.name", "Mi Proyecto")).onReady();
+        new StartupReadyBanner(new MockEnvironment().withProperty("app.name", "Acme CRM")).onReady();
 
         assertThat(output.getAll()).doesNotContain("API lista en");
     }
@@ -100,7 +100,7 @@ class StartupReadyBannerTest {
         String jwt = "jwt-secreto-que-no-debe-salir-0123456789-abcdef";
         String dbPassword = "clave-bd-que-no-debe-salir-QZX";
         MockEnvironment env = new MockEnvironment()
-            .withProperty("app.name", "Mi Proyecto")
+            .withProperty("app.name", "Acme CRM")
             .withProperty("local.server.port", "8080")
             .withProperty("app.security.jwt.secret", jwt)
             .withProperty("spring.datasource.password", dbPassword);
