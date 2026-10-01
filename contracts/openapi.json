@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Mi Proyecto API",
-    "description": "Plantilla base con autenticación, panel privado y configuración del proyecto.",
+    "title": "HS FACOP API",
+    "description": "HISTORIA CLINICA ORTODONCIA",
     "version": "v1"
   },
   "servers": [
@@ -298,6 +298,26 @@
               }
             }
           },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "La cuenta no existe",
             "content": {
@@ -320,26 +340,6 @@
           },
           "500": {
             "description": "Error inesperado",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Sin permiso para realizar esta acción",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Sesión ausente o inválida",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -405,8 +405,8 @@
               }
             }
           },
-          "500": {
-            "description": "Error inesperado",
+          "401": {
+            "description": "Sesión ausente o inválida",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -425,8 +425,8 @@
               }
             }
           },
-          "401": {
-            "description": "Sesión ausente o inválida",
+          "500": {
+            "description": "Error inesperado",
             "content": {
               "application/problem+json": {
                 "schema": {
