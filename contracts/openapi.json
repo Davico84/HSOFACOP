@@ -19,9 +19,185 @@
     {
       "name": "users",
       "description": "Gestión de usuarios"
+    },
+    {
+      "name": "orthodontic-records",
+      "description": "Historias clínicas de ortodoncia"
     }
   ],
   "paths": {
+    "/api/orthodontic-records/{id}": {
+      "get": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Obtener una historia",
+        "operationId": "getRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe o no está a tu alcance",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Guardar la historia completa (con la versión cargada)",
+        "operationId": "updateRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Historia guardada, con su nueva versión",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe o no está a tu alcance",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La historia cambió desde que se cargó (stale-record)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/register": {
       "post": {
         "tags": [
@@ -249,6 +425,173 @@
         }
       }
     },
+    "/api/orthodontic-records": {
+      "get": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Listar historias (las propias; todas si es ADMIN)",
+        "operationId": "listRecords",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Busca en paciente, documento y número (sin distinguir tildes ni mayúsculas)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120,
+              "minLength": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Página (base 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Tamaño (1–100; uno mayor se recorta a 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de historias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseRecordSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Página, tamaño o búsqueda inválidos",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Crear una historia (borrador) con el siguiente número del autor",
+        "operationId": "createRecord",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Historia creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/{id}/status": {
       "patch": {
         "tags": [
@@ -298,26 +641,6 @@
               }
             }
           },
-          "401": {
-            "description": "Sesión ausente o inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Sin permiso para realizar esta acción",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          },
           "404": {
             "description": "La cuenta no existe",
             "content": {
@@ -340,6 +663,26 @@
           },
           "500": {
             "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -405,8 +748,8 @@
               }
             }
           },
-          "401": {
-            "description": "Sesión ausente o inválida",
+          "500": {
+            "description": "Error inesperado",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -425,8 +768,8 @@
               }
             }
           },
-          "500": {
-            "description": "Error inesperado",
+          "401": {
+            "description": "Sesión ausente o inválida",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -441,72 +784,870 @@
   },
   "components": {
     "schemas": {
-      "RegisterRequest": {
+      "Anamnesis": {
         "type": "object",
         "properties": {
-          "email": {
+          "chiefComplaint": {
             "type": "string",
-            "format": "email",
-            "minLength": 1
+            "maxLength": 4000,
+            "minLength": 0
           },
-          "password": {
+          "personalPreferences": {
             "type": "string",
-            "maxLength": 2147483647,
-            "minLength": 8
+            "maxLength": 4000,
+            "minLength": 0
           },
-          "fullName": {
+          "cooperation": {
+            "type": "string",
+            "enum": [
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ]
+          },
+          "oralHygiene": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ]
+          },
+          "suckingHabits": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ]
+          },
+          "menarche": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ]
+          },
+          "medicalHistory": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "accidentsHistory": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "familyStructure": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "generalTreatmentNeeds": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "heredity": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
+      "AngleRelation": {
+        "type": "object",
+        "properties": {
+          "angleClass": {
+            "type": "string",
+            "enum": [
+              "CLASS_I",
+              "CLASS_II",
+              "CLASS_III"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        }
+      },
+      "Diagnosis": {
+        "type": "object",
+        "properties": {
+          "generalDiagnosis": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "problemList": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500,
+              "minLength": 0
+            },
+            "maxItems": 30,
+            "minItems": 0
+          },
+          "treatmentGoals": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500,
+              "minLength": 0
+            },
+            "maxItems": 30,
+            "minItems": 0
+          },
+          "treatmentPlan1": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "treatmentPlan2": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "treatmentSequence": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "nextStages": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "finalTreatmentPlan": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
+      "FacialAnalysis": {
+        "type": "object",
+        "properties": {
+          "facialType": {
+            "type": "string",
+            "enum": [
+              "MESOFACIAL",
+              "DOLICHOFACIAL",
+              "BRACHYFACIAL"
+            ]
+          },
+          "convexity": {
+            "type": "string",
+            "enum": [
+              "STRAIGHT",
+              "CONVEX",
+              "CONCAVE"
+            ]
+          },
+          "facialThirds": {
+            "type": "string",
+            "enum": [
+              "PRESENT",
+              "ABSENT_INCREASED",
+              "ABSENT_DECREASED"
+            ]
+          },
+          "facialThirdsAffected": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "UPPER",
+                "MIDDLE",
+                "LOWER"
+              ]
+            }
+          },
+          "lipSeal": {
+            "type": "string",
+            "enum": [
+              "PRESENT",
+              "ABSENT"
+            ]
+          },
+          "lipAnteroposteriorRelation": {
+            "type": "string",
+            "enum": [
+              "UPPER_AHEAD",
+              "SAME_LINE",
+              "LOWER_AHEAD"
+            ]
+          },
+          "restSymmetry": {
+            "type": "string",
+            "enum": [
+              "PRESENT",
+              "ABSENT"
+            ]
+          },
+          "restAsymmetrySides": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "RIGHT",
+                "LEFT"
+              ]
+            }
+          },
+          "openingSymmetry": {
+            "type": "string",
+            "enum": [
+              "PRESENT",
+              "ABSENT"
+            ]
+          },
+          "openingAsymmetrySides": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "RIGHT",
+                "LEFT"
+              ]
+            }
+          },
+          "nasolabialAngle": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "OPEN",
+              "DECREASED"
+            ]
+          },
+          "mentolabialSulcus": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "DEEP",
+              "SHALLOW"
+            ]
+          },
+          "zygomaticProjection": {
+            "type": "string",
+            "enum": [
+              "DECREASED",
+              "NORMAL",
+              "INCREASED"
+            ]
+          },
+          "chinNeckLine": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "INCREASED",
+              "DECREASED"
+            ]
+          },
+          "chinNeckAngle": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "OPEN",
+              "CLOSED"
+            ]
+          },
+          "facialPattern": {
+            "type": "string",
+            "enum": [
+              "PATTERN_I",
+              "PATTERN_II",
+              "PATTERN_III",
+              "SHORT_FACE",
+              "LONG_FACE"
+            ]
+          },
+          "patternIIFeatures": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MANDIBULAR_RETRUSION",
+                "MAXILLARY_PROTRUSION"
+              ]
+            }
+          },
+          "patternIIAfai": {
+            "type": "string",
+            "enum": [
+              "INCREASED",
+              "DECREASED"
+            ]
+          },
+          "patternIIIFeatures": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MANDIBULAR_PROTRUSION",
+                "MAXILLARY_RETRUSION"
+              ]
+            }
+          },
+          "patternIIIAfai": {
+            "type": "string",
+            "enum": [
+              "INCREASED",
+              "DECREASED"
+            ]
+          }
+        }
+      },
+      "FunctionalAnalysis": {
+        "type": "object",
+        "properties": {
+          "breathing": {
+            "type": "string",
+            "enum": [
+              "ORAL",
+              "NASAL",
+              "MIXED"
+            ]
+          },
+          "swallowing": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "ATYPICAL"
+            ]
+          },
+          "lipClosure": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "CONTRACTION"
+            ]
+          },
+          "tongueActivity": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "ANTERIOR_INTERPOSITION",
+              "LATERAL_INTERPOSITION"
+            ]
+          },
+          "tongueLateralSides": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "RIGHT",
+                "LEFT"
+              ]
+            }
+          },
+          "upperLip": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "HYPOACTIVE",
+              "HYPERACTIVE"
+            ]
+          },
+          "lowerLip": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "HYPOACTIVE",
+              "HYPERACTIVE"
+            ]
+          },
+          "masseter": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "HYPOACTIVE",
+              "HYPERACTIVE"
+            ]
+          },
+          "mentalis": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "HYPOACTIVE",
+              "HYPERACTIVE"
+            ]
+          },
+          "suckingHabitTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "FINGERS",
+                "TONGUE",
+                "LIPS",
+                "NAIL_BITING"
+              ]
+            }
+          },
+          "lingualFrenulum": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "SHORT"
+            ]
+          },
+          "snoring": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ]
+          },
+          "bruxism": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "WITHOUT_WEAR",
+              "WITH_WEAR"
+            ]
+          },
+          "bruxismTeeth": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "Midline": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "string",
+            "enum": [
+              "CENTERED",
+              "DEVIATED_RIGHT",
+              "DEVIATED_LEFT"
+            ]
+          },
+          "deviationMm": {
+            "type": "number",
+            "maximum": 30
+          },
+          "deviated": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OcclusalAnalysis": {
+        "type": "object",
+        "properties": {
+          "transverse": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "BILATERAL_POSTERIOR_CROSSBITE",
+              "UNILATERAL_POSTERIOR_CROSSBITE",
+              "BRODIE"
+            ]
+          },
+          "crossbiteSide": {
+            "type": "string",
+            "enum": [
+              "RIGHT",
+              "LEFT"
+            ]
+          },
+          "crossbiteType": {
+            "type": "string",
+            "enum": [
+              "SKELETAL",
+              "DENTOALVEOLAR",
+              "NONE"
+            ]
+          },
+          "vertical": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "EDGE_TO_EDGE",
+              "DEEP_BITE",
+              "OPEN_BITE"
+            ]
+          },
+          "deepBitePercent": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0
+          },
+          "openBiteMm": {
+            "type": "number",
+            "maximum": 30,
+            "minimum": 0
+          },
+          "speeCurve": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "ALTERED"
+            ]
+          },
+          "speeCurveDetail": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "anteroposteriorNormal": {
+            "type": "boolean"
+          },
+          "overjetMm": {
+            "type": "number",
+            "maximum": 30,
+            "minimum": 0
+          },
+          "anteriorCrossbiteTeeth": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "midlineUpper": {
+            "$ref": "#/components/schemas/Midline"
+          },
+          "midlineLower": {
+            "$ref": "#/components/schemas/Midline"
+          },
+          "canineRelation": {
+            "$ref": "#/components/schemas/SideRelations"
+          },
+          "molarRelation": {
+            "$ref": "#/components/schemas/SideRelations"
+          },
+          "miDiffersFromRc": {
+            "type": "boolean"
+          },
+          "canineRelationMi": {
+            "$ref": "#/components/schemas/SideRelations"
+          },
+          "mihDiffersFromRc": {
+            "type": "boolean"
+          },
+          "canineRelationMih": {
+            "$ref": "#/components/schemas/SideRelations"
+          },
+          "dentalAnomalies": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "tmjCondition": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "familyMalocclusion": {
+            "type": "string",
+            "enum": [
+              "YES",
+              "NO"
+            ]
+          },
+          "familyMalocclusionWho": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        }
+      },
+      "RadiographicAnalysis": {
+        "type": "object",
+        "properties": {
+          "panoramicDiagnosis": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "cephalometricAnalyses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "STEINER",
+                "RICKETTS",
+                "MCNAMARA",
+                "WITS"
+              ]
+            }
+          },
+          "apicalBases": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "growthTendency": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "dentoalveolar": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "others": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
+      "RecordContent": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Versión del formato del contenido (la fija el servidor)"
+          },
+          "anamnesis": {
+            "$ref": "#/components/schemas/Anamnesis"
+          },
+          "facial": {
+            "$ref": "#/components/schemas/FacialAnalysis"
+          },
+          "functional": {
+            "$ref": "#/components/schemas/FunctionalAnalysis"
+          },
+          "occlusal": {
+            "$ref": "#/components/schemas/OcclusalAnalysis"
+          },
+          "radiographic": {
+            "$ref": "#/components/schemas/RadiographicAnalysis"
+          },
+          "diagnosis": {
+            "$ref": "#/components/schemas/Diagnosis"
+          },
+          "signatures": {
+            "$ref": "#/components/schemas/Signatures"
+          }
+        },
+        "required": [
+          "anamnesis",
+          "diagnosis",
+          "facial",
+          "functional",
+          "occlusal",
+          "radiographic",
+          "signatures"
+        ]
+      },
+      "SideRelations": {
+        "type": "object",
+        "properties": {
+          "right": {
+            "$ref": "#/components/schemas/AngleRelation"
+          },
+          "left": {
+            "$ref": "#/components/schemas/AngleRelation"
+          }
+        }
+      },
+      "Signatures": {
+        "type": "object",
+        "properties": {
+          "patientSignatureName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "guardianName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "guardianRelationship": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "supervisor1Name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "supervisor2Name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "treatingSignatureName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        }
+      },
+      "UpdateRecordRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Versión cargada (control de edición concurrente)"
+          },
+          "treatingDentist": {
             "type": "string",
             "maxLength": 120,
-            "minLength": 2
-          }
-        },
-        "required": [
-          "email",
-          "fullName",
-          "password"
-        ]
-      },
-      "AuthResponse": {
-        "type": "object",
-        "properties": {
-          "accessToken": {
-            "type": "string"
+            "minLength": 0
           },
-          "user": {
-            "$ref": "#/components/schemas/UserResponse"
+          "patientName": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": "string",
+            "maxLength": 12,
+            "minLength": 0
+          },
+          "patientSex": {
+            "type": "string",
+            "enum": [
+              "FEMALE",
+              "MALE"
+            ]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "birthPlace": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "treatmentStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "content": {
+            "$ref": "#/components/schemas/RecordContent"
           }
         },
         "required": [
-          "accessToken",
-          "user"
+          "patientName",
+          "version"
         ]
       },
-      "UserResponse": {
+      "RecordResponse": {
         "type": "object",
         "properties": {
           "id": {
             "type": "integer",
             "format": "int64"
           },
-          "email": {
+          "recordNumber": {
+            "type": "string",
+            "example": "AEO-001"
+          },
+          "authorId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "authorName": {
             "type": "string"
           },
-          "role": {
+          "treatingDentist": {
+            "type": "string"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "documentType": {
             "type": "string",
             "enum": [
-              "ADMIN",
-              "USER"
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
             ]
           },
-          "fullName": {
+          "documentNumber": {
             "type": "string"
+          },
+          "patientSex": {
+            "type": "string",
+            "enum": [
+              "FEMALE",
+              "MALE"
+            ]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "birthPlace": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "treatmentStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "ageYears": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Años cumplidos a la fecha de inicio de tratamiento (o a hoy); vacío sin fecha de nacimiento"
+          },
+          "content": {
+            "$ref": "#/components/schemas/RecordContent"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Versión actual: se envía al guardar"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
-          "email",
-          "fullName",
+          "authorId",
+          "authorName",
+          "content",
+          "createdAt",
           "id",
-          "role"
+          "patientName",
+          "recordNumber",
+          "updatedAt",
+          "version"
         ]
       },
       "FieldProblem": {
@@ -616,6 +1757,74 @@
           "type"
         ]
       },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 2147483647,
+            "minLength": 8
+          },
+          "fullName": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2
+          }
+        },
+        "required": [
+          "email",
+          "fullName",
+          "password"
+        ]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "required": [
+          "accessToken",
+          "user"
+        ]
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "USER"
+            ]
+          },
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "fullName",
+          "id",
+          "role"
+        ]
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -632,6 +1841,70 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "CreateRecordRequest": {
+        "type": "object",
+        "properties": {
+          "treatingDentist": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "patientName": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": "string",
+            "maxLength": 12,
+            "minLength": 0
+          },
+          "patientSex": {
+            "type": "string",
+            "enum": [
+              "FEMALE",
+              "MALE"
+            ]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "birthPlace": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "treatmentStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "content": {
+            "$ref": "#/components/schemas/RecordContent"
+          }
+        },
+        "required": [
+          "patientName"
         ]
       },
       "ChangeUserStatusRequest": {
@@ -724,6 +1997,95 @@
           "size",
           "totalElements",
           "totalPages"
+        ]
+      },
+      "PageResponseRecordSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Página actual (base 0)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Tamaño aplicado (máximo 100)"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean",
+            "description": "¿Es la última página?"
+          }
+        },
+        "required": [
+          "content",
+          "last",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "RecordSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recordNumber": {
+            "type": "string",
+            "example": "AEO-001"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "treatingDentist": {
+            "type": "string"
+          },
+          "treatmentStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "authorName",
+          "id",
+          "patientName",
+          "recordNumber",
+          "updatedAt"
         ]
       }
     }
