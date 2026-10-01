@@ -1,0 +1,110 @@
+# Visión de producto — Mi Proyecto
+
+Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimos y **en qué orden**. El **cómo** (stack, estándares) vive en `docs/architecture.md`, `docs/backend.md`, `docs/frontend.md`, `docs/coding-style.md` y `docs/testing.md`. El **modelo de dominio** vive en `docs/domain.md`.
+
+> 📝 **Plantilla.** Las secciones marcadas con ✏️ son para rellenar en cada proyecto derivado. Lo demás (estado de capacidades técnicas, gobernanza, granularidad) aplica tal cual.
+
+---
+
+## 1. Producto ✏️
+
+**Mi Proyecto** es _[qué es el producto en una frase: para quién y qué problema resuelve]_.
+
+**Objetivos:**
+- _[objetivo de negocio 1]_
+- _[objetivo de negocio 2]_
+- Seguridad y trazabilidad: identidad + rol en toda operación.
+
+---
+
+## 2. Roadmap de capacidades ✏️
+
+> ⚠️ No es `openspec/specs/`. `specs/` contiene solo lo **ya construido**; este roadmap es ayuda de planificación. Cada capacidad nace como *change* (`add-<capacidad>`) y llega a `specs/` al archivar.
+
+| # | Capacidad | Tipo | Actor principal | Alcance breve | Depende de |
+|---|---|---|---|---|---|
+| 0 | `project-foundation` | técnica | dev | esqueleto ejecutable/validable del monorepo + tema por tokens | — |
+| 1 | `authentication` | negocio | usuario | registro, login, sesión, refresh, logout, protección por rol | 0 |
+| 2 | `app-shell` | técnica | usuario | layout privado (sidebar/header) + dashboard de ejemplo | 1 |
+| 3 | `template-bootstrap` | técnica | dev | configurar identidad visible y BD de una copia nueva | 0 |
+| 4 | `users` | negocio | admin | listado de cuentas y activar/deshabilitar usuarios (`add-user-account-status`); roles, alta y perfil en cambios posteriores | 1 |
+| 5 | _[capacidad de negocio]_ | negocio | _[actor]_ | _[alcance]_ | _[deps]_ |
+| … | `dashboard` | negocio | admin | panel con métricas reales del negocio | resto |
+
+---
+
+## 3. Estado de capacidades (puente hacia `specs/` y `changes/`)
+
+> Esta lista es el **puente vivo** entre la planificación y lo construido. **Actualízala en cada `/opsx:propose` y `/opsx:archive`** (ver "Ciclo de vida" abajo).
+
+- ✅ **`project-foundation`** — construida. Spec: `openspec/specs/project-foundation/spec.md` · changes archivados: `openspec/changes/archive/2026-07-03-add-project-scaffolding/`, `…/2026-09-28-update-tailwind-v4/` (Tailwind CSS 4 + "Tema definido por tokens CSS").
+- ✅ **`authentication`** — construida. Spec: `openspec/specs/authentication/spec.md` · change archivado: `openspec/changes/archive/2026-07-07-add-authentication/`.
+- ✅ **`api-type-contracts`** (técnica) — construida (contrato OpenAPI versionado + codegen orval). Spec: `openspec/specs/api-type-contracts/spec.md` · mismo change `add-authentication`.
+- ✅ **`app-shell`** (técnica) — construida: layout privado (sidebar/header responsive, logout al pie de la sidebar) + dashboard de inicio con datos de ejemplo. Spec: `openspec/specs/app-shell/spec.md` · change archivado: `openspec/changes/archive/2026-09-26-add-app-shell/`.
+- ✅ **`template-bootstrap`** (técnica) — construida: `project.config.json` + asistente `pnpm project:setup` / `pnpm project:apply` (identidad visible, BD, logos y colores; sin renombrados técnicos) para reutilizar la plantilla. Spec: `openspec/specs/template-bootstrap/spec.md` · change archivado: `openspec/changes/archive/2026-09-29-add-template-bootstrap/`.
+- ✅ **Tooltips del app-shell** (`app-shell`) — construida: tooltip de shadcn (Radix) en la barra de iconos (tablet) + `components.json`. Spec: `openspec/specs/app-shell/spec.md` · change archivado: `openspec/changes/archive/2026-09-29-update-app-shell-tooltips/`.
+- ✅ **Guardián del contrato** (`api-type-contracts`) — construida: `ContractDriftIT` (backend → contrato, en `verify`) + regenerar sin levantar la app con `-Dcontract.update=true`; CI también con cambios en `contracts/**`. Spec: `openspec/specs/api-type-contracts/spec.md` · change archivado: `openspec/changes/archive/2026-09-29-add-contract-drift-guard/`.
+- ✅ **Bloqueo de login por intentos fallidos** (`authentication`) — construida: bloqueo temporal tras N fallos (config validada al arranque, `UPDATE` atómico en transacción propia, reset condicional, login sin transacción larga, 401 indistinguible). Spec: `openspec/specs/authentication/spec.md` · change archivado: `openspec/changes/archive/2026-09-29-add-login-lockout/`.
+- ✅ **Formato uniforme de error** (`api-type-contracts`) — construida (en runtime): mismo `ProblemDetail` con `detail` en español, `type` `/errors/<…>`, `timestamp` y `traceId` también en los errores que resuelve Spring MVC por defecto (`handleExceptionInternal` + mapa status → mensaje). El contrato los documenta desde `update-api-contract-responses`. Spec: `openspec/specs/api-type-contracts/spec.md` · change archivado: `openspec/changes/archive/2026-09-29-update-api-type-contracts/`.
+- ✅ **Errores y status reales en el contrato** (`api-type-contracts`) — construida: schemas `ApiProblem`/`ValidationProblem`, `201`/`204` reales, errores semánticos por operación, transversales 401/403/500 automáticos (`OpenApiErrorsConfig` + `PublicPaths`), frontend tipado con el modelo generado; `OpenApiContractIT` vigila la fidelidad. Spec: `openspec/specs/api-type-contracts/spec.md` · change archivado: `openspec/changes/archive/2026-09-29-update-api-contract-responses/`.
+- ✅ **Secreto JWT obligatorio y robusto** (`authentication`) — construida: la app no arranca con un secreto ausente, sin resolver, de ejemplo o < 32 bytes (`JwtSecretRules` en `TokenService`, sin revelar el valor); secreto propio en los tests (`@DynamicPropertySource`). Spec: `openspec/specs/authentication/spec.md` · change archivado: `openspec/changes/archive/2026-09-30-update-jwt-secret-validation/`.
+- ✅ **Documentación de la API apagada por defecto** (`api-type-contracts`) — construida: `SWAGGER_ENABLED` (por defecto `false`) gobierna Swagger UI y `/v3/api-docs`; local la enciende en `secrets.properties` y los tests de contrato con `@TestPropertySource`. Spec: `openspec/specs/api-type-contracts/spec.md` · change archivado: `openspec/changes/archive/2026-09-30-update-api-docs-exposure/`.
+- ✅ **Aviso de backend listo al arrancar** (`project-foundation`) — construida: bloque destacado en el log (`StartupReadyBanner`, `ApplicationReadyEvent`) con el nombre del proyecto, la URL con el puerto real y el estado de Swagger; solo ASCII y sin secretos. Spec: `openspec/specs/project-foundation/spec.md` · change archivado: `openspec/changes/archive/2026-09-30-add-startup-ready-banner/`.
+- ✅ **Navegación filtrada por rol** (`app-shell`) — construida: `core/config/sections.ts` como única fuente de verdad; menú filtrado por rol y cada sección (con sus subrutas) protegida con `RequireRole`, acceso denegado dentro del shell; `Role` desde el contrato. Spec: `openspec/specs/app-shell/spec.md` · change archivado: `openspec/changes/archive/2026-10-01-update-app-shell-role-nav/`.
+- ✅ **`users` (primera parte): estado de cuenta** (`users` + `authentication`) — construida: `ACTIVE`/`DISABLED`; una cuenta deshabilitada no inicia ni renueva sesión (403 explicativo, revocación de refresh tokens, ventana ≤ 15 min); pantalla "Usuarios" solo `ADMIN` (listado paginado, activar/deshabilitar cuentas `USER`). Pendiente en `users`: roles, alta por admin y perfil. Spec: `openspec/specs/users/spec.md` · change archivado: `openspec/changes/archive/2026-10-01-add-user-account-status/`.
+- ⏳ **Resto** — planeadas (ver roadmap).
+
+---
+
+## 4. Ciclo de vida de una capacidad (gobernanza)
+
+```
+planeada (este roadmap) → en progreso (change activo: proposal.md + design.md) → construida (specs/<cap>/spec.md; change en changes/archive/)
+```
+
+Disciplina para que el contexto de la IA se mantenga preciso (su contexto se extrae de `specs/` y `docs/`):
+
+- **En `/opsx:propose`**: enlaza el change nuevo (`openspec/changes/<id>/proposal.md` y `design.md`) en "Estado de capacidades" y márcala 🚧/en progreso.
+- **En `/opsx:archive`** (en el **mismo commit/PR** que el archivado):
+  1. Si la capacidad tocó el dominio, **actualiza `docs/domain.md`** — es la fuente de la que la IA extrae el modelo; desincronizarla degrada la precisión.
+  2. Marca la capacidad como ✅ **construida** y enlaza su `spec.md` en `openspec/specs/`.
+  3. Verifica que el change quedó en `openspec/changes/archive/`.
+
+Regla equivalente para agentes en `CLAUDE.md → Flujo de trabajo → Gobernanza del ciclo`.
+
+---
+
+## 5. Convención de granularidad de capacidades
+
+**Una capacidad = un sustantivo, un actor/objetivo principal, un conjunto cohesivo de requirements**, con su propio `openspec/specs/<nombre>/spec.md`. Dos tipos: **de negocio** (lo que el usuario final hace: `authentication`, `orders`) y **técnica/plataforma** (base sobre la que se construye: `project-foundation`, `api-type-contracts`).
+
+**Mantén junto** cuando los requirements comparten actor y ciclo de vida, o cuando partirlo dejaría fragmentos sin sentido propio. **Parte** cuando aparecen actores/objetivos distintos con flujos independientes, cuando el `spec.md` crece demasiado (guía: **> ~7–8 requirements**), o cuando dos áreas evolucionan/despliegan por separado.
+
+> Señal de mala granularidad: un `#### Scenario:` que mezcla dos objetivos no relacionados, o un nombre de capacidad que necesita "y" (`login-y-pagos`).
+
+**Nomenclatura**: capacidad en **kebab-case sustantivo** (`authentication`); `change-id` = **verbo + capacidad** (`add-authentication`, `update-orders`). Un change modifica **una** capacidad siempre que sea posible; si toca varias, crea un `spec.md` delta por cada una.
+
+**Decisión tomada**: `authentication` es **UNA** sola capacidad (no se parte en registration/session/authorization); la autorización por rol es **parte de** ella. Razón: todos sus requirements giran en torno a identidad, sesión y acceso, con el mismo actor y modelo de token/rol.
+
+---
+
+## 6. Notas de secuencia ✏️
+
+- **`authentication` primero**: todo lo demás asume identidad + roles.
+- **`dashboard` al final**: agrega datos de casi todas las capacidades; construirlo antes obligaría a rehacerlo.
+- _[dependencias propias de tu producto]_
+
+## 7. Fuera de alcance por ahora (candidatas futuras)
+
+- `chatbot` (Spring AI ya está en el stack) — no priorizada aún.
+- `notifications` (correo/realtime STOMP) — cuando una capacidad lo requiera.
+
+**Variantes de plantilla:**
+- **Esta plantilla = single-tenant** (una sola empresa): auth + app shell + asistente de configuración, sin organizaciones ni branding por organización.
+- **Plantilla multi-tenant básica** — planificada. Añadirá `multi-tenancy` (aislamiento `@TenantId` + RLS) y `organization-branding`. Reglas y lecciones conservadas en [`docs/future/multi-tenant-template.md`](future/multi-tenant-template.md).
+
+**Tooling de plataforma (transversal, aún NO adoptado):**
+- **Seguridad (Snyk)**: escaneo de vulnerabilidades. Escalonado: primero **Dependabot** + `pnpm audit` (front) + **OWASP Dependency-Check** (Maven, back) en CI —sin cuentas externas—; **Snyk** después para SAST/licencias/contenedores (requiere cuenta + `SNYK_TOKEN`).
+- **Observabilidad (Sentry)**: monitoreo de errores + performance en front (React) y back (Spring Boot). Se apoya en el `traceId` (RFC 9457 + MDC) ya existente. Se monta con el setup de deploy/entornos.
+
+> El orden no es rígido: se ajusta según prioridad de negocio. Cambiar el orden no cambia las reglas de granularidad de este documento.
