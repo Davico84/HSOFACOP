@@ -1,4 +1,4 @@
-# Tooling y Setup — Mi Proyecto
+# Tooling y Setup — HS FACOP
 
 Guía **reproducible** del tooling de calidad. Adaptada del template FixRiver a la estructura real de este repo (monorepo con `modules/frontend`, hooks de git en la **raíz**). Complementa `docs/testing.md` (pruebas) y `docs/coding-style.md`.
 
@@ -49,7 +49,7 @@ Fuente única: `project.config.json` (nombre, tagline, descripción, BD, JWT iss
 - **¿Ya arrancó el backend?** Cuando está listo para recibir peticiones escribe un bloque destacado en el log (`StartupReadyBanner`), fácil de ver en terminales integradas:
   ```
   ============================================================
-    >> Mi Proyecto API lista en http://localhost:8080
+    >> HS FACOP API lista en http://localhost:8080
       Swagger UI: http://localhost:8080/swagger-ui.html
   ============================================================
   ```

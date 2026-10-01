@@ -29,8 +29,8 @@ spring:
 
 app:
   # Identidad visible (OpenAPI). La escribe `pnpm project:apply` desde project.config.json.
-  name: "Mi Proyecto"
-  description: "Plantilla base con autenticación, panel privado y configuración del proyecto."
+  name: "HS FACOP"
+  description: "HISTORIA CLINICA ORTODONCIA"
   auth:
     lockout:
       max-attempts: ${AUTH_LOCKOUT_MAX_ATTEMPTS:5}   # fallos consecutivos que bloquean la cuenta

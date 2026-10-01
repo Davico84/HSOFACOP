@@ -1,4 +1,4 @@
-# Arquitectura y Stack — Mi Proyecto
+# Arquitectura y Stack — HS FACOP
 
 Decisión de stack **cerrada el 2026-07-02**. Este documento es la fuente de verdad del *cómo* construimos.
 El *qué* (capacidades + cambios) vive en `openspec/`. El flujo de trabajo, en `SETUP-OPENSPEC.md`.
@@ -13,7 +13,7 @@ Referencias base:
 ## 1. Estructura del repositorio (monorepo modular)
 
 ```
-Mi Proyecto/
+HS FACOP/
 ├─ openspec/              # specs + changes (qué hace el sistema)
 │  └─ config.yaml         # schema spec-driven + contexto/reglas para la IA
 ├─ docs/                  # estándares perennes (este archivo, backend, frontend, testing, adr/)

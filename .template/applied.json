@@ -1,12 +1,12 @@
 {
-  "name": "Mi Proyecto",
-  "tagline": "Tu plataforma, lista para crecer.",
-  "description": "Plantilla base con autenticación, panel privado y configuración del proyecto.",
+  "name": "HS FACOP",
+  "tagline": "De puertas abiertas para el mundo",
+  "description": "HISTORIA CLINICA ORTODONCIA",
   "database": {
-    "name": "app",
-    "user": "app",
-    "port": 5432,
-    "container": "app-db"
+    "name": "hsfacopdb",
+    "user": "facop",
+    "port": 5436,
+    "container": "hs-facob-db"
   },
   "jwtIssuer": "mi-proyecto",
   "brand": {

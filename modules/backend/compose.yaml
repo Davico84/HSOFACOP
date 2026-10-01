@@ -4,13 +4,13 @@
 # Nombre del proyecto de Compose = nombre del contenedor: cada copia de la plantilla
 # tiene su propio volumen (<nombre>_pgdata) y no reutiliza el de otro proyecto.
 # `-p <nombre>` en la línea de comandos tiene prioridad sobre este valor.
-name: ${DB_CONTAINER_NAME:-app-db}
+name: ${DB_CONTAINER_NAME:-hs-facob-db}
 
 services:
   db:
     image: postgres:16
     # Nombre configurable para poder tener varias instancias locales.
-    container_name: ${DB_CONTAINER_NAME:-app-db}
+    container_name: ${DB_CONTAINER_NAME:-hs-facob-db}
     # Arranca solo al abrir Docker Desktop; `docker compose stop` lo deja parado.
     restart: unless-stopped
     environment:
@@ -19,7 +19,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       # Puerto del host configurable (evita choque con un PostgreSQL nativo en 5432).
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT:-5436}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

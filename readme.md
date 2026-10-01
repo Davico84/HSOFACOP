@@ -1,4 +1,4 @@
-# Mi Proyecto
+# HS FACOP
 
 **Plantilla base single-tenant** (una sola empresa): registro e inicio de sesión con JWT, panel privado con sidebar/header responsive, dashboard de ejemplo y un **asistente para configurar la identidad de cada proyecto nuevo** (nombre, BD, logos y colores). Ver [Crear un proyecto desde la plantilla](#crear-un-proyecto-desde-la-plantilla).
 
@@ -22,7 +22,7 @@ Todo el desarrollo gira en torno a **capacidades** (capabilities), y cada capaci
 ## Estructura del proyecto
 
 ```
-Mi Proyecto/
+HS FACOP/
 ├─ openspec/                  # 🧭 QUÉ hace el sistema (OpenSpec)
 │  ├─ specs/                  #   capacidades YA CONSTRUIDAS (1 carpeta = 1 capacidad)
 │  │  └─ project-foundation/spec.md

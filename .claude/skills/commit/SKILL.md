@@ -1,7 +1,7 @@
 ---
 name: commit
-description: Crea commits y PRs focalizados siguiendo el estándar de Mi Proyecto (docs/commits.md). Úsalo al commitear o abrir un PR. Argumentos opcionales — features/tareas a incluir, o modo solo-mensaje ("dry run").
-author: Mi Proyecto (adaptado de LIDR.co)
+description: Crea commits y PRs focalizados siguiendo el estándar de HS FACOP (docs/commits.md). Úsalo al commitear o abrir un PR. Argumentos opcionales — features/tareas a incluir, o modo solo-mensaje ("dry run").
+author: HS FACOP (adaptado de LIDR.co)
 version: 2.0.0
 ---
 

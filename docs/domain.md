@@ -1,4 +1,4 @@
-# Dominio de negocio — Mi Proyecto
+# Dominio de negocio — HS FACOP
 
 Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del dominio: actores, glosario y modelo conceptual. Documento **vivo**: crece y se detalla a medida que cada capacidad se especifica y construye.
 

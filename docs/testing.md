@@ -1,4 +1,4 @@
-# Guía de Pruebas — Mi Proyecto
+# Guía de Pruebas — HS FACOP
 
 > **Propósito.** Definir la estrategia, estándares y reglas de pruebas del monorepo (backend + frontend).
 > Cada capacidad, corrección o refactor se evalúa para elegir el nivel de prueba apropiado.

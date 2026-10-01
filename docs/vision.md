@@ -1,4 +1,4 @@
-# Visión de producto — Mi Proyecto
+# Visión de producto — HS FACOP
 
 Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimos y **en qué orden**. El **cómo** (stack, estándares) vive en `docs/architecture.md`, `docs/backend.md`, `docs/frontend.md`, `docs/coding-style.md` y `docs/testing.md`. El **modelo de dominio** vive en `docs/domain.md`.
 
@@ -8,7 +8,7 @@ Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimo
 
 ## 1. Producto ✏️
 
-**Mi Proyecto** es _[qué es el producto en una frase: para quién y qué problema resuelve]_.
+**HS FACOP** es _[qué es el producto en una frase: para quién y qué problema resuelve]_.
 
 **Objetivos:**
 - _[objetivo de negocio 1]_

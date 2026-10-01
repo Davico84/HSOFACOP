@@ -1,6 +1,6 @@
-# Estándares de Backend — Mi Proyecto
+# Estándares de Backend — HS FACOP
 
-Parte de la documentación de Mi Proyecto. Estándares de código y convenciones del backend **Java 25 · Spring Boot 4.0.6**.
+Parte de la documentación de HS FACOP. Estándares de código y convenciones del backend **Java 25 · Spring Boot 4.0.6**.
 Complementa a `docs/architecture.md` (arquitectura por capas), `docs/testing.md` (pruebas: slices + Testcontainers) y `docs/commits.md`.
 El equivalente de frontend es `docs/frontend.md` (y el estilo general de código en `docs/coding-style.md`).
 
