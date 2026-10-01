@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Configuración del proyecto (plantilla)",
+  "description": "Identidad visible y datos de BD del proyecto. Se aplica con `pnpm project:setup` o `pnpm project:apply`. NO pongas secretos aquí: la clave de BD y el JWT_SECRET van en modules/backend/secrets.properties.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "tagline", "description", "database", "jwtIssuer", "brand"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 60, "description": "Nombre visible del proyecto (login, sidebar, pestaña, OpenAPI, docs)." },
+    "tagline": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Frase corta del panel de marca del login." },
+    "description": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Frase de producto: login y descripción de OpenAPI." },
+    "database": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "user", "port", "container"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "description": "Nombre de la base de datos PostgreSQL." },
+        "user": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "description": "Usuario de la base de datos." },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Puerto del host para el Postgres de Docker." },
+        "container": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$", "description": "Nombre del contenedor Docker y del proyecto de Compose (volumen <nombre>_pgdata). Solo minúsculas, números, - y _." }
+      }
+    },
+    "jwtIssuer": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$", "description": "Emisor (iss) de los tokens JWT." },
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logo", "favicon", "colors"],
+      "properties": {
+        "logo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["light", "dark", "white"],
+          "properties": {
+            "light": { "$ref": "#/$defs/publicPath", "description": "Logo para tema claro." },
+            "dark": { "$ref": "#/$defs/publicPath", "description": "Logo para tema oscuro." },
+            "white": { "$ref": "#/$defs/publicPath", "description": "Logo blanco sobre el gradiente de marca." }
+          }
+        },
+        "favicon": { "$ref": "#/$defs/publicPath" },
+        "colors": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["light", "dark"],
+          "properties": {
+            "light": { "$ref": "#/$defs/palette" },
+            "dark": { "$ref": "#/$defs/palette" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "publicPath": { "type": "string", "pattern": "^/[A-Za-z0-9_./-]+$", "description": "Ruta pública servida desde modules/frontend/public (p. ej. /brand/logo.svg)." },
+    "color": {
+      "type": "string",
+      "description": "#rgb, #rrggbb o hsl(H S% L%) sin alpha.",
+      "pattern": "^(#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6}|hsl\\(.*\\))$"
+    },
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primary": { "$ref": "#/$defs/color" },
+        "ring": { "$ref": "#/$defs/color" },
+        "brand-start": { "$ref": "#/$defs/color" },
+        "brand-end": { "$ref": "#/$defs/color" }
+      }
+    }
+  }
+}

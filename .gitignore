@@ -1,0 +1,39 @@
+# === General ===
+.DS_Store
+Thumbs.db
+*.log
+
+# === Env / secrets ===
+.env
+.env.*
+!.env.example
+secrets.properties
+!secrets.properties.example
+
+# === Node === (general: raíz por los hooks + modules/*)
+node_modules/
+
+# === Artefactos de build/test por módulo ===
+modules/**/target/
+modules/**/*.class
+modules/**/dist/
+modules/**/coverage/
+modules/**/playwright-report/
+modules/**/test-results/
+
+# === IDE ===
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# === OpenSpec ===
+.worktrees/
+
+# === Python (scripts de skills) ===
+__pycache__/
+*.pyc
+
+# === Material de dominio local (no pertenece a la plantilla) ===
+docs/pdf/

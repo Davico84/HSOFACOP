@@ -1,0 +1,7 @@
+set -e
+
+# Corre lint-staged del frontend solo si el commit toca modules/frontend/
+# (así los commits de solo-backend no se ven afectados).
+if git diff --cached --name-only | grep -q '^modules/frontend/'; then
+  cd modules/frontend && pnpm exec lint-staged
+fi

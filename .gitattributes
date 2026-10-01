@@ -1,0 +1,21 @@
+# Normaliza finales de línea: LF en el repo, autoconversión en el working tree.
+* text=auto eol=lf
+
+# Scripts que se ejecutan en Linux/CI: SIEMPRE LF.
+*.sh    text eol=lf
+mvnw    text eol=lf
+.husky/* text eol=lf
+
+# Scripts de Windows: CRLF.
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# Binarios (git no debe tocar finales de línea).
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.jar   binary
+*.woff  binary
+*.woff2 binary

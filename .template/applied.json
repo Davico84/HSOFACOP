@@ -1,0 +1,34 @@
+{
+  "name": "Mi Proyecto",
+  "tagline": "Tu plataforma, lista para crecer.",
+  "description": "Plantilla base con autenticación, panel privado y configuración del proyecto.",
+  "database": {
+    "name": "app",
+    "user": "app",
+    "port": 5432,
+    "container": "app-db"
+  },
+  "jwtIssuer": "mi-proyecto",
+  "brand": {
+    "logo": {
+      "light": "/brand/logo-light.svg",
+      "dark": "/brand/logo-dark.svg",
+      "white": "/brand/logo-white.svg"
+    },
+    "favicon": "/favicon.svg",
+    "colors": {
+      "light": {
+        "primary": "hsl(292 72% 36%)",
+        "ring": "hsl(292 72% 45%)",
+        "brand-start": "hsl(174 70% 40%)",
+        "brand-end": "hsl(292 72% 42%)"
+      },
+      "dark": {
+        "primary": "hsl(292 65% 66%)",
+        "ring": "hsl(292 65% 66%)",
+        "brand-start": "hsl(174 70% 40%)",
+        "brand-end": "hsl(292 72% 42%)"
+      }
+    }
+  }
+}
