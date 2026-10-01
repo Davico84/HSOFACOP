@@ -1,0 +1,77 @@
+schema: spec-driven
+
+# Project context — shown to the AI when creating artifacts (proposals, specs, tasks).
+# Fuente de verdad ampliada: SETUP-OPENSPEC.md (flujo) y docs/architecture.md (stack).
+context: |
+  Proyecto: Mi Proyecto — desarrollo dirigido por especificaciones (spec-driven) con OpenSpec.
+  Guías: SETUP-OPENSPEC.md (setup/flujo) · docs/ = cómo construimos · openspec/ = qué hace + cambios.
+
+  Estructura del repo (monorepo modular):
+    Mi Proyecto/
+      openspec/            # specs + changes (qué hace el sistema)
+      docs/                # estándares perennes (ver mapa abajo)
+      modules/backend/             # Java 25 · Maven · Spring Boot (app principal)
+      modules/frontend/            # React 19 · Vite · TypeScript (SPA)
+      .github/workflows/   # CI
+
+  Docs — dónde vive cada cosa (dos dimensiones):
+    Negocio (sustituible):
+      docs/vision.md       # objetivos de producto + roadmap + gobernanza del ciclo + granularidad de capacidades
+      docs/domain.md       # modelo de dominio (vivo): actores, glosario, entidades y ER (local-first)
+    Tecnología (reutilizable):
+      docs/architecture.md # stack cerrado + arquitectura back/front
+      docs/backend.md      # estándares Java/Spring (capas, DTOs/validación, JPA, seguridad)
+      docs/frontend.md     # estándares frontend (arquitectura pantallas/módulos, React Query, Zustand, patrones UI)
+      docs/coding-style.md # estilo general de código (TypeScript, nombres, legibilidad; §7 paridad Zod↔Bean Validation)
+      docs/testing.md      # estrategia de pruebas + puente Scenario→test
+      docs/tooling-setup.md, docs/commits.md, docs/adr/
+
+  STACK CERRADO (2026-07-02) — ver detalle y versiones en docs/architecture.md.
+
+  Backend:
+    - Java 25 · Maven · Spring Boot 4.0.6.
+    - API REST: Spring Web MVC + springdoc-openapi (Swagger por perfil).
+    - Realtime: Spring WebSocket (STOMP) — encaja con @stomp/stompjs + sockjs del front.
+    - Persistencia: Spring Data JPA (Hibernate) + PostgreSQL. Migraciones: Flyway (db/migration), ddl-auto=none.
+    - Seguridad: Spring Security + JWT (com.auth0:java-jwt). Validación: Bean Validation.
+    - Caché: Spring Cache + Caffeine. Almacenamiento: AWS S3. IA: Spring AI (chat memory JDBC). Utils: Lombok, mail vía webhook.
+    - Configuración: única (sin perfiles dev/qa/pro); todos los valores externalizados como secretos (env vars + secrets.properties local ignorado, con .example versionado).
+    - Testing: Spring Boot test slices (H2, JPA-test, security-test, webmvc-test, websocket-test, flyway-test).
+    - Arquitectura por capas (paquetes reales):
+        presentation (controller · dto) → infra (config · security · service por dominio · utils/mappers)
+        → persistence (entity · repository · specification para queries dinámicas).
+
+  Frontend (base: template FixRiver — modules/frontend/proyecto-base):
+    - React 19 · TypeScript · Vite. UI: Tailwind + shadcn/Radix + @base-ui/react; lucide-react; framer-motion; sonner; recharts.
+    - Datos servidor: @tanstack/react-query + axios. Estado cliente: Zustand. Formularios: react-hook-form + zod (@hookform/resolvers).
+    - Routing: react-router-dom v7 con RouteGuard central (roles ADMIN/USER/ALL). Realtime: @stomp/stompjs + sockjs-client.
+    - Testing: Vitest + React Testing Library + MSW; e2e con Playwright. Lint: ESLint + typescript-eslint. Hooks: lint-staged.
+    - Arquitectura orientada a pantallas: src/{layouts,screens,modules(core/auth/...),store,routes,styles}.
+        screens orquestan; modules encapsulan lógica; core sin dependencias a otros módulos.
+
+  Convenciones de repo:
+    - Gestor front: pnpm. Backend: Maven. Commits: Conventional Commits en español (ver docs/commits.md). Pre-commit con lint-staged (front).
+    - Gate antes de codear: openspec validate <change> --strict + revisión humana del proposal/delta.
+    - CI en cada PR: openspec validate --strict + validate de backend (mvn verify) y frontend (pnpm validate).
+    - Definición de "listo": spec archivado + tests verdes (front y back) + CI en verde.
+
+  Reglas OpenSpec (invariantes):
+    - specs/ refleja lo YA construido, NO un backlog. En greenfield cada capacidad nace como change y llega a specs/ al archivar.
+    - Una capacidad = solo spec.md. Formato: "## Requirements" → "### Requirement:" (SHALL) → "#### Scenario:" (WHEN/THEN/AND). Cada requirement ≥ 1 scenario.
+    - Spec delta del change: changes/<id>/specs/<cap>/spec.md con "## ADDED | MODIFIED | REMOVED Requirements".
+    - change-id en kebab-case liderado por verbo: add-..., update-..., remove-... · design.md solo si hay decisión técnica real.
+    - Tests derivados de los Scenario del spec (uno por WHEN/THEN).
+
+  Estado: greenfield. Primera capacidad planificada: "authentication" (registro, login, persistencia de sesión, refresh de token, logout, protección de rutas por auth y rol). Prompt de arranque en SETUP-OPENSPEC.md §4.
+
+# Per-artifact rules (opcional): reglas específicas por tipo de artefacto.
+rules:
+  proposal:
+    - Incluir una sección "Non-goals" (alcance excluido).
+    - Referenciar docs/ en vez de duplicar guías perennes.
+  specs:
+    - Cada "### Requirement:" debe tener al menos un "#### Scenario:" con WHEN/THEN.
+    - Cubrir camino feliz + errores + casos borde en los scenarios.
+  tasks:
+    - Separar tareas de backend y frontend cuando la capacidad toque ambos.
+    - "Incluir la escritura de tests derivados de los Scenario (back = test slices; front = Vitest/MSW, e2e Playwright si aplica)."
