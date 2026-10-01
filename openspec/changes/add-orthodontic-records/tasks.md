@@ -1,0 +1,60 @@
+> Backend + contrato + frontend, commits separados por scope (docs/commits.md). Los `*IT` necesitan Docker (Testcontainers): `Skipped: 0`. Antes de tocar el frontend, skill `frontend-guard`.
+> Regenerar el contrato: `./mvnw -B verify -Dit.test=ContractDriftIT -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dcontract.update=true` y después `pnpm generate:api`.
+
+## 1. Backend — modelo y persistencia (D1, D2, D5)
+
+- [ ] 1.1 `V8__orthodontic_records.sql`: tabla `orthodontic_records` (columnas de D1, `content JSONB NOT NULL DEFAULT '{}'`, `version`, FK `author_id`), `UNIQUE (author_id, record_seq)`, `CHECK` de `document_type` e índices `(author_id, updated_at DESC)` y `(updated_at DESC)`
+- [ ] 1.2 Records de contenido + enums por paso (`RecordContent` con `schemaVersion`, `Anamnesis`, `FacialAnalysis`, `FunctionalAnalysis`, `OcclusalAnalysis`, `RadiographicAnalysis`, `Diagnosis`, `Signatures`) con el catálogo de D3; comentario en los enums: "solo añadir valores"
+- [ ] 1.3 Entidad `OrthodonticRecord` (`@JdbcTypeCode(SqlTypes.JSON)` en `content`, `@Version`, `author` `@ManyToOne(fetch = LAZY)`), `OrthodonticRecordRepository` y `OrthodonticRecordSpecifications` (alcance por autor + `search_text LIKE`)
+- [ ] 1.4 `common.text.SearchNormalizer` (minúsculas, sin diacríticos) + test unitario
+- [ ] 1.5 Test de repositorio (Testcontainers): ida y vuelta del JSONB, `UNIQUE (author_id, record_seq)` (mismo correlativo en otro autor sí se permite), búsqueda sin tildes ("quispe" ↔ "QUÍSPE"), alcance por autor y orden por `updated_at`
+
+## 2. Backend — servicio (D4, D6, D8)
+
+- [ ] 2.1 `service.records.RecordAgeCalculator` (edad a la fecha de inicio o a hoy, `null` sin nacimiento; `Clock` inyectable) + test con los scenarios de "Datos del paciente con edad calculada"
+- [ ] 2.2 `service.records.RecordNormalizer`: recorta, `""` → `null`, descarta condicionados (menarquia si sexo ≠ FEMALE, `facialThirdsAffected`, lados de asimetría, rasgos de Patrón II/III, `tongueLateralSides`, hábitos de succión si la anamnesis dice "no" → solo "no", `crossbiteSide`, `bruxismTeeth` (solo FDI 11–48 / 51–85), overjet y mordida cruzada anterior si AP = normal, `deviationMm` si centrada, relaciones en RC si no se marcó MI/MIH ≠ RC, `familyMalocclusionWho`, firmante (apoderado si < 18, paciente si no), ítems vacíos de las listas, `deepBitePercent`, `openBiteMm`, detalle de Spee) + test por cada condición
+- [ ] 2.3 `service.records.OrthodonticRecordService`: `create` (autor = usuario actual, tratante = `fullName` por defecto), `get`, `update` (comprueba `version` antes de copiar → conflicto; normaliza; recalcula `search_text`), `list` (paginado, `ADMIN` sin filtro / `USER` por autor); reglas de fechas (nacimiento no futuro, inicio ≥ nacimiento)
+- [ ] 2.4 Excepciones con su `ProblemDetail`: `RecordNotFoundException` (404), `StaleRecordException` (409, `/errors/stale-record`, también desde `ObjectOptimisticLockingFailureException`)
+- [ ] 2.5 `OrthodonticRecordServiceTest`: creación, alcance USER/ADMIN (ajena → 404), versión desactualizada → 409, correlativo (`AEO-001` primero, independiente por autor, `AEO-1000`, número enviado ignorado), documento por tipo, fechas inválidas → 400, autor conservado cuando guarda un ADMIN
+
+## 3. Backend — API y contrato (D7)
+
+- [ ] 3.1 DTOs en `presentation.dto`: `CreateRecordRequest`, `UpdateRecordRequest` (con `version`), `RecordResponse` (con `ageYears`), `RecordSummaryResponse` (con `authorName`); Bean Validation con los límites de D2 (≤ 200 / ≤ 4000 / 0–100 % / 0–30 mm)
+- [ ] 3.2 `OrthodonticRecordsController` (`/api/orthodontic-records`: `GET` lista con `q` + `@ParameterObject @PageableDefault(sort = "updatedAt", direction = DESC)`, `POST`, `GET /{id}`, `PUT /{id}`), `@PreAuthorize("isAuthenticated()")`, `operationId` y `@ApiResponse` 200/201/400/404/409
+- [ ] 3.3 `OrthodonticRecordsControllerTest` (`@WebMvcTest`): 401 sin sesión, 400 por campo (nombre vacío, longitudes, rangos, fechas), 201/200, 404, 409 con su `type`
+- [ ] 3.4 `OrthodonticRecordsIT` (flujo completo con Testcontainers): USER crea, edita y lista solo las suyas; otro USER recibe 404 al leer y al guardar; ADMIN lista todas con autor y guarda conservando el autor; dos guardados con la misma versión → el segundo 409 sin modificar; condicionados descartados al guardar
+- [ ] 3.5 `OpenApiContractIT`: operationIds y schemas nuevos; regenerar `contracts/openapi.json`; `ContractDriftIT` verde; `./mvnw -B verify` verde, `Skipped: 0`
+
+## 4. Frontend — base del módulo (D3, D9)
+
+- [ ] 4.1 `pnpm generate:api` (`orthodontic-records.ts` + modelos) — commit aparte con el contrato
+- [ ] 4.2 Sección "Historias clínicas": `PATHS.RECORDS`, `sections.ts` (sin `roles`), `navItems` (icono lucide `ClipboardList`), rutas de lista, formulario e impresión (esta última fuera del layout privado, protegida)
+- [ ] 4.3 `modules/records/config/options.ts`: etiquetas en español de cada enum (única fuente para wizard e impresión) + test de que cubre todos los valores del modelo generado
+- [ ] 4.4 Schemas Zod por paso y compuesto, con paridad de límites con el backend (docs/coding-style.md §7) + tests de los límites y de las reglas de fechas
+- [ ] 4.5 `utils/age.ts` (misma fórmula que el backend) + test con los scenarios de edad
+- [ ] 4.6 Hooks React Query: `recordKeys`, `useRecords(q, page)`, `useRecord(id)`, `useCreateRecord`, `useSaveRecord` (invalida lista y detalle; distingue 409 de número y de versión por `type`)
+
+## 5. Frontend — listado y wizard (spec: listado, formulario por pasos, secciones, concurrencia)
+
+- [ ] 5.1 `RecordsListScreen`: tabla paginada (número, paciente, documento, tratante, inicio, modificado; "Autor" solo para ADMIN), búsqueda con debounce, estados de carga, error con "Reintentar", vacío inicial ("Nueva historia") y vacío de búsqueda ("Limpiar búsqueda")
+- [ ] 5.2 `RecordFormScreen`: crear (`/historias/nueva` → POST → `/historias/:id?paso=1`) y editar; indicador de 7 pasos clicable; paso en `?paso=`; "Anterior/Siguiente" validan el paso y guardan solo si hay cambios (`isDirty`), `reset(response)` tras guardar; se queda en el paso si falla
+- [ ] 5.3 Componentes de campo reutilizables: `ChoiceField` (única, con deseleccionar), `ImageChoiceField` (tarjetas con imagen de la guía), `FieldHint` (valor de referencia), `MultiChoiceField`, `NoteField` (texto largo con contador), `MeasureField` (número + unidad), `SidePairField` (derecho/izquierdo), `ChoiceMatrix` (filas × opciones, musculatura), `ToothPicker` (FDI permanentes 11–48 + temporales 51–85), `ItemListField` (agregar/quitar/reordenar ítems; lista de problemas y metas)
+- [ ] 5.4 Pasos 1–7 (`Step1Patient` … `Step7Signatures`) con el catálogo de D3; condicionados ocultos (menarquia, lado de mordida cruzada, piezas con desgaste, % / mm de mordida, detalle de Spee); edad de solo lectura
+- [ ] 5.5 Salida con cambios sin guardar: `useBlocker` + `beforeunload` + `AlertDialog`; banner de 409 por versión con "Recargar historia" / "Seguir editando"; "Historia no encontrada" con enlace al listado ante 404
+- [ ] 5.6 Tests Vitest + MSW: listado (USER sin columna Autor, ADMIN con ella, búsqueda, ambos vacíos, error); wizard (avanzar guarda, sin cambios no hay petición, saltar desde el indicador, error de validación y de red se queda en el paso, selección única y múltiple, condicionados aparecen y se ocultan, salir con cambios pide confirmación, 409 muestra el banner, 404 muestra el aviso)
+
+## 6. Frontend — impresión (D10, spec: impresión)
+
+- [ ] 6.1 Copiar a `src/assets/records/` los logos (`logo-aeo.png` recortado del PDF, `logo-facop.webp` oficial) y las ilustraciones de la guía facial (`facial-guide/*.png`), ya extraídas en `docs/pdf/` durante la revisión (D12)
+- [ ] 6.2 Componentes `PrintPage` (cabecera con logos y "HISTORIA CLÍNICA ORTODONCIA Nro."), `PrintField` (valor o línea en blanco), `PrintChoice` (☒/☐ con todas las opciones), `PrintLines` (texto largo con líneas mínimas)
+- [ ] 6.3 `RecordPrintScreen` con las 7 secciones en el orden y títulos del PDF; CSS `@page A4`, `break-before: page` por sección, texto largo que fluye; `window.print()` al terminar de cargar; botón "Imprimir" en el formulario y en el listado
+- [ ] 6.4 Tests Vitest: opción marcada (☒ Mesofacial ☐ …), vacíos como línea sin "null/undefined", menarquia oculta si no aplica, 404 sin contenido
+- [ ] 6.5 E2E Playwright: crear una historia, llenar campos de varios pasos, abrir la impresión y generar `page.pdf()` comprobando número de páginas y textos clave
+- [ ] 6.6 `pnpm validate` verde
+
+## 7. Docs y cierre
+
+- [ ] 7.1 `docs/vision.md`: producto (historia clínica de ortodoncia FACOP/ARO), roadmap con `orthodontic-records` y las fases 2–3, estado 🚧 enlazando este change
+- [ ] 7.2 Al archivar — `docs/domain.md`: actores tratante (`USER`) y supervisor (`ADMIN`), glosario (anamnesis, overjet, Brodie, curva de Spee…), entidad `OrthodonticRecord` en texto y ER
+- [ ] 7.3 Prueba manual: llenar una historia real del PDF de punta a punta, imprimirla en Chrome y Edge y compararla con el PDF; USER no ve historias de otro; ADMIN sí
+- [ ] 7.4 `openspec validate add-orthodontic-records --strict`

@@ -28,7 +28,7 @@ Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimo
 | 2 | `app-shell` | técnica | usuario | layout privado (sidebar/header) + dashboard de ejemplo | 1 |
 | 3 | `template-bootstrap` | técnica | dev | configurar identidad visible y BD de una copia nueva | 0 |
 | 4 | `users` | negocio | admin | listado de cuentas y activar/deshabilitar usuarios (`add-user-account-status`); roles, alta y perfil en cambios posteriores | 1 |
-| 5 | _[capacidad de negocio]_ | negocio | _[actor]_ | _[alcance]_ | _[deps]_ |
+| 5 | `orthodontic-records` | negocio | tratante (`USER`) / supervisor (`ADMIN`) | historia clínica de ortodoncia: wizard, borrador, listado/búsqueda e impresión fiel al PDF. Fase 1: secciones de texto y selección (`add-orthodontic-records`); fase 2: análisis de modelos, Moyers, Nance y Bolton; fase 3: notas de evolución | 1, 2 |
 | … | `dashboard` | negocio | admin | panel con métricas reales del negocio | resto |
 
 ---
@@ -52,6 +52,7 @@ Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimo
 - ✅ **Aviso de backend listo al arrancar** (`project-foundation`) — construida: bloque destacado en el log (`StartupReadyBanner`, `ApplicationReadyEvent`) con el nombre del proyecto, la URL con el puerto real y el estado de Swagger; solo ASCII y sin secretos. Spec: `openspec/specs/project-foundation/spec.md` · change archivado: `openspec/changes/archive/2026-09-30-add-startup-ready-banner/`.
 - ✅ **Navegación filtrada por rol** (`app-shell`) — construida: `core/config/sections.ts` como única fuente de verdad; menú filtrado por rol y cada sección (con sus subrutas) protegida con `RequireRole`, acceso denegado dentro del shell; `Role` desde el contrato. Spec: `openspec/specs/app-shell/spec.md` · change archivado: `openspec/changes/archive/2026-10-01-update-app-shell-role-nav/`.
 - ✅ **`users` (primera parte): estado de cuenta** (`users` + `authentication`) — construida: `ACTIVE`/`DISABLED`; una cuenta deshabilitada no inicia ni renueva sesión (403 explicativo, revocación de refresh tokens, ventana ≤ 15 min); pantalla "Usuarios" solo `ADMIN` (listado paginado, activar/deshabilitar cuentas `USER`). Pendiente en `users`: roles, alta por admin y perfil. Spec: `openspec/specs/users/spec.md` · change archivado: `openspec/changes/archive/2026-10-01-add-user-account-status/`.
+- 🚧 **`orthodontic-records` (fase 1)** — en progreso: historia clínica de ortodoncia por pasos (págs. 1–4 y 10–13 del PDF), guardado de borrador, listado con búsqueda, acceso autor/`ADMIN` e impresión A4. Change: [`proposal.md`](../openspec/changes/add-orthodontic-records/proposal.md) · [`design.md`](../openspec/changes/add-orthodontic-records/design.md).
 - ⏳ **Resto** — planeadas (ver roadmap).
 
 ---
