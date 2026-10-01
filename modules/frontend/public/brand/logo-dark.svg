@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-hidden="true">
+  <!-- Marca genérica de la plantilla (tema oscuro). Sustitúyela con `pnpm project:setup`. -->
+  <rect x="4" y="4" width="40" height="40" rx="11" fill="#cf74ed"/>
+  <rect x="14" y="14" width="20" height="20" rx="5" fill="none" stroke="#230e28" stroke-width="3.5"/>
+  <circle cx="34" cy="14" r="4.5" fill="#8de3d8" stroke="#230e28" stroke-width="2"/>
+</svg>

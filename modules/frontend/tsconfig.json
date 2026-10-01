@@ -1,0 +1,16 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  // Solo para tooling (CLI de shadcn): `tsc -b` usa los proyectos referenciados, que
+  // declaran sus propios paths. Sin esto el CLI no resuelve `@/` y escribe en una
+  // carpeta literal `@/`.
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
