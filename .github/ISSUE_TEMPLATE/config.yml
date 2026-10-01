@@ -1,0 +1,2 @@
+# Fuerza el uso de plantillas (no issues en blanco).
+blank_issues_enabled: false

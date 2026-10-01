@@ -1,0 +1,88 @@
+name: Template
+
+# Tooling de reutilización de la plantilla (project:setup / project:apply).
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "scripts/project/**"
+      - "project.config.json"
+      - ".template/**"
+      - "package.json"
+      - ".github/workflows/template.yml"
+  push:
+    branches: [main, dev]
+    paths:
+      - "scripts/project/**"
+      - "project.config.json"
+      - ".template/**"
+      - "package.json"
+      - ".github/workflows/template.yml"
+
+concurrency:
+  group: template-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Tests del script (un test por Scenario de template-bootstrap).
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: git identity (los tests crean copias del repo con su propio git)
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "ci"
+      # Lista explícita: Node 22 trata los argumentos de --test como patrones de archivo (no carpetas).
+      - run: node --test scripts/project/apply.test.mjs scripts/project/config.test.mjs scripts/project/setup.test.mjs
+
+  # Ensayo real: aplica una identidad de ejemplo y comprueba que todo sigue compilando.
+  rehearsal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - run: pnpm install --frozen-lockfile
+
+      - name: Aplicar identidad de ejemplo (Acme CRM)
+        run: |
+          node --input-type=module -e "const m = await import('./scripts/project/support/repo-copy.mjs'); m.editConfig(process.cwd(), m.acme);"
+          pnpm project:apply
+          git add -A
+
+      - name: Contrato ↔ cliente coherentes (regenerar = mismo resultado)
+        working-directory: modules/frontend
+        run: |
+          pnpm generate:api
+          git diff --exit-code -- src/modules/core/services/generated || {
+            echo "::error::El cliente regenerado no coincide con el que dejó project:apply.";
+            exit 1;
+          }
+
+      - name: Frontend (validate + build + título)
+        working-directory: modules/frontend
+        run: |
+          pnpm validate
+          pnpm build
+          grep -q "<title>Acme CRM</title>" dist/index.html || { echo "::error::El <title> no refleja project.config.json"; exit 1; }
+
+      - name: Backend (compila + tests unitarios)
+        working-directory: modules/backend
+        run: ./mvnw -B test
+
+      - name: Backend ↔ contrato alineados (ContractDriftIT)
+        working-directory: modules/backend
+        run: ./mvnw -B verify -Dit.test=ContractDriftIT -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false

@@ -1,0 +1,28 @@
+name: OpenSpec
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "openspec/**"
+      - ".github/workflows/openspec.yml"
+  push:
+    branches: [main, dev]
+    paths:
+      - "openspec/**"
+      - ".github/workflows/openspec.yml"
+
+concurrency:
+  group: openspec-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate specs & changes (strict)
+        run: npx -y @fission-ai/openspec@latest validate --all --strict

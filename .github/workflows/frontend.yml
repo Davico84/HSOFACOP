@@ -1,0 +1,87 @@
+name: Frontend
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "modules/frontend/**"
+      - "contracts/**"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/frontend.yml"
+  push:
+    branches: [main, dev]
+    paths:
+      - "modules/frontend/**"
+      - "contracts/**"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/frontend.yml"
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: modules/frontend
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+
+  # Verifica que el cliente generado (orval) esté sincronizado con contracts/openapi.json.
+  # (La sincronización contrato ↔ backend real se verificará en un job del backend
+  #  cuando se automatice el export de /v3/api-docs.)
+  codegen-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Regenerar cliente desde el contrato
+        run: pnpm generate:api
+      - name: Verificar que el cliente generado está commiteado y al día
+        run: |
+          git diff --exit-code -- src/modules/core/services/generated || {
+            echo "::error::El cliente generado no coincide con contracts/openapi.json. Ejecuta 'pnpm generate:api' y commitea los cambios.";
+            exit 1;
+          }
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Tests + coverage
+        run: pnpm test:coverage
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: modules/frontend/coverage
+          if-no-files-found: ignore

@@ -1,0 +1,41 @@
+name: Backend
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "modules/backend/**"
+      - "contracts/**"
+      - ".github/workflows/backend.yml"
+  push:
+    branches: [main, dev]
+    paths:
+      - "modules/backend/**"
+      - "contracts/**"
+      - ".github/workflows/backend.yml"
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: modules/backend
+
+jobs:
+  # Compila y corre los tests (test slices + Testcontainers). En CI Linux
+  # Testcontainers funciona con el socket Docker estándar.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - name: Verify (compile + tests)
+        run: ./mvnw -B verify
+
+  # TODO(futuro): job 'lint' con Spotless/Checkstyle cuando se configure.
+  # TODO(futuro): job 'coverage' con JaCoCo (report + upload-artifact) cuando se configure.

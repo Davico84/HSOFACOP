@@ -1,0 +1,13 @@
+# Dueños de código: revisores solicitados automáticamente en cada PR.
+# Añade más usuarios/equipos por área a medida que crezca el equipo.
+# Docs: https://docs.github.com/es/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Por defecto
+*                    @Davico84
+
+# Por área
+/modules/backend/    @Davico84
+/modules/frontend/   @Davico84
+/openspec/           @Davico84
+/docs/               @Davico84
+/.github/            @Davico84
