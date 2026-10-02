@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/modules/core/utils/cn";
-import { ROW_LEADING } from "./printStyle";
+import { LABEL, ROW_LEADING } from "./printStyle";
 
 interface PrintLinesProps {
   label?: ReactNode;
@@ -20,7 +20,7 @@ export function PrintLines({ label, value, emptyText }: PrintLinesProps) {
   const text = value?.trim() || emptyText || "";
   return (
     <div className="flex flex-col">
-      {label ? <p className={cn("mt-[7pt]", ROW_LEADING)}>{label}</p> : null}
+      {label ? <p className={cn("mt-[7pt]", LABEL, ROW_LEADING)}>{label}</p> : null}
       {text ? <p className={cn("whitespace-pre-wrap wrap-break-word", ROW_LEADING)}>{text}</p> : null}
     </div>
   );

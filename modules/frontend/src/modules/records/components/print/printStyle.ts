@@ -16,3 +16,9 @@ export const PAGE_CSS = "@page { size: A4; margin: 0; }";
 export const ROW = "h-[17.3pt]";
 export const ROW_MIN = "min-h-[17.3pt]";
 export const ROW_LEADING = "leading-[17.3pt]";
+
+/**
+ * Pregunta o etiqueta: 1 pt más que la respuesta (11 pt / 10 pt) para distinguirlas; los títulos
+ * de sección siguen en 12 pt negrita (revisión del usuario).
+ */
+export const LABEL = "text-[11pt]";

@@ -7,6 +7,7 @@ import {
 import { PrintChoice } from "./PrintChoice";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
+import { LABEL } from "./printStyle";
 
 interface PrintFacialSectionProps {
   record: RecordResponse;
@@ -41,7 +42,7 @@ export function PrintFacialSection({ record }: PrintFacialSectionProps) {
       <PrintChoice label="10. PROYECCIÓN CIGOMÁTICA:" options={zygomaticOptions} value={f.zygomaticProjection} />
       <PrintChoice label="11. LÍNEA MENTÓN CUELLO:" options={chinNeckLineOptions} value={f.chinNeckLine} />
       <PrintChoice label="12. ÁNGULO MENTÓN CUELLO:" options={chinNeckAngleOptions} value={f.chinNeckAngle} />
-      <p>13. PATRÓN FACIAL</p>
+      <p className={LABEL}>13. PATRÓN FACIAL</p>
       <div className="flex flex-col pl-[8mm]">
         <p className="flex flex-wrap gap-x-[14pt]">
           <span>{mark(pattern === "PATTERN_I")} Patrón I</span>

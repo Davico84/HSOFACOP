@@ -8,6 +8,7 @@ import { PrintChoice } from "./PrintChoice";
 import { PrintField } from "./PrintField";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
+import { LABEL } from "./printStyle";
 import { PrintTitle } from "./PrintTitle";
 
 interface PrintOcclusalSectionProps {
@@ -71,7 +72,7 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
         <tbody>
           {rows.filter(([, , show]) => show).map(([label, r]) => (
             <tr key={label}>
-              <td className="pr-3">{label}</td>
+              <td className={`pr-3 ${LABEL}`}>{label}</td>
               <td className="pr-3"><span className="block min-h-[1.2em]">{relation(r?.right)}</span></td>
               <td><span className="block min-h-[1.2em]">{relation(r?.left)}</span></td>
             </tr>

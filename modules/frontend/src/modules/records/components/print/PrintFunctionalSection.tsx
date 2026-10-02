@@ -7,6 +7,7 @@ import { formatTeeth } from "../../utils/fdi";
 import { PrintChoice } from "./PrintChoice";
 import { PrintField } from "./PrintField";
 import { PrintPage } from "./PrintPage";
+import { LABEL } from "./printStyle";
 
 interface PrintFunctionalSectionProps {
   record: RecordResponse;
@@ -34,7 +35,7 @@ export function PrintFunctionalSection({ record }: PrintFunctionalSectionProps) 
         <tbody>
           {MUSCLES.map(([key, label]) => (
             <tr key={key}>
-              <td className="pr-4">{label}</td>
+              <td className={`pr-4 ${LABEL}`}>{label}</td>
               {muscleOptions.map((o) => (
                 <td key={o.value} className="pr-4">
                   {f[key] === o.value ? "☒" : "☐"} {o.label}
@@ -47,7 +48,7 @@ export function PrintFunctionalSection({ record }: PrintFunctionalSectionProps) 
       <PrintChoice label="Hábitos de succión:" options={suckingHabitOptions} value={f.suckingHabitTypes} />
       <PrintChoice label="Frenillo lingual:" options={frenulumOptions} value={f.lingualFrenulum} suffix={HEART_TEST_NOTE} />
       <PrintChoice label="¿El paciente ronca durante el sueño?" options={yesNoOptions} value={f.snoring} />
-      <p>¿Paciente con síntomas de bruxismo?</p>
+      <p className={LABEL}>¿Paciente con síntomas de bruxismo?</p>
       <div className="flex flex-col pl-[8mm]">
         {bruxismOptions.map((o) => (
           <p key={o.value} className="flex items-end gap-1">

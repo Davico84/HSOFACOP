@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ChoiceOption } from "@/modules/core/components/form/choiceTypes";
 import { cn } from "@/modules/core/utils/cn";
-import { ROW_LEADING } from "./printStyle";
+import { LABEL, ROW_LEADING } from "./printStyle";
 import { fitsInOneRow } from "./printLayout";
 
 interface PrintChoiceProps {
@@ -54,14 +54,14 @@ export function PrintChoice({ label, options, value, suffix, vertical = false }:
   if (label && (endsWithColon(label) || column)) {
     return (
       <div className={ROW_LEADING}>
-        <p>{label}</p>
+        <p className={LABEL}>{label}</p>
         {list}
       </div>
     );
   }
   return (
     <div className={cn("flex items-baseline gap-x-[10pt]", ROW_LEADING)}>
-      {label ? <span className="shrink-0">{label}</span> : null}
+      {label ? <span className={cn("shrink-0", LABEL)}>{label}</span> : null}
       {list}
     </div>
   );

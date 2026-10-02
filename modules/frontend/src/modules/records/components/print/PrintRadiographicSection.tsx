@@ -3,6 +3,7 @@ import { cephalometricOptions } from "../../config/options";
 import { PrintChoice } from "./PrintChoice";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
+import { LABEL } from "./printStyle";
 
 interface PrintRadiographicSectionProps {
   record: RecordResponse;
@@ -14,7 +15,7 @@ export function PrintRadiographicSection({ record }: PrintRadiographicSectionPro
   return (
     <PrintPage recordNumber={record.recordNumber} title="Análisis radiográfico">
       <PrintLines label="Diagnóstico de la radiografía panorámica" value={r.panoramicDiagnosis} lines={4} />
-      <p className="mt-[7pt]">Diagnóstico cefalométrico (realizar 3 análisis cefalométricos) e indicar en su diagnóstico</p>
+      <p className={`mt-[7pt] ${LABEL}`}>Diagnóstico cefalométrico (realizar 3 análisis cefalométricos) e indicar en su diagnóstico</p>
       <PrintChoice label="Análisis realizados:" options={cephalometricOptions} value={r.cephalometricAnalyses} />
       <div className="pl-[8mm]">
         <PrintLines label="Alteraciones cefalométricas de las bases apicales." value={r.apicalBases} lines={5} />

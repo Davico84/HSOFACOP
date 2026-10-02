@@ -3,6 +3,7 @@ import { isMinor } from "../../utils/age";
 import { PrintField } from "./PrintField";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
+import { LABEL } from "./printStyle";
 
 interface PrintSignaturesSectionProps {
   record: RecordResponse;
@@ -18,7 +19,7 @@ export function PrintSignaturesSection({ record }: PrintSignaturesSectionProps) 
       <div className="mt-[24pt] flex"><PrintField label="FECHA:" value="" className="max-w-72" handwritten /></div>
       {minor ? (
         <>
-          <p className="mt-[17pt]">FIRMA DEL APODERADO:</p>
+          <p className={`mt-[17pt] ${LABEL}`}>FIRMA DEL APODERADO:</p>
           <div className="flex gap-4">
             <PrintField label="Nombre" value={s.guardianName} grow={2} />
             <PrintField label="Parentesco" value={s.guardianRelationship} />
@@ -27,14 +28,14 @@ export function PrintSignaturesSection({ record }: PrintSignaturesSectionProps) 
         </>
       ) : (
         <>
-          <p className="mt-[17pt]">FIRMA DEL PACIENTE:</p>
+          <p className={`mt-[17pt] ${LABEL}`}>FIRMA DEL PACIENTE:</p>
           <div className="flex gap-4">
             <PrintField label="Nombre" value={s.patientSignatureName ?? record.patientName} grow={3} />
             <PrintField label="Firma" value="" handwritten />
           </div>
         </>
       )}
-      <p className="mt-[17pt]">FIRMA SUPERVISOR:</p>
+      <p className={`mt-[17pt] ${LABEL}`}>FIRMA SUPERVISOR:</p>
       <div className="flex gap-4">
         <PrintField label="Nombre" value={s.supervisor1Name} grow={3} />
         <PrintField label="Firma" value="" handwritten />
@@ -43,7 +44,7 @@ export function PrintSignaturesSection({ record }: PrintSignaturesSectionProps) 
         <PrintField label="Nombre" value={s.supervisor2Name} grow={3} />
         <PrintField label="Firma" value="" handwritten />
       </div>
-      <p className="mt-[17pt]">FIRMA DEL TRATANTE:</p>
+      <p className={`mt-[17pt] ${LABEL}`}>FIRMA DEL TRATANTE:</p>
       <div className="flex gap-4">
         <PrintField label="Nombre" value={s.treatingSignatureName ?? record.treatingDentist} grow={3} />
         <PrintField label="Firma" value="" handwritten />
