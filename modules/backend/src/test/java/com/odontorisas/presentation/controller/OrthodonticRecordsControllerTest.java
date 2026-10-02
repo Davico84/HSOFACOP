@@ -196,6 +196,18 @@ class OrthodonticRecordsControllerTest {
     }
 
     @Test
+    void model_measures_out_of_range_or_with_two_decimals_are_400() throws Exception {
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"transversal\":{\"intermolarUpper\":100}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.transversal.intermolarUpper"));
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"transversal\":{\"walaToEv\":{\"firstMolar\":2.25}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.transversal.walaToEv.firstMolar"));
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"transversal\":{\"intercanineLower\":-1}}}}")
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void deviated_midline_needs_at_least_half_a_millimeter() throws Exception {
         create("{\"patientName\":\"A\",\"content\":{\"occlusal\":{\"midlineLower\":{\"position\":\"DEVIATED_LEFT\",\"deviationMm\":0.4}}}}")
             .andExpect(status().isBadRequest())

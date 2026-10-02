@@ -176,7 +176,7 @@ class OrthodonticRecordServiceTest {
         RecordContent e = RecordContent.empty();
         RecordData data = new RecordData(null, "Juan", DocumentType.DNI, "74125896", PatientSex.MALE,
             LocalDate.of(2012, 5, 20), null, null, null, LocalDate.of(2026, 5, 19),
-            new RecordContent(null, anamnesis, e.facial(), e.functional(), e.occlusal(), e.radiographic(),
+            new RecordContent(null, anamnesis, e.facial(), e.functional(), e.occlusal(), e.models(), e.radiographic(),
                 e.diagnosis(), e.signatures()));
 
         RecordView view = service.update(medinaActor, 10L, 0, data);

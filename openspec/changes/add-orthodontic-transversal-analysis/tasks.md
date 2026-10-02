@@ -2,10 +2,10 @@
 
 ## 1. Backend
 
-- [ ] 1.1 Records `ModelAnalysis` / `TransversalAnalysis` / `WalaToEv` en `RecordContent` (`schemaVersion` 3) con Bean Validation (0–99,9 mm, 1 decimal; interpretación ≤ 4000)
-- [ ] 1.2 `RecordNormalizer`: sección vacía al leer/guardar, texto recortado + tests
-- [ ] 1.3 Tests: controller (400 por rango/decimales con su ruta), IT (guardar y leer el análisis; historia sin `models` se abre y guarda)
-- [ ] 1.4 Regenerar contrato; `mvn verify` verde
+- [x] 1.1 Records `ModelAnalysis` / `TransversalAnalysis` / `WalaToEv` en `RecordContent` (`schemaVersion` 3) con Bean Validation (0–99,9 mm, 1 decimal; interpretación ≤ 4000)
+- [x] 1.2 `RecordNormalizer`: sección vacía al leer/guardar, texto recortado + tests
+- [x] 1.3 Tests: controller (400 por rango/decimales con su ruta), IT (guardar y leer el análisis; historia sin `models` se abre y guarda)
+- [x] 1.4 Regenerar contrato; `mvn verify` verde
 
 ## 2. Frontend
 

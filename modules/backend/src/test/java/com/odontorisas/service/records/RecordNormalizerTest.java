@@ -15,6 +15,7 @@ import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
 import com.odontorisas.service.records.content.FunctionalAnalysis.TongueActivity;
 import com.odontorisas.service.records.content.Midline;
+import com.odontorisas.service.records.content.ModelAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
@@ -26,6 +27,8 @@ import com.odontorisas.service.records.content.RecordContent;
 import com.odontorisas.service.records.content.Side;
 import com.odontorisas.service.records.content.SideRelations;
 import com.odontorisas.service.records.content.Signatures;
+import com.odontorisas.service.records.content.TransversalAnalysis;
+import com.odontorisas.service.records.content.WalaToEv;
 import com.odontorisas.service.records.content.YesNo;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +49,7 @@ class RecordNormalizerTest {
                                       RadiographicAnalysis r, Diagnosis d, Signatures s) {
         RecordContent e = RecordContent.empty();
         return new RecordContent(null, a != null ? a : e.anamnesis(), f != null ? f : e.facial(),
-            fn != null ? fn : e.functional(), o != null ? o : e.occlusal(), r != null ? r : e.radiographic(),
+            fn != null ? fn : e.functional(), o != null ? o : e.occlusal(), e.models(), r != null ? r : e.radiographic(),
             d != null ? d : e.diagnosis(), s != null ? s : e.signatures());
     }
 
@@ -230,6 +233,27 @@ class RecordNormalizerTest {
             .isEqualTo("Padre");
         assertThat(RecordNormalizer.occlusal(occlusal(null, null, null, null, null, YesNo.NO)).familyMalocclusionWho())
             .isNull();
+    }
+
+    // --- Análisis de modelos ---
+
+    @Test
+    void models_section_is_filled_when_missing_and_interpretation_is_trimmed() {
+        RecordContent e = RecordContent.empty();
+        RecordContent withoutModels = new RecordContent(1, e.anamnesis(), e.facial(), e.functional(), e.occlusal(), null,
+            e.radiographic(), e.diagnosis(), e.signatures());
+        RecordContent out = RecordNormalizer.content(withoutModels, null, null);
+        assertThat(out.models().transversal()).isNotNull();
+        assertThat(out.models().transversal().walaToEv()).isNotNull();
+        assertThat(out.schemaVersion()).isEqualTo(3);
+
+        TransversalAnalysis t = new TransversalAnalysis(new BigDecimal("34.5"), null, new BigDecimal("50.1"), null,
+            null, null, null, new BigDecimal("50.0"), null, "  Compresión maxilar leve ");
+        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t)).transversal();
+        assertThat(kept.intermolarUpper()).isEqualByComparingTo("50.1");
+        assertThat(kept.xIdealWidth()).isEqualByComparingTo("50.0");
+        assertThat(kept.walaToEv()).isEqualTo(WalaToEv.empty());
+        assertThat(kept.interpretation()).isEqualTo("Compresión maxilar leve");
     }
 
     // --- Radiográfico, diagnóstico y firmas ---

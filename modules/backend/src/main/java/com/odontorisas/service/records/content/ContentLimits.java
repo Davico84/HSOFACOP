@@ -13,6 +13,8 @@ public final class ContentLimits {
     public static final int LIST_ITEMS = 30;
     /** Milímetros: 0–30 con un decimal. */
     public static final String MAX_MM = "30.0";
+    /** Medidas de los análisis de modelos: 0–99,9 mm con un decimal. */
+    public static final String MAX_MODEL_MM = "99.9";
     /** Desviación mínima de la línea media cuando está desviada. */
     public static final String MIN_MIDLINE_MM = "0.5";
 

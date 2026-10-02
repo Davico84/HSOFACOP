@@ -12,6 +12,7 @@ import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
 import com.odontorisas.service.records.content.FunctionalAnalysis.TongueActivity;
 import com.odontorisas.service.records.content.Midline;
+import com.odontorisas.service.records.content.ModelAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
@@ -20,6 +21,8 @@ import com.odontorisas.service.records.content.RadiographicAnalysis;
 import com.odontorisas.service.records.content.RecordContent;
 import com.odontorisas.service.records.content.SideRelations;
 import com.odontorisas.service.records.content.Signatures;
+import com.odontorisas.service.records.content.TransversalAnalysis;
+import com.odontorisas.service.records.content.WalaToEv;
 import com.odontorisas.service.records.content.YesNo;
 
 import java.util.Collection;
@@ -65,6 +68,7 @@ public final class RecordNormalizer {
             facial(c.facial() != null ? c.facial() : FacialAnalysis.empty()),
             functional(c.functional() != null ? c.functional() : FunctionalAnalysis.empty(), anamnesis.suckingHabits()),
             occlusal(c.occlusal() != null ? c.occlusal() : OcclusalAnalysis.empty()),
+            models(c.models() != null ? c.models() : ModelAnalysis.empty()),
             radiographic(c.radiographic() != null ? c.radiographic() : RadiographicAnalysis.empty()),
             diagnosis(c.diagnosis() != null ? c.diagnosis() : Diagnosis.empty()),
             signatures(c.signatures() != null ? c.signatures() : Signatures.empty(), ageYears));
@@ -159,6 +163,15 @@ public final class RecordNormalizer {
             return null;
         }
         return new AngleRelation(r.angleClass(), text(r.detail()));
+    }
+
+    static ModelAnalysis models(ModelAnalysis m) {
+        TransversalAnalysis t = m.transversal() != null ? m.transversal() : TransversalAnalysis.empty();
+        return new ModelAnalysis(new TransversalAnalysis(
+            t.intercanineUpper(), t.intercanineLower(), t.intermolarUpper(), t.intermolarLower(),
+            t.walaWidth(), t.xPcWidth(), t.xPrimePcWidth(), t.xIdealWidth(),
+            t.walaToEv() != null ? t.walaToEv() : WalaToEv.empty(),
+            text(t.interpretation())));
     }
 
     static RadiographicAnalysis radiographic(RadiographicAnalysis r) {

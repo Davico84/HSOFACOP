@@ -281,6 +281,34 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void transversal_analysis_is_saved_and_a_record_without_models_still_opens_and_saves() throws Exception {
+        Session torres = register("Dra. Torres");
+        JsonNode created = createOk(torres, "Ana");
+        long id = created.get("id").asLong();
+        assertThat(created.get("content").get("models").get("transversal").isObject()).isTrue();
+
+        // Historia guardada antes del análisis de modelos (schemaVersion 2, sin "models").
+        jdbc.update("UPDATE orthodontic_records SET content = (content - 'models') || '{\"schemaVersion\":2}'::jsonb WHERE id = ?", id);
+        JsonNode old = read(getRecord(torres, id));
+        assertThat(old.get("content").get("models").get("transversal").get("walaToEv").isObject()).isTrue();
+
+        ObjectNode body = json.createObjectNode();
+        body.put("version", old.get("version").asLong());
+        body.put("patientName", "Ana");
+        ObjectNode transversal = body.putObject("content").putObject("models").putObject("transversal");
+        transversal.put("intermolarUpper", 50.1).put("xIdealWidth", 50.0).put("interpretation", " Compresión leve ");
+        transversal.putObject("walaToEv").put("firstMolar", 2.6);
+
+        JsonNode saved = read(save(torres, id, json.writeValueAsString(body)));
+
+        JsonNode t = saved.get("content").get("models").get("transversal");
+        assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
+        assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
+        assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(3);
+    }
+
+    @Test
     void without_session_is_401() throws Exception {
         mockMvc.perform(post(BASE).contentType(MediaType.APPLICATION_JSON).content("{\"patientName\":\"Ana\"}"))
             .andExpect(status().isUnauthorized());

@@ -16,16 +16,20 @@ public record RecordContent(
     @Schema(requiredMode = REQUIRED) @Valid FacialAnalysis facial,
     @Schema(requiredMode = REQUIRED) @Valid FunctionalAnalysis functional,
     @Schema(requiredMode = REQUIRED) @Valid OcclusalAnalysis occlusal,
+    @Schema(requiredMode = REQUIRED) @Valid ModelAnalysis models,
     @Schema(requiredMode = REQUIRED) @Valid RadiographicAnalysis radiographic,
     @Schema(requiredMode = REQUIRED) @Valid Diagnosis diagnosis,
     @Schema(requiredMode = REQUIRED) @Valid Signatures signatures) {
 
-    /** 2: tercios y simetrías faciales pasan a presenta/no presenta + texto (migración V9). */
-    public static final int CURRENT_SCHEMA_VERSION = 2;
+    /**
+     * 2: tercios y simetrías faciales pasan a presenta/no presenta + texto (migración V9).
+     * 3: sección {@code models} (análisis de modelos); sin migración, llega vacía.
+     */
+    public static final int CURRENT_SCHEMA_VERSION = 3;
 
     public static RecordContent empty() {
         return new RecordContent(CURRENT_SCHEMA_VERSION, Anamnesis.empty(), FacialAnalysis.empty(),
-            FunctionalAnalysis.empty(), OcclusalAnalysis.empty(), RadiographicAnalysis.empty(),
+            FunctionalAnalysis.empty(), OcclusalAnalysis.empty(), ModelAnalysis.empty(), RadiographicAnalysis.empty(),
             Diagnosis.empty(), Signatures.empty());
     }
 }
