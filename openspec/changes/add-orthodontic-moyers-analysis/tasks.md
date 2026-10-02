@@ -13,7 +13,7 @@
 - [x] 2.2 `config/moyers.ts` (tabla 75 %) + `utils/moyers.ts` (suma, redondeo, requerido, diferencias) con tests de los scenarios
 - [x] 2.3 Bloque "Análisis de Moyers" en el paso 5 (fecha, incisivos con suma, tabla de espacios con requerido y diferencia, predisposición, interpretación)
 - [x] 2.4 `PrintMoyersSection` tras la hoja del transversal
-- [ ] 2.6 Revisión del usuario: tabla de espacios alineada (entradas, requerido y diferencia en la misma columna); predisposición escrita por el odontólogo (backend `crowdingPositive/Neutral/Negative` ≤ 200 + contrato + campos de texto + impresión)
+- [x] 2.6 Revisión del usuario: tabla de espacios alineada (entradas, requerido y diferencia en la misma columna); predisposición escrita por el odontólogo (backend `crowdingPositive/Neutral/Negative` ≤ 200 + contrato + campos de texto + impresión)
 - [ ] 2.5 Tests Vitest (bloque Moyers, cálculos en pantalla, impresión) y E2E (11 hojas); `pnpm validate` verde; impresión verificada con Edge headless
 
 ## 3. Docs y cierre
