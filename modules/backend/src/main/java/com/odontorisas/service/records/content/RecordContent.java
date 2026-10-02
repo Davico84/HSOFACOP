@@ -20,7 +20,8 @@ public record RecordContent(
     @Schema(requiredMode = REQUIRED) @Valid Diagnosis diagnosis,
     @Schema(requiredMode = REQUIRED) @Valid Signatures signatures) {
 
-    public static final int CURRENT_SCHEMA_VERSION = 1;
+    /** 2: tercios y simetrías faciales pasan a presenta/no presenta + texto (migración V9). */
+    public static final int CURRENT_SCHEMA_VERSION = 2;
 
     public static RecordContent empty() {
         return new RecordContent(CURRENT_SCHEMA_VERSION, Anamnesis.empty(), FacialAnalysis.empty(),

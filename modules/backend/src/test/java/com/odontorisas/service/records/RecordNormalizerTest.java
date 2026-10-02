@@ -9,8 +9,6 @@ import com.odontorisas.service.records.content.Anamnesis;
 import com.odontorisas.service.records.content.Diagnosis;
 import com.odontorisas.service.records.content.FacialAnalysis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
-import com.odontorisas.service.records.content.FacialAnalysis.FacialThird;
-import com.odontorisas.service.records.content.FacialAnalysis.FacialThirds;
 import com.odontorisas.service.records.content.FacialAnalysis.PatternIIFeature;
 import com.odontorisas.service.records.content.FunctionalAnalysis;
 import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
@@ -93,35 +91,29 @@ class RecordNormalizerTest {
 
     // --- Análisis facial ---
 
-    private static FacialAnalysis facial(FacialThirds thirds, Presence rest, FacialPattern pattern) {
-        return new FacialAnalysis(null, null, thirds, List.of(FacialThird.LOWER, FacialThird.UPPER, FacialThird.LOWER),
-            null, null, rest, List.of(Side.LEFT), Presence.PRESENT, List.of(Side.RIGHT), null, null, null, null, null,
+    private static FacialAnalysis facial(FacialPattern pattern) {
+        return new FacialAnalysis(null, null, Presence.ABSENT, "  Tercio inferior aumentado ", null, null,
+            Presence.ABSENT, "   ", null, null, null, null, null, null, null,
             pattern, List.of(PatternIIFeature.MAXILLARY_PROTRUSION, PatternIIFeature.MANDIBULAR_RETRUSION),
             AfaiChange.INCREASED, List.of(), AfaiChange.DECREASED);
     }
 
     @Test
-    void affected_thirds_only_when_proportion_is_absent_and_sorted_without_duplicates() {
-        assertThat(RecordNormalizer.facial(facial(FacialThirds.ABSENT_INCREASED, null, null)).facialThirdsAffected())
-            .containsExactly(FacialThird.UPPER, FacialThird.LOWER);
-        assertThat(RecordNormalizer.facial(facial(FacialThirds.PRESENT, null, null)).facialThirdsAffected()).isEmpty();
-    }
-
-    @Test
-    void asymmetry_sides_only_when_symmetry_is_absent() {
-        FacialAnalysis out = RecordNormalizer.facial(facial(null, Presence.ABSENT, null));
-        assertThat(out.restAsymmetrySides()).containsExactly(Side.LEFT);
-        assertThat(out.openingAsymmetrySides()).isEmpty();
+    void facial_notes_are_trimmed_and_blank_becomes_null() {
+        FacialAnalysis out = RecordNormalizer.facial(facial(null));
+        assertThat(out.facialThirds()).isEqualTo(Presence.ABSENT);
+        assertThat(out.facialThirdsNotes()).isEqualTo("Tercio inferior aumentado");
+        assertThat(out.restSymmetryNotes()).isNull();
     }
 
     @Test
     void pattern_features_only_for_their_pattern() {
-        FacialAnalysis ii = RecordNormalizer.facial(facial(null, null, FacialPattern.PATTERN_II));
+        FacialAnalysis ii = RecordNormalizer.facial(facial(FacialPattern.PATTERN_II));
         assertThat(ii.patternIIFeatures()).containsExactly(PatternIIFeature.MANDIBULAR_RETRUSION, PatternIIFeature.MAXILLARY_PROTRUSION);
         assertThat(ii.patternIIAfai()).isEqualTo(AfaiChange.INCREASED);
         assertThat(ii.patternIIIAfai()).isNull();
 
-        FacialAnalysis i = RecordNormalizer.facial(facial(null, null, FacialPattern.PATTERN_I));
+        FacialAnalysis i = RecordNormalizer.facial(facial(FacialPattern.PATTERN_I));
         assertThat(i.patternIIFeatures()).isEmpty();
         assertThat(i.patternIIAfai()).isNull();
     }

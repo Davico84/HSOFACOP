@@ -1,22 +1,26 @@
 package com.odontorisas.service.records.content;
 
+import jakarta.validation.constraints.Size;
+
 import java.util.List;
 
-/** Paso 2 (pág. 2): análisis facial con las opciones de la Guía de análisis facial. */
+import static com.odontorisas.service.records.content.ContentLimits.LONG_TEXT;
+
+/**
+ * Paso 2 (pág. 2): análisis facial con las opciones de la Guía de análisis facial. Tercios y
+ * simetrías: presenta / no presenta y un texto libre para el detalle (schemaVersion 2).
+ */
 public record FacialAnalysis(
     FacialType facialType,
     Convexity convexity,
-    FacialThirds facialThirds,
-    /** Solo si no presenta proporción de tercios. */
-    List<FacialThird> facialThirdsAffected,
+    Presence facialThirds,
+    @Size(max = LONG_TEXT) String facialThirdsNotes,
     Presence lipSeal,
     LipRelation lipAnteroposteriorRelation,
     Presence restSymmetry,
-    /** Solo si no presenta simetría en reposo. */
-    List<Side> restAsymmetrySides,
+    @Size(max = LONG_TEXT) String restSymmetryNotes,
     Presence openingSymmetry,
-    /** Solo si no presenta simetría en apertura. */
-    List<Side> openingAsymmetrySides,
+    @Size(max = LONG_TEXT) String openingSymmetryNotes,
     NasolabialAngle nasolabialAngle,
     MentolabialSulcus mentolabialSulcus,
     ZygomaticProjection zygomaticProjection,
@@ -33,8 +37,6 @@ public record FacialAnalysis(
     // Enums de cada pregunta: solo se añaden valores.
     public enum FacialType { MESOFACIAL, DOLICHOFACIAL, BRACHYFACIAL }
     public enum Convexity { STRAIGHT, CONVEX, CONCAVE }
-    public enum FacialThirds { PRESENT, ABSENT_INCREASED, ABSENT_DECREASED }
-    public enum FacialThird { UPPER, MIDDLE, LOWER }
     public enum LipRelation { UPPER_AHEAD, SAME_LINE, LOWER_AHEAD }
     public enum NasolabialAngle { NORMAL, OPEN, DECREASED }
     public enum MentolabialSulcus { NORMAL, DEEP, SHALLOW }
@@ -46,7 +48,7 @@ public record FacialAnalysis(
     public enum PatternIIIFeature { MANDIBULAR_PROTRUSION, MAXILLARY_RETRUSION }
 
     public static FacialAnalysis empty() {
-        return new FacialAnalysis(null, null, null, List.of(), null, null, null, List.of(), null, List.of(),
+        return new FacialAnalysis(null, null, null, null, null, null, null, null, null, null,
             null, null, null, null, null, null, List.of(), null, List.of(), null);
     }
 }

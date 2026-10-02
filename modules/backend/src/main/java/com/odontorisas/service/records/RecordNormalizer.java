@@ -6,7 +6,6 @@ import com.odontorisas.service.records.content.AngleRelation;
 import com.odontorisas.service.records.content.Diagnosis;
 import com.odontorisas.service.records.content.FacialAnalysis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
-import com.odontorisas.service.records.content.FacialAnalysis.FacialThirds;
 import com.odontorisas.service.records.content.FdiTeeth;
 import com.odontorisas.service.records.content.FunctionalAnalysis;
 import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
@@ -17,7 +16,6 @@ import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Vertical;
-import com.odontorisas.service.records.content.Presence;
 import com.odontorisas.service.records.content.RadiographicAnalysis;
 import com.odontorisas.service.records.content.RecordContent;
 import com.odontorisas.service.records.content.SideRelations;
@@ -82,16 +80,14 @@ public final class RecordNormalizer {
     }
 
     static FacialAnalysis facial(FacialAnalysis f) {
-        boolean thirdsAbsent = f.facialThirds() == FacialThirds.ABSENT_INCREASED
-            || f.facialThirds() == FacialThirds.ABSENT_DECREASED;
         boolean patternII = f.facialPattern() == FacialPattern.PATTERN_II;
         boolean patternIII = f.facialPattern() == FacialPattern.PATTERN_III;
         return new FacialAnalysis(
-            f.facialType(), f.convexity(), f.facialThirds(),
-            thirdsAbsent ? enums(f.facialThirdsAffected()) : List.of(),
+            f.facialType(), f.convexity(),
+            f.facialThirds(), text(f.facialThirdsNotes()),
             f.lipSeal(), f.lipAnteroposteriorRelation(),
-            f.restSymmetry(), f.restSymmetry() == Presence.ABSENT ? enums(f.restAsymmetrySides()) : List.of(),
-            f.openingSymmetry(), f.openingSymmetry() == Presence.ABSENT ? enums(f.openingAsymmetrySides()) : List.of(),
+            f.restSymmetry(), text(f.restSymmetryNotes()),
+            f.openingSymmetry(), text(f.openingSymmetryNotes()),
             f.nasolabialAngle(), f.mentolabialSulcus(), f.zygomaticProjection(), f.chinNeckLine(), f.chinNeckAngle(),
             f.facialPattern(),
             patternII ? enums(f.patternIIFeatures()) : List.of(), patternII ? f.patternIIAfai() : null,
