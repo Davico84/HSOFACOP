@@ -104,6 +104,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
       expect(screen.getByText(text).className).not.toMatch(/border-b/);
     }
     expect(screen.getByText("Av. Ejército 512").className).toMatch(/border-b/);
+    expect(screen.getByText("Av. Ejército 512").className).not.toMatch(/text-center/);
     const lined = Array.from(container.querySelectorAll("article .border-b"));
     for (const line of lined) {
       expect(line.parentElement?.textContent).toMatch(
@@ -118,6 +119,17 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     await screen.findAllByRole("article");
 
     expect(screen.queryByText(/1ª menstruación/)).not.toBeInTheDocument();
+  });
+
+  it("datos cortos del paciente centrados sobre su línea (edad, fechas, documento, celular)", async () => {
+    serve(recordResponse({ ageYears: 13, treatmentStartDate: "2026-05-19", birthPlace: "Arequipa", birthDate: "2012-05-20",
+      documentType: "DNI", documentNumber: "74125896", phone: "987 654 321" }));
+    renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+
+    for (const text of ["13 años", "19/05/2026", "Arequipa, 20/05/2012", "DNI 74125896", "987 654 321"]) {
+      expect(screen.getByText(text).className).toMatch(/text-center/);
+    }
   });
 
   it("documento, edad, piezas FDI y lista numerada", async () => {
