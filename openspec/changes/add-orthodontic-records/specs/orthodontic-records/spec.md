@@ -276,7 +276,7 @@ El sistema SHALL detectar que una historia cambió desde que el usuario la carg�
 - **AND** el formulario avisa que la historia cambió y ofrece recargarla (descartando lo propio) o seguir editando para copiar lo escrito
 
 ### Requirement: Impresión con presentación del PDF
-El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce los títulos, el orden y los logos ARO/FACOP del PDF original, para imprimir o guardar como PDF desde el navegador. Los datos escritos en el sistema SHALL imprimirse como texto, sin las líneas del PDF (eran para llenar a mano); los campos de opciones SHALL listar todas las opciones con la elegida marcada; un campo de texto vacío NO SHALL imprimir líneas en blanco; cada sección SHALL empezar en página nueva como en el PDF y solo la fecha y las firmas, que se llenan sobre el papel, SHALL llevar su línea. La interfaz de la aplicación (menú, cabecera, botones) NO SHALL imprimirse.
+El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce los títulos, el orden y los logos ARO/FACOP del PDF original, para imprimir o guardar como PDF desde el navegador. Los datos escritos en el sistema SHALL imprimirse como texto, sin las líneas del PDF (eran para llenar a mano); los campos de opciones SHALL listar todas las opciones con la elegida marcada; un campo de texto vacío NO SHALL imprimir líneas en blanco; cada sección SHALL empezar en página nueva como en el PDF; solo la fecha y las firmas (que se llenan sobre el papel) y los datos del paciente de la hoja 1 (PACIENTE a Celular, que conservan la forma del PDF) SHALL llevar su línea. La interfaz de la aplicación (menú, cabecera, botones) NO SHALL imprimirse.
 
 #### Scenario: Imprimir una historia completa
 - **WHEN** el usuario pulsa "Vista previa" en una historia
@@ -304,9 +304,9 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 - **THEN** esos campos salen sin texto ni líneas (salvo los textos de la anamnesis, que salen "No refiere") y las opciones sin marcar, sin textos como "null" o "undefined"
 
 #### Scenario: Datos escritos sin líneas de llenado a mano
-- **WHEN** se imprime una historia con domicilio, diagnóstico general y lista de problemas escritos
+- **WHEN** se imprime una historia con diagnóstico general y lista de problemas escritos
 - **THEN** esos datos salen como texto sin subrayado ni renglones debajo
-- **AND** solo "FECHA:" y las líneas "Firma" conservan su línea para llenarse sobre el papel
+- **AND** conservan su línea solo "FECHA:", las líneas "Firma" y los datos del paciente de la hoja 1 (PACIENTE, Edad, Domicilio, Fecha de inicio, Documento, Lugar y fecha de nacimiento, Celular)
 
 #### Scenario: Textos largos
 - **WHEN** un campo de texto libre ocupa más de lo que el PDF reserva
