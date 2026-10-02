@@ -325,7 +325,8 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         body.put("patientName", "Ana");
         body.put("treatmentStartDate", "2026-09-15");
         ObjectNode moyers = body.putObject("content").putObject("models").putObject("moyers");
-        moyers.put("analysisDate", "2026-09-01").put("interpretation", " Discrepancia negativa ");
+        moyers.put("analysisDate", "2026-09-01").put("interpretation", " Discrepancia negativa ")
+            .put("crowdingNegative", " Mandíbula derecho ");
         moyers.putObject("lowerIncisors").put("tooth42", 6.0).put("tooth41", 5.5).put("tooth31", 5.4).put("tooth32", 6.1);
         moyers.putObject("availableSpace").put("mandibleRight", 21.0).put("maxillaLeft", 22.6);
 
@@ -335,6 +336,8 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("analysisDate").stringValue()).isEqualTo("2026-09-01");
         assertThat(y.get("lowerIncisors").get("tooth32").decimalValue()).isEqualByComparingTo("6.1");
         assertThat(y.get("availableSpace").get("mandibleRight").decimalValue()).isEqualByComparingTo("21.0");
+        assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
+        assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
         assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(4);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",

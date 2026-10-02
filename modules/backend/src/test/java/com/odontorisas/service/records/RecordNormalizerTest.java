@@ -267,11 +267,14 @@ class RecordNormalizerTest {
         assertThat(RecordNormalizer.models(withoutMoyers).moyers()).isEqualTo(MoyersAnalysis.empty());
 
         LowerIncisors incisors = new LowerIncisors(new BigDecimal("6.0"), new BigDecimal("5.5"), null, null);
-        MoyersAnalysis y = new MoyersAnalysis(LocalDate.of(2026, 9, 1), incisors, null, "  Discrepancia negativa ");
+        MoyersAnalysis y = new MoyersAnalysis(LocalDate.of(2026, 9, 1), incisors, null, " ", null, " Mandíbula derecho ",
+            "  Discrepancia negativa ");
         MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y)).moyers();
         assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
         assertThat(kept.lowerIncisors()).isEqualTo(incisors);
         assertThat(kept.availableSpace()).isEqualTo(AvailableSpace.empty());
+        assertThat(kept.crowdingPositive()).isNull();
+        assertThat(kept.crowdingNegative()).isEqualTo("Mandíbula derecho");
         assertThat(kept.interpretation()).isEqualTo("Discrepancia negativa");
     }
 

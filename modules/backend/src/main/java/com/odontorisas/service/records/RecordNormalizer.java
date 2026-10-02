@@ -181,6 +181,7 @@ public final class RecordNormalizer {
                 y.analysisDate(),
                 y.lowerIncisors() != null ? y.lowerIncisors() : LowerIncisors.empty(),
                 y.availableSpace() != null ? y.availableSpace() : AvailableSpace.empty(),
+                text(y.crowdingPositive()), text(y.crowdingNeutral()), text(y.crowdingNegative()),
                 text(y.interpretation())));
     }
 

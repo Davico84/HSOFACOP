@@ -211,6 +211,9 @@ class OrthodonticRecordsControllerTest {
         create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"availableSpace\":{\"maxillaLeft\":100}}}}}")
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors[0].field").value("content.models.moyers.availableSpace.maxillaLeft"));
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"crowdingPositive\":\"" + "x".repeat(201) + "\"}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.moyers.crowdingPositive"));
     }
 
     @Test
