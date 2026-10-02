@@ -201,7 +201,7 @@ El formulario SHALL cubrir los campos de las páginas 1–4 y 10–13 del PDF. D
 
 #### Scenario: Dos planes de tratamiento
 - **WHEN** el usuario escribe el Plan 1 y deja vacío el Plan 2
-- **THEN** se imprimen ambos bloques: el Plan 1 con su texto y el Plan 2 con sus líneas en blanco
+- **THEN** se imprimen ambos títulos: el Plan 1 con su texto y el Plan 2 sin texto ni líneas
 
 #### Scenario: Apoderado firma por el paciente menor de edad
 - **WHEN** la edad calculada del paciente es menor de 18 años
@@ -210,7 +210,7 @@ El formulario SHALL cubrir los campos de las páginas 1–4 y 10–13 del PDF. D
 
 #### Scenario: Fecha y supervisores a mano
 - **WHEN** se imprime la página de firmas
-- **THEN** "FECHA:" sale con la línea vacía para llenarla a mano y los nombres de supervisores salen como se escribieron (o en blanco), cada uno con su línea de firma
+- **THEN** "FECHA:" sale con su línea vacía para llenarla a mano y los nombres de supervisores salen como se escribieron (o en blanco, sin línea), cada uno con su línea de firma
 
 #### Scenario: Deseleccionar una opción
 - **WHEN** el usuario quita la selección de un campo de selección única
@@ -272,7 +272,7 @@ El sistema SHALL detectar que una historia cambió desde que el usuario la carg�
 - **AND** el formulario avisa que la historia cambió y ofrece recargarla (descartando lo propio) o seguir editando para copiar lo escrito
 
 ### Requirement: Impresión con presentación del PDF
-El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce los títulos, el orden y los logos ARO/FACOP del PDF original, para imprimir o guardar como PDF desde el navegador. Los valores SHALL aparecer en lugar de las líneas; los campos de opciones SHALL listar todas las opciones con la elegida marcada; los campos vacíos SHALL imprimirse como línea en blanco para completar a mano; cada sección SHALL empezar en página nueva como en el PDF y la página de firmas SHALL dejar el espacio para firmar a mano. La interfaz de la aplicación (menú, cabecera, botones) NO SHALL imprimirse.
+El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce los títulos, el orden y los logos ARO/FACOP del PDF original, para imprimir o guardar como PDF desde el navegador. Los datos escritos en el sistema SHALL imprimirse como texto, sin las líneas del PDF (eran para llenar a mano); los campos de opciones SHALL listar todas las opciones con la elegida marcada; un campo de texto vacío NO SHALL imprimir líneas en blanco; cada sección SHALL empezar en página nueva como en el PDF y solo la fecha y las firmas, que se llenan sobre el papel, SHALL llevar su línea. La interfaz de la aplicación (menú, cabecera, botones) NO SHALL imprimirse.
 
 #### Scenario: Imprimir una historia completa
 - **WHEN** el usuario pulsa "Vista previa" en una historia
@@ -296,7 +296,12 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 
 #### Scenario: Historia a medio llenar
 - **WHEN** se imprime una historia con campos vacíos
-- **THEN** esos campos salen como línea en blanco del ancho del PDF (salvo los textos de la anamnesis, que salen "No refiere") y las opciones sin marcar, sin textos como "null" o "undefined"
+- **THEN** esos campos salen sin texto ni líneas (salvo los textos de la anamnesis, que salen "No refiere") y las opciones sin marcar, sin textos como "null" o "undefined"
+
+#### Scenario: Datos escritos sin líneas de llenado a mano
+- **WHEN** se imprime una historia con domicilio, diagnóstico general y lista de problemas escritos
+- **THEN** esos datos salen como texto sin subrayado ni renglones debajo
+- **AND** solo "FECHA:" y las líneas "Firma" conservan su línea para llenarse sobre el papel
 
 #### Scenario: Textos largos
 - **WHEN** un campo de texto libre ocupa más de lo que el PDF reserva
