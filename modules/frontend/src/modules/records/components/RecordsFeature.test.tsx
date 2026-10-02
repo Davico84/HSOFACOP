@@ -30,6 +30,7 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
     expect(within(row).getByText("19/05/2026")).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Autor" })).not.toBeInTheDocument();
     expect(within(row).getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toHaveAttribute("href", "/historias/10/imprimir");
+    expect(within(row).getByRole("link", { name: "Editar historia AEO-001" })).toHaveAttribute("href", "/historias/10?paso=1");
   });
 
   it("ADMIN ve las historias de todos con la columna Autor", async () => {
@@ -118,5 +119,16 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
     await screen.findByText("Ana QUÍSPE");
     expect(router.state.location.search).toBe("?q=quispe");
     expect(screen.getByRole("searchbox", { name: "Buscar historias" })).toHaveValue("quispe");
+  });
+  it("'Editar' abre la historia en el formulario, paso 1", async () => {
+    mockList(() => page([summary()]));
+    server.use(http.get("*/api/orthodontic-records/:id", () => HttpResponse.json(recordResponse())));
+    const { router } = renderRecordRoutes("/historias");
+
+    const row = await screen.findByRole("row", { name: /AEO-001/ });
+    await userEvent.click(within(row).getByRole("link", { name: "Editar historia AEO-001" }));
+
+    expect(await screen.findByRole("heading", { level: 2, name: /Paciente y anamnesis/ })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/historias/10");
   });
 });

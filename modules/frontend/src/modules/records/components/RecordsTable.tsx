@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { RecordSummaryResponse } from "@/modules/core/services/generated/model";
 import { recordPath } from "@/routes/paths";
 import { formatDate, formatDateTime, formatDocument } from "../utils/recordDisplay";
+import { RecordEditLink } from "./RecordEditLink";
 import { RecordPrintLink } from "./RecordPrintLink";
 
 interface RecordsTableProps {
@@ -41,7 +42,10 @@ export function RecordsTable({ records, showAuthor }: RecordsTableProps) {
             <TableCell className="whitespace-nowrap">{formatDateTime(record.updatedAt)}</TableCell>
             {showAuthor ? <TableCell>{record.authorName}</TableCell> : null}
             <TableCell className="text-right">
-              <RecordPrintLink id={record.id} recordNumber={record.recordNumber} />
+              <div className="flex justify-end gap-2">
+                <RecordEditLink id={record.id} recordNumber={record.recordNumber} />
+                <RecordPrintLink id={record.id} recordNumber={record.recordNumber} />
+              </div>
             </TableCell>
           </TableRow>
         ))}
