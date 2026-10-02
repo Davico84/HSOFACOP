@@ -49,7 +49,7 @@
 - [x] 6.2 Componentes `PrintPage` (cabecera con logos y "HISTORIA CLÍNICA ORTODONCIA Nro."), `PrintField` (valor o línea en blanco), `PrintChoice` (☒/☐ con todas las opciones), `PrintLines` (texto largo con líneas mínimas)
 - [x] 6.3 `RecordPrintScreen` con las 7 secciones en el orden y títulos del PDF; CSS `@page A4`, `break-before: page` por sección, texto largo que fluye; `window.print()` al terminar de cargar; botón "Imprimir" en el formulario y en el listado
 - [x] 6.4 Tests Vitest: opción marcada (☒ Mesofacial ☐ …), vacíos como línea sin "null/undefined", menarquia oculta si no aplica, 404 sin contenido
-- [ ] 6.5 ⏸ (Playwright no está instalado en el repo: pendiente de decisión) E2E Playwright: crear una historia, llenar campos de varios pasos, abrir la impresión y generar `page.pdf()` comprobando número de páginas y textos clave
+- [x] 6.5 E2E Playwright (`e2e/records.backend.spec.ts`, con `E2E_BACKEND=1` y backend real; smoke sin API en CI): crear una historia, llenar campos de varios pasos, abrir la impresión y generar `page.pdf()` comprobando número de páginas y textos clave
 - [x] 6.6 `pnpm validate` verde
 
 ## 6b. Ajustes de la revisión del usuario

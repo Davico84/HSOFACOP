@@ -63,7 +63,7 @@ Decisión del proyecto: **Testcontainers desde el inicio** (PostgreSQL real efí
 | Comunicación con la API (MSW) | Integración |
 | Navegación y enrutamiento (Router) | Integración |
 | Flujo de autenticación (login/logout) | Integración + E2E |
-| Permisos por rol | Integración + E2E (frontend: integración con el router y los guards reales en `AppLayout.roles.test.tsx` y `sectionRoute.test.tsx`; **E2E pendiente**: no hay Playwright ni usuarios de prueba con rol en un backend de E2E) |
+| Permisos por rol | Integración + E2E (frontend: integración con el router y los guards reales en `AppLayout.roles.test.tsx` y `sectionRoute.test.tsx`; **E2E de roles pendiente**: Playwright ya está instalado, faltan usuarios de prueba con rol en un backend de E2E) |
 | Workflows CRUD completos | E2E |
 
 ### Utilidades del proyecto (frontend)
@@ -94,8 +94,10 @@ Usa `renderHook` con un `wrapper` que provea un `QueryClient` nuevo por test (co
 - `playwright.config.ts` levanta el dev server y lo reutiliza si ya corre. Para entorno desplegado: `E2E_BASE_URL=... pnpm test:e2e`.
 - **CI**: job `e2e-smoke` en `.github/workflows/frontend.yml`, instala Chromium y corre contra el dev server — **sin backend**.
 
+- **Flujo real contra el backend**: los specs `e2e/*.backend.spec.ts` (p. ej. `records.backend.spec.ts`: registrarse → crear una historia clínica → llenar pasos → imprimir a PDF con `page.pdf()`) solo corren con `E2E_BACKEND=1 pnpm test:e2e` y el backend + PostgreSQL levantados en local. Se saltan en CI.
+
 > [!IMPORTANT]
-> **Hoy los specs son "smoke", no CRUD real.** Cubren solo flujos que degradan con
+> **En CI los specs son "smoke", no CRUD real.** Cubren solo flujos que degradan con
 > gracia **sin API** (`useSessionBootstrap` intenta un refresh, falla por red y cae a
 > "no autenticado" → login), como `e2e/auth.smoke.spec.ts`: guard de rutas privadas,
 > validación de formulario, navegación entre pantallas. **Pendiente** para un flujo
