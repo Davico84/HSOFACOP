@@ -77,11 +77,11 @@ test("crear, llenar e imprimir una historia clínica", async ({ page }) => {
 
   // Impresión: hojas A4 con los datos y PDF real
   await page.goto(`/historias/${id}/imprimir`);
-  await expect(page.getByRole("article")).toHaveCount(9);
+  await expect(page.getByRole("article")).toHaveCount(10);
   await expect(page.getByText("13, 26")).toBeVisible();
   await expect(page.getByText("1. Overjet aumentado")).toBeVisible();
   await page.emulateMedia({ media: "print" });
   const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
   const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
-  expect(pages).toBe(9);
+  expect(pages).toBe(10);
 });

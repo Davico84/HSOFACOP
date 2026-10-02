@@ -29,7 +29,7 @@ interface RecordFormProps {
 }
 
 /**
- * Formulario de 7 pasos de la historia. Cambiar de paso guarda antes si hay cambios (validando
+ * Formulario de 8 pasos de la historia. Cambiar de paso guarda antes si hay cambios (validando
  * solo el paso actual); si el guardado falla se queda en el paso. Una historia nueva se crea al
  * salir del paso 1 y pasa a su URL. Detecta ediciones concurrentes (409) y avisa al salir con
  * cambios sin guardar.

@@ -175,7 +175,7 @@ describe("orthodontic-records — Formulario por pasos con guardado de borrador"
 });
 
 describe("orthodontic-records — Abrir un paso no cuenta como cambio", () => {
-  it.each([1, 2, 3, 4, 5, 6, 7])("paso %i recién abierto: sin cambios y con 'Vista previa' disponible", async (paso) => {
+  it.each([1, 2, 3, 4, 5, 6, 7, 8])("paso %i recién abierto: sin cambios y con 'Vista previa' disponible", async (paso) => {
     mockRecord({ patientSex: "FEMALE", birthDate: "1990-01-01" });
     renderRecordRoutes(`/historias/10?paso=${paso}`);
     await screen.findByRole("heading", { level: 2 });
@@ -274,7 +274,7 @@ describe("orthodontic-records — Secciones clínicas de la fase 1", () => {
 
   it("la lista de problemas se arma ítem por ítem y se reordena", async () => {
     const { calls } = mockRecord();
-    renderRecordRoutes("/historias/10?paso=6");
+    renderRecordRoutes("/historias/10?paso=7");
     await stepHeading(/Diagnóstico y planes/);
 
     const input = screen.getByPlaceholderText("Nuevo problema");
@@ -289,11 +289,50 @@ describe("orthodontic-records — Secciones clínicas de la fase 1", () => {
 
   it("firmas: con paciente menor de edad se pide el apoderado", async () => {
     mockRecord({ birthDate: "2012-05-20", treatmentStartDate: "2026-05-19", ageYears: 13 });
-    renderRecordRoutes("/historias/10?paso=7");
+    renderRecordRoutes("/historias/10?paso=8");
     await stepHeading(/Firmas/);
 
     expect(screen.getByLabelText("Nombre del apoderado")).toBeInTheDocument();
     expect(screen.getByLabelText("Parentesco")).toBeInTheDocument();
     expect(screen.queryByLabelText("Nombre del paciente")).not.toBeInTheDocument();
+  });
+});
+
+describe("orthodontic-records — Análisis transversal de los modelos (paso 5)", () => {
+  it("el paso 5 sigue al análisis oclusal y el radiográfico pasa a ser el 6", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=4");
+    await screen.findByRole("heading", { level: 2, name: /Análisis oclusal/ });
+
+    await userEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
+    expect(await screen.findByRole("heading", { level: 2, name: /^5\. Análisis de modelos/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
+    expect(await screen.findByRole("heading", { level: 2, name: /^6\. Análisis radiográfico/ })).toBeInTheDocument();
+  });
+
+  it("muestra en vivo la diferencia con el promedio (por sexo) y con la norma WALA–EV, y lo guarda", async () => {
+    const { calls } = mockRecord({ patientSex: "FEMALE" });
+    renderRecordRoutes("/historias/10?paso=5");
+    await screen.findByRole("heading", { level: 2, name: /Análisis de modelos/ });
+
+    await userEvent.type(screen.getByLabelText("AMS: ancho molar superior"), "50.1");
+    expect(screen.getByText("promedio 52,4 mm · −2,3")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Distancia WALA a EV, 1er molar inferior (mm)"), "2.6");
+    expect(screen.getByLabelText("Diferencia 1er molar inferior")).toHaveTextContent("+0,6");
+    await userEvent.type(screen.getByLabelText("Ancho X ideal"), "50");
+
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    await waitFor(() => expect(calls.put).toHaveLength(1));
+    const t = calls.put[0].content?.models.transversal;
+    expect(t?.intermolarUpper).toBe(50.1);
+    expect(t?.walaToEv?.firstMolar).toBe(2.6);
+    expect(t?.xIdealWidth).toBe(50);
+  });
+
+  it("sin sexo indicado no compara con el promedio", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await screen.findByRole("heading", { level: 2, name: /Análisis de modelos/ });
+    expect(screen.getAllByText("Indica el sexo del paciente (paso 1) para comparar con el promedio.")).toHaveLength(2);
   });
 });

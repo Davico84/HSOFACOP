@@ -1,0 +1,67 @@
+import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { Input } from "@/modules/core/ui/input";
+import { fieldError } from "@/modules/core/components/form/fieldError";
+import type { RecordFormValues } from "../../schemas/record";
+import { WALA_EV_NORMS } from "../../config/transversal";
+import { difference, formatMm, formatSigned } from "../../utils/transversal";
+
+/** Distancias WALA–EV de las piezas inferiores: norma, medida y diferencia calculada. */
+export function WalaToEvTable() {
+  const { control, formState } = useFormContext<RecordFormValues>();
+  const values = useWatch({ control, name: "content.models.transversal.walaToEv" });
+
+  return (
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className="mb-1.5 text-sm font-medium">Distancia WALA a EV (eje vestibular)</legend>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="text-xs text-muted-foreground">
+              <th scope="col" className="py-1 pr-3 text-left font-medium">Pieza</th>
+              <th scope="col" className="px-2 py-1 text-right font-medium">Norma</th>
+              <th scope="col" className="px-2 py-1 text-left font-medium">Medido (mm)</th>
+              <th scope="col" className="px-2 py-1 text-right font-medium">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {WALA_EV_NORMS.map(({ key, label, norm }) => {
+              const name = `content.models.transversal.walaToEv.${key}` as const;
+              const error = fieldError(formState.errors, name);
+              const diff = formatSigned(difference(values?.[key] ?? null, norm));
+              return (
+                <tr key={key} className="border-t border-border">
+                  <th scope="row" className="py-1.5 pr-3 text-left font-medium">{label}</th>
+                  <td className="px-2 py-1.5 text-right tabular-nums">{formatMm(norm)} mm</td>
+                  <td className="px-2 py-1.5">
+                    <Controller
+                      control={control}
+                      name={name}
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step={0.1}
+                          className="h-8 w-24"
+                          aria-label={`Distancia WALA a EV, ${label} (mm)`}
+                          aria-invalid={error ? true : undefined}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                          onBlur={field.onBlur}
+                          ref={field.ref}
+                        />
+                      )}
+                    />
+                    {error ? <p className="text-xs text-destructive">{error}</p> : null}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums" aria-label={`Diferencia ${label}`}>
+                    {diff || "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+  );
+}

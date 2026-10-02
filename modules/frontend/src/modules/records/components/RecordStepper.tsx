@@ -7,7 +7,7 @@ interface RecordStepperProps {
   onSelect: (step: number) => void;
 }
 
-/** Indicador de los 7 pasos; cada paso se puede abrir directamente (guarda antes si hay cambios). */
+/** Indicador de los 8 pasos; cada paso se puede abrir directamente (guarda antes si hay cambios). */
 export function RecordStepper({ current, disabled, onSelect }: RecordStepperProps) {
   return (
     <nav aria-label="Pasos de la historia clínica">

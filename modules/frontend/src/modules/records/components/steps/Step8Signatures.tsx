@@ -4,10 +4,10 @@ import type { RecordFormValues } from "../../schemas/record";
 import { ageYears, isMinor } from "../../utils/age";
 
 /**
- * Paso 7 (pág. 13): nombres de quienes firman sobre el papel. Si el paciente es menor de edad
+ * Paso 8 (pág. 13): nombres de quienes firman sobre el papel. Si el paciente es menor de edad
  * firma el apoderado (nombre y parentesco). La fecha se llena a mano en la hoja impresa.
  */
-export function Step7Signatures() {
+export function Step8Signatures() {
   const { control } = useFormContext<RecordFormValues>();
   const [birthDate, startDate, patientName, treatingDentist] = useWatch({
     control,

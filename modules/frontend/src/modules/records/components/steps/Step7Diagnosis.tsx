@@ -2,8 +2,8 @@ import { ItemListField } from "@/modules/core/components/form/ItemListField";
 import { TextAreaField } from "@/modules/core/components/form/TextAreaField";
 import { LIST_ITEM, LIST_ITEMS, LONG_TEXT } from "../../schemas/record";
 
-/** Paso 6 (págs. 11–13): diagnóstico, problemas y metas (listas), dos planes, secuencia y plan final. */
-export function Step6Diagnosis() {
+/** Paso 7 (págs. 11–13): diagnóstico, problemas y metas (listas), dos planes, secuencia y plan final. */
+export function Step7Diagnosis() {
   return (
     <div className="flex flex-col gap-6">
       <TextAreaField name="content.diagnosis.generalDiagnosis" label="Diagnóstico general" rows={8} maxLength={LONG_TEXT} />

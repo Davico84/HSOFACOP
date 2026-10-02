@@ -5,8 +5,8 @@ import type { RecordFormValues } from "../../schemas/record";
 import { LONG_TEXT } from "../../schemas/record";
 import { CEPHALOMETRIC_REQUIRED, cephalometricOptions } from "../../config/options";
 
-/** Paso 5 (pág. 10): análisis radiográfico. El PDF pide 3 análisis cefalométricos (aviso, no bloqueo). */
-export function Step5Radiographic() {
+/** Paso 6 (pág. 10): análisis radiográfico. El PDF pide 3 análisis cefalométricos (aviso, no bloqueo). */
+export function Step6Radiographic() {
   const { control } = useFormContext<RecordFormValues>();
   const analyses = useWatch({ control, name: "content.radiographic.cephalometricAnalyses" });
   const count = analyses?.length ?? 0;

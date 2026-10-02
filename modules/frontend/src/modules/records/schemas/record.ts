@@ -51,6 +51,8 @@ export const LIST_ITEM = 500;
 export const LIST_ITEMS = 30;
 export const MAX_MM = 30;
 export const MIN_MIDLINE_MM = 0.5;
+/** Medidas de los análisis de modelos: 0–99,9 mm con un decimal (paridad con `MAX_MODEL_MM`). */
+export const MAX_MODEL_MM = 99.9;
 
 const tooLong = (max: number) => `Máximo ${max} caracteres.`;
 const text = (max: number) => z.string().max(max, tooLong(max)).nullish();
@@ -165,6 +167,31 @@ const occlusal = z.object({
   familyMalocclusionWho: text(SHORT_TEXT),
 });
 
+const modelMm = decimal(0, MAX_MODEL_MM, "mm");
+
+const transversal = z.object({
+  intercanineUpper: modelMm,
+  intercanineLower: modelMm,
+  intermolarUpper: modelMm,
+  intermolarLower: modelMm,
+  walaWidth: modelMm,
+  xPcWidth: modelMm,
+  xPrimePcWidth: modelMm,
+  xIdealWidth: modelMm,
+  walaToEv: z
+    .object({
+      canine: modelMm,
+      firstPremolar: modelMm,
+      secondPremolar: modelMm,
+      firstMolar: modelMm,
+      secondMolar: modelMm,
+    })
+    .nullish(),
+  interpretation: text(LONG_TEXT),
+});
+
+const models = z.object({ transversal });
+
 const radiographic = z.object({
   panoramicDiagnosis: text(LONG_TEXT),
   cephalometricAnalyses: many(RadiographicAnalysisCephalometricAnalysesItem),
@@ -220,6 +247,7 @@ export const recordFormSchema = z
       facial,
       functional,
       occlusal,
+      models,
       radiographic,
       diagnosis,
       signatures,

@@ -2,7 +2,7 @@ import type { FieldPath } from "react-hook-form";
 import type { RecordFormValues } from "../schemas/record";
 
 export interface RecordStep {
-  /** 1–7, como en `?paso=`. */
+  /** 1–8, como en `?paso=`. */
   number: number;
   title: string;
   /** Páginas del PDF que cubre. */
@@ -11,7 +11,7 @@ export interface RecordStep {
   fields: FieldPath<RecordFormValues>[];
 }
 
-/** Los 7 pasos del formulario, en el orden del PDF de la historia clínica. */
+/** Los 8 pasos del formulario, en el orden del PDF de la historia clínica. */
 export const RECORD_STEPS: readonly RecordStep[] = [
   {
     number: 1,
@@ -25,9 +25,10 @@ export const RECORD_STEPS: readonly RecordStep[] = [
   { number: 2, title: "Análisis facial", pages: "pág. 2", fields: ["content.facial"] },
   { number: 3, title: "Análisis funcional", pages: "pág. 3", fields: ["content.functional"] },
   { number: 4, title: "Análisis oclusal y extra", pages: "págs. 3–4", fields: ["content.occlusal"] },
-  { number: 5, title: "Análisis radiográfico", pages: "pág. 10", fields: ["content.radiographic"] },
-  { number: 6, title: "Diagnóstico y planes", pages: "págs. 11–13", fields: ["content.diagnosis"] },
-  { number: 7, title: "Firmas", pages: "pág. 13", fields: ["content.signatures"] },
+  { number: 5, title: "Análisis de modelos", pages: "pág. 5", fields: ["content.models"] },
+  { number: 6, title: "Análisis radiográfico", pages: "pág. 10", fields: ["content.radiographic"] },
+  { number: 7, title: "Diagnóstico y planes", pages: "págs. 11–13", fields: ["content.diagnosis"] },
+  { number: 8, title: "Firmas", pages: "pág. 13", fields: ["content.signatures"] },
 ];
 
 /** Paso al que pertenece un campo (p. ej. un error del servidor), o `null`. */

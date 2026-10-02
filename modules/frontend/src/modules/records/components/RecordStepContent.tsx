@@ -2,9 +2,10 @@ import { Step1Patient } from "./steps/Step1Patient";
 import { Step2Facial } from "./steps/Step2Facial";
 import { Step3Functional } from "./steps/Step3Functional";
 import { Step4Occlusal } from "./steps/Step4Occlusal";
-import { Step5Radiographic } from "./steps/Step5Radiographic";
-import { Step6Diagnosis } from "./steps/Step6Diagnosis";
-import { Step7Signatures } from "./steps/Step7Signatures";
+import { Step5Models } from "./steps/Step5Models";
+import { Step6Radiographic } from "./steps/Step6Radiographic";
+import { Step7Diagnosis } from "./steps/Step7Diagnosis";
+import { Step8Signatures } from "./steps/Step8Signatures";
 
 interface RecordStepContentProps {
   step: number;
@@ -21,11 +22,13 @@ export function RecordStepContent({ step, recordNumber }: RecordStepContentProps
     case 4:
       return <Step4Occlusal />;
     case 5:
-      return <Step5Radiographic />;
+      return <Step5Models />;
     case 6:
-      return <Step6Diagnosis />;
+      return <Step6Radiographic />;
     case 7:
-      return <Step7Signatures />;
+      return <Step7Diagnosis />;
+    case 8:
+      return <Step8Signatures />;
     default:
       return <Step1Patient recordNumber={recordNumber} />;
   }

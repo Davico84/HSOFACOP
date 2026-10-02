@@ -108,7 +108,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     const lined = Array.from(container.querySelectorAll("article .border-b"));
     for (const line of lined) {
       expect(line.parentElement?.textContent).toMatch(
-        /^(FECHA:|Firma|PACIENTE|Edad:|Domicilio|Fecha de inicio de tratamiento:|Documento|Lugar y fecha de nacimiento del paciente|Celular)/,
+        /^(FECHA:|Firma|PACIENTE|Paciente|Edad|Sexo|Domicilio|Fecha de inicio de tratamiento:|Documento|Lugar y fecha de nacimiento del paciente|Celular)/,
       );
     }
   });
@@ -129,6 +129,25 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(bodyRows.every((r) => r.textContent === "")).toBe(true);
   });
 
+  it("hoja del análisis transversal tras el oclusal, con las diferencias calculadas", async () => {
+    serve(withContent(
+      { models: { transversal: { intermolarUpper: 50.1, intermolarLower: 45.8, walaToEv: { firstMolar: 2.6 }, interpretation: "Compresión leve" } } },
+      { patientSex: "FEMALE", ageYears: 13 },
+    ));
+    renderRecordRoutes("/historias/10/imprimir");
+    const sheets = await screen.findAllByRole("article");
+
+    const titles = sheets.map((sheet) => within(sheet).queryAllByRole("heading", { level: 2 })[0]?.textContent ?? "");
+    expect(titles.indexOf("Análisis de modelos")).toBe(titles.indexOf("Análisis oclusal") + 1);
+    const models = sheets[titles.indexOf("Análisis de modelos")];
+    expect(within(models).getByText("Análisis Transversal de los Modelos")).toBeInTheDocument();
+    expect(within(models).getByText("(promedio 52,4 mm · −2,3)")).toBeInTheDocument();
+    expect(within(models).getByText("(promedio 46,1 mm · −0,3)")).toBeInTheDocument();
+    expect(within(models).getByText("+0,6")).toBeInTheDocument();
+    expect(within(models).getByText("Femenino")).toBeInTheDocument();
+    expect(within(models).getByText("Compresión leve")).toBeInTheDocument();
+  });
+
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {
     serve(recordResponse({ patientSex: "MALE" }));
     renderRecordRoutes("/historias/10/imprimir");
@@ -143,8 +162,9 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     renderRecordRoutes("/historias/10/imprimir");
     await screen.findAllByRole("article");
 
+    const first = screen.getAllByRole("article")[0];
     for (const text of ["13 años", "19/05/2026", "Arequipa, 20/05/2012", "DNI 74125896", "987 654 321"]) {
-      expect(screen.getByText(text).className).toMatch(/text-center/);
+      expect(within(first).getByText(text).className).toMatch(/text-center/);
     }
   });
 
@@ -173,7 +193,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     await screen.findAllByRole("article");
 
     expect(screen.getByText("CE 001234567")).toBeInTheDocument();
-    expect(screen.getByText("13 años")).toBeInTheDocument();
+    expect(within(screen.getAllByRole("article")[0]).getByText("13 años")).toBeInTheDocument();
     expect(screen.getByText("13, 26, 55")).toBeInTheDocument();
     expect(screen.getByText("1. Mordida profunda")).toBeInTheDocument();
     expect(screen.getByText("2. Overjet aumentado")).toBeInTheDocument();

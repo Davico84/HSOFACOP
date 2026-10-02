@@ -8,7 +8,7 @@ interface RecordEditLinkProps {
   recordNumber: string;
 }
 
-/** Abre la historia en el formulario de 7 pasos (desde el paso 1). */
+/** Abre la historia en el formulario de 8 pasos (desde el paso 1). */
 export function RecordEditLink({ id, recordNumber }: RecordEditLinkProps) {
   return (
     <Link
