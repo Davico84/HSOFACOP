@@ -131,6 +131,15 @@ El formulario SHALL cubrir los campos de las páginas 1–4 y 10–13 del PDF. D
 - **THEN** las preguntas con ilustración en la Guía de análisis facial muestran cada opción con su imagen (o la imagen de referencia junto a las opciones) y el valor normativo de la guía como ayuda
 - **AND** pulsar la imagen de una opción la selecciona igual que pulsar su etiqueta
 
+#### Scenario: Tercios y simetrías con observaciones
+- **WHEN** el usuario marca "No presenta" en Proporción de los tercios faciales y escribe "Tercio inferior aumentado"
+- **THEN** se guardan la opción y el texto; la impresión muestra "☐ Presenta" y "☒ No presenta" en renglones separados y el texto debajo
+- **AND** Simetría facial en reposo y en apertura bucal funcionan igual (presenta / no presenta + texto)
+
+#### Scenario: Historias guardadas con el formato anterior del análisis facial
+- **WHEN** una historia guardada antes del cambio tenía "No presenta, tercio aumentado" con los tercios superior e inferior, o un lado asimétrico marcado
+- **THEN** al actualizar el sistema queda "No presenta" con el texto "Tercio aumentado: superior, inferior" (o "Lado asimétrico: izquierdo"), sin perder información
+
 #### Scenario: AFAI aumentada y disminuida son excluyentes
 - **WHEN** el usuario elige Patrón II, marca "Con aumento de AFAI" y luego "Con AFAI disminuida"
 - **THEN** queda marcada solo "Con AFAI disminuida"; "Retrusión mandibular" y "Protrusión maxilar" sí pueden marcarse juntas

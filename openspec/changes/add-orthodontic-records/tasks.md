@@ -12,7 +12,7 @@
 ## 2. Backend — servicio (D4, D6, D8)
 
 - [x] 2.1 `service.records.RecordAgeCalculator` (edad a la fecha de inicio o a hoy, `null` sin nacimiento; `Clock` inyectable) + test con los scenarios de "Datos del paciente con edad calculada"
-- [x] 2.2 `service.records.RecordNormalizer`: recorta, `""` → `null`, descarta condicionados (menarquia si sexo ≠ FEMALE, `facialThirdsAffected`, lados de asimetría, rasgos de Patrón II/III, `tongueLateralSides`, hábitos de succión si la anamnesis dice "no" → solo "no", `crossbiteSide`, `bruxismTeeth` (solo FDI 11–48 / 51–85), overjet y mordida cruzada anterior si AP = normal, `deviationMm` si centrada, relaciones en RC si no se marcó MI/MIH ≠ RC, `familyMalocclusionWho`, firmante (apoderado si < 18, paciente si no), ítems vacíos de las listas, `deepBitePercent`, `openBiteMm`, detalle de Spee) + test por cada condición
+- [x] 2.2 `service.records.RecordNormalizer`: recorta, `""` → `null`, descarta condicionados (menarquia si sexo ≠ FEMALE, rasgos de Patrón II/III, `tongueLateralSides`, hábitos de succión si la anamnesis dice "no" → solo "no", `crossbiteSide`, `bruxismTeeth` (solo FDI 11–48 / 51–85), overjet y mordida cruzada anterior si AP = normal, `deviationMm` si centrada, relaciones en RC si no se marcó MI/MIH ≠ RC, `familyMalocclusionWho`, firmante (apoderado si < 18, paciente si no), ítems vacíos de las listas, `deepBitePercent`, `openBiteMm`, detalle de Spee) + test por cada condición
 - [x] 2.3 `service.records.OrthodonticRecordService`: `create` (autor = usuario actual, tratante = `fullName` por defecto), `get`, `update` (comprueba `version` antes de copiar → conflicto; normaliza; recalcula `search_text`), `list` (paginado, `ADMIN` sin filtro / `USER` por autor); las reglas de fechas y documento son validación del request (3.1)
 - [x] 2.4 Excepciones con su `ProblemDetail`: `RecordNotFoundException` (404), `StaleRecordException` (409, `/errors/stale-record`, también desde `ObjectOptimisticLockingFailureException`)
 - [x] 2.5 `OrthodonticRecordServiceTest`: creación, alcance USER/ADMIN (ajena → 404), versión desactualizada → 409, correlativo (`AEO-001` primero, independiente por autor, `AEO-1000`, número enviado ignorado), autor conservado cuando guarda un ADMIN
@@ -51,6 +51,11 @@
 - [x] 6.4 Tests Vitest: opción marcada (☒ Mesofacial ☐ …), vacíos como línea sin "null/undefined", menarquia oculta si no aplica, 404 sin contenido
 - [ ] 6.5 ⏸ (Playwright no está instalado en el repo: pendiente de decisión) E2E Playwright: crear una historia, llenar campos de varios pasos, abrir la impresión y generar `page.pdf()` comprobando número de páginas y textos clave
 - [x] 6.6 `pnpm validate` verde
+
+## 6b. Ajustes de la revisión del usuario
+
+- [x] 6b.1 Botón de imprimir: valores iniciales completos (abrir un paso no cuenta como cambio); impresión con las medidas del PDF y página sin margen propio (igual que la vista previa)
+- [x] 6b.2 Análisis facial: tercios y simetrías = presenta / no presenta + texto (`V9`, `schemaVersion` 2); impresión vertical de 3, 5, 6 y 7
 
 ## 7. Docs y cierre
 
