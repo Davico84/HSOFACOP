@@ -8,13 +8,10 @@
 import type { FacialAnalysisFacialType } from './facialAnalysisFacialType';
 import type { FacialAnalysisConvexity } from './facialAnalysisConvexity';
 import type { FacialAnalysisFacialThirds } from './facialAnalysisFacialThirds';
-import type { FacialAnalysisFacialThirdsAffectedItem } from './facialAnalysisFacialThirdsAffectedItem';
 import type { FacialAnalysisLipSeal } from './facialAnalysisLipSeal';
 import type { FacialAnalysisLipAnteroposteriorRelation } from './facialAnalysisLipAnteroposteriorRelation';
 import type { FacialAnalysisRestSymmetry } from './facialAnalysisRestSymmetry';
-import type { FacialAnalysisRestAsymmetrySidesItem } from './facialAnalysisRestAsymmetrySidesItem';
 import type { FacialAnalysisOpeningSymmetry } from './facialAnalysisOpeningSymmetry';
-import type { FacialAnalysisOpeningAsymmetrySidesItem } from './facialAnalysisOpeningAsymmetrySidesItem';
 import type { FacialAnalysisNasolabialAngle } from './facialAnalysisNasolabialAngle';
 import type { FacialAnalysisMentolabialSulcus } from './facialAnalysisMentolabialSulcus';
 import type { FacialAnalysisZygomaticProjection } from './facialAnalysisZygomaticProjection';
@@ -30,13 +27,25 @@ export interface FacialAnalysis {
   facialType?: FacialAnalysisFacialType;
   convexity?: FacialAnalysisConvexity;
   facialThirds?: FacialAnalysisFacialThirds;
-  facialThirdsAffected?: FacialAnalysisFacialThirdsAffectedItem[];
+  /**
+   * @minLength 0
+   * @maxLength 4000
+   */
+  facialThirdsNotes?: string;
   lipSeal?: FacialAnalysisLipSeal;
   lipAnteroposteriorRelation?: FacialAnalysisLipAnteroposteriorRelation;
   restSymmetry?: FacialAnalysisRestSymmetry;
-  restAsymmetrySides?: FacialAnalysisRestAsymmetrySidesItem[];
+  /**
+   * @minLength 0
+   * @maxLength 4000
+   */
+  restSymmetryNotes?: string;
   openingSymmetry?: FacialAnalysisOpeningSymmetry;
-  openingAsymmetrySides?: FacialAnalysisOpeningAsymmetrySidesItem[];
+  /**
+   * @minLength 0
+   * @maxLength 4000
+   */
+  openingSymmetryNotes?: string;
   nasolabialAngle?: FacialAnalysisNasolabialAngle;
   mentolabialSulcus?: FacialAnalysisMentolabialSulcus;
   zygomaticProjection?: FacialAnalysisZygomaticProjection;

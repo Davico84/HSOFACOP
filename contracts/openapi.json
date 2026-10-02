@@ -949,20 +949,13 @@
             "type": "string",
             "enum": [
               "PRESENT",
-              "ABSENT_INCREASED",
-              "ABSENT_DECREASED"
+              "ABSENT"
             ]
           },
-          "facialThirdsAffected": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "UPPER",
-                "MIDDLE",
-                "LOWER"
-              ]
-            }
+          "facialThirdsNotes": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
           },
           "lipSeal": {
             "type": "string",
@@ -986,15 +979,10 @@
               "ABSENT"
             ]
           },
-          "restAsymmetrySides": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "RIGHT",
-                "LEFT"
-              ]
-            }
+          "restSymmetryNotes": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
           },
           "openingSymmetry": {
             "type": "string",
@@ -1003,15 +991,10 @@
               "ABSENT"
             ]
           },
-          "openingAsymmetrySides": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "RIGHT",
-                "LEFT"
-              ]
-            }
+          "openingSymmetryNotes": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
           },
           "nasolabialAngle": {
             "type": "string",

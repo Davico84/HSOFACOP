@@ -12,6 +12,5 @@ export type FacialAnalysisFacialThirds = typeof FacialAnalysisFacialThirds[keyof
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const FacialAnalysisFacialThirds = {
   PRESENT: 'PRESENT',
-  ABSENT_INCREASED: 'ABSENT_INCREASED',
-  ABSENT_DECREASED: 'ABSENT_DECREASED',
+  ABSENT: 'ABSENT',
 } as const;
