@@ -10,6 +10,8 @@ interface PrintPageProps {
   title?: string;
   /** Primera hoja: logos grandes a la izquierda y la cabecera junto a ellos (pág. 1 del PDF). */
   first?: boolean;
+  /** Hoja de tabla a lo ancho (notas de evolución): márgenes laterales de 15 mm, como el PDF. */
+  wide?: boolean;
   children: ReactNode;
 }
 
@@ -19,13 +21,14 @@ interface PrintPageProps {
  * superior derecha (dentro del margen). La hoja se ve igual en pantalla y en papel (la página
  * impresa no tiene margen propio, ver `PAGE_CSS`); cada sección empieza en hoja nueva.
  */
-export function PrintPage({ recordNumber, title, first = false, children }: PrintPageProps) {
+export function PrintPage({ recordNumber, title, first = false, wide = false, children }: PrintPageProps) {
   return (
     <article
       className={cn(
         // Misma hoja en pantalla y en papel: 210 mm de ancho con los márgenes del PDF por dentro.
         // Si un texto largo pasa a otra hoja, los márgenes se repiten en la continuación.
-        "relative mx-auto box-border w-[210mm] min-h-[296mm] bg-background pt-[20mm] pr-[24mm] pb-[20mm] pl-[25mm] shadow-md",
+        "relative mx-auto box-border w-[210mm] min-h-[296mm] bg-background shadow-md",
+        wide ? "px-[15mm] pt-[21mm] pb-[20mm]" : "pt-[20mm] pr-[24mm] pb-[20mm] pl-[25mm]",
         "[box-decoration-break:clone] [-webkit-box-decoration-break:clone]",
         "print:m-0 print:shadow-none",
         !first && "print:break-before-page",

@@ -113,6 +113,22 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     }
   });
 
+  it("la última hoja es 'Notas de evolución' en blanco para llenar a mano", async () => {
+    serve(recordResponse());
+    renderRecordRoutes("/historias/10/imprimir");
+
+    const sheets = await screen.findAllByRole("article");
+    const last = sheets[sheets.length - 1];
+    const table = within(last).getByRole("table");
+    expect(within(table).getByRole("columnheader", { name: "Notas de evolución" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "Tratante encargado:" })).toBeInTheDocument();
+    expect(within(table).getAllByRole("columnheader").slice(2).map((h) => h.textContent))
+      .toEqual(["Fecha", "Trabajo realizado", "Firma de docente"]);
+    const bodyRows = within(table).getAllByRole("row").slice(3);
+    expect(bodyRows).toHaveLength(37);
+    expect(bodyRows.every((r) => r.textContent === "")).toBe(true);
+  });
+
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {
     serve(recordResponse({ patientSex: "MALE" }));
     renderRecordRoutes("/historias/10/imprimir");
