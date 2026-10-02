@@ -1221,6 +1221,17 @@
           }
         }
       },
+      "ModelAnalysis": {
+        "type": "object",
+        "properties": {
+          "transversal": {
+            "$ref": "#/components/schemas/TransversalAnalysis"
+          }
+        },
+        "required": [
+          "transversal"
+        ]
+      },
       "OcclusalAnalysis": {
         "type": "object",
         "properties": {
@@ -1404,6 +1415,9 @@
           "occlusal": {
             "$ref": "#/components/schemas/OcclusalAnalysis"
           },
+          "models": {
+            "$ref": "#/components/schemas/ModelAnalysis"
+          },
           "radiographic": {
             "$ref": "#/components/schemas/RadiographicAnalysis"
           },
@@ -1419,6 +1433,7 @@
           "diagnosis",
           "facial",
           "functional",
+          "models",
           "occlusal",
           "radiographic",
           "signatures"
@@ -1466,6 +1481,59 @@
           "treatingSignatureName": {
             "type": "string",
             "maxLength": 200,
+            "minLength": 0
+          }
+        }
+      },
+      "TransversalAnalysis": {
+        "type": "object",
+        "properties": {
+          "intercanineUpper": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "intercanineLower": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "intermolarUpper": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "intermolarLower": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "walaWidth": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "xPcWidth": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "xPrimePcWidth": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "xIdealWidth": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "walaToEv": {
+            "$ref": "#/components/schemas/WalaToEv"
+          },
+          "interpretation": {
+            "type": "string",
+            "maxLength": 4000,
             "minLength": 0
           }
         }
@@ -1539,6 +1607,36 @@
           "patientName",
           "version"
         ]
+      },
+      "WalaToEv": {
+        "type": "object",
+        "properties": {
+          "canine": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "firstPremolar": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "secondPremolar": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "firstMolar": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "secondMolar": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          }
+        }
       },
       "RecordResponse": {
         "type": "object",

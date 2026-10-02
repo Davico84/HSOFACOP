@@ -14,6 +14,7 @@ export function emptyContent(): RecordContent {
     facial: {},
     functional: { suckingHabitTypes: ["NONE"] },
     occlusal: {},
+    models: { transversal: { walaToEv: {} } },
     radiographic: {},
     diagnosis: { problemList: [], treatmentGoals: [] },
     signatures: {},

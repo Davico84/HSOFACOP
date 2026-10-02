@@ -9,6 +9,7 @@ import type { Anamnesis } from './anamnesis';
 import type { FacialAnalysis } from './facialAnalysis';
 import type { FunctionalAnalysis } from './functionalAnalysis';
 import type { OcclusalAnalysis } from './occlusalAnalysis';
+import type { ModelAnalysis } from './modelAnalysis';
 import type { RadiographicAnalysis } from './radiographicAnalysis';
 import type { Diagnosis } from './diagnosis';
 import type { Signatures } from './signatures';
@@ -20,6 +21,7 @@ export interface RecordContent {
   facial: FacialAnalysis;
   functional: FunctionalAnalysis;
   occlusal: OcclusalAnalysis;
+  models: ModelAnalysis;
   radiographic: RadiographicAnalysis;
   diagnosis: Diagnosis;
   signatures: Signatures;
