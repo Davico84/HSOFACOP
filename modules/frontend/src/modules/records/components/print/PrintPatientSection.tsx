@@ -21,17 +21,17 @@ export function PrintPatientSection({ record }: PrintPatientSectionProps) {
       <div className="flex"><PrintField label="ODONTÓLOGO TRATANTE:" value={record.treatingDentist} /></div>
       <PrintTitle>ANAMNESIS</PrintTitle>
       <div className="flex gap-4">
-        <PrintField label="PACIENTE" value={record.patientName} grow={3} />
-        <PrintField label="Edad:" value={formatAge(record.ageYears)} />
+        <PrintField label="PACIENTE" value={record.patientName} grow={3} lined />
+        <PrintField label="Edad:" value={formatAge(record.ageYears)} lined />
       </div>
-      <div className="flex"><PrintField label="Domicilio" value={record.address} /></div>
+      <div className="flex"><PrintField label="Domicilio" value={record.address} lined /></div>
       <div className="flex gap-4">
-        <PrintField label="Fecha de inicio de tratamiento:" value={formatDate(record.treatmentStartDate)} grow={2} />
-        <PrintField label="Documento" value={document} />
+        <PrintField label="Fecha de inicio de tratamiento:" value={formatDate(record.treatmentStartDate)} grow={2} lined />
+        <PrintField label="Documento" value={document} lined />
       </div>
       <div className="flex gap-4">
-        <PrintField label="Lugar y fecha de nacimiento del paciente" value={birth} grow={2} />
-        <PrintField label="Celular" value={record.phone} />
+        <PrintField label="Lugar y fecha de nacimiento del paciente" value={birth} grow={2} lined />
+        <PrintField label="Celular" value={record.phone} lined />
       </div>
       <PrintLines label="Queja principal - ¿Por qué buscó tratamiento?" value={a.chiefComplaint} emptyText={NOT_REPORTED} lines={2} />
       <PrintLines label="Gustos personales (color, canal preferido en YouTube, juguetes)." value={a.personalPreferences} emptyText={NOT_REPORTED} lines={1} />

@@ -94,19 +94,21 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(screen.getAllByText("No refiere")).toHaveLength(6);
   });
 
-  it("los datos escritos salen sin líneas; solo fecha y firmas conservan su línea", async () => {
+  it("los textos escritos salen sin líneas; conservan su línea los datos del paciente, la fecha y las firmas", async () => {
     serve(withContent({ diagnosis: { generalDiagnosis: "Clase II esquelética", problemList: ["Mordida profunda"], treatmentGoals: [] } },
       { address: "Av. Ejército 512" }));
     const { container } = renderRecordRoutes("/historias/10/imprimir");
     await screen.findAllByRole("article");
 
-    for (const text of ["Av. Ejército 512", "Clase II esquelética", "1. Mordida profunda"]) {
+    for (const text of ["Clase II esquelética", "1. Mordida profunda"]) {
       expect(screen.getByText(text).className).not.toMatch(/border-b/);
     }
+    expect(screen.getByText("Av. Ejército 512").className).toMatch(/border-b/);
     const lined = Array.from(container.querySelectorAll("article .border-b"));
-    expect(lined.length).toBeGreaterThan(0);
     for (const line of lined) {
-      expect(line.parentElement?.textContent).toMatch(/^(FECHA:|Firma)/);
+      expect(line.parentElement?.textContent).toMatch(
+        /^(FECHA:|Firma|PACIENTE|Edad:|Domicilio|Fecha de inicio de tratamiento:|Documento|Lugar y fecha de nacimiento del paciente|Celular)/,
+      );
     }
   });
 
