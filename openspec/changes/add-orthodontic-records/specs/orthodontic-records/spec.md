@@ -255,6 +255,10 @@ El sistema SHALL ofrecer la sección "Historias clínicas" con un listado pagina
 - **WHEN** el usuario busca un número de documento o un número de historia existentes (p. ej. "aeo-001")
 - **THEN** el resultado incluye la historia correspondiente
 
+#### Scenario: Búsqueda y página en la dirección
+- **WHEN** el usuario busca "quispe" y pasa a la página 2 del listado
+- **THEN** la dirección queda `/historias?q=quispe&pagina=2` y recargar o volver de otra pantalla conserva la búsqueda y la página
+
 #### Scenario: Sin resultados
 - **WHEN** la búsqueda no coincide con ninguna historia
 - **THEN** el listado muestra un estado vacío "No hay historias que coincidan" con opción de limpiar la búsqueda
@@ -276,8 +280,9 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 
 #### Scenario: Imprimir una historia completa
 - **WHEN** el usuario pulsa "Vista previa" en una historia
-- **THEN** se abre la vista preliminar con las hojas A4 tal como saldrán, sin abrir el diálogo de impresión
+- **THEN** se abre en la misma pestaña la vista preliminar con las hojas A4 tal como saldrán, sin abrir el diálogo de impresión
 - **AND** el diálogo de impresión del navegador se abre solo al pulsar "Imprimir" en esa vista
+- **AND** "Volver" regresa a donde se abrió: el listado con su búsqueda y página, o el paso del formulario
 - **AND** cada página lleva el logo ARO/FACOP y la cabecera "HISTORIA CLÍNICA ORTODONCIA Nro. <número>"
 
 #### Scenario: Opciones de una pregunta en la hoja impresa

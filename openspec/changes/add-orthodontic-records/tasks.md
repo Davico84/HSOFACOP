@@ -61,6 +61,7 @@
 - [x] 6b.4 Anamnesis: textos vacíos se imprimen "No refiere" (y el formulario lo muestra como ayuda)
 - [x] 6b.5 Impresión sin líneas de llenado a mano en los datos escritos (solo fecha y firmas conservan su línea)
 - [x] 6b.6 Impresión: preguntas y etiquetas en 11 pt para distinguirlas de las respuestas (10 pt)
+- [x] 6b.7 Vista previa en la misma pestaña con "Volver" al origen; búsqueda y página del listado en la URL
 
 ## 7. Docs y cierre
 
