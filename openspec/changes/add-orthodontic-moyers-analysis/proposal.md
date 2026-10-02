@@ -10,7 +10,7 @@ Segundo análisis de modelos de la fase 2 de `orthodontic-records` (uno por chan
 - **Espacio disponible** por arcada y lado (mandíbula der./izq., maxilar der./izq.), escrito a mano.
 - **Espacio requerido calculado** con la tabla de Moyers al **75 %** (tabla única, sin distinguir sexo): la suma se redondea al 0,5 mm más cercano; fuera de 19,5–29,0 mm no se calcula y se avisa.
 - **Diferencia** = disponible − requerido, por arcada y lado.
-- **Tabla 2 · Predisposición de apiñamiento** automática: cada arcada/lado aparece en Positivo (+), Nulo (0) o Negativo (−) según su diferencia.
+- **Tabla 2 · Predisposición de apiñamiento**: el odontólogo escribe el resultado en cada fila (Positivo, Nulo, Negativo), guiándose por las diferencias calculadas (revisión del usuario).
 - Interpretación (texto libre).
 - Impresión: hoja "FICHA PARA EL ANÁLISIS DE MOYERS" después de la del análisis transversal (11 hojas), con las tablas del PDF reconstruidas como tablas.
 - Las historias guardadas siguen válidas: la subsección llega vacía (`schemaVersion` 4 sin migración de datos).

@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Análisis de Moyers
-El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de 42, 41, 31 y 32, espacio disponible de mandíbula y maxilar por lado (derecho e izquierdo) e interpretación. Las medidas SHALL estar en milímetros, entre 0 y 99,9, con a lo sumo un decimal. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión: la suma de los cuatro incisivos; el espacio requerido de cada arcada con la tabla de Moyers al 75 % a partir de la suma redondeada al 0,5 mm más cercano (igual para ambos lados); la diferencia disponible − requerido por arcada y lado; y la predisposición de apiñamiento (Positivo si la diferencia es mayor que 0, Nulo si es 0, Negativo si es menor).
+El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de 42, 41, 31 y 32, espacio disponible de mandíbula y maxilar por lado (derecho e izquierdo), predisposición de apiñamiento dental (un texto por fila: Positivo, Nulo y Negativo, escrito por el odontólogo) e interpretación. Las medidas SHALL estar en milímetros, entre 0 y 99,9, con a lo sumo un decimal. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión: la suma de los cuatro incisivos; el espacio requerido de cada arcada con la tabla de Moyers al 75 % a partir de la suma redondeada al 0,5 mm más cercano (igual para ambos lados); y la diferencia disponible − requerido por arcada y lado. La predisposición de apiñamiento SHALL NOT calcularse.
 
 #### Scenario: Suma y espacio requerido
 - **WHEN** se registran 42 = 6,0, 41 = 5,5, 31 = 5,4 y 32 = 6,1 mm
@@ -15,10 +15,13 @@ El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 de
 - **WHEN** la suma de los incisivos es menor que 19,5 mm o mayor que 29,0 mm, o falta alguno de los cuatro
 - **THEN** no se calcula el requerido ni la diferencia, y si hay suma se avisa que está fuera de la tabla de Moyers
 
-#### Scenario: Diferencia y predisposición de apiñamiento
+#### Scenario: Diferencia disponible − requerido
 - **WHEN** con requerido mandibular 22,2 y maxilar 22,6 se registra disponible mandíbula derecho 21,0, mandíbula izquierdo 22,6, maxilar derecho 23,5 y maxilar izquierdo 22,6
 - **THEN** las diferencias son −1,2, +0,4, +0,9 y 0,0
-- **AND** la predisposición muestra Positivo: mandíbula izquierdo y maxilar derecho; Nulo: maxilar izquierdo; Negativo: mandíbula derecho
+
+#### Scenario: Predisposición de apiñamiento escrita por el odontólogo
+- **WHEN** el odontólogo escribe en la fila Negativo "Mandíbula derecho" y deja vacías Positivo y Nulo
+- **THEN** se guarda e imprime tal cual en la Tabla 2, sin completarse a partir de las diferencias
 
 #### Scenario: Fecha anterior al tratamiento
 - **WHEN** la fecha del análisis es anterior a la fecha de inicio de tratamiento
@@ -34,4 +37,4 @@ El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 de
 
 #### Scenario: Hoja impresa de Moyers
 - **WHEN** se imprime una historia
-- **THEN** después de la hoja del análisis transversal sale "FICHA PARA EL ANÁLISIS DE MOYERS" con nombre, edad y fecha, la ficha con incisivos, suma, disponible, requerido y diferencia, la tabla de predisposición de apiñamiento y la interpretación
+- **THEN** después de la hoja del análisis transversal sale "FICHA PARA EL ANÁLISIS DE MOYERS" con nombre, edad y fecha, la ficha con incisivos, suma, disponible, requerido y diferencia, la tabla de predisposición de apiñamiento con lo escrito y la interpretación
