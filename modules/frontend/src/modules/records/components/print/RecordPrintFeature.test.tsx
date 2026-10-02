@@ -85,6 +85,15 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(container.textContent).not.toMatch(/null|undefined/);
   });
 
+  it("anamnesis: los textos vacíos se imprimen como 'No refiere'; los escritos, tal cual", async () => {
+    serve(withContent({ anamnesis: { chiefComplaint: "Dientes salidos" } }));
+    renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+
+    expect(screen.getByText("Dientes salidos")).toBeInTheDocument();
+    expect(screen.getAllByText("No refiere")).toHaveLength(6);
+  });
+
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {
     serve(recordResponse({ patientSex: "MALE" }));
     renderRecordRoutes("/historias/10/imprimir");

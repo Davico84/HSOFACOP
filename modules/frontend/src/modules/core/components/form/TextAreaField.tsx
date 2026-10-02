@@ -11,11 +11,12 @@ interface TextAreaFieldProps<T extends FieldValues> {
   /** Muestra "n / máximo" (el límite real lo valida el schema). */
   maxLength?: number;
   rows?: number;
+  placeholder?: string;
   className?: string;
 }
 
 /** Texto largo con contador de caracteres. */
-export function TextAreaField<T extends FieldValues>({ name, label, hint, maxLength, rows = 3, className }: TextAreaFieldProps<T>) {
+export function TextAreaField<T extends FieldValues>({ name, label, hint, maxLength, rows = 3, placeholder, className }: TextAreaFieldProps<T>) {
   const { register, formState, control } = useFormContext<T>();
   const value: unknown = useWatch({ control, name });
   const id = fieldId(name);
@@ -26,6 +27,7 @@ export function TextAreaField<T extends FieldValues>({ name, label, hint, maxLen
       <Textarea
         id={id}
         rows={rows}
+        placeholder={placeholder}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
         {...register(name)}

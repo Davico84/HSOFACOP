@@ -6,7 +6,7 @@ import { FormField } from "@/modules/core/components/form/FormField";
 import { Input } from "@/modules/core/ui/input";
 import type { RecordFormValues } from "../../schemas/record";
 import { LONG_TEXT } from "../../schemas/record";
-import { cooperationOptions, documentTypeOptions, sexOptions, yesNoOptions } from "../../config/options";
+import { cooperationOptions, documentTypeOptions, NOT_REPORTED, sexOptions, yesNoOptions } from "../../config/options";
 import { ageYears } from "../../utils/age";
 import { formatAge } from "../../utils/recordDisplay";
 
@@ -47,8 +47,9 @@ export function Step1Patient({ recordNumber }: Step1PatientProps) {
 
       <section aria-labelledby="s1-anamnesis" className="flex flex-col gap-4">
         <h3 id="s1-anamnesis" className="text-lg font-semibold">Anamnesis</h3>
-        <TextAreaField name="content.anamnesis.chiefComplaint" label="Queja principal – ¿Por qué buscó tratamiento?" maxLength={LONG_TEXT} />
-        <TextAreaField name="content.anamnesis.personalPreferences" label="Gustos personales (color, canal preferido en YouTube, juguetes)" maxLength={LONG_TEXT} />
+        <p className="text-sm text-muted-foreground">Los textos que se dejen vacíos se imprimen como "{NOT_REPORTED}".</p>
+        <TextAreaField name="content.anamnesis.chiefComplaint" label="Queja principal – ¿Por qué buscó tratamiento?" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
+        <TextAreaField name="content.anamnesis.personalPreferences" label="Gustos personales (color, canal preferido en YouTube, juguetes)" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
         <ChoiceField name="content.anamnesis.cooperation" label="Índice de colaboración / cooperación" options={cooperationOptions} />
         <div className="grid gap-4 md:grid-cols-2">
           <ChoiceField name="content.anamnesis.oralHygiene" label="Higiene oral" options={yesNoOptions} />
@@ -58,11 +59,11 @@ export function Step1Patient({ recordNumber }: Step1PatientProps) {
         {sex === "FEMALE" ? (
           <ChoiceField name="content.anamnesis.menarche" label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} />
         ) : null}
-        <TextAreaField name="content.anamnesis.medicalHistory" label="Historia médica / medicación de uso continuo" maxLength={LONG_TEXT} />
-        <TextAreaField name="content.anamnesis.accidentsHistory" label="Histórico de accidentes o traumas" maxLength={LONG_TEXT} />
-        <TextAreaField name="content.anamnesis.familyStructure" label="Estructura familiar" maxLength={LONG_TEXT} />
-        <TextAreaField name="content.anamnesis.generalTreatmentNeeds" label="Necesidad de tratamiento general (caries, endodoncia, exodoncia)" maxLength={LONG_TEXT} />
-        <TextAreaField name="content.anamnesis.heredity" label="Características importantes de la herencia" maxLength={LONG_TEXT} />
+        <TextAreaField name="content.anamnesis.medicalHistory" label="Historia médica / medicación de uso continuo" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
+        <TextAreaField name="content.anamnesis.accidentsHistory" label="Histórico de accidentes o traumas" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
+        <TextAreaField name="content.anamnesis.familyStructure" label="Estructura familiar" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
+        <TextAreaField name="content.anamnesis.generalTreatmentNeeds" label="Necesidad de tratamiento general (caries, endodoncia, exodoncia)" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
+        <TextAreaField name="content.anamnesis.heredity" label="Características importantes de la herencia" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
       </section>
     </div>
   );

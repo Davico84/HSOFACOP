@@ -100,6 +100,9 @@ export const angleClassOptions = choices(AngleRelationAngleClass, {
 
 // --- Paso 1: anamnesis ---
 
+/** Lo que se imprime en un texto de la anamnesis que se dejó vacío. */
+export const NOT_REPORTED = "No refiere";
+
 export const cooperationOptions = choices(AnamnesisCooperation, { HIGH: "Alto", MEDIUM: "Medio", LOW: "Bajo" });
 
 // --- Paso 2: análisis facial (Guía de análisis facial) ---
