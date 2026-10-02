@@ -285,13 +285,18 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 - **THEN** sus opciones se imprimen en el renglón siguiente, juntas si caben en un renglón ("☐ Presenta ☒ No presenta")
 - **AND** si no caben (p. ej. "5. RELACIÓN ANTEROPOSTERIOR DE LABIOS:"), una opción por renglón, sin partir la lista a la mitad
 
+#### Scenario: Textos de la anamnesis sin respuesta
+- **WHEN** se imprime una historia con algún texto de la anamnesis vacío (queja principal, gustos, historia médica, accidentes, estructura familiar, tratamiento general o herencia)
+- **THEN** ese texto se imprime como "No refiere" en lugar de renglones en blanco
+- **AND** en el formulario esos campos muestran "No refiere" como ayuda mientras están vacíos
+
 #### Scenario: Opciones marcadas
 - **WHEN** se imprime una historia con Tipo facial "Mesofacial"
 - **THEN** la línea muestra "☒ Mesofacial ☐ Dolicofacial ☐ Braquifacial"
 
 #### Scenario: Historia a medio llenar
 - **WHEN** se imprime una historia con campos vacíos
-- **THEN** esos campos salen como línea en blanco del ancho del PDF y las opciones sin marcar, sin textos como "null" o "undefined"
+- **THEN** esos campos salen como línea en blanco del ancho del PDF (salvo los textos de la anamnesis, que salen "No refiere") y las opciones sin marcar, sin textos como "null" o "undefined"
 
 #### Scenario: Textos largos
 - **WHEN** un campo de texto libre ocupa más de lo que el PDF reserva

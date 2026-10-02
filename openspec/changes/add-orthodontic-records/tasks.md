@@ -58,6 +58,7 @@
 - [x] 6b.2 Análisis facial: tercios y simetrías = presenta / no presenta + texto (`V9`, `schemaVersion` 2); impresión vertical de 3, 5, 6 y 7
 
 - [x] 6b.3 Impresión: regla de saltos de línea (":" → opciones en el renglón siguiente, juntas si caben) y vista preliminar con botón "Imprimir" (sin diálogo automático)
+- [x] 6b.4 Anamnesis: textos vacíos se imprimen "No refiere" (y el formulario lo muestra como ayuda)
 
 ## 7. Docs y cierre
 
