@@ -28,10 +28,8 @@ export function PrintFunctionalSection({ record }: PrintFunctionalSectionProps) 
       <PrintChoice label="Respiración:" options={breathingOptions} value={f.breathing} />
       <PrintChoice label="Deglución:" options={swallowingOptions} value={f.swallowing} />
       <PrintChoice label="Cierre labial:" options={lipClosureOptions} value={f.lipClosure} />
-      <div className="flex flex-wrap gap-x-4">
-        <PrintChoice label="Actividad lingual:" options={tongueOptions} value={f.tongueActivity} />
-        {lateral ? <PrintChoice label="Lado:" options={sideOptions} value={f.tongueLateralSides} /> : null}
-      </div>
+      <PrintChoice label="Actividad lingual:" options={tongueOptions} value={f.tongueActivity} />
+      {lateral ? <div className="pl-[8mm]"><PrintChoice label="Lado:" options={sideOptions} value={f.tongueLateralSides} /></div> : null}
       <table className="w-full">
         <tbody>
           {MUSCLES.map(([key, label]) => (
@@ -54,7 +52,7 @@ export function PrintFunctionalSection({ record }: PrintFunctionalSectionProps) 
         {bruxismOptions.map((o) => (
           <p key={o.value} className="flex items-end gap-1">
             <span>{f.bruxism === o.value ? "☒" : "☐"} {o.label}</span>
-            {o.value === "WITH_WEAR" ? <PrintField label=", Piezas:" value={formatTeeth(f.bruxismTeeth)} /> : null}
+            {o.value === "WITH_WEAR" ? <PrintField label="Piezas:" value={formatTeeth(f.bruxismTeeth)} className="ml-[3pt]" /> : null}
           </p>
         ))}
       </div>

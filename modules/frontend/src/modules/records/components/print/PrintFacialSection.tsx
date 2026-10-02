@@ -18,8 +18,8 @@ const AFAI_SHORT = afaiOptions.map((o) => ({ ...o, label: o.value === "INCREASED
 const mark = (on: boolean) => (on ? "☒" : "☐");
 
 /**
- * Pág. 2: análisis facial en una sola hoja, como el PDF: cada pregunta con sus opciones debajo;
- * tercios y simetrías con Presenta / No presenta en vertical y 2 renglones de texto; sin imágenes.
+ * Pág. 2: análisis facial en una sola hoja: cada pregunta con sus opciones en el renglón siguiente
+ * (juntas si caben; si no, una por renglón); tercios y simetrías con 2 renglones de texto; sin imágenes.
  */
 export function PrintFacialSection({ record }: PrintFacialSectionProps) {
   const f = record.content.facial;
@@ -28,19 +28,19 @@ export function PrintFacialSection({ record }: PrintFacialSectionProps) {
     <PrintPage recordNumber={record.recordNumber} title="Análisis facial">
       <PrintChoice label="1. TIPO FACIAL:" options={facialTypeOptions} value={f.facialType} />
       <PrintChoice label="2. CONVEXIDAD:" options={convexityOptions} value={f.convexity} />
-      <PrintChoice vertical label="3. PROPORCIÓN DE LOS TERCIOS FACIALES:" options={presenceOptions} value={f.facialThirds} />
+      <PrintChoice label="3. PROPORCIÓN DE LOS TERCIOS FACIALES:" options={presenceOptions} value={f.facialThirds} />
       <PrintLines value={f.facialThirdsNotes} lines={2} />
       <PrintChoice label="4. SELLADO LABIAL:" options={presenceOptions} value={f.lipSeal} />
-      <PrintChoice vertical label="5. RELACIÓN ANTEROPOSTERIOR DE LABIOS:" options={lipRelationOptions} value={f.lipAnteroposteriorRelation} />
-      <PrintChoice vertical label="6. SIMETRÍA FACIAL EN REPOSO:" options={presenceOptions} value={f.restSymmetry} />
+      <PrintChoice label="5. RELACIÓN ANTEROPOSTERIOR DE LABIOS:" options={lipRelationOptions} value={f.lipAnteroposteriorRelation} />
+      <PrintChoice label="6. SIMETRÍA FACIAL EN REPOSO:" options={presenceOptions} value={f.restSymmetry} />
       <PrintLines value={f.restSymmetryNotes} lines={2} />
-      <PrintChoice vertical label="7. SIMETRÍA FACIAL EN APERTURA BUCAL:" options={presenceOptions} value={f.openingSymmetry} />
+      <PrintChoice label="7. SIMETRÍA FACIAL EN APERTURA BUCAL:" options={presenceOptions} value={f.openingSymmetry} />
       <PrintLines value={f.openingSymmetryNotes} lines={2} />
-      <PrintChoice stacked label="8. ÁNGULO NASOLABIAL:" options={nasolabialOptions} value={f.nasolabialAngle} />
-      <PrintChoice stacked label="9. SURCO MENTOLABIAL:" options={mentolabialOptions} value={f.mentolabialSulcus} />
-      <PrintChoice stacked label="10. PROYECCIÓN CIGOMÁTICA:" options={zygomaticOptions} value={f.zygomaticProjection} />
-      <PrintChoice stacked label="11. LÍNEA MENTÓN CUELLO:" options={chinNeckLineOptions} value={f.chinNeckLine} />
-      <PrintChoice stacked label="12. ÁNGULO MENTÓN CUELLO:" options={chinNeckAngleOptions} value={f.chinNeckAngle} />
+      <PrintChoice label="8. ÁNGULO NASOLABIAL:" options={nasolabialOptions} value={f.nasolabialAngle} />
+      <PrintChoice label="9. SURCO MENTOLABIAL:" options={mentolabialOptions} value={f.mentolabialSulcus} />
+      <PrintChoice label="10. PROYECCIÓN CIGOMÁTICA:" options={zygomaticOptions} value={f.zygomaticProjection} />
+      <PrintChoice label="11. LÍNEA MENTÓN CUELLO:" options={chinNeckLineOptions} value={f.chinNeckLine} />
+      <PrintChoice label="12. ÁNGULO MENTÓN CUELLO:" options={chinNeckAngleOptions} value={f.chinNeckAngle} />
       <p>13. PATRÓN FACIAL</p>
       <div className="flex flex-col pl-[8mm]">
         <p className="flex flex-wrap gap-x-[14pt]">

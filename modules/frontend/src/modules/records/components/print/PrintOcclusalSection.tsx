@@ -38,23 +38,19 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
   return (
     <PrintPage recordNumber={record.recordNumber} title="Análisis oclusal">
       <PrintTitle sub>TRANSVERSAL</PrintTitle>
-      <PrintChoice options={transverseOptions} value={o.transverse}
-        suffix={o.crossbiteSide ? `(lado: ${labelOf(sideOptions, o.crossbiteSide)})` : undefined} />
+      <PrintChoice options={transverseOptions} value={o.transverse} />
+      {o.crossbiteSide ? <p className="pl-[8mm]">Lado de la mordida cruzada unilateral: {labelOf(sideOptions, o.crossbiteSide)}</p> : null}
       <PrintChoice label="Característica de la mordida cruzada:" options={crossbiteTypeOptions} value={o.crossbiteType} />
       <PrintTitle sub>VERTICAL</PrintTitle>
-      <div className="flex flex-wrap items-end gap-x-4">
-        <PrintChoice options={verticalOptions.slice(0, 2)} value={o.vertical} />
-        <span className="flex items-end gap-1">
-          {o.vertical === "DEEP_BITE" ? "☒" : "☐"} <PrintField label="Mordida profunda de" value={numberText(o.deepBitePercent)} /> %
-        </span>
-        <span className="flex items-end gap-1">
-          {o.vertical === "OPEN_BITE" ? "☒" : "☐"} <PrintField label="Mordida abierta de" value={numberText(o.openBiteMm)} /> mm
-        </span>
-      </div>
-      <div className="flex flex-wrap items-end gap-x-3">
-        <PrintChoice label="CURVA DE SPEE:" options={speeOptions} value={o.speeCurve} />
-        <PrintField label="" value={o.speeCurveDetail} grow={3} />
-      </div>
+      <PrintChoice options={verticalOptions.slice(0, 2)} value={o.vertical} vertical />
+      <span className="flex w-[90mm] items-end gap-1">
+        {o.vertical === "DEEP_BITE" ? "☒" : "☐"} <PrintField label="Mordida profunda de" value={numberText(o.deepBitePercent)} /> %
+      </span>
+      <span className="flex w-[90mm] items-end gap-1">
+        {o.vertical === "OPEN_BITE" ? "☒" : "☐"} <PrintField label="Mordida abierta de" value={numberText(o.openBiteMm)} /> mm
+      </span>
+      <PrintChoice label="CURVA DE SPEE:" options={speeOptions} value={o.speeCurve} />
+      <div className="flex"><PrintField label="Alterada:" value={o.speeCurveDetail} /></div>
       <PrintTitle sub>ANTEROPOSTERIOR</PrintTitle>
       <p>{o.anteroposteriorNormal ? "☒" : "☐"} Normal</p>
       <div className="flex flex-wrap gap-x-4">

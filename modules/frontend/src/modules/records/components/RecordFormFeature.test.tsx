@@ -175,13 +175,13 @@ describe("orthodontic-records — Formulario por pasos con guardado de borrador"
 });
 
 describe("orthodontic-records — Abrir un paso no cuenta como cambio", () => {
-  it.each([1, 2, 3, 4, 5, 6, 7])("paso %i recién abierto: sin cambios y con 'Imprimir' disponible", async (paso) => {
+  it.each([1, 2, 3, 4, 5, 6, 7])("paso %i recién abierto: sin cambios y con 'Vista previa' disponible", async (paso) => {
     mockRecord({ patientSex: "FEMALE", birthDate: "1990-01-01" });
     renderRecordRoutes(`/historias/10?paso=${paso}`);
     await screen.findByRole("heading", { level: 2 });
 
     expect(screen.queryByText(/Cambios sin guardar/)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Imprimir historia AEO-001" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toBeInTheDocument();
   });
 });
 

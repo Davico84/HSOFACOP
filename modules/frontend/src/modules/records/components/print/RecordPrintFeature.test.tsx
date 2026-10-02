@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
 import type { RecordResponse } from "@/modules/core/services/generated/model";
@@ -32,7 +33,7 @@ afterEach(() => {
 });
 
 describe("orthodontic-records — Impresión con presentación del PDF", () => {
-  it("cada hoja lleva los logos y la cabecera con el número, y se abre el diálogo de impresión", async () => {
+  it("vista preliminar: cada hoja con logos y cabecera; el diálogo se abre solo al pulsar Imprimir", async () => {
     serve(recordResponse());
     renderRecordRoutes("/historias/10/imprimir");
 
@@ -43,7 +44,10 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
       expect(within(sheet).getByRole("img", { name: /AEO/ })).toBeInTheDocument();
       expect(within(sheet).getByRole("img", { name: /FACOP/ })).toBeInTheDocument();
     }
-    await vi.advanceTimersByTimeAsync(500);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(print).not.toHaveBeenCalled();
+
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Imprimir" }));
     expect(print).toHaveBeenCalledTimes(1);
   });
 
@@ -55,14 +59,22 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(line.textContent?.replace(/\(.*?\)\s*/g, "")).toMatch(/☒\s*Mesofacial\s*☐\s*Dolicofacial\s*☐\s*Braquifacial/);
   });
 
-  it("tercios y simetrías: Presenta / No presenta en vertical y su texto debajo", async () => {
+  it("pregunta con \":\": opciones en el renglón siguiente, juntas si caben (tercios) y el texto debajo", async () => {
     serve(withContent({ facial: { facialThirds: "ABSENT", facialThirdsNotes: "Tercio inferior aumentado", restSymmetry: "PRESENT" } }));
     renderRecordRoutes("/historias/10/imprimir");
 
     const block = (await screen.findByText("3. PROPORCIÓN DE LOS TERCIOS FACIALES:")).parentElement!;
     const rows = Array.from(block.querySelectorAll("p")).map((p) => p.textContent?.replace(/\(.*?\)\s*/g, ""));
-    expect(rows).toEqual(["3. PROPORCIÓN DE LOS TERCIOS FACIALES:", "☐ Presenta", "☒ No presenta"]);
+    expect(rows).toEqual(["3. PROPORCIÓN DE LOS TERCIOS FACIALES:", "☐ Presenta☒ No presenta"]);
     expect(screen.getByText("Tercio inferior aumentado")).toBeInTheDocument();
+  });
+
+  it("opciones largas que no caben en un renglón: una por renglón (relación de labios)", async () => {
+    serve(withContent({ facial: { lipAnteroposteriorRelation: "SAME_LINE" } }));
+    renderRecordRoutes("/historias/10/imprimir");
+
+    const block = (await screen.findByText("5. RELACIÓN ANTEROPOSTERIOR DE LABIOS:")).parentElement!;
+    expect(block.querySelectorAll("p")).toHaveLength(4);
   });
 
   it("una historia a medio llenar no imprime 'null' ni 'undefined'", async () => {

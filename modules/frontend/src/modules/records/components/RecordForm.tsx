@@ -127,8 +127,8 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
           {record && !dirty ? <RecordPrintLink id={record.id} recordNumber={record.recordNumber} /> : null}
           {record && dirty ? (
             <Button type="button" variant="outline" size="sm" disabled aria-describedby="print-needs-save">
-              <Printer className="size-4" aria-hidden="true" /> Imprimir
-              <span id="print-needs-save" className="sr-only">Guarda los cambios para imprimir</span>
+              <Printer className="size-4" aria-hidden="true" /> Vista previa
+              <span id="print-needs-save" className="sr-only">Guarda los cambios para ver la vista previa e imprimir</span>
             </Button>
           ) : null}
         </header>

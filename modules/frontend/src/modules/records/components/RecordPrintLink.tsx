@@ -8,17 +8,17 @@ interface RecordPrintLinkProps {
   recordNumber: string;
 }
 
-/** Abre la vista de impresión de la historia en otra pestaña (el formulario queda abierto). */
+/** Abre la vista preliminar de impresión en otra pestaña (el formulario queda abierto); allí se imprime. */
 export function RecordPrintLink({ id, recordNumber }: RecordPrintLinkProps) {
   return (
     <Link
       to={recordPrintPath(id)}
       target="_blank"
       rel="noopener"
-      aria-label={`Imprimir historia ${recordNumber}`}
+      aria-label={`Vista previa de impresión de la historia ${recordNumber}`}
       className={buttonVariants({ variant: "outline", size: "sm" })}
     >
-      <Printer className="size-4" aria-hidden="true" /> Imprimir
+      <Printer className="size-4" aria-hidden="true" /> Vista previa
     </Link>
   );
 }

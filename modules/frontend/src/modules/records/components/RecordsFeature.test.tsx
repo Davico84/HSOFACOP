@@ -29,7 +29,7 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
     expect(within(row).getByText("DNI 74125896")).toBeInTheDocument();
     expect(within(row).getByText("19/05/2026")).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Autor" })).not.toBeInTheDocument();
-    expect(within(row).getByRole("link", { name: "Imprimir historia AEO-001" })).toHaveAttribute("href", "/historias/10/imprimir");
+    expect(within(row).getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toHaveAttribute("href", "/historias/10/imprimir");
   });
 
   it("ADMIN ve las historias de todos con la columna Autor", async () => {
