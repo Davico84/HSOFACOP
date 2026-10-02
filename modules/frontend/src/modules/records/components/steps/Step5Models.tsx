@@ -14,6 +14,9 @@ import { MoyersSpaceTable } from "../fields/MoyersSpaceTable";
 import { WalaToEvTable } from "../fields/WalaToEvTable";
 
 const TRIGGER = "text-lg font-semibold hover:no-underline";
+// El panel recorta lo que sobresale (lo necesita su animación): este margen deja espacio al anillo
+// de foco de los campos pegados al borde.
+const CONTENT = "flex flex-col gap-6 px-1.5 pt-1.5";
 
 /**
  * Paso 5 (págs. 5–6): análisis de modelos, uno por panel plegable para no recorrer los cuatro
@@ -31,7 +34,7 @@ export function Step5Models() {
     <Accordion type="multiple" value={value} onValueChange={setOpen} className="rounded-lg border border-border px-4">
       <AccordionItem value="transversal">
         <AccordionTrigger className={TRIGGER}>Análisis transversal de los modelos</AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-6">
+        <AccordionContent className={CONTENT}>
           <div className="grid gap-4 sm:grid-cols-2">
             <MeasureField name="content.models.transversal.intercanineUpper" label="AIS: ancho inter canino superior" unit="mm" />
             <MeasureField name="content.models.transversal.intercanineLower" label="AII: ancho inter canino inferior" unit="mm" />
@@ -58,7 +61,7 @@ export function Step5Models() {
 
       <AccordionItem value="moyers">
         <AccordionTrigger className={TRIGGER}>Análisis de Moyers</AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-6">
+        <AccordionContent className={CONTENT}>
           <TextField
             name="content.models.moyers.analysisDate"
             label="Fecha del análisis"
