@@ -340,15 +340,16 @@ describe("orthodontic-records — Análisis transversal de los modelos (paso 5)"
 describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
   /** Los análisis van en paneles plegables: Moyers empieza cerrado. */
   async function openMoyers() {
-    await userEvent.click(await screen.findByRole("button", { name: "Análisis de Moyers" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Análisis de Moyers/ }));
   }
 
   it("los análisis son paneles plegables: el transversal abierto y Moyers cerrado al entrar", async () => {
     mockRecord();
     renderRecordRoutes("/historias/10?paso=5");
-    expect(await screen.findByRole("button", { name: "Análisis transversal de los modelos" })).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: "Análisis de Moyers" })).toHaveAttribute("aria-expanded", "false");
+    expect(await screen.findByRole("button", { name: /^Análisis transversal de los modelos/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /^Análisis de Moyers/ })).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByLabelText("Pieza 42")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Análisis de Moyers/ })).toHaveTextContent("Sin datos");
   });
 
   it("calcula en vivo suma, requerido al 75 % y diferencias; la predisposición la escribe el odontólogo", async () => {
@@ -370,6 +371,8 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     expect(screen.getByLabelText("Espacio requerido, Maxilar izquierdo")).toHaveTextContent("22,6");
     expect(screen.getByLabelText("Diferencia, Mandíbula derecho")).toHaveTextContent("−1,2");
     expect(screen.getByLabelText("Diferencia, Maxilar izquierdo")).toHaveTextContent("0,0");
+    // La cabecera del panel cuenta los datos registrados (fecha, 4 incisivos y 4 espacios).
+    expect(screen.getByRole("button", { name: /^Análisis de Moyers/ })).toHaveTextContent("9 datos");
     expect(screen.getByLabelText("Negativo")).toHaveValue("");
     await userEvent.type(screen.getByLabelText("Negativo"), "Mandíbula derecho");
 
@@ -402,10 +405,10 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
 
     await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2999-01-01");
     // Se cierra el panel: al guardar, el error lo vuelve a abrir para que no quede oculto.
-    await userEvent.click(screen.getByRole("button", { name: "Análisis de Moyers" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Análisis de Moyers/ }));
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     expect(await screen.findByText("La fecha del análisis no puede ser futura.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Análisis de Moyers" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /^Análisis de Moyers/ })).toHaveAttribute("aria-expanded", "true");
     expect(calls.put).toHaveLength(0);
   });
 });
