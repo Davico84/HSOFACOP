@@ -1,13 +1,17 @@
 import { MeasureField } from "@/modules/core/components/form/MeasureField";
 import { TextAreaField } from "@/modules/core/components/form/TextAreaField";
+import { TextField } from "@/modules/core/components/form/TextField";
 import { LONG_TEXT } from "../../schemas/record";
 import { INTERMOLAR_NOTE } from "../../config/transversal";
+import { CrowdingPredisposition } from "../fields/CrowdingPredisposition";
 import { IntermolarField } from "../fields/IntermolarField";
+import { MoyersIncisorsField } from "../fields/MoyersIncisorsField";
+import { MoyersSpaceTable } from "../fields/MoyersSpaceTable";
 import { WalaToEvTable } from "../fields/WalaToEvTable";
 
 /**
- * Paso 5 (pág. 5): análisis de modelos. Por ahora el análisis transversal; Moyers, Nance y Bolton
- * se agregan aquí en sus propios changes. Paciente, edad y sexo se toman del paso 1.
+ * Paso 5 (págs. 5–6): análisis de modelos. Por ahora el transversal y Moyers; Nance y Bolton se
+ * agregan aquí en sus propios changes. Paciente, edad y sexo se toman del paso 1.
  */
 export function Step5Models() {
   return (
@@ -33,6 +37,21 @@ export function Step5Models() {
         </div>
         <WalaToEvTable />
         <TextAreaField name="content.models.transversal.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
+      </section>
+
+      <section aria-labelledby="s5-moyers" className="flex flex-col gap-6 border-t border-border pt-6">
+        <h3 id="s5-moyers" className="text-lg font-semibold">Análisis de Moyers</h3>
+        <TextField
+          name="content.models.moyers.analysisDate"
+          label="Fecha del análisis"
+          type="date"
+          className="max-w-xs"
+          hint="Puede ser anterior al inicio del tratamiento."
+        />
+        <MoyersIncisorsField />
+        <MoyersSpaceTable />
+        <CrowdingPredisposition />
+        <TextAreaField name="content.models.moyers.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
       </section>
     </div>
   );

@@ -336,3 +336,58 @@ describe("orthodontic-records — Análisis transversal de los modelos (paso 5)"
     expect(screen.getAllByText("Indica el sexo del paciente (paso 1) para comparar con el promedio.")).toHaveLength(2);
   });
 });
+
+describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
+  it("calcula en vivo suma, requerido al 75 %, diferencias y predisposición, y lo guarda", async () => {
+    const { calls } = mockRecord({ treatmentStartDate: "2026-09-15" });
+    renderRecordRoutes("/historias/10?paso=5");
+    await screen.findByRole("heading", { level: 3, name: "Análisis de Moyers" });
+
+    await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2026-09-01");
+    for (const [tooth, value] of [["42", "6"], ["41", "5.5"], ["31", "5.4"], ["32", "6.1"]]) {
+      await userEvent.type(screen.getByLabelText(`Pieza ${tooth}`), value);
+    }
+    expect(screen.getByText("23,0 mm")).toBeInTheDocument();
+    for (const [side, value] of [["Mandíbula derecho", "21"], ["Mandíbula izquierdo", "22.6"], ["Maxilar derecho", "23.5"], ["Maxilar izquierdo", "22.6"]]) {
+      await userEvent.type(screen.getByLabelText(`Espacio disponible, ${side} (mm)`), value);
+    }
+    expect(screen.getByLabelText("Espacio requerido, Mandíbula derecho")).toHaveTextContent("22,2");
+    expect(screen.getByLabelText("Espacio requerido, Maxilar izquierdo")).toHaveTextContent("22,6");
+    expect(screen.getByLabelText("Diferencia, Mandíbula derecho")).toHaveTextContent("−1,2");
+    expect(screen.getByLabelText("Diferencia, Maxilar izquierdo")).toHaveTextContent("0,0");
+    const crowding = screen.getByRole("table", { name: "Predisposición de apiñamiento dental" });
+    expect(crowding).toHaveTextContent("PositivoMandíbula izquierdo · Maxilar derecho");
+    expect(crowding).toHaveTextContent("NuloMaxilar izquierdo");
+    expect(crowding).toHaveTextContent("NegativoMandíbula derecho");
+
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    await waitFor(() => expect(calls.put).toHaveLength(1));
+    const y = calls.put[0].content?.models.moyers;
+    expect(y?.analysisDate).toBe("2026-09-01");
+    expect(y?.lowerIncisors).toEqual({ tooth42: 6, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 });
+    expect(y?.availableSpace?.mandibleRight).toBe(21);
+  });
+
+  it("una suma fuera de la tabla avisa y no calcula el requerido", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await screen.findByRole("heading", { level: 3, name: "Análisis de Moyers" });
+
+    for (const [tooth, value] of [["42", "4.5"], ["41", "4.5"], ["31", "4.5"], ["32", "5.5"]]) {
+      await userEvent.type(screen.getByLabelText(`Pieza ${tooth}`), value);
+    }
+    expect(screen.getByText("Fuera de la tabla de Moyers (19,5–29,0 mm).")).toBeInTheDocument();
+    expect(screen.getByLabelText("Espacio requerido, Mandíbula derecho")).toHaveTextContent("—");
+  });
+
+  it("una fecha futura no se guarda y el error aparece junto al campo", async () => {
+    const { calls } = mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await screen.findByRole("heading", { level: 3, name: "Análisis de Moyers" });
+
+    await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2999-01-01");
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    expect(await screen.findByText("La fecha del análisis no puede ser futura.")).toBeInTheDocument();
+    expect(calls.put).toHaveLength(0);
+  });
+});

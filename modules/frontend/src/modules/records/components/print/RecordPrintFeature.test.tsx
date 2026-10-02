@@ -108,7 +108,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     const lined = Array.from(container.querySelectorAll("article .border-b"));
     for (const line of lined) {
       expect(line.parentElement?.textContent).toMatch(
-        /^(FECHA:|Firma|PACIENTE|Paciente|Edad|Sexo|Domicilio|Fecha de inicio de tratamiento:|Documento|Lugar y fecha de nacimiento del paciente|Celular)/,
+        /^(FECHA:|Firma|PACIENTE|Paciente|Edad|Sexo|Domicilio|Fecha de inicio de tratamiento:|Documento|Lugar y fecha de nacimiento del paciente|Celular|Nombre:|Fecha:)/,
       );
     }
   });
@@ -146,6 +146,34 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(within(models).getByText("+0,6")).toBeInTheDocument();
     expect(within(models).getByText("Femenino")).toBeInTheDocument();
     expect(within(models).getByText("Compresión leve")).toBeInTheDocument();
+  });
+
+  it("hoja de Moyers tras la del transversal, con requerido, diferencias y predisposición calculados", async () => {
+    serve(withContent(
+      { models: { transversal: {}, moyers: {
+        analysisDate: "2026-09-01",
+        lowerIncisors: { tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 },
+        availableSpace: { mandibleRight: 21.0, mandibleLeft: 22.6, maxillaRight: 23.5, maxillaLeft: 22.6 },
+        interpretation: "Discrepancia negativa leve",
+      } } },
+      { ageYears: 13 },
+    ));
+    renderRecordRoutes("/historias/10/imprimir");
+    const sheets = await screen.findAllByRole("article");
+
+    const titles = sheets.map((sheet) => within(sheet).queryAllByRole("heading", { level: 2 })[0]?.textContent ?? "");
+    expect(titles.indexOf("Ficha para el análisis de Moyers")).toBe(titles.indexOf("Análisis de modelos") + 1);
+    const moyers = sheets[titles.indexOf("Ficha para el análisis de Moyers")];
+    expect(within(moyers).getByText("01/09/2026")).toBeInTheDocument();
+    expect(within(moyers).getByLabelText("Pieza 42")).toHaveTextContent("6,0");
+    expect(within(moyers).getByLabelText("Pieza 32")).toHaveTextContent("6,1");
+    expect(within(moyers).getByText("23,0")).toBeInTheDocument();
+    const rows = within(moyers).getAllByRole("row").map((r) => r.textContent);
+    expect(rows).toContain("Espacio requerido (Moyers 75 %)22,222,222,622,6");
+    expect(rows).toContain("Diferencia−1,2+0,4+0,90,0");
+    expect(rows).toContain("PositivoMandíbula izquierdo · Maxilar derecho");
+    expect(rows).toContain("NegativoMandíbula derecho");
+    expect(within(moyers).getByText("Discrepancia negativa leve")).toBeInTheDocument();
   });
 
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {

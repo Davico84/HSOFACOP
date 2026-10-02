@@ -190,7 +190,21 @@ const transversal = z.object({
   interpretation: text(LONG_TEXT),
 });
 
-const models = z.object({ transversal });
+const moyers = z.object({
+  analysisDate: z
+    .string()
+    .refine((d) => !d || d <= today(), "La fecha del análisis no puede ser futura.")
+    .nullish(),
+  lowerIncisors: z
+    .object({ tooth42: modelMm, tooth41: modelMm, tooth31: modelMm, tooth32: modelMm })
+    .nullish(),
+  availableSpace: z
+    .object({ mandibleRight: modelMm, mandibleLeft: modelMm, maxillaRight: modelMm, maxillaLeft: modelMm })
+    .nullish(),
+  interpretation: text(LONG_TEXT),
+});
+
+const models = z.object({ transversal, moyers });
 
 const radiographic = z.object({
   panoramicDiagnosis: text(LONG_TEXT),

@@ -25,7 +25,7 @@ export const RECORD_STEPS: readonly RecordStep[] = [
   { number: 2, title: "Análisis facial", pages: "pág. 2", fields: ["content.facial"] },
   { number: 3, title: "Análisis funcional", pages: "pág. 3", fields: ["content.functional"] },
   { number: 4, title: "Análisis oclusal y extra", pages: "págs. 3–4", fields: ["content.occlusal"] },
-  { number: 5, title: "Análisis de modelos", pages: "pág. 5", fields: ["content.models"] },
+  { number: 5, title: "Análisis de modelos", pages: "págs. 5–6", fields: ["content.models"] },
   { number: 6, title: "Análisis radiográfico", pages: "pág. 10", fields: ["content.radiographic"] },
   { number: 7, title: "Diagnóstico y planes", pages: "págs. 11–13", fields: ["content.diagnosis"] },
   { number: 8, title: "Firmas", pages: "pág. 13", fields: ["content.signatures"] },
