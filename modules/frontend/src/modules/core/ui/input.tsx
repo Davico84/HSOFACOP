@@ -15,6 +15,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
         "placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
+        // Ícono del calendario (type="date"): visible en ambos temas gracias a color-scheme y clicable.
+        "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80 hover:[&::-webkit-calendar-picker-indicator]:opacity-100",
         "aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive",
         className,
       )}

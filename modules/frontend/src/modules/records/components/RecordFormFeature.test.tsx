@@ -338,10 +338,23 @@ describe("orthodontic-records — Análisis transversal de los modelos (paso 5)"
 });
 
 describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
+  /** Los análisis van en paneles plegables: Moyers empieza cerrado. */
+  async function openMoyers() {
+    await userEvent.click(await screen.findByRole("button", { name: "Análisis de Moyers" }));
+  }
+
+  it("los análisis son paneles plegables: el transversal abierto y Moyers cerrado al entrar", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    expect(await screen.findByRole("button", { name: "Análisis transversal de los modelos" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "Análisis de Moyers" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByLabelText("Pieza 42")).not.toBeInTheDocument();
+  });
+
   it("calcula en vivo suma, requerido al 75 % y diferencias; la predisposición la escribe el odontólogo", async () => {
     const { calls } = mockRecord({ treatmentStartDate: "2026-09-15" });
     renderRecordRoutes("/historias/10?paso=5");
-    await screen.findByRole("heading", { level: 3, name: "Análisis de Moyers" });
+    await openMoyers();
 
     await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2026-09-01");
     for (const [tooth, value] of [["42", "6"], ["41", "5.5"], ["31", "5.4"], ["32", "6.1"]]) {
@@ -371,7 +384,7 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
   it("una suma fuera de la tabla avisa y no calcula el requerido", async () => {
     mockRecord();
     renderRecordRoutes("/historias/10?paso=5");
-    await screen.findByRole("heading", { level: 3, name: "Análisis de Moyers" });
+    await openMoyers();
 
     for (const [tooth, value] of [["42", "4.5"], ["41", "4.5"], ["31", "4.5"], ["32", "5.5"]]) {
       await userEvent.type(screen.getByLabelText(`Pieza ${tooth}`), value);
@@ -380,14 +393,17 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     expect(screen.getByLabelText("Espacio requerido, Mandíbula derecho")).toHaveTextContent("—");
   });
 
-  it("una fecha futura no se guarda y el error aparece junto al campo", async () => {
+  it("una fecha futura no se guarda y el error abre el panel y aparece junto al campo", async () => {
     const { calls } = mockRecord();
     renderRecordRoutes("/historias/10?paso=5");
-    await screen.findByRole("heading", { level: 3, name: "Análisis de Moyers" });
+    await openMoyers();
 
     await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2999-01-01");
+    // Se cierra el panel: al guardar, el error lo vuelve a abrir para que no quede oculto.
+    await userEvent.click(screen.getByRole("button", { name: "Análisis de Moyers" }));
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     expect(await screen.findByText("La fecha del análisis no puede ser futura.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Análisis de Moyers" })).toHaveAttribute("aria-expanded", "true");
     expect(calls.put).toHaveLength(0);
   });
 });
