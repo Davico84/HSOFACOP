@@ -9,13 +9,13 @@
 
 ## 2. Frontend
 
-- [ ] 2.1 `pnpm generate:api`; schema Zod en paridad; valores iniciales con la sección
-- [ ] 2.2 `config/transversal.ts` (normas y promedios) + `utils/transversal.ts` (diferencias) con tests de los scenarios
-- [ ] 2.3 Paso 5 "Análisis de modelos", `RECORD_STEPS` con 8 pasos y renumeración de los siguientes
-- [ ] 2.4 `PrintModelsSection` tras el análisis oclusal
-- [ ] 2.5 Tests Vitest (paso 5, diferencias en pantalla, impresión) y E2E (10 hojas); `pnpm validate` verde; impresión verificada con Edge headless
+- [x] 2.1 `pnpm generate:api`; schema Zod en paridad; valores iniciales con la sección
+- [x] 2.2 `config/transversal.ts` (normas y promedios) + `utils/transversal.ts` (diferencias) con tests de los scenarios
+- [x] 2.3 Paso 5 "Análisis de modelos", `RECORD_STEPS` con 8 pasos y renumeración de los siguientes
+- [x] 2.4 `PrintModelsSection` tras el análisis oclusal
+- [x] 2.5 Tests Vitest (paso 5, diferencias en pantalla, impresión) y E2E (10 hojas); `pnpm validate` verde; impresión verificada con Edge headless
 
 ## 3. Docs y cierre
 
 - [x] 3.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 3.2 Al archivar — `docs/domain.md`: análisis transversal en `OrthodonticRecord`
+- [x] 3.2 Al archivar — `docs/domain.md`: análisis transversal en `OrthodonticRecord`

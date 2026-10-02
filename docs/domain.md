@@ -24,7 +24,7 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 
 | Término | Significado |
 |---|---|
-| Historia clínica de ortodoncia | Registro de un paciente según el formato de la clínica (PDF de 14 págs.): anamnesis, análisis facial, funcional, oclusal y radiográfico, diagnóstico, planes y firmas. Se identifica con un número correlativo por tratante (`AEO-001`). |
+| Historia clínica de ortodoncia | Registro de un paciente según el formato de la clínica (PDF de 14 págs.): anamnesis, análisis facial, funcional, oclusal, de modelos y radiográfico, diagnóstico, planes y firmas. Se identifica con un número correlativo por tratante (`AEO-001`). |
 | Anamnesis | Entrevista inicial: queja principal, antecedentes médicos, hábitos, estructura familiar. Un texto sin respuesta se imprime "No refiere". |
 | Guía de análisis facial | Documento de la clínica con las opciones e ilustraciones de cada pregunta del análisis facial y sus valores normativos. |
 | AFAI | Altura facial anteroinferior; en los patrones II y III se marca aumentada o disminuida (excluyentes). |
@@ -34,6 +34,9 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | Clase de Angle | Relación canina o molar por lado: Clase I, II o III, con detalle en fracción ("½ cúspide"). |
 | MI / MIH / RC | Máxima intercuspidación, mordida habitual y relación céntrica; si MI o MIH difieren de RC, se registra la relación canina en RC. |
 | Notación FDI | Numeración de piezas dentales: permanentes 11–48 y temporales 51–85. |
+| Análisis transversal de los modelos | Anchos de arcada medidos en los modelos (mm): intercanino (AIS/AII) e intermolar (AMS/AMI) superior e inferior, borde WALA, X Pc, X´ Pc y X ideal (escrito a mano), y distancias WALA–EV por diente inferior. |
+| Promedio intermolar | Referencia por sexo para AMS (54,0 mm hombres / 52,4 mm mujeres) y AMI (47,2 / 46,1 mm); se muestra la diferencia con la medida. |
+| WALA–EV | Distancia del borde WALA (unión mucogingival) al eje vestibular (EV) de cada diente inferior; normas: canino 0,6, 1er premolar 0,8, 2do premolar 1,3, 1er molar 2,0, 2do molar 2,2 mm. |
 | Apoderado | Quien firma por un paciente menor de 18 años. |
 
 ---
@@ -72,15 +75,15 @@ Cuenta de acceso al sistema.
 Token de refresco persistido para rotación y revocación real (logout). Se guarda el **hash** del token, nunca el valor en claro.
 - `user` (FK), `tokenHash` (único), `expiresAt`, `revoked`, `createdAt`. El access token es JWT stateless (no se persiste).
 
-### `orthodontic-records` → **OrthodonticRecord** *(construida, fase 1)*
+### `orthodontic-records` → **OrthodonticRecord** *(construida, fases 1 y 2.1)*
 Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o busca; el contenido clínico va en JSON (JSONB) tipado por paso.
 - `author` (FK `User`, nunca cambia) y `recordSeq` / `recordNumber`: correlativo **por autor** (`AEO-001`, `AEO-002`…), asignado al crear y no editable.
 - Paciente embebido (sin registro maestro de pacientes): `patientName` (obligatorio), `documentType` (`DNI` 8 dígitos | `FOREIGNER_CARD` 9 | `PASSPORT` 6–12, solo dígitos) + `documentNumber`, `patientSex` (`FEMALE` | `MALE`), `birthDate`, `birthPlace`, `address`, `phone`, `treatmentStartDate`, `treatingDentist` (por defecto el autor).
 - Edad **calculada** (años cumplidos a la fecha de inicio de tratamiento o a hoy); menor de 18 → firma el apoderado.
-- `content` (JSON, `schemaVersion` 2): anamnesis, análisis facial, funcional, oclusal y extra, radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
+- `content` (JSON, `schemaVersion` 3): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`: medidas en mm 0–99,9 con un decimal + interpretación; las diferencias con promedios y normas se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
 - `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
 - Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
-- Pendiente (fases 2 y 3): análisis de modelos (transversal, Moyers, Nance, Bolton) y notas de evolución digitalizadas (hoy se imprime la hoja en blanco).
+- Pendiente (fases 2 y 3): análisis de Moyers, Nance y Bolton y notas de evolución digitalizadas (hoy se imprime la hoja en blanco).
 
 ---
 
