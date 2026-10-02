@@ -57,6 +57,8 @@
 - [x] 6b.1 Botón de imprimir: valores iniciales completos (abrir un paso no cuenta como cambio); impresión con las medidas del PDF y página sin margen propio (igual que la vista previa)
 - [x] 6b.2 Análisis facial: tercios y simetrías = presenta / no presenta + texto (`V9`, `schemaVersion` 2); impresión vertical de 3, 5, 6 y 7
 
+- [x] 6b.3 Impresión: regla de saltos de línea (":" → opciones en el renglón siguiente, juntas si caben) y vista preliminar con botón "Imprimir" (sin diálogo automático)
+
 ## 7. Docs y cierre
 
 - [x] 7.1 `docs/vision.md`: producto (historia clínica de ortodoncia FACOP/ARO), roadmap con `orthodontic-records` y las fases 2–3, estado 🚧 enlazando este change

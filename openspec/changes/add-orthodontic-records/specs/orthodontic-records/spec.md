@@ -275,9 +275,15 @@ El sistema SHALL detectar que una historia cambió desde que el usuario la carg�
 El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce los títulos, el orden y los logos ARO/FACOP del PDF original, para imprimir o guardar como PDF desde el navegador. Los valores SHALL aparecer en lugar de las líneas; los campos de opciones SHALL listar todas las opciones con la elegida marcada; los campos vacíos SHALL imprimirse como línea en blanco para completar a mano; cada sección SHALL empezar en página nueva como en el PDF y la página de firmas SHALL dejar el espacio para firmar a mano. La interfaz de la aplicación (menú, cabecera, botones) NO SHALL imprimirse.
 
 #### Scenario: Imprimir una historia completa
-- **WHEN** el usuario pulsa "Imprimir" en una historia
-- **THEN** se abre la vista de impresión con la historia y el diálogo de impresión del navegador
+- **WHEN** el usuario pulsa "Vista previa" en una historia
+- **THEN** se abre la vista preliminar con las hojas A4 tal como saldrán, sin abrir el diálogo de impresión
+- **AND** el diálogo de impresión del navegador se abre solo al pulsar "Imprimir" en esa vista
 - **AND** cada página lleva el logo ARO/FACOP y la cabecera "HISTORIA CLÍNICA ORTODONCIA Nro. <número>"
+
+#### Scenario: Opciones de una pregunta en la hoja impresa
+- **WHEN** una pregunta termina en ":" (p. ej. "3. PROPORCIÓN DE LOS TERCIOS FACIALES:")
+- **THEN** sus opciones se imprimen en el renglón siguiente, juntas si caben en un renglón ("☐ Presenta ☒ No presenta")
+- **AND** si no caben (p. ej. "5. RELACIÓN ANTEROPOSTERIOR DE LABIOS:"), una opción por renglón, sin partir la lista a la mitad
 
 #### Scenario: Opciones marcadas
 - **WHEN** se imprime una historia con Tipo facial "Mesofacial"
