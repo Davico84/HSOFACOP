@@ -20,6 +20,10 @@ export function MoyersSpaceTable() {
   // Las cuatro columnas tienen el mismo ancho y todo va centrado: la entrada, el requerido y la
   // diferencia de cada lado quedan uno debajo del otro (revisión del usuario).
   const cell = "w-28 px-2 py-1.5 text-center tabular-nums";
+  // Requerido y diferencia se calculan: caja del mismo tamaño que la entrada, pero bloqueada
+  // (fondo apagado, sin foco), para que las tres filas guarden concordancia (revisión del usuario).
+  const locked =
+    "mx-auto flex h-8 w-24 cursor-not-allowed select-none items-center justify-center rounded-md border border-input bg-muted text-muted-foreground";
 
   return (
     <fieldset className="flex flex-col gap-1.5">
@@ -75,16 +79,20 @@ export function MoyersSpaceTable() {
             <tr className="border-t border-border">
               <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Espacio requerido (Moyers 75 %)</th>
               {sides.map(({ key, label, required }) => (
-                <td key={key} className={cell} aria-label={`Espacio requerido, ${label}`}>
-                  {required === null ? "—" : formatMm(required)}
+                <td key={key} className={cell}>
+                  <output className={locked} aria-label={`Espacio requerido, ${label}`}>
+                    {required === null ? "—" : formatMm(required)}
+                  </output>
                 </td>
               ))}
             </tr>
             <tr className="border-t border-border">
               <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Diferencia</th>
               {sides.map(({ key, label, difference }) => (
-                <td key={key} className={cell} aria-label={`Diferencia, ${label}`}>
-                  {formatSigned(difference) || "—"}
+                <td key={key} className={cell}>
+                  <output className={locked} aria-label={`Diferencia, ${label}`}>
+                    {formatSigned(difference) || "—"}
+                  </output>
                 </td>
               ))}
             </tr>
