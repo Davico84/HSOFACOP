@@ -24,9 +24,14 @@ interface PrintFieldProps {
 export function PrintField({ label, value, grow = 1, className, lined = false, center = false }: PrintFieldProps) {
   const text = value === null || value === undefined ? "" : String(value);
   return (
-    <span className={cn("flex min-w-0 items-end gap-[3pt]", ROW_MIN, ROW_LEADING, className)} style={{ flexGrow: grow }}>
+    // La etiqueta va con el primer renglón del valor; un valor largo continúa debajo, en su columna.
+    // Los datos cortos centrados (edad, fechas, documento, celular) no se comprimen ni se parten.
+    <span
+      className={cn("flex min-w-0 items-baseline gap-[3pt]", center && "shrink-0", ROW_MIN, ROW_LEADING, className)}
+      style={{ flexGrow: grow }}
+    >
       {label ? <span className={cn("shrink-0", LABEL)}>{label}</span> : null}
-      <span className={cn("min-w-[12mm] flex-1 px-[2pt] wrap-break-word", lined && "border-b border-foreground", center && "text-center", ROW_LEADING)}>{text}</span>
+      <span className={cn("min-w-[12mm] flex-1 px-[2pt] wrap-break-word", lined && "border-b border-foreground", center && "text-center whitespace-nowrap", ROW_LEADING)}>{text}</span>
     </span>
   );
 }
