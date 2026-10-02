@@ -14,9 +14,9 @@
 - [x] 2.3 Bloque "Análisis de Moyers" en el paso 5 (fecha, incisivos con suma, tabla de espacios con requerido y diferencia, predisposición, interpretación)
 - [x] 2.4 `PrintMoyersSection` tras la hoja del transversal
 - [x] 2.6 Revisión del usuario: tabla de espacios alineada (entradas, requerido y diferencia en la misma columna); predisposición escrita por el odontólogo (backend `crowdingPositive/Neutral/Negative` ≤ 200 + contrato + campos de texto + impresión)
-- [ ] 2.5 Tests Vitest (bloque Moyers, cálculos en pantalla, impresión) y E2E (11 hojas); `pnpm validate` verde; impresión verificada con Edge headless
+- [x] 2.5 Tests Vitest (bloque Moyers, cálculos en pantalla, impresión) y E2E (11 hojas); `pnpm validate` verde; impresión verificada con Edge headless
 
 ## 3. Docs y cierre
 
 - [x] 3.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 3.2 Al archivar — `docs/domain.md`: análisis de Moyers en `OrthodonticRecord` y glosario
+- [x] 3.2 Al archivar — `docs/domain.md`: análisis de Moyers en `OrthodonticRecord` y glosario
