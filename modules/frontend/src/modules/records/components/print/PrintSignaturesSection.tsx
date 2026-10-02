@@ -1,6 +1,7 @@
 import type { RecordResponse } from "@/modules/core/services/generated/model";
 import { isMinor } from "../../utils/age";
 import { PrintField } from "./PrintField";
+import { PrintSignatureRow } from "./PrintSignatureRow";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
 import { LABEL } from "./printStyle";
@@ -20,35 +21,19 @@ export function PrintSignaturesSection({ record }: PrintSignaturesSectionProps) 
       {minor ? (
         <>
           <p className={`mt-[17pt] ${LABEL}`}>FIRMA DEL APODERADO:</p>
-          <div className="flex gap-4">
-            <PrintField label="Nombre" value={s.guardianName} grow={2} />
-            <PrintField label="Parentesco" value={s.guardianRelationship} />
-            <PrintField label="Firma" value="" lined />
-          </div>
+          <PrintSignatureRow name={s.guardianName} relationship={s.guardianRelationship ?? null} />
         </>
       ) : (
         <>
           <p className={`mt-[17pt] ${LABEL}`}>FIRMA DEL PACIENTE:</p>
-          <div className="flex gap-4">
-            <PrintField label="Nombre" value={s.patientSignatureName ?? record.patientName} grow={3} />
-            <PrintField label="Firma" value="" lined />
-          </div>
+          <PrintSignatureRow name={s.patientSignatureName ?? record.patientName} />
         </>
       )}
       <p className={`mt-[17pt] ${LABEL}`}>FIRMA SUPERVISOR:</p>
-      <div className="flex gap-4">
-        <PrintField label="Nombre" value={s.supervisor1Name} grow={3} />
-        <PrintField label="Firma" value="" lined />
-      </div>
-      <div className="mt-[10pt] flex gap-4">
-        <PrintField label="Nombre" value={s.supervisor2Name} grow={3} />
-        <PrintField label="Firma" value="" lined />
-      </div>
+      <PrintSignatureRow name={s.supervisor1Name} />
+      <div className="mt-[10pt]"><PrintSignatureRow name={s.supervisor2Name} /></div>
       <p className={`mt-[17pt] ${LABEL}`}>FIRMA DEL TRATANTE:</p>
-      <div className="flex gap-4">
-        <PrintField label="Nombre" value={s.treatingSignatureName ?? record.treatingDentist} grow={3} />
-        <PrintField label="Firma" value="" lined />
-      </div>
+      <PrintSignatureRow name={s.treatingSignatureName ?? record.treatingDentist} />
     </PrintPage>
   );
 }
