@@ -60,7 +60,6 @@ export function Step5Models() {
             name="content.models.moyers.analysisDate"
             label="Fecha del análisis"
             type="date"
-            className="max-w-xs"
             hint="Puede ser anterior al inicio del tratamiento."
           />
           <MoyersIncisorsField />

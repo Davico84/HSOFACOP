@@ -18,6 +18,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         // Ícono del calendario (type="date"): visible en ambos temas gracias a color-scheme y clicable.
         "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80 hover:[&::-webkit-calendar-picker-indicator]:opacity-100",
         "aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive",
+        // Una fecha ocupa solo lo que mide su contenido (dd/mm/aaaa + ícono), no todo el ancho.
+        type === "date" && "w-fit",
         className,
       )}
       {...props}
