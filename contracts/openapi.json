@@ -871,6 +871,31 @@
           }
         }
       },
+      "AvailableSpace": {
+        "type": "object",
+        "properties": {
+          "mandibleRight": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "mandibleLeft": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "maxillaRight": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "maxillaLeft": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          }
+        }
+      },
       "Diagnosis": {
         "type": "object",
         "properties": {
@@ -1201,6 +1226,31 @@
           }
         }
       },
+      "LowerIncisors": {
+        "type": "object",
+        "properties": {
+          "tooth42": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth41": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth31": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth32": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          }
+        }
+      },
       "Midline": {
         "type": "object",
         "properties": {
@@ -1226,11 +1276,35 @@
         "properties": {
           "transversal": {
             "$ref": "#/components/schemas/TransversalAnalysis"
+          },
+          "moyers": {
+            "$ref": "#/components/schemas/MoyersAnalysis"
           }
         },
         "required": [
+          "moyers",
           "transversal"
         ]
+      },
+      "MoyersAnalysis": {
+        "type": "object",
+        "properties": {
+          "analysisDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "lowerIncisors": {
+            "$ref": "#/components/schemas/LowerIncisors"
+          },
+          "availableSpace": {
+            "$ref": "#/components/schemas/AvailableSpace"
+          },
+          "interpretation": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
       },
       "OcclusalAnalysis": {
         "type": "object",

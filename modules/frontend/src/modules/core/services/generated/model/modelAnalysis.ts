@@ -6,7 +6,9 @@
  * OpenAPI spec version: v1
  */
 import type { TransversalAnalysis } from './transversalAnalysis';
+import type { MoyersAnalysis } from './moyersAnalysis';
 
 export interface ModelAnalysis {
   transversal: TransversalAnalysis;
+  moyers: MoyersAnalysis;
 }
