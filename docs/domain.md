@@ -15,7 +15,8 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 |---|---|---|
 | **Administrador** | Gestiona la aplicación: usuarios, configuración y métricas del panel. | `ADMIN` |
 | **Usuario** | Usa las funcionalidades del producto dentro de su rol. | `USER` |
-| _[actor de negocio]_ | _[descripción]_ | _[rol]_ |
+| **Tratante** | Alumno u odontólogo del posgrado (AEO/FACOP) que llena y corrige sus historias clínicas de ortodoncia. Solo ve las suyas. | `USER` |
+| **Supervisor** | Docente que revisa y corrige las historias de todos los tratantes. | `ADMIN` |
 
 > Los roles de sistema (`ADMIN`/`USER`) los define `authentication`; el mapeo fino de permisos se detalla al construir cada capacidad.
 
@@ -23,7 +24,17 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 
 | Término | Significado |
 |---|---|
-| _[término del dominio]_ | _[significado]_ |
+| Historia clínica de ortodoncia | Registro de un paciente según el formato de la clínica (PDF de 14 págs.): anamnesis, análisis facial, funcional, oclusal y radiográfico, diagnóstico, planes y firmas. Se identifica con un número correlativo por tratante (`AEO-001`). |
+| Anamnesis | Entrevista inicial: queja principal, antecedentes médicos, hábitos, estructura familiar. Un texto sin respuesta se imprime "No refiere". |
+| Guía de análisis facial | Documento de la clínica con las opciones e ilustraciones de cada pregunta del análisis facial y sus valores normativos. |
+| AFAI | Altura facial anteroinferior; en los patrones II y III se marca aumentada o disminuida (excluyentes). |
+| Overjet | Resalte horizontal de los incisivos superiores, en milímetros. |
+| Mordida cruzada / Brodie | Alteraciones transversales de la oclusión (posterior uni o bilateral; Brodie = mordida en tijera). |
+| Curva de Spee | Curvatura del plano oclusal inferior; normal o alterada (con descripción). |
+| Clase de Angle | Relación canina o molar por lado: Clase I, II o III, con detalle en fracción ("½ cúspide"). |
+| MI / MIH / RC | Máxima intercuspidación, mordida habitual y relación céntrica; si MI o MIH difieren de RC, se registra la relación canina en RC. |
+| Notación FDI | Numeración de piezas dentales: permanentes 11–48 y temporales 51–85. |
+| Apoderado | Quien firma por un paciente menor de 18 años. |
 
 ---
 
@@ -61,9 +72,15 @@ Cuenta de acceso al sistema.
 Token de refresco persistido para rotación y revocación real (logout). Se guarda el **hash** del token, nunca el valor en claro.
 - `user` (FK), `tokenHash` (único), `expiresAt`, `revoked`, `createdAt`. El access token es JWT stateless (no se persiste).
 
-### _[capacidad de negocio]_ → **_[Entidad]_** ✏️
-_[qué representa]_
-- _[campos conceptuales clave]_
+### `orthodontic-records` → **OrthodonticRecord** *(construida, fase 1)*
+Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o busca; el contenido clínico va en JSON (JSONB) tipado por paso.
+- `author` (FK `User`, nunca cambia) y `recordSeq` / `recordNumber`: correlativo **por autor** (`AEO-001`, `AEO-002`…), asignado al crear y no editable.
+- Paciente embebido (sin registro maestro de pacientes): `patientName` (obligatorio), `documentType` (`DNI` 8 dígitos | `FOREIGNER_CARD` 9 | `PASSPORT` 6–12, solo dígitos) + `documentNumber`, `patientSex` (`FEMALE` | `MALE`), `birthDate`, `birthPlace`, `address`, `phone`, `treatmentStartDate`, `treatingDentist` (por defecto el autor).
+- Edad **calculada** (años cumplidos a la fecha de inicio de tratamiento o a hoy); menor de 18 → firma el apoderado.
+- `content` (JSON, `schemaVersion` 2): anamnesis, análisis facial, funcional, oclusal y extra, radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
+- `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
+- Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
+- Pendiente (fases 2 y 3): análisis de modelos (transversal, Moyers, Nance, Bolton) y notas de evolución digitalizadas (hoy se imprime la hoja en blanco).
 
 ---
 
@@ -74,6 +91,7 @@ _[qué representa]_
 ```mermaid
 erDiagram
     User ||--o{ RefreshToken : "tiene"
+    User ||--o{ OrthodonticRecord : "es autor de"
 
     User {
         Long id PK
@@ -91,6 +109,21 @@ erDiagram
         String tokenHash UK
         DateTime expiresAt
         Boolean revoked
+    }
+    OrthodonticRecord {
+        Long id PK
+        Long authorId FK
+        int recordSeq
+        String recordNumber
+        String patientName
+        String documentType
+        String documentNumber
+        String patientSex
+        Date birthDate
+        Date treatmentStartDate
+        String searchText
+        Json content
+        Long version
     }
 ```
 

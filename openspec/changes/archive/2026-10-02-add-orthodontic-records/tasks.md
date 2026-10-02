@@ -72,6 +72,6 @@
 ## 7. Docs y cierre
 
 - [x] 7.1 `docs/vision.md`: producto (historia clínica de ortodoncia FACOP/ARO), roadmap con `orthodontic-records` y las fases 2–3, estado 🚧 enlazando este change
-- [ ] 7.2 Al archivar — `docs/domain.md`: actores tratante (`USER`) y supervisor (`ADMIN`), glosario (anamnesis, overjet, Brodie, curva de Spee…), entidad `OrthodonticRecord` en texto y ER
-- [ ] 7.3 Prueba manual: llenar una historia real del PDF de punta a punta, imprimirla en Chrome y Edge y compararla con el PDF; USER no ve historias de otro; ADMIN sí
+- [x] 7.2 Al archivar — `docs/domain.md`: actores tratante (`USER`) y supervisor (`ADMIN`), glosario (anamnesis, overjet, Brodie, curva de Spee…), entidad `OrthodonticRecord` en texto y ER
+- [x] 7.3 (validada por el usuario durante la revisión del 2026-10-01/02) Prueba manual: llenar una historia real del PDF de punta a punta, imprimirla en Chrome y Edge y compararla con el PDF; USER no ve historias de otro; ADMIN sí
 - [x] 7.4 `openspec validate add-orthodontic-records --strict`
