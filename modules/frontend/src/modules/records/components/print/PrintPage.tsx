@@ -39,7 +39,7 @@ export function PrintPage({ recordNumber, title, first = false, children }: Prin
           </div>
           <p className="text-[14pt] leading-tight">
             HISTORIA CLÍNICA ORTODONCIA Nro.{" "}
-            <span className="inline-block min-w-[30mm] border-b border-foreground px-1 text-center">{recordNumber}</span>
+            <span className="font-semibold">{recordNumber}</span>
           </p>
         </header>
       ) : (

@@ -94,6 +94,22 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(screen.getAllByText("No refiere")).toHaveLength(6);
   });
 
+  it("los datos escritos salen sin líneas; solo fecha y firmas conservan su línea", async () => {
+    serve(withContent({ diagnosis: { generalDiagnosis: "Clase II esquelética", problemList: ["Mordida profunda"], treatmentGoals: [] } },
+      { address: "Av. Ejército 512" }));
+    const { container } = renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+
+    for (const text of ["Av. Ejército 512", "Clase II esquelética", "1. Mordida profunda"]) {
+      expect(screen.getByText(text).className).not.toMatch(/border-b/);
+    }
+    const lined = Array.from(container.querySelectorAll("article .border-b"));
+    expect(lined.length).toBeGreaterThan(0);
+    for (const line of lined) {
+      expect(line.parentElement?.textContent).toMatch(/^(FECHA:|Firma)/);
+    }
+  });
+
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {
     serve(recordResponse({ patientSex: "MALE" }));
     renderRecordRoutes("/historias/10/imprimir");

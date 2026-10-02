@@ -19,7 +19,7 @@ function relation(r: AngleRelation | null | undefined): string {
 }
 
 function midline(name: string, m: Midline | null | undefined): string {
-  if (!m?.position) return `${name} ____`;
+  if (!m?.position) return "";
   const mm = m.deviationMm != null ? ` ${String(m.deviationMm).replace(".", ",")} mm` : "";
   return `${name} ${labelOf(midlineOptions, m.position).toLowerCase()}${mm}`;
 }
@@ -58,7 +58,7 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
         <PrintField label="Mordida cruzada anterior (piezas)" value={formatTeeth(o.anteriorCrossbiteTeeth)} grow={2} />
       </div>
       <div className="flex">
-        <PrintField label="Línea media" value={`${midline("superior", o.midlineUpper)} · ${midline("inferior", o.midlineLower)}`} />
+        <PrintField label="Línea media" value={[midline("superior", o.midlineUpper), midline("inferior", o.midlineLower)].filter(Boolean).join(" · ")} />
       </div>
       <table className="mt-[7pt] w-full">
         <thead>
@@ -72,8 +72,8 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
           {rows.filter(([, , show]) => show).map(([label, r]) => (
             <tr key={label}>
               <td className="pr-3">{label}</td>
-              <td className="pr-3"><span className="block min-h-[1.2em] border-b border-foreground">{relation(r?.right)}</span></td>
-              <td><span className="block min-h-[1.2em] border-b border-foreground">{relation(r?.left)}</span></td>
+              <td className="pr-3"><span className="block min-h-[1.2em]">{relation(r?.right)}</span></td>
+              <td><span className="block min-h-[1.2em]">{relation(r?.left)}</span></td>
             </tr>
           ))}
         </tbody>
