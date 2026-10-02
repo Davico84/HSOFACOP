@@ -67,6 +67,7 @@
 - [x] 6b.10 Listado: botón "Editar" (abre el formulario en el paso 1) junto a "Vista previa"
 - [x] 6b.11 Firmas con línea 20 % más corta (41 mm); nombres largos: la etiqueta va con el primer renglón y el nombre continúa debajo; los datos cortos no se parten
 - [x] 6b.12 Etiquetas en línea terminan en ":" para separarlas de su contenido ("Nombre:", "PACIENTE:", "Firma:")
+- [x] 6b.13 Hoja "Notas de evolución" en blanco (pág. 14 del PDF) al final de la impresión, para llenar a mano
 
 ## 7. Docs y cierre
 

@@ -312,6 +312,10 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 - **WHEN** un campo de texto libre ocupa más de lo que el PDF reserva
 - **THEN** el texto se imprime completo continuando en la página siguiente, sin cortarse ni solaparse
 
+#### Scenario: Hoja de notas de evolución para llenar a mano
+- **WHEN** se imprime una historia
+- **THEN** después de la hoja de firmas sale la hoja "Notas de evolución" en blanco, como la pág. 14 del PDF: "Tratante encargado:" y una tabla Fecha / Trabajo realizado / Firma de docente con 37 renglones vacíos para llenar a mano
+
 #### Scenario: Sin acceso a la historia
 - **WHEN** un `USER` abre la vista de impresión de una historia ajena
 - **THEN** ve "Historia no encontrada" y no se imprime contenido

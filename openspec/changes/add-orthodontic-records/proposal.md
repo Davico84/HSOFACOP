@@ -24,7 +24,7 @@ La historia clínica de ortodoncia de FACOP/ARO se llena hoy **a mano** sobre un
 
 **Fases siguientes (changes aparte, no en este):**
 - `add-orthodontic-model-analysis`: análisis transversal de modelos (pág. 5), Moyers (pág. 6), Nance (pág. 7) y Bolton (pág. 9) con cálculos automáticos.
-- `add-orthodontic-progress-notes`: notas de evolución (pág. 14) con fecha, trabajo realizado y docente.
+- `add-orthodontic-progress-notes`: notas de evolución (pág. 14) digitalizadas, con fecha, trabajo realizado y docente. Mientras tanto, la impresión de esta fase incluye la hoja en blanco para llenarla a mano.
 
 ## Non-goals
 
