@@ -132,6 +132,19 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     }
   });
 
+  it("las etiquetas en línea terminan en ':' para separarlas de su contenido", async () => {
+    serve(recordResponse({ address: "Av. Ejército 512" }));
+    renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+
+    for (const label of ["PACIENTE:", "Domicilio:", "Documento:", "Celular:", "Lugar y fecha de nacimiento del paciente:"]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+    expect(screen.getAllByText("Nombre:").length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText("Firma:").length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByText("Mordida profunda de")).toBeInTheDocument();
+  });
+
   it("documento, edad, piezas FDI y lista numerada", async () => {
     serve(withContent(
       {

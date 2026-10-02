@@ -15,13 +15,24 @@ interface PrintFieldProps {
   lined?: boolean;
   /** Valor centrado sobre la línea (datos cortos: edad, fechas, documento, celular). */
   center?: boolean;
+  /**
+   * La etiqueta termina en ":" para separarla de su contenido (revisión del usuario). Desactivar
+   * solo cuando la etiqueta es el inicio de una frase ("Mordida profunda de 60 %").
+   */
+  colon?: boolean;
+}
+
+/** "Nombre" → "Nombre:"; respeta las que ya terminan en ":" o "?" ("¿Quién?"). */
+function withColon(label: ReactNode, colon: boolean): ReactNode {
+  if (!colon || typeof label !== "string" || /[:?]\s*$/.test(label)) return label;
+  return `${label}:`;
 }
 
 /**
  * "Etiqueta valor": el dato sale impreso como texto, sin raya (las rayas eran para escribir a
  * mano). Con `lined`, la raya se conserva (firma, fecha y los datos del paciente).
  */
-export function PrintField({ label, value, grow = 1, className, lined = false, center = false }: PrintFieldProps) {
+export function PrintField({ label, value, grow = 1, className, lined = false, center = false, colon = true }: PrintFieldProps) {
   const text = value === null || value === undefined ? "" : String(value);
   return (
     // La etiqueta va con el primer renglón del valor; un valor largo continúa debajo, en su columna.
@@ -30,7 +41,7 @@ export function PrintField({ label, value, grow = 1, className, lined = false, c
       className={cn("flex min-w-0 items-baseline gap-[3pt]", center && "shrink-0", ROW_MIN, ROW_LEADING, className)}
       style={{ flexGrow: grow }}
     >
-      {label ? <span className={cn("shrink-0", LABEL)}>{label}</span> : null}
+      {label ? <span className={cn("shrink-0", LABEL)}>{withColon(label, colon)}</span> : null}
       <span className={cn("min-w-[12mm] flex-1 px-[2pt] wrap-break-word", lined && "border-b border-foreground", center && "text-center whitespace-nowrap", ROW_LEADING)}>{text}</span>
     </span>
   );

@@ -45,10 +45,10 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
       <PrintTitle sub>VERTICAL</PrintTitle>
       <PrintChoice options={verticalOptions.slice(0, 2)} value={o.vertical} vertical />
       <span className="flex w-[90mm] items-end gap-1">
-        {o.vertical === "DEEP_BITE" ? "☒" : "☐"} <PrintField label="Mordida profunda de" value={numberText(o.deepBitePercent)} /> %
+        {o.vertical === "DEEP_BITE" ? "☒" : "☐"} <PrintField label="Mordida profunda de" colon={false} value={numberText(o.deepBitePercent)} /> %
       </span>
       <span className="flex w-[90mm] items-end gap-1">
-        {o.vertical === "OPEN_BITE" ? "☒" : "☐"} <PrintField label="Mordida abierta de" value={numberText(o.openBiteMm)} /> mm
+        {o.vertical === "OPEN_BITE" ? "☒" : "☐"} <PrintField label="Mordida abierta de" colon={false} value={numberText(o.openBiteMm)} /> mm
       </span>
       <PrintChoice label="CURVA DE SPEE:" options={speeOptions} value={o.speeCurve} />
       <div className="flex"><PrintField label="Alterada:" value={o.speeCurveDetail} /></div>
