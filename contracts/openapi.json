@@ -1299,6 +1299,21 @@
           "availableSpace": {
             "$ref": "#/components/schemas/AvailableSpace"
           },
+          "crowdingPositive": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "crowdingNeutral": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "crowdingNegative": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
           "interpretation": {
             "type": "string",
             "maxLength": 4000,

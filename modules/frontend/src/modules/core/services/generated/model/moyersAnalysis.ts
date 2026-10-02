@@ -14,6 +14,21 @@ export interface MoyersAnalysis {
   availableSpace?: AvailableSpace;
   /**
    * @minLength 0
+   * @maxLength 200
+   */
+  crowdingPositive?: string;
+  /**
+   * @minLength 0
+   * @maxLength 200
+   */
+  crowdingNeutral?: string;
+  /**
+   * @minLength 0
+   * @maxLength 200
+   */
+  crowdingNegative?: string;
+  /**
+   * @minLength 0
    * @maxLength 4000
    */
   interpretation?: string;
