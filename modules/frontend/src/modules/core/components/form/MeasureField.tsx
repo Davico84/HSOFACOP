@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Controller, useFormContext, type FieldValues, type Path } from "react-hook-form";
-import { Input } from "@/modules/core/ui/input";
+import { NumberInput } from "@/modules/core/ui/number-input";
 import { FormField } from "./FormField";
 import { fieldError, fieldId } from "./fieldError";
 
@@ -25,15 +25,13 @@ export function MeasureField<T extends FieldValues>({ name, label, unit, step = 
         name={name}
         render={({ field }) => (
           <div className="flex items-center gap-2">
-            <Input
+            <NumberInput
               id={id}
-              type="number"
-              inputMode="decimal"
               step={step}
               className="w-28"
               aria-invalid={error ? true : undefined}
-              value={field.value ?? ""}
-              onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+              value={field.value}
+              onChange={field.onChange}
               onBlur={field.onBlur}
               ref={field.ref}
             />

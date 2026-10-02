@@ -1,5 +1,5 @@
 import { Controller, useFormContext, useWatch } from "react-hook-form";
-import { Input } from "@/modules/core/ui/input";
+import { NumberInput } from "@/modules/core/ui/number-input";
 import { fieldError } from "@/modules/core/components/form/fieldError";
 import type { RecordFormValues } from "../../schemas/record";
 import { WALA_EV_NORMS } from "../../config/transversal";
@@ -37,15 +37,14 @@ export function WalaToEvTable() {
                       control={control}
                       name={name}
                       render={({ field }) => (
-                        <Input
-                          type="number"
-                          inputMode="decimal"
+                        <NumberInput
                           step={0.1}
-                          className="h-8 w-24"
+                          className="w-24"
+                          inputClassName="h-8"
                           aria-label={`Distancia WALA a EV, ${label} (mm)`}
                           aria-invalid={error ? true : undefined}
-                          value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                          value={field.value}
+                          onChange={field.onChange}
                           onBlur={field.onBlur}
                           ref={field.ref}
                         />
