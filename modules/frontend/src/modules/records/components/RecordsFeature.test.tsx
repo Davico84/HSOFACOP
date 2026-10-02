@@ -3,7 +3,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
-import { page, summary } from "../test/fixtures";
+import { page, recordResponse, summary } from "../test/fixtures";
 import { renderRecordRoutes } from "../test/renderRecordRoutes";
 
 /** Backend de listado: registra la búsqueda pedida y responde según ella. */
@@ -86,5 +86,37 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
     fail = false;
     await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     await waitFor(() => expect(screen.getByRole("row", { name: /AEO-001/ })).toBeInTheDocument());
+  });
+  it("la búsqueda y la página quedan en la URL", async () => {
+    mockList((q) => page([summary({ patientName: q ? "Ana QUÍSPE" : "Ana Quispe" })], 0, 3));
+    const { router } = renderRecordRoutes("/historias");
+    await screen.findByRole("row", { name: /AEO-001/ });
+
+    await userEvent.type(screen.getByRole("searchbox", { name: "Buscar historias" }), "quispe");
+    await screen.findByText("Ana QUÍSPE");
+    expect(router.state.location.search).toBe("?q=quispe");
+
+    await userEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?q=quispe&pagina=2"));
+  });
+
+  it("la vista previa se abre en la misma pestaña y 'Volver' regresa al listado con su búsqueda", async () => {
+    mockList((q) => page(q ? [summary({ patientName: "Ana QUÍSPE" })] : [summary()]));
+    server.use(http.get("*/api/orthodontic-records/:id", () => HttpResponse.json(recordResponse())));
+    const { router } = renderRecordRoutes("/historias?q=quispe");
+
+    const row = await screen.findByRole("row", { name: /AEO-001/ });
+    expect(screen.getByRole("searchbox", { name: "Buscar historias" })).toHaveValue("quispe");
+    const preview = within(row).getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" });
+    expect(preview).not.toHaveAttribute("target");
+
+    await userEvent.click(preview);
+    await screen.findAllByRole("article");
+    expect(router.state.location.pathname).toBe("/historias/10/imprimir");
+
+    await userEvent.click(screen.getByRole("link", { name: "Volver" }));
+    await screen.findByText("Ana QUÍSPE");
+    expect(router.state.location.search).toBe("?q=quispe");
+    expect(screen.getByRole("searchbox", { name: "Buscar historias" })).toHaveValue("quispe");
   });
 });

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { AxiosError } from "axios";
-import { Printer } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
 import { buttonVariants } from "@/modules/core/ui/button-variants";
 import { recordPath } from "@/routes/paths";
@@ -21,6 +21,8 @@ export function RecordPrintFeature() {
   const { id: param } = useParams();
   const id = param && /^\d+$/.test(param) ? Number(param) : null;
   const record = useRecord(id);
+  // De dónde se abrió la vista (listado con su búsqueda o paso del formulario); si no, la historia.
+  const returnTo = (useLocation().state as { returnTo?: string } | null)?.returnTo;
 
   // El papel es claro: se quita el tema oscuro mientras la vista está abierta.
   useEffect(() => {
@@ -51,8 +53,8 @@ export function RecordPrintFeature() {
       <style>{PAGE_CSS}</style>
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-6 py-3 print:hidden">
         <div className="flex items-center gap-3">
-          <Link to={recordPath(record.data.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
-            Volver a la historia
+          <Link to={returnTo ?? recordPath(record.data.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <ArrowLeft className="size-4" aria-hidden="true" /> Volver
           </Link>
           <p className="text-sm text-muted-foreground">
             Vista preliminar de la historia {record.data.recordNumber}: revisa las hojas y pulsa Imprimir.

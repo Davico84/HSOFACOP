@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Loader2, Plus, Search } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
 import { buttonVariants } from "@/modules/core/ui/button-variants";
@@ -13,17 +13,49 @@ import { RecordsTable } from "./RecordsTable";
 import { RecordsPagination } from "./RecordsPagination";
 import { RecordsEmptyState } from "./RecordsEmptyState";
 
-/** Historias clínicas: búsqueda, listado paginado y acceso a crear, abrir e imprimir. */
+/**
+ * Historias clínicas: búsqueda, listado paginado y acceso a crear, abrir e imprimir. La búsqueda y
+ * la página viven en la URL (`?q=…&pagina=N`): volver de la vista previa o recargar las conserva.
+ */
 export function RecordsFeature() {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const query = useDebouncedValue(search, 300);
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") ?? "";
+  const page = Math.max(0, (Number(params.get("pagina")) || 1) - 1);
+  const [search, setSearch] = useState(query);
+  const debounced = useDebouncedValue(search, 300);
   const records = useRecords(query, page);
   const isAdmin = useSessionStore((s) => s.user?.role === "ADMIN");
 
-  const onSearch = (value: string) => {
-    setSearch(value);
-    setPage(0);
+  // Lo escrito pasa a la URL al dejar de teclear (y vuelve a la página 1).
+  useEffect(() => {
+    // Solo un término ya asentado (si aún se escribe o se acaba de limpiar, no se pisa la URL).
+    if (debounced !== search || debounced.trim() === query.trim()) return;
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (debounced.trim()) next.set("q", debounced.trim());
+        else next.delete("q");
+        next.delete("pagina");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [debounced, search, query, setParams]);
+
+  const setPage = (next: number | ((current: number) => number)) => {
+    const value = typeof next === "function" ? next(page) : next;
+    setParams((prev) => {
+      const out = new URLSearchParams(prev);
+      if (value > 0) out.set("pagina", String(value + 1));
+      else out.delete("pagina");
+      return out;
+    });
+  };
+
+  const onSearch = (value: string) => setSearch(value);
+  const clearSearch = () => {
+    setSearch("");
+    setParams({}, { replace: true });
   };
 
   let content;
@@ -46,7 +78,7 @@ export function RecordsFeature() {
     content = (
       <RecordsEmptyState
         searching={query.trim() !== ""}
-        onClear={() => onSearch("")}
+        onClear={clearSearch}
         onBack={page > 0 ? () => setPage((p) => p - 1) : undefined}
       />
     );
