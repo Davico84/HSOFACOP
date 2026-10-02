@@ -10,9 +10,7 @@ import { RecordLoading } from "../RecordLoading";
 import { RecordLoadError } from "../RecordLoadError";
 import { RecordNotFound } from "../RecordNotFound";
 import { RecordPrintDocument } from "./RecordPrintDocument";
-
-/** A4 con márgenes de 15 mm; sin colores de fondo (impresora en blanco y negro). */
-const PAGE_CSS = "@page { size: A4; margin: 15mm; }";
+import { PAGE_CSS } from "./printStyle";
 
 /**
  * Vista de impresión de una historia (fuera del shell): la carga, fuerza el tema claro mientras

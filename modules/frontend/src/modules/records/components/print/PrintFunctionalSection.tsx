@@ -50,7 +50,7 @@ export function PrintFunctionalSection({ record }: PrintFunctionalSectionProps) 
       <PrintChoice label="Frenillo lingual:" options={frenulumOptions} value={f.lingualFrenulum} suffix={HEART_TEST_NOTE} />
       <PrintChoice label="¿El paciente ronca durante el sueño?" options={yesNoOptions} value={f.snoring} />
       <p>¿Paciente con síntomas de bruxismo?</p>
-      <div className="flex flex-col pl-6">
+      <div className="flex flex-col pl-[8mm]">
         {bruxismOptions.map((o) => (
           <p key={o.value} className="flex items-end gap-1">
             <span>{f.bruxism === o.value ? "☒" : "☐"} {o.label}</span>

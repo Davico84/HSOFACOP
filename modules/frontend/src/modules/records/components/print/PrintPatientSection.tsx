@@ -5,6 +5,7 @@ import { PrintChoice } from "./PrintChoice";
 import { PrintField } from "./PrintField";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
+import { PrintTitle } from "./PrintTitle";
 
 interface PrintPatientSectionProps {
   record: RecordResponse;
@@ -18,7 +19,7 @@ export function PrintPatientSection({ record }: PrintPatientSectionProps) {
   return (
     <PrintPage recordNumber={record.recordNumber} first>
       <div className="flex"><PrintField label="ODONTÓLOGO TRATANTE:" value={record.treatingDentist} /></div>
-      <h2 className="mt-3 text-sm font-bold">ANAMNESIS</h2>
+      <PrintTitle>ANAMNESIS</PrintTitle>
       <div className="flex gap-4">
         <PrintField label="PACIENTE" value={record.patientName} grow={3} />
         <PrintField label="Edad:" value={formatAge(record.ageYears)} />

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Printer, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/modules/core/ui/button";
 import type { RecordResponse } from "@/modules/core/services/generated/model";
@@ -121,10 +121,16 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
             </h1>
             <p className="text-muted-foreground">
               {record ? record.patientName : "Completa al menos el nombre del paciente para crearla."}
-              {record && dirty ? " · Cambios sin guardar" : ""}
+              {record && dirty ? " · Cambios sin guardar (guarda para imprimir)" : ""}
             </p>
           </div>
           {record && !dirty ? <RecordPrintLink id={record.id} recordNumber={record.recordNumber} /> : null}
+          {record && dirty ? (
+            <Button type="button" variant="outline" size="sm" disabled aria-describedby="print-needs-save">
+              <Printer className="size-4" aria-hidden="true" /> Imprimir
+              <span id="print-needs-save" className="sr-only">Guarda los cambios para imprimir</span>
+            </Button>
+          ) : null}
         </header>
 
         {stale ? (

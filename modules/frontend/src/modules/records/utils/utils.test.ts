@@ -51,9 +51,11 @@ describe("orthodontic-records — presentación", () => {
 });
 
 describe("orthodontic-records — conversión del formulario", () => {
-  it("los null del servidor no llegan al formulario y lo vacío no se envía", () => {
+  it("todos los campos existen desde el inicio (vacíos) y lo vacío no se envía", () => {
     const values = toFormValues(recordResponse({ address: "Av. Ejército 512" }));
-    expect(values.birthPlace).toBeUndefined();
+    expect(values.birthPlace).toBe("");
+    expect(values.content.facial.facialType).toBeNull();
+    expect(values.content.diagnosis.problemList).toEqual([]);
     const request = toUpdateRequest({ ...values, phone: "" }, 3);
     expect(request.version).toBe(3);
     expect(request.address).toBe("Av. Ejército 512");

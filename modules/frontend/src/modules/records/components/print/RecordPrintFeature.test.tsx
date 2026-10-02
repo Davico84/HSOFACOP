@@ -51,7 +51,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     serve(withContent({ facial: { facialType: "MESOFACIAL" } }));
     renderRecordRoutes("/historias/10/imprimir");
 
-    const line = (await screen.findByText("1. TIPO FACIAL:")).closest("p")!;
+    const line = (await screen.findByText("1. TIPO FACIAL:")).parentElement!;
     expect(line.textContent?.replace(/\(.*?\)\s*/g, "")).toMatch(/☒\s*Mesofacial\s*☐\s*Dolicofacial\s*☐\s*Braquifacial/);
   });
 

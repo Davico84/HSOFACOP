@@ -8,6 +8,7 @@ import { PrintChoice } from "./PrintChoice";
 import { PrintField } from "./PrintField";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
+import { PrintTitle } from "./PrintTitle";
 
 interface PrintOcclusalSectionProps {
   record: RecordResponse;
@@ -36,11 +37,11 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
   ];
   return (
     <PrintPage recordNumber={record.recordNumber} title="Análisis oclusal">
-      <p className="font-bold italic">TRANSVERSAL</p>
+      <PrintTitle sub>TRANSVERSAL</PrintTitle>
       <PrintChoice options={transverseOptions} value={o.transverse}
         suffix={o.crossbiteSide ? `(lado: ${labelOf(sideOptions, o.crossbiteSide)})` : undefined} />
       <PrintChoice label="Característica de la mordida cruzada:" options={crossbiteTypeOptions} value={o.crossbiteType} />
-      <p className="mt-1 font-bold italic">VERTICAL</p>
+      <PrintTitle sub>VERTICAL</PrintTitle>
       <div className="flex flex-wrap items-end gap-x-4">
         <PrintChoice options={verticalOptions.slice(0, 2)} value={o.vertical} />
         <span className="flex items-end gap-1">
@@ -54,7 +55,7 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
         <PrintChoice label="CURVA DE SPEE:" options={speeOptions} value={o.speeCurve} />
         <PrintField label="" value={o.speeCurveDetail} grow={3} />
       </div>
-      <p className="mt-1 font-bold italic">ANTEROPOSTERIOR</p>
+      <PrintTitle sub>ANTEROPOSTERIOR</PrintTitle>
       <p>{o.anteroposteriorNormal ? "☒" : "☐"} Normal</p>
       <div className="flex flex-wrap gap-x-4">
         <PrintField label="Overjet aumentado (mm)" value={numberText(o.overjetMm)} />
@@ -63,7 +64,7 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
       <div className="flex">
         <PrintField label="Línea media" value={`${midline("superior", o.midlineUpper)} · ${midline("inferior", o.midlineLower)}`} />
       </div>
-      <table className="mt-1 w-full">
+      <table className="mt-[7pt] w-full">
         <thead>
           <tr>
             <th />
@@ -81,7 +82,7 @@ export function PrintOcclusalSection({ record }: PrintOcclusalSectionProps) {
           ))}
         </tbody>
       </table>
-      <h2 className="mt-3 text-sm font-bold">EXTRA</h2>
+      <PrintTitle>EXTRA</PrintTitle>
       <PrintLines label="Anomalías Dentales (forma/color/número)." value={o.dentalAnomalies} lines={1} />
       <PrintLines label="Condición de la ATM" value={o.tmjCondition} lines={1} />
       <div className="flex flex-wrap items-end gap-x-4">

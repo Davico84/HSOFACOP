@@ -5,6 +5,7 @@ import type {
   UpdateRecordRequest,
 } from "@/modules/core/services/generated/model";
 import type { RecordFormValues } from "../schemas/record";
+import { completeValues } from "../schemas/recordDefaults";
 
 /** Contenido vacío (todas las secciones presentes), como lo devuelve el backend para una historia nueva. */
 export function emptyContent(): RecordContent {
@@ -21,16 +22,13 @@ export function emptyContent(): RecordContent {
 
 /** Valores iniciales de una historia nueva; el tratante se propone con el nombre del usuario. */
 export function emptyRecordValues(treatingDentist?: string): RecordFormValues {
-  return {
-    treatingDentist: treatingDentist ?? "",
-    patientName: "",
-    content: emptyContent(),
-  } as RecordFormValues;
+  return completeValues({ treatingDentist: treatingDentist ?? "", patientName: "", content: emptyContent() });
 }
 
 /**
- * Respuesta del servidor → valores del formulario. Los `null` del JSON pasan a `undefined`
- * (el formulario los trata como vacío) y se quitan los campos que no se editan.
+ * Respuesta del servidor → valores del formulario, con TODOS los campos presentes (los `null`
+ * del JSON pasan a su valor vacío) y sin los campos que no se editan. Valores iniciales
+ * completos: montar un paso no cuenta como cambio.
  */
 export function toFormValues(record: RecordResponse): RecordFormValues {
   const clean = withoutNulls(record) as RecordResponse;
@@ -47,7 +45,7 @@ export function toFormValues(record: RecordResponse): RecordFormValues {
     treatmentStartDate: clean.treatmentStartDate,
     content: clean.content,
   };
-  return values as RecordFormValues;
+  return completeValues(values);
 }
 
 /** Valores del formulario → cuerpo del POST (sin vacíos: el servidor los trata como nulos). */

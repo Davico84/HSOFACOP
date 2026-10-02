@@ -14,7 +14,7 @@ interface RecordPrintDocumentProps {
 /** La historia completa en hojas A4, en el orden y con los títulos del PDF (fase 1). */
 export function RecordPrintDocument({ record }: RecordPrintDocumentProps) {
   return (
-    <div className="mx-auto flex max-w-[210mm] flex-col gap-8 bg-background p-[15mm] text-[10.5pt] leading-snug text-foreground print:max-w-none print:gap-0 print:p-0">
+    <div className="flex flex-col gap-8 py-8 font-[Arial,Helvetica,sans-serif] text-[10pt] leading-[17.3pt] text-foreground print:gap-0 print:py-0">
       <PrintPatientSection record={record} />
       <PrintFacialSection record={record} />
       <PrintFunctionalSection record={record} />

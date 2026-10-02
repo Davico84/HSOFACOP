@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
@@ -28,12 +29,15 @@ export function renderRecordRoutes(initialPath: string, role: Role = "USER") {
     ],
     { initialEntries: [initialPath] },
   );
+  // StrictMode como en main.tsx (doble montaje en desarrollo).
   const view = render(
+    <StrictMode>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={0}>
         <RouterProvider router={router} />
       </TooltipProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
+    </StrictMode>,
   );
   return { ...view, router };
 }

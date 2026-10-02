@@ -2,6 +2,7 @@ import type { RecordResponse } from "@/modules/core/services/generated/model";
 import { PrintLines } from "./PrintLines";
 import { PrintNumberedList } from "./PrintNumberedList";
 import { PrintPage } from "./PrintPage";
+import { PrintTitle } from "./PrintTitle";
 
 interface PrintDiagnosisSectionProps {
   record: RecordResponse;
@@ -20,9 +21,9 @@ export function PrintDiagnosisSection({ record }: PrintDiagnosisSectionProps) {
       <PrintPage recordNumber={record.recordNumber} title="Planes de tratamiento">
         <PrintLines label="Plan 1" value={d.treatmentPlan1} lines={8} />
         <PrintLines label="Plan 2" value={d.treatmentPlan2} lines={8} />
-        <h2 className="mt-2 text-sm font-bold">SECUENCIA DE TRATAMIENTO</h2>
+        <PrintTitle>SECUENCIA DE TRATAMIENTO</PrintTitle>
         <PrintLines value={d.treatmentSequence} lines={8} />
-        <h2 className="mt-2 text-sm font-bold">POSIBLES PRÓXIMAS ETAPAS</h2>
+        <PrintTitle>POSIBLES PRÓXIMAS ETAPAS</PrintTitle>
         <PrintLines value={d.nextStages} lines={3} />
       </PrintPage>
     </>
