@@ -65,6 +65,7 @@
 - [x] 6b.8 Hoja 1: los datos del paciente (PACIENTE a Celular) conservan su línea como en el PDF; edad, fechas, documento y celular centrados sobre la línea
 - [x] 6b.9 Firmas alineadas: "Firma" y su línea en una columna fija igual en todas las filas (`PrintSignatureRow`)
 - [x] 6b.10 Listado: botón "Editar" (abre el formulario en el paso 1) junto a "Vista previa"
+- [x] 6b.11 Firmas con línea 20 % más corta (41 mm); nombres largos: la etiqueta va con el primer renglón y el nombre continúa debajo; los datos cortos no se parten
 
 ## 7. Docs y cierre
 
