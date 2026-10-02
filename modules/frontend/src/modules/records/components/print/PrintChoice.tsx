@@ -12,10 +12,12 @@ interface PrintChoiceProps {
   suffix?: ReactNode;
   /** Etiqueta en su propio renglón y opciones debajo, como en las preguntas numeradas del PDF. */
   stacked?: boolean;
+  /** Etiqueta y debajo una opción por renglón (p. ej. "Presenta" / "No presenta"). */
+  vertical?: boolean;
 }
 
 /** Todas las opciones, con la elegida marcada: "☒ Mesofacial ☐ Dolicofacial ☐ Braquifacial". */
-export function PrintChoice({ label, options, value, suffix, stacked = false }: PrintChoiceProps) {
+export function PrintChoice({ label, options, value, suffix, stacked = false, vertical = false }: PrintChoiceProps) {
   const selected = Array.isArray(value) ? value : value ? [value] : [];
   const items = (
     <>
@@ -29,6 +31,20 @@ export function PrintChoice({ label, options, value, suffix, stacked = false }: 
       {suffix ? <span>{suffix}</span> : null}
     </>
   );
+  if (vertical) {
+    return (
+      <div className={ROW_LEADING}>
+        {label ? <p>{label}</p> : null}
+        {options.map((o) => (
+          <p key={o.value}>
+            <span aria-hidden="true">{selected.includes(o.value) ? "☒" : "☐"}</span>{" "}
+            <span className="sr-only">{selected.includes(o.value) ? "(marcado) " : "(sin marcar) "}</span>
+            {o.label}
+          </p>
+        ))}
+      </div>
+    );
+  }
   if (stacked) {
     return (
       <div className={ROW_LEADING}>

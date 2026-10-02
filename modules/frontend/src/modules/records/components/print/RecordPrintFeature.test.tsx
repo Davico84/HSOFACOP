@@ -55,6 +55,16 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(line.textContent?.replace(/\(.*?\)\s*/g, "")).toMatch(/☒\s*Mesofacial\s*☐\s*Dolicofacial\s*☐\s*Braquifacial/);
   });
 
+  it("tercios y simetrías: Presenta / No presenta en vertical y su texto debajo", async () => {
+    serve(withContent({ facial: { facialThirds: "ABSENT", facialThirdsNotes: "Tercio inferior aumentado", restSymmetry: "PRESENT" } }));
+    renderRecordRoutes("/historias/10/imprimir");
+
+    const block = (await screen.findByText("3. PROPORCIÓN DE LOS TERCIOS FACIALES:")).parentElement!;
+    const rows = Array.from(block.querySelectorAll("p")).map((p) => p.textContent?.replace(/\(.*?\)\s*/g, ""));
+    expect(rows).toEqual(["3. PROPORCIÓN DE LOS TERCIOS FACIALES:", "☐ Presenta", "☒ No presenta"]);
+    expect(screen.getByText("Tercio inferior aumentado")).toBeInTheDocument();
+  });
+
   it("una historia a medio llenar no imprime 'null' ni 'undefined'", async () => {
     serve(recordResponse());
     const { container } = renderRecordRoutes("/historias/10/imprimir");

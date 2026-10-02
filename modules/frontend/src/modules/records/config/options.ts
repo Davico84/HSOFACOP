@@ -8,8 +8,6 @@ import {
   FacialAnalysisChinNeckLine,
   FacialAnalysisConvexity,
   FacialAnalysisFacialPattern,
-  FacialAnalysisFacialThirds,
-  FacialAnalysisFacialThirdsAffectedItem,
   FacialAnalysisFacialType,
   FacialAnalysisLipAnteroposteriorRelation,
   FacialAnalysisLipSeal,
@@ -18,7 +16,6 @@ import {
   FacialAnalysisPatternIIAfai,
   FacialAnalysisPatternIIFeaturesItem,
   FacialAnalysisPatternIIIFeaturesItem,
-  FacialAnalysisRestAsymmetrySidesItem,
   FacialAnalysisZygomaticProjection,
   FunctionalAnalysisBreathing,
   FunctionalAnalysisBruxism,
@@ -26,6 +23,7 @@ import {
   FunctionalAnalysisLipClosure,
   FunctionalAnalysisSuckingHabitTypesItem,
   FunctionalAnalysisSwallowing,
+  FunctionalAnalysisTongueLateralSidesItem,
   FunctionalAnalysisTongueActivity,
   FunctionalAnalysisUpperLip,
   MidlinePosition,
@@ -89,7 +87,7 @@ export const sexOptions = choices(CreateRecordRequestPatientSex, { FEMALE: "Feme
 
 export const yesNoOptions = choices(AnamnesisOralHygiene, { YES: "Sí", NO: "No" });
 export const presenceOptions = choices(FacialAnalysisLipSeal, { PRESENT: "Presenta", ABSENT: "No presenta" });
-export const sideOptions = choices(FacialAnalysisRestAsymmetrySidesItem, { RIGHT: "Derecho", LEFT: "Izquierdo" });
+export const sideOptions = choices(FunctionalAnalysisTongueLateralSidesItem, { RIGHT: "Derecho", LEFT: "Izquierdo" });
 export const muscleOptions = choices(FunctionalAnalysisUpperLip, {
   NORMAL: "Normal", HYPOACTIVE: "Hipoactivo", HYPERACTIVE: "Hiperactivo",
 });
@@ -112,12 +110,6 @@ export const facialTypeOptions = choices(FacialAnalysisFacialType,
 export const convexityOptions = choices(FacialAnalysisConvexity,
   { STRAIGHT: "Recto", CONVEX: "Convexo", CONCAVE: "Cóncavo" },
   { STRAIGHT: convexidadRecto, CONVEX: convexidadConvexo, CONCAVE: convexidadConcavo });
-export const facialThirdsOptions = choices(FacialAnalysisFacialThirds, {
-  PRESENT: "Presenta", ABSENT_INCREASED: "No presenta, tercio aumentado", ABSENT_DECREASED: "No presenta, tercio disminuido",
-});
-export const facialThirdOptions = choices(FacialAnalysisFacialThirdsAffectedItem, {
-  UPPER: "Superior", MIDDLE: "Medio", LOWER: "Inferior",
-});
 export const lipRelationOptions = choices(FacialAnalysisLipAnteroposteriorRelation,
   { UPPER_AHEAD: "Labio superior adelante del inferior", SAME_LINE: "Superior e inferior en la misma línea", LOWER_AHEAD: "Labio inferior adelante del superior" },
   { UPPER_AHEAD: labiosSuperior, SAME_LINE: labiosMisma, LOWER_AHEAD: labiosInferior });
@@ -142,11 +134,11 @@ export const patternIIIFeatureOptions = choices(FacialAnalysisPatternIIIFeatures
 export const facialHints = {
   facialType: "Horizontal en la mayor anchura cigomática; vertical por el punto más inferior del mentón y el punto medio entre las cejas.",
   convexity: "Ángulo glabela–subnasal–pogonion. Normal: 140,2° ± 4,9° (masculino) · 138,9° ± 6,2° (femenino).",
-  facialThirds: "Relación tercio medio / inferior (glabela–subnasal y subnasal–mentoniano blando): 1 ± 0,08.",
+  facialThirds: "Relación tercio medio / inferior (glabela–subnasal y subnasal–mentoniano blando): 1 ± 0,08. Si no presenta, describir qué tercio está aumentado o disminuido.",
   lipSeal: "Con labios relajados hay 1 a 3 mm entre el borde inferior del labio superior y el superior del inferior.",
   lipRelation: "Línea Sn–Pg'. Labio superior adelante: 3,5 ± 1,4 mm · labio inferior adelante: 2,2 ± 1,6 mm.",
-  restSymmetry: "Equilibrio horizontal y vertical entre ambos lados respecto a la línea vertical verdadera. Indicar el lado asimétrico.",
-  openingSymmetry: "Las estructuras laterales deben seguir proporcionales al abrir la boca. Indicar el lado asimétrico.",
+  restSymmetry: "Equilibrio horizontal y vertical entre ambos lados respecto a la línea vertical verdadera. Si no presenta, indicar el lado asimétrico en el texto.",
+  openingSymmetry: "Las estructuras laterales deben seguir proporcionales al abrir la boca. Si no presenta, indicar el lado asimétrico en el texto.",
   nasolabial: "Base de la nariz – labio superior. Normal: 111,9° ± 8,4° (femenino) · 111,4° ± 11,7° (masculino).",
   mentolabial: "Labio inferior – proyección anterior del mentón. Normal: 124° ± 10°.",
   zygomatic: "Examen frontal y de perfil: depresión infraorbitaria. Deficiente en hipoplasia maxilar, aumentada en protrusión maxilar.",
