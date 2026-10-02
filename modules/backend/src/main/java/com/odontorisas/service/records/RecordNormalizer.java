@@ -3,6 +3,7 @@ package com.odontorisas.service.records;
 import com.odontorisas.common.PatientSex;
 import com.odontorisas.service.records.content.Anamnesis;
 import com.odontorisas.service.records.content.AngleRelation;
+import com.odontorisas.service.records.content.AvailableSpace;
 import com.odontorisas.service.records.content.Diagnosis;
 import com.odontorisas.service.records.content.FacialAnalysis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
@@ -11,8 +12,10 @@ import com.odontorisas.service.records.content.FunctionalAnalysis;
 import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
 import com.odontorisas.service.records.content.FunctionalAnalysis.TongueActivity;
+import com.odontorisas.service.records.content.LowerIncisors;
 import com.odontorisas.service.records.content.Midline;
 import com.odontorisas.service.records.content.ModelAnalysis;
+import com.odontorisas.service.records.content.MoyersAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
@@ -167,11 +170,18 @@ public final class RecordNormalizer {
 
     static ModelAnalysis models(ModelAnalysis m) {
         TransversalAnalysis t = m.transversal() != null ? m.transversal() : TransversalAnalysis.empty();
-        return new ModelAnalysis(new TransversalAnalysis(
-            t.intercanineUpper(), t.intercanineLower(), t.intermolarUpper(), t.intermolarLower(),
-            t.walaWidth(), t.xPcWidth(), t.xPrimePcWidth(), t.xIdealWidth(),
-            t.walaToEv() != null ? t.walaToEv() : WalaToEv.empty(),
-            text(t.interpretation())));
+        MoyersAnalysis y = m.moyers() != null ? m.moyers() : MoyersAnalysis.empty();
+        return new ModelAnalysis(
+            new TransversalAnalysis(
+                t.intercanineUpper(), t.intercanineLower(), t.intermolarUpper(), t.intermolarLower(),
+                t.walaWidth(), t.xPcWidth(), t.xPrimePcWidth(), t.xIdealWidth(),
+                t.walaToEv() != null ? t.walaToEv() : WalaToEv.empty(),
+                text(t.interpretation())),
+            new MoyersAnalysis(
+                y.analysisDate(),
+                y.lowerIncisors() != null ? y.lowerIncisors() : LowerIncisors.empty(),
+                y.availableSpace() != null ? y.availableSpace() : AvailableSpace.empty(),
+                text(y.interpretation())));
     }
 
     static RadiographicAnalysis radiographic(RadiographicAnalysis r) {

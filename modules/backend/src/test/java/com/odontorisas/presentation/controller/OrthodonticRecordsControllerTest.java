@@ -205,6 +205,20 @@ class OrthodonticRecordsControllerTest {
             .andExpect(jsonPath("$.errors[0].field").value("content.models.transversal.walaToEv.firstMolar"));
         create("{\"patientName\":\"A\",\"content\":{\"models\":{\"transversal\":{\"intercanineLower\":-1}}}}")
             .andExpect(status().isBadRequest());
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"lowerIncisors\":{\"tooth31\":5.45}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.moyers.lowerIncisors.tooth31"));
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"availableSpace\":{\"maxillaLeft\":100}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.moyers.availableSpace.maxillaLeft"));
+    }
+
+    @Test
+    void moyers_date_in_the_future_is_400() throws Exception {
+        String tomorrow = java.time.LocalDate.now().plusDays(1).toString();
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"analysisDate\":\"" + tomorrow + "\"}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.moyers.analysisDate"));
     }
 
     @Test

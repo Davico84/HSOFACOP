@@ -24,8 +24,9 @@ public record RecordContent(
     /**
      * 2: tercios y simetrías faciales pasan a presenta/no presenta + texto (migración V9).
      * 3: sección {@code models} (análisis de modelos); sin migración, llega vacía.
+     * 4: subsección {@code models.moyers}; sin migración, llega vacía.
      */
-    public static final int CURRENT_SCHEMA_VERSION = 3;
+    public static final int CURRENT_SCHEMA_VERSION = 4;
 
     public static RecordContent empty() {
         return new RecordContent(CURRENT_SCHEMA_VERSION, Anamnesis.empty(), FacialAnalysis.empty(),

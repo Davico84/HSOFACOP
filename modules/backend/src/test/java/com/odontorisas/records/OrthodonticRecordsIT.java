@@ -305,7 +305,40 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(3);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(4);
+    }
+
+    @Test
+    void moyers_analysis_is_saved_with_a_date_before_treatment_and_a_record_without_it_still_opens() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana").get("id").asLong();
+
+        // Historia guardada antes del análisis de Moyers (schemaVersion 3, sin "moyers").
+        jdbc.update("UPDATE orthodontic_records SET content = jsonb_set(content #- '{models,moyers}', '{schemaVersion}', '3') WHERE id = ?", id);
+        JsonNode old = read(getRecord(torres, id));
+        JsonNode emptyMoyers = old.get("content").get("models").get("moyers");
+        assertThat(emptyMoyers.get("lowerIncisors").isObject()).isTrue();
+        assertThat(emptyMoyers.get("availableSpace").isObject()).isTrue();
+
+        ObjectNode body = json.createObjectNode();
+        body.put("version", old.get("version").asLong());
+        body.put("patientName", "Ana");
+        body.put("treatmentStartDate", "2026-09-15");
+        ObjectNode moyers = body.putObject("content").putObject("models").putObject("moyers");
+        moyers.put("analysisDate", "2026-09-01").put("interpretation", " Discrepancia negativa ");
+        moyers.putObject("lowerIncisors").put("tooth42", 6.0).put("tooth41", 5.5).put("tooth31", 5.4).put("tooth32", 6.1);
+        moyers.putObject("availableSpace").put("mandibleRight", 21.0).put("maxillaLeft", 22.6);
+
+        JsonNode saved = read(save(torres, id, json.writeValueAsString(body)));
+
+        JsonNode y = saved.get("content").get("models").get("moyers");
+        assertThat(y.get("analysisDate").stringValue()).isEqualTo("2026-09-01");
+        assertThat(y.get("lowerIncisors").get("tooth32").decimalValue()).isEqualByComparingTo("6.1");
+        assertThat(y.get("availableSpace").get("mandibleRight").decimalValue()).isEqualByComparingTo("21.0");
+        assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(4);
+        assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
+            String.class, id)).isEqualTo("2026-09-01");
     }
 
     @Test

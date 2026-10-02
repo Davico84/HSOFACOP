@@ -15,7 +15,10 @@ import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
 import com.odontorisas.service.records.content.FunctionalAnalysis.TongueActivity;
 import com.odontorisas.service.records.content.Midline;
+import com.odontorisas.service.records.content.AvailableSpace;
+import com.odontorisas.service.records.content.LowerIncisors;
 import com.odontorisas.service.records.content.ModelAnalysis;
+import com.odontorisas.service.records.content.MoyersAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
@@ -33,6 +36,7 @@ import com.odontorisas.service.records.content.YesNo;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -245,15 +249,30 @@ class RecordNormalizerTest {
         RecordContent out = RecordNormalizer.content(withoutModels, null, null);
         assertThat(out.models().transversal()).isNotNull();
         assertThat(out.models().transversal().walaToEv()).isNotNull();
-        assertThat(out.schemaVersion()).isEqualTo(3);
+        assertThat(out.models().moyers()).isEqualTo(MoyersAnalysis.empty());
+        assertThat(out.schemaVersion()).isEqualTo(4);
 
         TransversalAnalysis t = new TransversalAnalysis(new BigDecimal("34.5"), null, new BigDecimal("50.1"), null,
             null, null, null, new BigDecimal("50.0"), null, "  Compresión maxilar leve ");
-        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t)).transversal();
+        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t, null)).transversal();
         assertThat(kept.intermolarUpper()).isEqualByComparingTo("50.1");
         assertThat(kept.xIdealWidth()).isEqualByComparingTo("50.0");
         assertThat(kept.walaToEv()).isEqualTo(WalaToEv.empty());
         assertThat(kept.interpretation()).isEqualTo("Compresión maxilar leve");
+    }
+
+    @Test
+    void moyers_subsection_is_filled_when_missing_and_its_parts_kept() {
+        ModelAnalysis withoutMoyers = new ModelAnalysis(TransversalAnalysis.empty(), null);
+        assertThat(RecordNormalizer.models(withoutMoyers).moyers()).isEqualTo(MoyersAnalysis.empty());
+
+        LowerIncisors incisors = new LowerIncisors(new BigDecimal("6.0"), new BigDecimal("5.5"), null, null);
+        MoyersAnalysis y = new MoyersAnalysis(LocalDate.of(2026, 9, 1), incisors, null, "  Discrepancia negativa ");
+        MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y)).moyers();
+        assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
+        assertThat(kept.lowerIncisors()).isEqualTo(incisors);
+        assertThat(kept.availableSpace()).isEqualTo(AvailableSpace.empty());
+        assertThat(kept.interpretation()).isEqualTo("Discrepancia negativa");
     }
 
     // --- Radiográfico, diagnóstico y firmas ---
