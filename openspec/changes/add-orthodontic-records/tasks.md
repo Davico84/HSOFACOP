@@ -63,6 +63,7 @@
 - [x] 6b.6 Impresión: preguntas y etiquetas en 11 pt para distinguirlas de las respuestas (10 pt)
 - [x] 6b.7 Vista previa en la misma pestaña con "Volver" al origen; búsqueda y página del listado en la URL
 - [x] 6b.8 Hoja 1: los datos del paciente (PACIENTE a Celular) conservan su línea como en el PDF; edad, fechas, documento y celular centrados sobre la línea
+- [x] 6b.9 Firmas alineadas: "Firma" y su línea en una columna fija igual en todas las filas (`PrintSignatureRow`)
 
 ## 7. Docs y cierre
 
