@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useFormContext, useWatch, type FieldValues, type Path } from "react-hook-form";
 import { Textarea } from "@/modules/core/ui/textarea";
 import { FormField } from "./FormField";
-import { fieldError, fieldId } from "./fieldError";
+import { describedBy, fieldError, fieldId } from "./fieldError";
 
 interface TextAreaFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -29,7 +29,7 @@ export function TextAreaField<T extends FieldValues>({ name, label, hint, maxLen
         rows={rows}
         placeholder={placeholder}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
+        aria-describedby={describedBy(id, hint, error)}
         {...register(name)}
       />
       {maxLength ? (

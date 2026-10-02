@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { FieldHint } from "@/modules/core/components/form/FieldHint";
 import { MeasureField } from "@/modules/core/components/form/MeasureField";
 import { TextAreaField } from "@/modules/core/components/form/TextAreaField";
 import { TextField } from "@/modules/core/components/form/TextField";
@@ -37,11 +38,13 @@ export function Step5Models() {
             <IntermolarField arch="upper" label="AMS: ancho molar superior" />
             <IntermolarField arch="lower" label="AMI: ancho molar inferior" />
           </div>
-          <ul className="border-l-2 border-primary/60 pl-3 text-xs text-muted-foreground">
-            {INTERMOLAR_NOTE.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
+          <FieldHint>
+            <ul>
+              {INTERMOLAR_NOTE.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </FieldHint>
           <div className="grid gap-4 sm:grid-cols-4">
             <MeasureField name="content.models.transversal.walaWidth" label="Ancho borde WALA" unit="mm" />
             <MeasureField name="content.models.transversal.xPcWidth" label="Ancho X Pc" unit="mm" />

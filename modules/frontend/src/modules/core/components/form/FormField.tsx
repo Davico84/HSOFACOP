@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import { Label } from "@/modules/core/ui/label";
 import { cn } from "@/modules/core/utils/cn";
+import { FieldHint } from "./FieldHint";
 
 interface FormFieldProps {
   /** id del control (para `htmlFor`); en grupos de opciones, el id del grupo. */
   id: string;
   label: ReactNode;
-  /** Texto de ayuda bajo la etiqueta (p. ej. un valor de referencia). */
+  /** Ayuda bajo la etiqueta (p. ej. un valor de referencia); el control la enlaza con `describedBy`. */
   hint?: ReactNode;
   error?: string;
   /** Grupo de opciones: la etiqueta no apunta a un único control. */
@@ -20,8 +21,6 @@ interface FormFieldProps {
  * schema (Zod) o del servidor, nunca se calcula aquí.
  */
 export function FormField({ id, label, hint, error, group, className, children }: FormFieldProps) {
-  const hintId = hint ? `${id}-hint` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {group ? (
@@ -33,14 +32,10 @@ export function FormField({ id, label, hint, error, group, className, children }
           {label}
         </Label>
       )}
-      {hint ? (
-        <p id={hintId} className="border-l-2 border-primary/60 pl-2 text-xs text-muted-foreground">
-          {hint}
-        </p>
-      ) : null}
+      {hint ? <FieldHint id={`${id}-hint`}>{hint}</FieldHint> : null}
       {children}
       {error ? (
-        <p id={errorId} role="alert" className="text-xs text-destructive">
+        <p id={`${id}-error`} role="alert" className="text-xs text-destructive">
           {error}
         </p>
       ) : null}

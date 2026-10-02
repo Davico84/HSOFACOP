@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { useFormContext, type FieldValues, type Path } from "react-hook-form";
 import { Input } from "@/modules/core/ui/input";
 import { FormField } from "./FormField";
-import { fieldError, fieldId } from "./fieldError";
+import { describedBy, fieldError, fieldId } from "./fieldError";
 
 interface TextFieldProps<T extends FieldValues> extends Omit<ComponentProps<"input">, "name"> {
   name: Path<T>;
@@ -20,7 +20,7 @@ export function TextField<T extends FieldValues>({ name, label, hint, className,
       <Input
         id={id}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
+        aria-describedby={describedBy(id, hint, error)}
         {...props}
         {...register(name)}
       />

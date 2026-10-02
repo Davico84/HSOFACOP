@@ -3,7 +3,7 @@ import { Controller, useFormContext, type FieldValues, type Path } from "react-h
 import { cn } from "@/modules/core/utils/cn";
 import { FormField } from "./FormField";
 import type { ChoiceOption } from "./choiceTypes";
-import { fieldError, fieldId } from "./fieldError";
+import { describedBy, fieldError, fieldId } from "./fieldError";
 
 interface ChoiceFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -42,6 +42,7 @@ export function ChoiceField<T extends FieldValues>({
             <div
               role="radiogroup"
               aria-labelledby={`${id}-label`}
+              aria-describedby={describedBy(id, hint, error)}
               aria-invalid={error ? true : undefined}
               className={cn(
                 withImages ? "grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2" : "flex flex-wrap gap-2",

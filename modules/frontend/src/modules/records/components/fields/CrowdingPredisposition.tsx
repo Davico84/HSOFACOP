@@ -1,3 +1,4 @@
+import { FieldHint } from "@/modules/core/components/form/FieldHint";
 import { TextField } from "@/modules/core/components/form/TextField";
 import { SHORT_TEXT } from "../../schemas/record";
 import { CROWDING_ROWS } from "../../config/moyers";
@@ -15,9 +16,9 @@ export function CrowdingPredisposition() {
           <TextField key={key} name={`content.models.moyers.${key}`} label={label} maxLength={SHORT_TEXT} />
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">
+      <FieldHint>
         Guíate por la diferencia de cada lado: positiva sobra espacio, cero es justo, negativa falta espacio.
-      </p>
+      </FieldHint>
     </fieldset>
   );
 }

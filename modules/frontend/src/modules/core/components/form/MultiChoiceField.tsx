@@ -3,7 +3,7 @@ import { Controller, useFormContext, type FieldValues, type Path } from "react-h
 import { cn } from "@/modules/core/utils/cn";
 import { FormField } from "./FormField";
 import type { ChoiceOption } from "./choiceTypes";
-import { fieldError, fieldId } from "./fieldError";
+import { describedBy, fieldError, fieldId } from "./fieldError";
 
 interface MultiChoiceFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -46,7 +46,7 @@ export function MultiChoiceField<T extends FieldValues>({
             field.onChange(options.map((o) => o.value).filter((v) => next.includes(v)));
           };
           return (
-            <div role="group" aria-labelledby={`${id}-label`} className="flex flex-wrap gap-2">
+            <div role="group" aria-labelledby={`${id}-label`} aria-describedby={describedBy(id, hint, error)} className="flex flex-wrap gap-2">
               {options.map((option) => {
                 const checked = selected.includes(option.value);
                 return (

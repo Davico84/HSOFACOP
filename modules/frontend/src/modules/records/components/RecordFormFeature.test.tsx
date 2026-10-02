@@ -356,6 +356,8 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     renderRecordRoutes("/historias/10?paso=5");
     await openMoyers();
 
+    // La ayuda del campo se ve y el lector de pantalla la anuncia con el campo.
+    expect(screen.getByLabelText("Fecha del análisis")).toHaveAccessibleDescription("Puede ser anterior al inicio del tratamiento.");
     await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2026-09-01");
     for (const [tooth, value] of [["42", "6"], ["41", "5.5"], ["31", "5.4"], ["32", "6.1"]]) {
       await userEvent.type(screen.getByLabelText(`Pieza ${tooth}`), value);
