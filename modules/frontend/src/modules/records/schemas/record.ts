@@ -201,6 +201,9 @@ const moyers = z.object({
   availableSpace: z
     .object({ mandibleRight: modelMm, mandibleLeft: modelMm, maxillaRight: modelMm, maxillaLeft: modelMm })
     .nullish(),
+  crowdingPositive: text(SHORT_TEXT),
+  crowdingNeutral: text(SHORT_TEXT),
+  crowdingNegative: text(SHORT_TEXT),
   interpretation: text(LONG_TEXT),
 });
 

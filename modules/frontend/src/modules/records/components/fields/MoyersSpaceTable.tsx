@@ -17,23 +17,25 @@ export function MoyersSpaceTable() {
     name: ["content.models.moyers.lowerIncisors", "content.models.moyers.availableSpace"],
   });
   const { sides } = moyersResult(incisors, available);
-  const cell = "px-2 py-1.5 text-right tabular-nums";
+  // Las cuatro columnas tienen el mismo ancho y todo va centrado: la entrada, el requerido y la
+  // diferencia de cada lado quedan uno debajo del otro (revisión del usuario).
+  const cell = "w-28 px-2 py-1.5 text-center tabular-nums";
 
   return (
     <fieldset className="flex flex-col gap-1.5">
       <legend className="mb-1.5 text-sm font-medium">Espacio disponible, requerido y diferencia (mm)</legend>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="border-collapse border border-border text-sm">
           <thead>
-            <tr className="text-xs text-muted-foreground">
+            <tr className="bg-muted text-xs text-muted-foreground">
               <td />
               <th scope="colgroup" colSpan={2} className="px-2 py-1 text-center font-medium">Mandíbula</th>
               <th scope="colgroup" colSpan={2} className="px-2 py-1 text-center font-medium">Maxilar</th>
             </tr>
-            <tr className="text-xs text-muted-foreground">
+            <tr className="bg-muted text-xs text-muted-foreground">
               <td />
               {MOYERS_SIDES.map(({ key, side, label }) => (
-                <th key={key} scope="col" className="px-2 py-1 text-right font-medium" aria-label={label}>
+                <th key={key} scope="col" className="w-28 px-2 py-1 text-center font-medium" aria-label={label}>
                   {side}
                 </th>
               ))}
@@ -41,12 +43,12 @@ export function MoyersSpaceTable() {
           </thead>
           <tbody>
             <tr className="border-t border-border">
-              <th scope="row" className="py-1.5 pr-3 text-left font-medium">Espacio disponible</th>
+              <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Espacio disponible</th>
               {MOYERS_SIDES.map(({ key, label }) => {
                 const name = `content.models.moyers.availableSpace.${key}` as const;
                 const error = fieldError(formState.errors, name);
                 return (
-                  <td key={key} className="px-2 py-1.5 text-right">
+                  <td key={key} className={cell}>
                     <Controller
                       control={control}
                       name={name}
@@ -55,7 +57,7 @@ export function MoyersSpaceTable() {
                           type="number"
                           inputMode="decimal"
                           step={0.1}
-                          className="ml-auto h-8 w-24"
+                          className="mx-auto h-8 w-24 text-center"
                           aria-label={`Espacio disponible, ${label} (mm)`}
                           aria-invalid={error ? true : undefined}
                           value={field.value ?? ""}
@@ -71,7 +73,7 @@ export function MoyersSpaceTable() {
               })}
             </tr>
             <tr className="border-t border-border">
-              <th scope="row" className="py-1.5 pr-3 text-left font-medium">Espacio requerido (Moyers 75 %)</th>
+              <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Espacio requerido (Moyers 75 %)</th>
               {sides.map(({ key, label, required }) => (
                 <td key={key} className={cell} aria-label={`Espacio requerido, ${label}`}>
                   {required === null ? "—" : formatMm(required)}
@@ -79,7 +81,7 @@ export function MoyersSpaceTable() {
               ))}
             </tr>
             <tr className="border-t border-border">
-              <th scope="row" className="py-1.5 pr-3 text-left font-medium">Diferencia</th>
+              <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Diferencia</th>
               {sides.map(({ key, label, difference }) => (
                 <td key={key} className={cell} aria-label={`Diferencia, ${label}`}>
                   {formatSigned(difference) || "—"}

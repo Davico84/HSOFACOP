@@ -26,20 +26,14 @@ describe("análisis de Moyers", () => {
     expect(requiredSpace(29.2)).toEqual({ mandible: 25.7, maxilla: 25.9 });
   });
 
-  it("diferencia disponible − requerido y predisposición de apiñamiento", () => {
+  it("diferencia disponible − requerido", () => {
     const r = moyersResult(incisors, { mandibleRight: 21.0, mandibleLeft: 22.6, maxillaRight: 23.5, maxillaLeft: 22.6 });
     expect(r.sides.map((s) => s.difference)).toEqual([-1.2, 0.4, 0.9, 0]);
-    expect(r.crowding).toEqual({
-      positive: ["Mandíbula izquierdo", "Maxilar derecho"],
-      neutral: ["Maxilar izquierdo"],
-      negative: ["Mandíbula derecho"],
-    });
   });
 
-  it("un lado sin espacio disponible no tiene diferencia ni predisposición", () => {
+  it("un lado sin espacio disponible no tiene diferencia", () => {
     const r = moyersResult(incisors, { mandibleRight: 21.0 });
     expect(r.sides[1]).toMatchObject({ available: null, required: 22.2, difference: null });
-    expect(r.crowding.negative).toEqual(["Mandíbula derecho"]);
-    expect(r.crowding.positive).toEqual([]);
+    expect(r.sides[0].difference).toBe(-1.2);
   });
 });

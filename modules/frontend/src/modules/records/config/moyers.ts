@@ -46,11 +46,11 @@ export const MOYERS_SIDES: readonly { key: keyof AvailableSpace; arch: MoyersArc
   { key: "maxillaLeft", arch: "maxilla", side: "Izquierdo", label: "Maxilar izquierdo" },
 ];
 
-/** Filas de la Tabla 2 del PDF ("Predisposición de apiñamiento dental"). */
+/** Filas de la Tabla 2 del PDF ("Predisposición de apiñamiento dental"); las escribe el odontólogo. */
 export const CROWDING_ROWS = [
-  { key: "positive", label: "Positivo" },
-  { key: "neutral", label: "Nulo" },
-  { key: "negative", label: "Negativo" },
+  { key: "crowdingPositive", label: "Positivo" },
+  { key: "crowdingNeutral", label: "Nulo" },
+  { key: "crowdingNegative", label: "Negativo" },
 ] as const;
 
 export const MOYERS_OUT_OF_RANGE = "Fuera de la tabla de Moyers (19,5–29,0 mm).";

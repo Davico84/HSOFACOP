@@ -148,12 +148,13 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(within(models).getByText("Compresión leve")).toBeInTheDocument();
   });
 
-  it("hoja de Moyers tras la del transversal, con requerido, diferencias y predisposición calculados", async () => {
+  it("hoja de Moyers tras la del transversal, con requerido y diferencias calculados y la predisposición escrita", async () => {
     serve(withContent(
       { models: { transversal: {}, moyers: {
         analysisDate: "2026-09-01",
         lowerIncisors: { tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 },
         availableSpace: { mandibleRight: 21.0, mandibleLeft: 22.6, maxillaRight: 23.5, maxillaLeft: 22.6 },
+        crowdingNegative: "Mandíbula derecho",
         interpretation: "Discrepancia negativa leve",
       } } },
       { ageYears: 13 },
@@ -167,11 +168,11 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(within(moyers).getByText("01/09/2026")).toBeInTheDocument();
     expect(within(moyers).getByLabelText("Pieza 42")).toHaveTextContent("6,0");
     expect(within(moyers).getByLabelText("Pieza 32")).toHaveTextContent("6,1");
-    expect(within(moyers).getByText("23,0")).toBeInTheDocument();
+    expect(within(moyers).getByLabelText("Suma de anteriores")).toHaveTextContent("23,0");
     const rows = within(moyers).getAllByRole("row").map((r) => r.textContent);
     expect(rows).toContain("Espacio requerido (Moyers 75 %)22,222,222,622,6");
     expect(rows).toContain("Diferencia−1,2+0,4+0,90,0");
-    expect(rows).toContain("PositivoMandíbula izquierdo · Maxilar derecho");
+    expect(rows).toContain("Positivo");
     expect(rows).toContain("NegativoMandíbula derecho");
     expect(within(moyers).getByText("Discrepancia negativa leve")).toBeInTheDocument();
   });

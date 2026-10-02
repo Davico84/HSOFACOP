@@ -1,5 +1,5 @@
 import type { AvailableSpace, LowerIncisors } from "@/modules/core/services/generated/model";
-import { CROWDING_ROWS, LOWER_INCISORS, MOYERS_75, MOYERS_SIDES, type MoyersArch } from "../config/moyers";
+import { LOWER_INCISORS, MOYERS_75, MOYERS_SIDES, type MoyersArch } from "../config/moyers";
 
 /** Milímetros con un decimal → décimas enteras (evita errores de coma flotante). */
 const tenths = (mm: number) => Math.round(mm * 10);
@@ -29,8 +29,6 @@ export function requiredSpace(sum: number | null): MoyersRequired | null {
   return row ? { maxilla: row.maxilla, mandible: row.mandible } : null;
 }
 
-export type Crowding = (typeof CROWDING_ROWS)[number]["key"];
-
 export interface MoyersSideResult {
   key: keyof AvailableSpace;
   label: string;
@@ -44,27 +42,21 @@ export interface MoyersResult {
   /** Hay suma pero queda fuera de 19,5–29,0 mm. */
   outOfRange: boolean;
   sides: MoyersSideResult[];
-  /** Arcada/lado agrupados por el signo de su diferencia (Tabla 2 del PDF). */
-  crowding: Record<Crowding, string[]>;
 }
 
-/** Suma, requerido, diferencia (disponible − requerido) y predisposición de apiñamiento. */
+/** Suma, requerido y diferencia (disponible − requerido); la predisposición la escribe el odontólogo. */
 export function moyersResult(
   incisors: Measures<LowerIncisors> | null | undefined,
   available: Measures<AvailableSpace> | null | undefined,
 ): MoyersResult {
   const sum = incisorSum(incisors);
   const required = requiredSpace(sum);
-  const crowding: Record<Crowding, string[]> = { positive: [], neutral: [], negative: [] };
   const sides = MOYERS_SIDES.map(({ key, arch, label }) => {
     const value = available?.[key];
     const space = present(value) ? value : null;
     const req = required ? required[arch] : null;
     const difference = space === null || req === null ? null : (tenths(space) - tenths(req)) / 10;
-    if (difference !== null) {
-      crowding[difference > 0 ? "positive" : difference < 0 ? "negative" : "neutral"].push(label);
-    }
     return { key, label, available: space, required: req, difference };
   });
-  return { sum, outOfRange: sum !== null && required === null, sides, crowding };
+  return { sum, outOfRange: sum !== null && required === null, sides };
 }

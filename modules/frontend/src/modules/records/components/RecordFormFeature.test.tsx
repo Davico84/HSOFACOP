@@ -338,7 +338,7 @@ describe("orthodontic-records — Análisis transversal de los modelos (paso 5)"
 });
 
 describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
-  it("calcula en vivo suma, requerido al 75 %, diferencias y predisposición, y lo guarda", async () => {
+  it("calcula en vivo suma, requerido al 75 % y diferencias; la predisposición la escribe el odontólogo", async () => {
     const { calls } = mockRecord({ treatmentStartDate: "2026-09-15" });
     renderRecordRoutes("/historias/10?paso=5");
     await screen.findByRole("heading", { level: 3, name: "Análisis de Moyers" });
@@ -355,10 +355,8 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     expect(screen.getByLabelText("Espacio requerido, Maxilar izquierdo")).toHaveTextContent("22,6");
     expect(screen.getByLabelText("Diferencia, Mandíbula derecho")).toHaveTextContent("−1,2");
     expect(screen.getByLabelText("Diferencia, Maxilar izquierdo")).toHaveTextContent("0,0");
-    const crowding = screen.getByRole("table", { name: "Predisposición de apiñamiento dental" });
-    expect(crowding).toHaveTextContent("PositivoMandíbula izquierdo · Maxilar derecho");
-    expect(crowding).toHaveTextContent("NuloMaxilar izquierdo");
-    expect(crowding).toHaveTextContent("NegativoMandíbula derecho");
+    expect(screen.getByLabelText("Negativo")).toHaveValue("");
+    await userEvent.type(screen.getByLabelText("Negativo"), "Mandíbula derecho");
 
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     await waitFor(() => expect(calls.put).toHaveLength(1));
@@ -366,6 +364,8 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     expect(y?.analysisDate).toBe("2026-09-01");
     expect(y?.lowerIncisors).toEqual({ tooth42: 6, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 });
     expect(y?.availableSpace?.mandibleRight).toBe(21);
+    expect(y?.crowdingNegative).toBe("Mandíbula derecho");
+    expect(y?.crowdingPositive).toBeUndefined();
   });
 
   it("una suma fuera de la tabla avisa y no calcula el requerido", async () => {
