@@ -16,15 +16,18 @@ interface PrintPageProps {
 /**
  * Hoja A4 de la historia impresa, con la composición del PDF: en la primera, logos grandes y
  * "HISTORIA CLÍNICA ORTODONCIA Nro." en 14 pt; en las demás, logos pequeños en la esquina
- * superior derecha (dentro del margen). En pantalla se ve como una hoja con sus márgenes; al
- * imprimir, los márgenes los pone `@page` y cada sección empieza en hoja nueva.
+ * superior derecha (dentro del margen). La hoja se ve igual en pantalla y en papel (la página
+ * impresa no tiene margen propio, ver `PAGE_CSS`); cada sección empieza en hoja nueva.
  */
 export function PrintPage({ recordNumber, title, first = false, children }: PrintPageProps) {
   return (
     <article
       className={cn(
-        "relative mx-auto w-[210mm] min-h-[297mm] bg-background pt-[20mm] pr-[24mm] pb-[20mm] pl-[25mm] shadow-md",
-        "print:w-auto print:min-h-0 print:p-0 print:shadow-none",
+        // Misma hoja en pantalla y en papel: 210 mm de ancho con los márgenes del PDF por dentro.
+        // Si un texto largo pasa a otra hoja, los márgenes se repiten en la continuación.
+        "relative mx-auto box-border w-[210mm] min-h-[296mm] bg-background pt-[20mm] pr-[24mm] pb-[20mm] pl-[25mm] shadow-md",
+        "[box-decoration-break:clone] [-webkit-box-decoration-break:clone]",
+        "print:m-0 print:shadow-none",
         !first && "print:break-before-page",
       )}
     >
@@ -40,7 +43,7 @@ export function PrintPage({ recordNumber, title, first = false, children }: Prin
           </p>
         </header>
       ) : (
-        <header className="absolute top-[2mm] right-[8mm] flex w-[19mm] flex-col items-center gap-[0.5mm] print:-top-[18mm] print:-right-[16mm]">
+        <header className="absolute top-[2mm] right-[8mm] flex w-[19mm] flex-col items-center gap-[0.5mm]">
           <img src={logoAeo} alt="AEO — Escuela de Post-grado Altos Estudios en Odontología" className="w-full" />
           <img src={logoFacop} alt="FACOP — Faculdade do Centro Oeste Paulista" className="w-[16mm]" />
           <span className="sr-only">HISTORIA CLÍNICA ORTODONCIA Nro. {recordNumber}</span>
