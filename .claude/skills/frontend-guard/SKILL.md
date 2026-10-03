@@ -1,6 +1,6 @@
 ---
 name: frontend-guard
-description: Checklist obligatorio ANTES de crear o modificar un componente, hook, schema o pantalla del frontend de Mi Proyecto (modules/frontend). Úsalo al añadir una pantalla, un componente, un formulario, una validación Zod o un hook de React Query. No lo uses para backend, OpenSpec ni docs.
+description: Checklist obligatorio ANTES de crear o modificar un componente, hook, schema o pantalla del frontend de HS FACOP (modules/frontend). Úsalo al añadir una pantalla, un componente, un formulario, una validación Zod o un hook de React Query. No lo uses para backend, OpenSpec ni docs.
 ---
 
 # Frontend Guard — comprueba antes de escribir

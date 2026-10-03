@@ -3,11 +3,11 @@ schema: spec-driven
 # Project context — shown to the AI when creating artifacts (proposals, specs, tasks).
 # Fuente de verdad ampliada: SETUP-OPENSPEC.md (flujo) y docs/architecture.md (stack).
 context: |
-  Proyecto: Mi Proyecto — desarrollo dirigido por especificaciones (spec-driven) con OpenSpec.
+  Proyecto: HS FACOP — desarrollo dirigido por especificaciones (spec-driven) con OpenSpec.
   Guías: SETUP-OPENSPEC.md (setup/flujo) · docs/ = cómo construimos · openspec/ = qué hace + cambios.
 
   Estructura del repo (monorepo modular):
-    Mi Proyecto/
+    HS FACOP/
       openspec/            # specs + changes (qué hace el sistema)
       docs/                # estándares perennes (ver mapa abajo)
       modules/backend/             # Java 25 · Maven · Spring Boot (app principal)

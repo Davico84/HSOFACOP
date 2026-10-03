@@ -1,4 +1,4 @@
-# Estándar de commits — Mi Proyecto
+# Estándar de commits — HS FACOP
 
 Formato: **Conventional Commits**, mensajes **en español**.
 Combina el formato convencional (tipos + scope) con las buenas prácticas del skill `commit` del demo `lidr-specboot-main` (focalizado, subject + body, PRs con `gh`).

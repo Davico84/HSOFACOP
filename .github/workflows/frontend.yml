@@ -85,3 +85,28 @@ jobs:
           name: frontend-coverage
           path: modules/frontend/coverage
           if-no-files-found: ignore
+
+  # Smoke E2E sin backend (docs/testing.md §4): guard de rutas, validación del login y
+  # navegación. Los specs `*.backend.spec.ts` se saltan (necesitan backend + PostgreSQL).
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Instalar Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: E2E smoke
+        run: pnpm test:e2e
+      - name: Reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: modules/frontend/playwright-report
+          if-no-files-found: ignore

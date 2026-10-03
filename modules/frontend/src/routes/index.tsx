@@ -4,6 +4,9 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { DashboardScreen } from "@/screens/dashboard/DashboardScreen";
 import { ComingSoonScreen } from "@/screens/ComingSoonScreen";
 import { UsersScreen } from "@/screens/users/UsersScreen";
+import { RecordsListScreen } from "@/screens/records/RecordsListScreen";
+import { RecordFormScreen } from "@/screens/records/RecordFormScreen";
+import { RecordPrintScreen } from "@/screens/records/RecordPrintScreen";
 import { LoginView } from "@/screens/auth/LoginView";
 import { RegisterView } from "@/screens/auth/RegisterView";
 import { RequireAuth } from "@/modules/core/auth/RequireAuth";
@@ -38,8 +41,15 @@ export const appRoutes: RouteObject[] = [
           sectionRoute("moduleA", [{ index: true, element: <ComingSoonScreen title="Módulo A" /> }]),
           sectionRoute("moduleB", [{ index: true, element: <ComingSoonScreen title="Módulo B" /> }]),
           sectionRoute("users", [{ index: true, element: <UsersScreen /> }]),
+          sectionRoute("records", [
+            { index: true, element: <RecordsListScreen /> },
+            { path: "nueva", element: <RecordFormScreen /> },
+            { path: ":id", element: <RecordFormScreen /> },
+          ]),
         ],
       },
+      // Impresión: protegida pero SIN el shell (ni menú ni cabecera en el papel).
+      { path: `${PATHS.RECORDS}/:id/imprimir`, element: <RecordPrintScreen /> },
     ],
   },
 ];

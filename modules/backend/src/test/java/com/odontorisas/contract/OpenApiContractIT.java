@@ -228,7 +228,8 @@ class OpenApiContractIT extends AbstractIntegrationTest {
     void operation_ids_are_explicit_and_stable() {
         List<String> ids = allOperations().stream().map(op -> op.get("operationId").stringValue()).toList();
         assertThat(ids).doesNotHaveDuplicates()
-            .containsExactlyInAnyOrder("register", "login", "refresh", "logout", "listUsers", "changeUserStatus");
+            .containsExactlyInAnyOrder("register", "login", "refresh", "logout", "listUsers", "changeUserStatus",
+                "listRecords", "createRecord", "getRecord", "updateRecord");
     }
 
     // --- Gestión de usuarios (add-user-account-status) ---
@@ -257,6 +258,33 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         // Login y refresh documentan el 403 de cuenta deshabilitada.
         assertThat(schemaName("/auth/login", "403", PROBLEM_JSON)).isEqualTo("ApiProblem");
         assertThat(schemaName("/auth/refresh", "403", PROBLEM_JSON)).isEqualTo("ApiProblem");
+    }
+
+    // --- Historias clínicas (add-orthodontic-records) ---
+
+    @Test
+    void records_api_is_documented_with_real_statuses_and_error_schemas() {
+        String base = "/api/orthodontic-records";
+        String item = base + "/{id}";
+        assertThat(schemaName(base, "get", "200", MediaType.APPLICATION_JSON_VALUE))
+            .isEqualTo("PageResponseRecordSummaryResponse");
+        assertThat(schemaName(base, "post", "201", MediaType.APPLICATION_JSON_VALUE)).isEqualTo("RecordResponse");
+        assertThat(schemaName(base, "post", "400", PROBLEM_JSON)).isEqualTo("ValidationProblem");
+        assertThat(names(responses(base, "post"))).doesNotContain("200");
+        assertThat(schemaName(item, "get", "200", MediaType.APPLICATION_JSON_VALUE)).isEqualTo("RecordResponse");
+        assertThat(schemaName(item, "get", "404", PROBLEM_JSON)).isEqualTo("ApiProblem");
+        assertThat(schemaName(item, "put", "200", MediaType.APPLICATION_JSON_VALUE)).isEqualTo("RecordResponse");
+        assertThat(schemaName(item, "put", "400", PROBLEM_JSON)).isEqualTo("ValidationProblem");
+        assertThat(schemaName(item, "put", "404", PROBLEM_JSON)).isEqualTo("ApiProblem");
+        assertThat(schemaName(item, "put", "409", PROBLEM_JSON)).isEqualTo("ApiProblem");
+        assertThat(names(responses(base, "get"))).contains("401", "500");
+
+        // El contenido clínico viaja tipado: una sección por paso del formulario.
+        assertThat(names(schemaByName("RecordContent").get("properties"))).containsExactlyInAnyOrder(
+            "schemaVersion", "anamnesis", "facial", "functional", "occlusal", "models", "radiographic", "diagnosis", "signatures");
+        assertThat(strings(schemaByName("UpdateRecordRequest").get("required"))).contains("version", "patientName");
+        assertThat(names(schemaByName("UpdateRecordRequest").get("properties"))).doesNotContain("recordNumber", "authorId");
+        assertThat(names(schemaByName("RecordSummaryResponse").get("properties"))).doesNotContain("content");
     }
 
     // --- Lo documentado coincide con lo real ---

@@ -130,4 +130,12 @@
     @apply bg-background text-foreground;
     margin: 0;
   }
+  /* Controles nativos (ícono del calendario de las fechas, barras de desplazamiento) con el tema:
+     sin esto el navegador los pinta oscuros también en modo oscuro y no se ven. */
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
 }

@@ -1,6 +1,6 @@
-# OpenSpec en Mi Proyecto — Setup y flujo
+# OpenSpec en HS FACOP — Setup y flujo
 
-Repo: `D:\proyectos\drivenSpec\Mi Proyecto\Odontorisas`
+Repo: `D:\proyectos\drivenSpec\HS FACOP\Odontorisas`
 Paquete: **`@fission-ai/openspec`** · integra nativo con Claude Code.
 CLI de referencia en esta guía: **v1.5.0** (verifica con `openspec --version`).
 
@@ -53,7 +53,7 @@ openspec --help       # lista de comandos disponibles
 ## 2. Inicializar en el repo
 
 ```powershell
-cd D:\proyectos\drivenSpec\Mi Proyecto\Odontorisas
+cd D:\proyectos\drivenSpec\HS FACOP\Odontorisas
 openspec init
 ```
 
@@ -161,7 +161,7 @@ Tras archivar, `openspec list --specs` ya mostrará la capacidad `authentication
 
 ## 4. Prompt para arrancar authentication
 
-Pega esto en Claude Code (repo Mi Proyecto) tras el `init`:
+Pega esto en Claude Code (repo HS FACOP) tras el `init`:
 
 ```
 /opsx:propose Autenticación de usuarios: registro, login, persistencia de sesión,
@@ -265,7 +265,7 @@ jobs:
 
 `docs/` = *cómo* construimos (guía estable). `openspec/` = *qué* hace el sistema + cambios.
 
-Pendiente crear en Mi Proyecto:
+Pendiente crear en HS FACOP:
 - `docs/testing.md` — estrategia de pruebas (niveles, matriz, MSW, Playwright).
 - `docs/architecture.md`, `docs/coding-style.md`, `docs/react.md`, `docs/api.md`.
 - `docs/adr/` — Architecture Decision Records para decisiones no obvias.
@@ -273,7 +273,7 @@ Pendiente crear en Mi Proyecto:
 
 ### Plantilla mínima `CLAUDE.md` (raíz)
 ```markdown
-# Mi Proyecto — Guía para agentes
+# HS FACOP — Guía para agentes
 
 - Flujo de especificación: ver `SETUP-OPENSPEC.md` y `openspec/config.yaml`.
 - Cómo construimos (perenne): ver `docs/` (testing, architecture, coding-style, react, api).

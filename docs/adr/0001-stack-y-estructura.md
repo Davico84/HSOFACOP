@@ -6,7 +6,7 @@
 
 ## Contexto
 
-Mi Proyecto arranca greenfield con desarrollo dirigido por especificaciones (OpenSpec ya inicializado).
+HS FACOP arranca greenfield con desarrollo dirigido por especificaciones (OpenSpec ya inicializado).
 Se necesita fijar la estructura del repo y el stack de backend y frontend antes de escribir código, para que las capacidades (empezando por `authentication`) se especifiquen e implementen con un objetivo técnico estable.
 
 Referencias consultadas:
@@ -19,7 +19,7 @@ Referencias consultadas:
 
 ### Estructura — monorepo modular
 ```
-Mi Proyecto/  →  openspec/ · docs/ · modules/backend/ · modules/frontend/ · .github/workflows/
+HS FACOP/  →  openspec/ · docs/ · modules/backend/ · modules/frontend/ · .github/workflows/
 ```
 
 ### Backend

@@ -1,0 +1,31 @@
+package com.odontorisas.persistence.repository;
+
+import com.odontorisas.persistence.entity.OrthodonticRecord;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
+
+public interface OrthodonticRecordRepository
+        extends JpaRepository<OrthodonticRecord, Long>, JpaSpecificationExecutor<OrthodonticRecord> {
+
+    /** Último correlativo del autor (0 si no tiene historias). Llamar con la fila del autor bloqueada. */
+    @Query("select coalesce(max(r.recordSeq), 0) from OrthodonticRecord r where r.author.id = :authorId")
+    int findMaxRecordSeq(@Param("authorId") Long authorId);
+
+    /** Listado con el autor cargado en la misma consulta (columna "Autor", sin N+1). */
+    @Override
+    @EntityGraph(attributePaths = "author")
+    Page<OrthodonticRecord> findAll(Specification<OrthodonticRecord> spec, Pageable pageable);
+
+    /** Historia con su autor cargado (para devolver su nombre). */
+    @EntityGraph(attributePaths = "author")
+    @Query("select r from OrthodonticRecord r where r.id = :id")
+    Optional<OrthodonticRecord> findWithAuthorById(@Param("id") Long id);
+}

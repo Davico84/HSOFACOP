@@ -1,4 +1,4 @@
-# Mi Proyecto — Guía para agentes
+# HS FACOP — Guía para agentes
 
 Proyecto **greenfield** con desarrollo dirigido por especificaciones (spec-driven) usando **OpenSpec**.
 Monorepo modular: `modules/backend/` (Java/Spring) + `modules/frontend/` (React/Vite), con `openspec/` y `docs/` en la raíz.

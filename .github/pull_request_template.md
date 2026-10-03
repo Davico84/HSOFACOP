@@ -1,5 +1,5 @@
 <!--
-Plantilla de PR de Mi Proyecto.
+Plantilla de PR de HS FACOP.
 Base recomendada para ramas de feature: `dev`.
 Título de la PR en Conventional Commits, p. ej.: feat(auth): agrega login
 -->

@@ -15,7 +15,7 @@
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>odontorisas-backend</name>
-    <description>Mi Proyecto - backend</description>
+    <description>HS FACOP - backend</description>
 
     <properties>
         <java.version>25</java.version>

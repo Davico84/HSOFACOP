@@ -1,4 +1,4 @@
-# Visión de producto — Mi Proyecto
+# Visión de producto — HS FACOP
 
 Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimos y **en qué orden**. El **cómo** (stack, estándares) vive en `docs/architecture.md`, `docs/backend.md`, `docs/frontend.md`, `docs/coding-style.md` y `docs/testing.md`. El **modelo de dominio** vive en `docs/domain.md`.
 
@@ -8,11 +8,11 @@ Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimo
 
 ## 1. Producto ✏️
 
-**Mi Proyecto** es _[qué es el producto en una frase: para quién y qué problema resuelve]_.
+**HS FACOP** es el sistema de historias clínicas de ortodoncia de la Escuela de Post-grado AEO / FACOP: los tratantes llenan la historia desde un formulario por pasos (en vez de a mano sobre el PDF) y la imprimen con la presentación oficial; los supervisores revisan y corrigen cualquiera.
 
 **Objetivos:**
-- _[objetivo de negocio 1]_
-- _[objetivo de negocio 2]_
+- Historias legibles, completas y reimprimibles: se llenan, guardan y corrigen sin rehacer la hoja.
+- Revisión por supervisores: el ADMIN ve y corrige las historias de todos los tratantes.
 - Seguridad y trazabilidad: identidad + rol en toda operación.
 
 ---
@@ -28,7 +28,7 @@ Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimo
 | 2 | `app-shell` | técnica | usuario | layout privado (sidebar/header) + dashboard de ejemplo | 1 |
 | 3 | `template-bootstrap` | técnica | dev | configurar identidad visible y BD de una copia nueva | 0 |
 | 4 | `users` | negocio | admin | listado de cuentas y activar/deshabilitar usuarios (`add-user-account-status`); roles, alta y perfil en cambios posteriores | 1 |
-| 5 | _[capacidad de negocio]_ | negocio | _[actor]_ | _[alcance]_ | _[deps]_ |
+| 5 | `orthodontic-records` | negocio | tratante (`USER`) / supervisor (`ADMIN`) | historia clínica de ortodoncia: wizard, borrador, listado/búsqueda e impresión fiel al PDF. Fase 1: secciones de texto y selección (`add-orthodontic-records`); fase 2: análisis de modelos (transversal, Moyers, Nance y Bolton). Las notas de evolución se imprimen en blanco para llenar a mano (decisión del usuario) | 1, 2 |
 | … | `dashboard` | negocio | admin | panel con métricas reales del negocio | resto |
 
 ---
@@ -52,6 +52,11 @@ Dimensión de **negocio** (sustituible por proyecto). Define **qué** construimo
 - ✅ **Aviso de backend listo al arrancar** (`project-foundation`) — construida: bloque destacado en el log (`StartupReadyBanner`, `ApplicationReadyEvent`) con el nombre del proyecto, la URL con el puerto real y el estado de Swagger; solo ASCII y sin secretos. Spec: `openspec/specs/project-foundation/spec.md` · change archivado: `openspec/changes/archive/2026-09-30-add-startup-ready-banner/`.
 - ✅ **Navegación filtrada por rol** (`app-shell`) — construida: `core/config/sections.ts` como única fuente de verdad; menú filtrado por rol y cada sección (con sus subrutas) protegida con `RequireRole`, acceso denegado dentro del shell; `Role` desde el contrato. Spec: `openspec/specs/app-shell/spec.md` · change archivado: `openspec/changes/archive/2026-10-01-update-app-shell-role-nav/`.
 - ✅ **`users` (primera parte): estado de cuenta** (`users` + `authentication`) — construida: `ACTIVE`/`DISABLED`; una cuenta deshabilitada no inicia ni renueva sesión (403 explicativo, revocación de refresh tokens, ventana ≤ 15 min); pantalla "Usuarios" solo `ADMIN` (listado paginado, activar/deshabilitar cuentas `USER`). Pendiente en `users`: roles, alta por admin y perfil. Spec: `openspec/specs/users/spec.md` · change archivado: `openspec/changes/archive/2026-10-01-add-user-account-status/`.
+- ✅ **`orthodontic-records` (fase 1)** — construida: historia clínica de ortodoncia en 7 pasos (págs. 1–4 y 10–13 del PDF), número `AEO-001` por tratante, borrador con versión (409), listado con búsqueda en la URL, acceso autor/`ADMIN`, vista preliminar e impresión A4 fiel al PDF (incluye la hoja de notas de evolución en blanco). Spec: `openspec/specs/orthodontic-records/spec.md` · change archivado: `openspec/changes/archive/2026-10-02-add-orthodontic-records/`. Siguiente: fase 2 (análisis de modelos).
+- ✅ **`orthodontic-records` (fase 2.1): análisis transversal de los modelos** — construida: paso 5 "Análisis de modelos" tras el oclusal (8 pasos), medidas AIS/AII/AMS/AMI, borde WALA y distancias WALA–EV con diferencias automáticas (promedio intermolar por sexo y normas por diente), hoja impresa tras el análisis oclusal (10 hojas). Spec: `openspec/specs/orthodontic-records/spec.md` · change archivado: `openspec/changes/archive/2026-10-02-add-orthodontic-transversal-analysis/`. Siguen Moyers, Nance y Bolton (un change cada uno).
+- ✅ **`orthodontic-records` (fase 2.2): análisis de Moyers** — construida: panel en el paso 5 (análisis de modelos en paneles plegables) con fecha, incisivos 42/41/31/32 y suma, espacio requerido con la tabla de Moyers al 75 % (suma redondeada al 0,5), diferencia disponible − requerido por arcada y lado, predisposición de apiñamiento escrita por el odontólogo, hoja impresa tras el transversal (11 hojas). Spec: `openspec/specs/orthodontic-records/spec.md` · change archivado: `openspec/changes/archive/2026-10-02-add-orthodontic-moyers-analysis/`. Siguen Nance y Bolton.
+- ✅ **`orthodontic-records` (fase 2.3): análisis de Nance** — construida: panel 3 del paso 5 con fecha, puntos 1 (SA) y 2 (ST), anchos de 15→25 y 45→35 con total, discrepancia SA − ST calculada (vacía si falta una pieza), conclusión escrita, dibujo SVG de la arcada superior, hoja impresa tras Moyers (12 hojas; pág. 8 en blanco omitida). Spec: `openspec/specs/orthodontic-records/spec.md` · change archivado: `openspec/changes/archive/2026-10-03-add-orthodontic-nance-analysis/`. Sigue Bolton.
+- ✅ **`orthodontic-records` (fase 2.4): análisis de Bolton** — construida: panel 4 del paso 5 en español con fecha, grilla de 12 + 12 piezas (15→25 y 45→35 compartidas con Nance; 1eros molares propios), relación total y anterior calculadas con la fórmula en fracción, rango y real/ideal/diferencia del lado que corresponde, hoja impresa tras Nance (13 hojas). Spec: `openspec/specs/orthodontic-records/spec.md` · change archivado: `openspec/changes/archive/2026-10-03-add-orthodontic-bolton-analysis/`. **Fase 2 completa: historia clínica completa** (las notas de evolución se llenan a mano sobre la hoja impresa, desde la fase 1).
 - ⏳ **Resto** — planeadas (ver roadmap).
 
 ---
