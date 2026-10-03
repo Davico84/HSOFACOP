@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { AccordionSection } from "@/modules/core/components/AccordionSection";
 import { FieldHint } from "@/modules/core/components/form/FieldHint";
 import { MeasureField } from "@/modules/core/components/form/MeasureField";
@@ -9,6 +9,7 @@ import { Accordion } from "@/modules/core/ui/accordion";
 import { LONG_TEXT, type RecordFormValues } from "../../schemas/record";
 import { INTERMOLAR_NOTE } from "../../config/transversal";
 import { CrowdingPredisposition } from "../fields/CrowdingPredisposition";
+import { FilledStatus } from "../fields/FilledStatus";
 import { IntermolarField } from "../fields/IntermolarField";
 import { MoyersIncisorsField } from "../fields/MoyersIncisorsField";
 import { MoyersSpaceTable } from "../fields/MoyersSpaceTable";
@@ -16,7 +17,6 @@ import { NanceResultTable } from "../fields/NanceResultTable";
 import { NanceWidthsTable } from "../fields/NanceWidthsTable";
 import { WalaToEvTable } from "../fields/WalaToEvTable";
 import { ArchDiagram } from "../ArchDiagram";
-import { countFilled, filledLabel } from "../../utils/filled";
 
 /**
  * Paso 5 (págs. 5–7): análisis de modelos, uno por panel plegable para no recorrer los cuatro
@@ -25,12 +25,7 @@ import { countFilled, filledLabel } from "../../utils/filled";
  * edad y sexo se toman del paso 1.
  */
 export function Step5Models() {
-  const { control, formState } = useFormContext<RecordFormValues>();
-  const [transversal, moyers, nance] = useWatch({
-    control,
-    name: ["content.models.transversal", "content.models.moyers", "content.models.nance"],
-  });
-  const filled = { transversal: countFilled(transversal), moyers: countFilled(moyers), nance: countFilled(nance) };
+  const { formState } = useFormContext<RecordFormValues>();
   const [open, setOpen] = useState<string[]>(["transversal"]);
   const withErrors = Object.keys(formState.errors.content?.models ?? {});
   const value = [...new Set([...open, ...withErrors])];
@@ -42,8 +37,7 @@ export function Step5Models() {
         index={1}
         title="Análisis transversal de los modelos"
         description="pág. 5 · anchos inter canino e inter molar, borde WALA y distancias WALA–EV"
-        status={filledLabel(filled.transversal)}
-        filled={filled.transversal > 0}
+        status={<FilledStatus name="content.models.transversal" />}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <MeasureField name="content.models.transversal.intercanineUpper" label="AIS: ancho inter canino superior" unit="mm" />
@@ -73,8 +67,7 @@ export function Step5Models() {
         index={2}
         title="Análisis de Moyers"
         description="pág. 6 · incisivos inferiores, espacio disponible y requerido"
-        status={filledLabel(filled.moyers)}
-        filled={filled.moyers > 0}
+        status={<FilledStatus name="content.models.moyers" />}
       >
         <TextField
           name="content.models.moyers.analysisDate"
@@ -93,8 +86,7 @@ export function Step5Models() {
         index={3}
         title="Análisis de Nance"
         description="pág. 7 · discrepancia óseo dentaria: espacio disponible (SA) frente al requerido (ST)"
-        status={filledLabel(filled.nance)}
-        filled={filled.nance > 0}
+        status={<FilledStatus name="content.models.nance" />}
       >
         <TextField
           name="content.models.nance.analysisDate"

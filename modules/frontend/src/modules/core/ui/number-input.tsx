@@ -15,6 +15,8 @@ export interface NumberInputProps
   className?: string;
   /** Clases del `<input>` (alto, alineación del texto). */
   inputClassName?: string;
+  /** Botones más angostos, para celdas de tabla con valores cortos (p. ej. "99,9"). */
+  compact?: boolean;
   ref?: Ref<HTMLInputElement>;
 }
 
@@ -37,6 +39,7 @@ export function NumberInput({
   max,
   className,
   inputClassName,
+  compact = false,
   disabled,
   ref,
   ...props
@@ -65,14 +68,15 @@ export function NumberInput({
         max={max}
         disabled={disabled}
         className={cn(
-          "pr-7 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+          compact ? "pr-5" : "pr-7",
+          "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
           inputClassName,
         )}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
         {...props}
       />
-      <div className="absolute inset-y-px right-px flex w-6 flex-col overflow-hidden rounded-r-md border-l border-input">
+      <div className={cn("absolute inset-y-px right-px flex flex-col", compact ? "w-4" : "w-6", "overflow-hidden rounded-r-md border-l border-input")}>
         {/* onMouseDown evita que el campo pierda el foco al pulsar. */}
         <button
           type="button"
@@ -83,7 +87,7 @@ export function NumberInput({
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => nudge(1)}
         >
-          <ChevronUp className="size-3" aria-hidden="true" />
+          <ChevronUp className={compact ? "size-2.5" : "size-3"} aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -94,7 +98,7 @@ export function NumberInput({
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => nudge(-1)}
         >
-          <ChevronDown className="size-3" aria-hidden="true" />
+          <ChevronDown className={compact ? "size-2.5" : "size-3"} aria-hidden="true" />
         </button>
       </div>
     </div>

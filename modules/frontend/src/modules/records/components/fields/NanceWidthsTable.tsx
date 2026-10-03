@@ -54,8 +54,9 @@ export function NanceWidthsTable() {
                           render={({ field }) => (
                             <NumberInput
                               step={0.1}
-                              className="w-16"
-                              inputClassName="h-8 px-1 text-center"
+                              compact
+                              className="w-14"
+                              inputClassName="h-8 pl-1 text-center"
                               aria-label={`Ancho mesiodistal, pieza ${t} (mm)`}
                               aria-invalid={error ? true : undefined}
                               value={field.value}

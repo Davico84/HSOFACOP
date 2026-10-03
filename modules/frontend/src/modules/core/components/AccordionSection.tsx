@@ -10,10 +10,8 @@ interface AccordionSectionProps {
   title: string;
   /** Qué contiene (p. ej. "pág. 6 del PDF · espacio disponible y requerido"). */
   description?: ReactNode;
-  /** Estado a la derecha (p. ej. "Sin datos" / "6 datos"). */
+  /** Estado a la derecha (p. ej. un `SectionStatus` con "Sin datos" / "6 datos"). */
   status?: ReactNode;
-  /** Resalta el estado (hay datos registrados). */
-  filled?: boolean;
   /** Clases del contenido. */
   className?: string;
   children: ReactNode;
@@ -25,7 +23,7 @@ interface AccordionSectionProps {
  * margen interno porque el panel recorta lo que sobresale (su animación lo necesita) y si no se
  * cortaría el anillo de foco de los campos pegados al borde.
  */
-export function AccordionSection({ value, index, title, description, status, filled = false, className, children }: AccordionSectionProps) {
+export function AccordionSection({ value, index, title, description, status, className, children }: AccordionSectionProps) {
   return (
     <AccordionItem
       value={value}
@@ -44,16 +42,7 @@ export function AccordionSection({ value, index, title, description, status, fil
             {description ? <span className="text-xs font-normal text-muted-foreground">{description}</span> : null}
           </span>
         </span>
-        {status ? (
-          <span
-            className={cn(
-              "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
-              filled ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground",
-            )}
-          >
-            {status}
-          </span>
-        ) : null}
+        {status}
       </AccordionTrigger>
       <AccordionContent className={cn("flex flex-col gap-6 border-t border-border px-5 pt-5", className)}>
         {children}
