@@ -41,6 +41,16 @@ function mockRecord(initial: Partial<RecordResponse> = {}) {
 
 const stepHeading = (title: RegExp) => screen.findByRole("heading", { level: 2, name: title });
 
+/**
+ * Llena un campo pegando el valor: un solo evento en lugar de uno por tecla. Los análisis de
+ * modelos llenan muchas medidas y, tecla por tecla, superaban el tiempo de un test en CI.
+ */
+async function fill(label: string, value: string) {
+  const input = screen.getByLabelText(label);
+  await userEvent.click(input);
+  await userEvent.paste(value);
+}
+
 beforeEach(() => {
   toast.success.mockClear();
   toast.error.mockClear();
@@ -298,7 +308,7 @@ describe("orthodontic-records — Secciones clínicas de la fase 1", () => {
   });
 });
 
-describe("orthodontic-records — Análisis transversal de los modelos (paso 5)", () => {
+describe("orthodontic-records — Análisis transversal de los modelos (paso 5)", { timeout: 15_000 }, () => {
   it("el paso 5 sigue al análisis oclusal y el radiográfico pasa a ser el 6", async () => {
     mockRecord();
     renderRecordRoutes("/historias/10?paso=4");
@@ -337,7 +347,7 @@ describe("orthodontic-records — Análisis transversal de los modelos (paso 5)"
   });
 });
 
-describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
+describe("orthodontic-records — Análisis de Moyers (paso 5)", { timeout: 15_000 }, () => {
   /** Los análisis van en paneles plegables: Moyers empieza cerrado. */
   async function openMoyers() {
     await userEvent.click(await screen.findByRole("button", { name: /^Análisis de Moyers/ }));
@@ -359,13 +369,13 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
 
     // La ayuda del campo se ve y el lector de pantalla la anuncia con el campo.
     expect(screen.getByLabelText("Fecha del análisis")).toHaveAccessibleDescription("Puede ser anterior al inicio del tratamiento.");
-    await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2026-09-01");
+    await fill("Fecha del análisis", "2026-09-01");
     for (const [tooth, value] of [["42", "6"], ["41", "5.5"], ["31", "5.4"], ["32", "6.1"]]) {
-      await userEvent.type(screen.getByLabelText(`Pieza ${tooth}`), value);
+      await fill(`Pieza ${tooth}`, value);
     }
     expect(screen.getByText("23,0 mm")).toBeInTheDocument();
     for (const [side, value] of [["Mandíbula derecho", "21"], ["Mandíbula izquierdo", "22.6"], ["Maxilar derecho", "23.5"], ["Maxilar izquierdo", "22.6"]]) {
-      await userEvent.type(screen.getByLabelText(`Espacio disponible, ${side} (mm)`), value);
+      await fill(`Espacio disponible, ${side} (mm)`, value);
     }
     expect(screen.getByLabelText("Espacio requerido, Mandíbula derecho")).toHaveTextContent("22,2");
     expect(screen.getByLabelText("Espacio requerido, Maxilar izquierdo")).toHaveTextContent("22,6");
@@ -374,7 +384,7 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     // La cabecera del panel cuenta los datos registrados (fecha, 4 incisivos y 4 espacios).
     expect(screen.getByRole("button", { name: /^Análisis de Moyers/ })).toHaveTextContent("9 datos");
     expect(screen.getByLabelText("Negativo")).toHaveValue("");
-    await userEvent.type(screen.getByLabelText("Negativo"), "Mandíbula derecho");
+    await fill("Negativo", "Mandíbula derecho");
 
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     await waitFor(() => expect(calls.put).toHaveLength(1));
@@ -392,7 +402,7 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     await openMoyers();
 
     for (const [tooth, value] of [["42", "4.5"], ["41", "4.5"], ["31", "4.5"], ["32", "5.5"]]) {
-      await userEvent.type(screen.getByLabelText(`Pieza ${tooth}`), value);
+      await fill(`Pieza ${tooth}`, value);
     }
     expect(screen.getByText("Fuera de la tabla de Moyers (19,5–29,0 mm).")).toBeInTheDocument();
     expect(screen.getByLabelText("Espacio requerido, Mandíbula derecho")).toHaveTextContent("—");
@@ -403,7 +413,7 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     renderRecordRoutes("/historias/10?paso=5");
     await openMoyers();
 
-    await userEvent.type(screen.getByLabelText("Fecha del análisis"), "2999-01-01");
+    await fill("Fecha del análisis", "2999-01-01");
     // Se cierra el panel: al guardar, el error lo vuelve a abrir para que no quede oculto.
     await userEvent.click(screen.getByRole("button", { name: /^Análisis de Moyers/ }));
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
@@ -413,7 +423,7 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
   });
 });
 
-describe("orthodontic-records — Análisis de Nance (paso 5)", () => {
+describe("orthodontic-records — Análisis de Nance (paso 5)", { timeout: 15_000 }, () => {
   const upper: [number, string][] = [[15, "7"], [14, "7.1"], [13, "7.8"], [12, "6.7"], [11, "8.6"], [21, "8.5"], [22, "6.6"], [23, "7.7"], [24, "7"], [25, "6.9"]];
 
   async function openNance() {
@@ -427,16 +437,16 @@ describe("orthodontic-records — Análisis de Nance (paso 5)", () => {
 
     expect(screen.getByRole("img", { name: /Arcada superior en vista oclusal/ })).toBeInTheDocument();
     for (const [tooth, value] of upper) {
-      await userEvent.type(screen.getByLabelText(`Ancho mesiodistal, pieza ${tooth} (mm)`), value);
+      await fill(`Ancho mesiodistal, pieza ${tooth} (mm)`, value);
     }
     expect(screen.getByLabelText("Total superior")).toHaveTextContent("73,9");
-    await userEvent.type(screen.getByLabelText("SA, espacio disponible superior (mm)"), "70.5");
+    await fill("SA, espacio disponible superior (mm)", "70.5");
     // Punto 2 (ST) y la tabla final repiten el total; la tabla final repite también el SA.
     expect(screen.getAllByLabelText("ST, espacio requerido superior").map((e) => e.textContent)).toEqual(["73,9 mm", "73,9 mm"]);
     expect(screen.getByLabelText("SA, espacio disponible superior")).toHaveTextContent("70,5 mm");
     expect(screen.getByLabelText("Discrepancia superior")).toHaveTextContent("−3,4 mm");
     expect(screen.getByLabelText("Conclusión superior")).toHaveValue("");
-    await userEvent.type(screen.getByLabelText("Conclusión superior"), "Falta de espacio leve");
+    await fill("Conclusión superior", "Falta de espacio leve");
 
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     await waitFor(() => expect(calls.put).toHaveLength(1));
@@ -453,16 +463,16 @@ describe("orthodontic-records — Análisis de Nance (paso 5)", () => {
     await openNance();
 
     for (const [tooth, value] of upper.slice(0, 9)) {
-      await userEvent.type(screen.getByLabelText(`Ancho mesiodistal, pieza ${tooth} (mm)`), value);
+      await fill(`Ancho mesiodistal, pieza ${tooth} (mm)`, value);
     }
-    await userEvent.type(screen.getByLabelText("SA, espacio disponible superior (mm)"), "70.5");
+    await fill("SA, espacio disponible superior (mm)", "70.5");
     expect(screen.getByText("Faltan piezas por medir.")).toBeInTheDocument();
     expect(screen.getByLabelText("Total superior")).toHaveTextContent("—");
     expect(screen.getByLabelText("Discrepancia superior")).toHaveTextContent("—");
   });
 });
 
-describe("orthodontic-records — Análisis de Bolton (paso 5)", () => {
+describe("orthodontic-records — Análisis de Bolton (paso 5)", { timeout: 15_000 }, () => {
   const boltonModels = {
     transversal: {},
     moyers: {},
@@ -483,10 +493,10 @@ describe("orthodontic-records — Análisis de Bolton (paso 5)", () => {
     await openPanel(/^Análisis de Nance/);
     await openPanel(/^Análisis de Bolton/);
 
-    await userEvent.type(screen.getByLabelText("Ancho mesiodistal, pieza 11 (mm)"), "8.6");
+    await fill("Ancho mesiodistal, pieza 11 (mm)", "8.6");
     expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(8.6);
     await userEvent.clear(screen.getByLabelText("Bolton, pieza 31 (mm)"));
-    await userEvent.type(screen.getByLabelText("Bolton, pieza 31 (mm)"), "5.4");
+    await fill("Bolton, pieza 31 (mm)", "5.4");
     expect(screen.getByLabelText("Ancho mesiodistal, pieza 31 (mm)")).toHaveValue(5.4);
   });
 
@@ -507,7 +517,7 @@ describe("orthodontic-records — Análisis de Bolton (paso 5)", () => {
     expect(screen.getAllByText("Dentro del rango")).toHaveLength(2);
 
     await userEvent.clear(screen.getByLabelText("Bolton, pieza 26 (mm)"));
-    await userEvent.type(screen.getByLabelText("Bolton, pieza 26 (mm)"), "10.3");
+    await fill("Bolton, pieza 26 (mm)", "10.3");
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     await waitFor(() => expect(calls.put).toHaveLength(1));
     expect(calls.put[0].content?.models.bolton.firstMolars).toEqual({ tooth16: 10.2, tooth26: 10.3, tooth46: 11, tooth36: 11.2 });
