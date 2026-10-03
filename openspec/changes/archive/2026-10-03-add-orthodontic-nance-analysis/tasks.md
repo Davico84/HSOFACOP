@@ -14,9 +14,9 @@
 - [x] 2.3 `ArchDiagram` (SVG con la geometría aprobada en `config/archGeometry.ts`; tema en pantalla, grises al imprimir)
 - [x] 2.4 Panel 3 "Análisis de Nance" en el paso 5 (fecha, SA, dibujo + anchos con total, resultado con discrepancia y conclusión, interpretación)
 - [x] 2.5 `PrintNanceSection` tras Moyers
-- [ ] 2.6 Tests Vitest (panel, cálculos, impresión) y E2E (12 hojas); `pnpm validate` verde; impresión verificada con Edge headless
+- [x] 2.6 Tests Vitest (panel, cálculos, impresión) y E2E (12 hojas); `pnpm validate` verde; impresión verificada con Edge headless
 
 ## 3. Docs y cierre
 
 - [x] 3.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 3.2 Al archivar — `docs/domain.md`: análisis de Nance en `OrthodonticRecord` y glosario
+- [x] 3.2 Al archivar — `docs/domain.md`: análisis de Nance en `OrthodonticRecord` y glosario
