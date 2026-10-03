@@ -207,7 +207,51 @@ const moyers = z.object({
   interpretation: text(LONG_TEXT),
 });
 
-const models = z.object({ transversal, moyers });
+/** Anchos de las piezas que se miden en Nance, por arcada (de mesial a mesial del 1er molar). */
+const upperWidths = z
+  .object({
+    tooth15: modelMm,
+    tooth14: modelMm,
+    tooth13: modelMm,
+    tooth12: modelMm,
+    tooth11: modelMm,
+    tooth21: modelMm,
+    tooth22: modelMm,
+    tooth23: modelMm,
+    tooth24: modelMm,
+    tooth25: modelMm,
+  })
+  .nullish();
+const lowerWidths = z
+  .object({
+    tooth45: modelMm,
+    tooth44: modelMm,
+    tooth43: modelMm,
+    tooth42: modelMm,
+    tooth41: modelMm,
+    tooth31: modelMm,
+    tooth32: modelMm,
+    tooth33: modelMm,
+    tooth34: modelMm,
+    tooth35: modelMm,
+  })
+  .nullish();
+
+const nance = z.object({
+  analysisDate: z
+    .string()
+    .refine((d) => !d || d <= today(), "La fecha del análisis no puede ser futura.")
+    .nullish(),
+  availableUpper: modelMm,
+  availableLower: modelMm,
+  upperWidths,
+  lowerWidths,
+  conclusionUpper: text(SHORT_TEXT),
+  conclusionLower: text(SHORT_TEXT),
+  interpretation: text(LONG_TEXT),
+});
+
+const models = z.object({ transversal, moyers, nance });
 
 const radiographic = z.object({
   panoramicDiagnosis: text(LONG_TEXT),

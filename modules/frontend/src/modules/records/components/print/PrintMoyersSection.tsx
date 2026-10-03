@@ -7,19 +7,12 @@ import { formatMm, formatSigned } from "../../utils/transversal";
 import { PrintField } from "./PrintField";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
-import { LABEL } from "./printStyle";
+import { TABLE_CELL, TABLE_HEAD, TABLE_NUM } from "./printStyle";
 
 interface PrintMoyersSectionProps {
   record: RecordResponse;
 }
 
-const CELL = "border border-foreground px-[4pt] py-[2pt]";
-/**
- * Celda de etiqueta: sombreada y en 11 pt, para distinguirla de los valores registrados (10 pt,
- * fondo blanco). `print-color-adjust: exact` hace que el sombreado salga también en papel.
- */
-const HEAD = cn(CELL, LABEL, "bg-muted font-normal [print-color-adjust:exact]");
-const NUM = cn(CELL, "text-center tabular-nums");
 const mm = (value: number | null | undefined) => (value === null || value === undefined ? "" : formatMm(value));
 
 /**
@@ -47,43 +40,43 @@ export function PrintMoyersSection({ record }: PrintMoyersSectionProps) {
       <table className="mt-[10pt] w-full border-collapse">
         <tbody>
           <tr>
-            <th colSpan={5} className={cn(HEAD, "text-left")}>
+            <th colSpan={5} className={cn(TABLE_HEAD, "text-left")}>
               Ficha para la recolección de datos para el análisis predictivo de Moyers
             </th>
           </tr>
           {/* Una columna por pieza, alineada con las de cada lado: la etiqueta arriba (sombreada) y el valor debajo. */}
           <tr>
-            <th scope="row" className={cn(HEAD, "w-[58mm] text-left")}>Diente</th>
+            <th scope="row" className={cn(TABLE_HEAD, "w-[58mm] text-left")}>Diente</th>
             {LOWER_INCISORS.map(({ key, label }) => (
-              <th key={key} scope="col" className={cn(HEAD, "text-center")}>{label}</th>
+              <th key={key} scope="col" className={cn(TABLE_HEAD, "text-center")}>{label}</th>
             ))}
           </tr>
           <tr>
-            <th scope="row" className={cn(HEAD, "text-left")}>Ancho mesiodistal</th>
+            <th scope="row" className={cn(TABLE_HEAD, "text-left")}>Ancho mesiodistal</th>
             {LOWER_INCISORS.map(({ key, label }) => (
-              <td key={key} className={NUM} aria-label={`Pieza ${label}`}>{mm(m?.lowerIncisors?.[key])}</td>
+              <td key={key} className={TABLE_NUM} aria-label={`Pieza ${label}`}>{mm(m?.lowerIncisors?.[key])}</td>
             ))}
           </tr>
           <tr>
-            <th scope="row" className={cn(HEAD, "text-left")}>Suma de anteriores en mm</th>
-            <td colSpan={4} className={NUM} aria-label="Suma de anteriores">{mm(sum)}</td>
+            <th scope="row" className={cn(TABLE_HEAD, "text-left")}>Suma de anteriores en mm</th>
+            <td colSpan={4} className={TABLE_NUM} aria-label="Suma de anteriores">{mm(sum)}</td>
           </tr>
           <tr>
-            <td className={HEAD} />
-            <th colSpan={2} className={cn(HEAD, "text-center")}>Mandíbula</th>
-            <th colSpan={2} className={cn(HEAD, "text-center")}>Maxilar</th>
+            <td className={TABLE_HEAD} />
+            <th colSpan={2} className={cn(TABLE_HEAD, "text-center")}>Mandíbula</th>
+            <th colSpan={2} className={cn(TABLE_HEAD, "text-center")}>Maxilar</th>
           </tr>
           <tr>
-            <td className={HEAD} />
+            <td className={TABLE_HEAD} />
             {MOYERS_SIDES.map(({ key, side }) => (
-              <th key={key} className={cn(HEAD, "w-[25mm] text-center")}>{side}</th>
+              <th key={key} className={cn(TABLE_HEAD, "w-[25mm] text-center")}>{side}</th>
             ))}
           </tr>
           {rows.map(([label, value]) => (
             <tr key={label}>
-              <th scope="row" className={cn(HEAD, "text-left whitespace-nowrap")}>{label}</th>
+              <th scope="row" className={cn(TABLE_HEAD, "text-left whitespace-nowrap")}>{label}</th>
               {sides.map((s) => (
-                <td key={s.key} className={NUM}>{value(s)}</td>
+                <td key={s.key} className={TABLE_NUM}>{value(s)}</td>
               ))}
             </tr>
           ))}
@@ -93,12 +86,12 @@ export function PrintMoyersSection({ record }: PrintMoyersSectionProps) {
       <table className="mt-[4pt] w-[80%] border-collapse">
         <tbody>
           <tr>
-            <th colSpan={2} className={cn(HEAD, "text-left")}>Predisposición de Apiñamiento dental</th>
+            <th colSpan={2} className={cn(TABLE_HEAD, "text-left")}>Predisposición de Apiñamiento dental</th>
           </tr>
           {CROWDING_ROWS.map(({ key, label }) => (
             <tr key={key}>
-              <th scope="row" className={cn(HEAD, "w-[30%] text-left")}>{label}</th>
-              <td className={CELL}>{m?.[key]}</td>
+              <th scope="row" className={cn(TABLE_HEAD, "w-[30%] text-left")}>{label}</th>
+              <td className={TABLE_CELL}>{m?.[key]}</td>
             </tr>
           ))}
         </tbody>

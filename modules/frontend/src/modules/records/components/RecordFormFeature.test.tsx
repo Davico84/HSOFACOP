@@ -412,3 +412,50 @@ describe("orthodontic-records — Análisis de Moyers (paso 5)", () => {
     expect(calls.put).toHaveLength(0);
   });
 });
+
+describe("orthodontic-records — Análisis de Nance (paso 5)", () => {
+  const upper: [number, string][] = [[15, "7"], [14, "7.1"], [13, "7.8"], [12, "6.7"], [11, "8.6"], [21, "8.5"], [22, "6.6"], [23, "7.7"], [24, "7"], [25, "6.9"]];
+
+  async function openNance() {
+    await userEvent.click(await screen.findByRole("button", { name: /^Análisis de Nance/ }));
+  }
+
+  it("calcula ST y discrepancia en vivo, muestra la arcada y guarda la conclusión escrita", async () => {
+    const { calls } = mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openNance();
+
+    expect(screen.getByRole("img", { name: /Arcada superior en vista oclusal/ })).toBeInTheDocument();
+    for (const [tooth, value] of upper) {
+      await userEvent.type(screen.getByLabelText(`Ancho mesiodistal, pieza ${tooth} (mm)`), value);
+    }
+    expect(screen.getByLabelText("Total superior")).toHaveTextContent("73,9");
+    await userEvent.type(screen.getByLabelText("SA, espacio disponible superior (mm)"), "70.5");
+    expect(screen.getByLabelText("ST, espacio requerido superior")).toHaveTextContent("73,9 mm");
+    expect(screen.getByLabelText("Discrepancia superior")).toHaveTextContent("−3,4 mm");
+    expect(screen.getByLabelText("Conclusión superior")).toHaveValue("");
+    await userEvent.type(screen.getByLabelText("Conclusión superior"), "Falta de espacio leve");
+
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    await waitFor(() => expect(calls.put).toHaveLength(1));
+    const n = calls.put[0].content?.models.nance;
+    expect(n?.availableUpper).toBe(70.5);
+    expect(n?.upperWidths?.tooth11).toBe(8.6);
+    expect(n?.conclusionUpper).toBe("Falta de espacio leve");
+    expect(n?.conclusionLower).toBeUndefined();
+  });
+
+  it("si falta una pieza no hay ST ni discrepancia y se avisa", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openNance();
+
+    for (const [tooth, value] of upper.slice(0, 9)) {
+      await userEvent.type(screen.getByLabelText(`Ancho mesiodistal, pieza ${tooth} (mm)`), value);
+    }
+    await userEvent.type(screen.getByLabelText("SA, espacio disponible superior (mm)"), "70.5");
+    expect(screen.getByText("Faltan piezas por medir.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Total superior")).toHaveTextContent("—");
+    expect(screen.getByLabelText("Discrepancia superior")).toHaveTextContent("—");
+  });
+});

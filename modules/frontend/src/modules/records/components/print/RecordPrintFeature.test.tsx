@@ -177,6 +177,36 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(within(moyers).getByText("Discrepancia negativa leve")).toBeInTheDocument();
   });
 
+  it("hoja de Nance tras la de Moyers, con ST y discrepancia calculados, el dibujo y la conclusión escrita", async () => {
+    serve(withContent(
+      { models: { transversal: {}, moyers: {}, nance: {
+        analysisDate: "2026-09-01",
+        availableUpper: 70.5,
+        upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
+        lowerWidths: { tooth31: 5.4 },
+        conclusionUpper: "Falta de espacio leve",
+        interpretation: "Discrepancia negativa en el maxilar",
+      } } },
+      { ageYears: 13 },
+    ));
+    renderRecordRoutes("/historias/10/imprimir");
+    const sheets = await screen.findAllByRole("article");
+
+    const titles = sheets.map((sheet) => within(sheet).queryAllByRole("heading", { level: 2 })[0]?.textContent ?? "");
+    const index = titles.indexOf("Análisis de Nance · discrepancia óseo dentaria");
+    expect(index).toBe(titles.indexOf("Ficha para el análisis de Moyers") + 1);
+    const nance = sheets[index];
+    expect(within(nance).getByRole("img", { name: /Arcada superior/ })).toBeInTheDocument();
+    expect(within(nance).getByLabelText("Pieza 11")).toHaveTextContent("8,6");
+    expect(within(nance).getByLabelText("Pieza 31")).toHaveTextContent("5,4");
+    expect(within(nance).getByLabelText("Total superior")).toHaveTextContent("73,9 mm");
+    expect(within(nance).getByLabelText("Total inferior")).toHaveTextContent("");
+    const rows = within(nance).getAllByRole("row").map((r) => r.textContent);
+    expect(rows).toContain("Superior70,5 mm73,9 mm−3,4 mmFalta de espacio leve");
+    expect(rows).toContain("Inferior");
+    expect(within(nance).getByText("Discrepancia negativa en el maxilar")).toBeInTheDocument();
+  });
+
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {
     serve(recordResponse({ patientSex: "MALE" }));
     renderRecordRoutes("/historias/10/imprimir");

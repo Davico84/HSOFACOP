@@ -12,19 +12,25 @@ import { CrowdingPredisposition } from "../fields/CrowdingPredisposition";
 import { IntermolarField } from "../fields/IntermolarField";
 import { MoyersIncisorsField } from "../fields/MoyersIncisorsField";
 import { MoyersSpaceTable } from "../fields/MoyersSpaceTable";
+import { NanceResultTable } from "../fields/NanceResultTable";
+import { NanceWidthsTable } from "../fields/NanceWidthsTable";
 import { WalaToEvTable } from "../fields/WalaToEvTable";
+import { ArchDiagram } from "../ArchDiagram";
 import { countFilled, filledLabel } from "../../utils/filled";
 
 /**
- * Paso 5 (págs. 5–6): análisis de modelos, uno por panel plegable para no recorrer los cuatro
- * (transversal y Moyers; Nance y Bolton se agregan en sus propios changes). Se abre el transversal;
+ * Paso 5 (págs. 5–7): análisis de modelos, uno por panel plegable para no recorrer los cuatro
+ * (transversal, Moyers y Nance; Bolton se agrega en su propio change). Se abre el transversal;
  * un análisis con errores de validación se abre solo para que el error no quede oculto. Paciente,
  * edad y sexo se toman del paso 1.
  */
 export function Step5Models() {
   const { control, formState } = useFormContext<RecordFormValues>();
-  const [transversal, moyers] = useWatch({ control, name: ["content.models.transversal", "content.models.moyers"] });
-  const filled = { transversal: countFilled(transversal), moyers: countFilled(moyers) };
+  const [transversal, moyers, nance] = useWatch({
+    control,
+    name: ["content.models.transversal", "content.models.moyers", "content.models.nance"],
+  });
+  const filled = { transversal: countFilled(transversal), moyers: countFilled(moyers), nance: countFilled(nance) };
   const [open, setOpen] = useState<string[]>(["transversal"]);
   const withErrors = Object.keys(formState.errors.content?.models ?? {});
   const value = [...new Set([...open, ...withErrors])];
@@ -80,6 +86,28 @@ export function Step5Models() {
         <MoyersSpaceTable />
         <CrowdingPredisposition />
         <TextAreaField name="content.models.moyers.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
+      </AccordionSection>
+
+      <AccordionSection
+        value="nance"
+        index={3}
+        title="Análisis de Nance"
+        description="pág. 7 · discrepancia óseo dentaria: espacio disponible (SA) frente al requerido (ST)"
+        status={filledLabel(filled.nance)}
+        filled={filled.nance > 0}
+      >
+        <TextField
+          name="content.models.nance.analysisDate"
+          label="Fecha del análisis"
+          type="date"
+          hint="Puede ser anterior al inicio del tratamiento."
+        />
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+          <ArchDiagram className="mx-auto max-w-60" />
+          <NanceWidthsTable />
+        </div>
+        <NanceResultTable />
+        <TextAreaField name="content.models.nance.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
       </AccordionSection>
     </Accordion>
   );

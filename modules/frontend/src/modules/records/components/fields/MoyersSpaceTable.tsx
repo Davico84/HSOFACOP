@@ -1,5 +1,6 @@
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { NumberInput } from "@/modules/core/ui/number-input";
+import { ComputedValue } from "@/modules/core/components/form/ComputedValue";
 import { fieldError } from "@/modules/core/components/form/fieldError";
 import type { RecordFormValues } from "../../schemas/record";
 import { MOYERS_SIDES } from "../../config/moyers";
@@ -20,10 +21,6 @@ export function MoyersSpaceTable() {
   // Las cuatro columnas tienen el mismo ancho y todo va centrado: la entrada, el requerido y la
   // diferencia de cada lado quedan uno debajo del otro (revisión del usuario).
   const cell = "w-28 px-2 py-1.5 text-center tabular-nums";
-  // Requerido y diferencia se calculan: caja del mismo tamaño que la entrada, pero bloqueada
-  // (fondo apagado, sin foco), para que las tres filas guarden concordancia (revisión del usuario).
-  const locked =
-    "mx-auto flex h-8 w-24 cursor-not-allowed select-none items-center justify-center rounded-md border border-input bg-muted text-muted-foreground";
 
   return (
     <fieldset className="flex flex-col gap-1.5">
@@ -79,9 +76,9 @@ export function MoyersSpaceTable() {
               <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Espacio requerido (Moyers 75 %)</th>
               {sides.map(({ key, label, required }) => (
                 <td key={key} className={cell}>
-                  <output className={locked} aria-label={`Espacio requerido, ${label}`}>
-                    {required === null ? "—" : formatMm(required)}
-                  </output>
+                  <ComputedValue label={`Espacio requerido, ${label}`} className="mx-auto w-24">
+                    {required === null ? "" : formatMm(required)}
+                  </ComputedValue>
                 </td>
               ))}
             </tr>
@@ -89,9 +86,9 @@ export function MoyersSpaceTable() {
               <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Diferencia</th>
               {sides.map(({ key, label, difference }) => (
                 <td key={key} className={cell}>
-                  <output className={locked} aria-label={`Diferencia, ${label}`}>
-                    {formatSigned(difference) || "—"}
-                  </output>
+                  <ComputedValue label={`Diferencia, ${label}`} className="mx-auto w-24">
+                    {formatSigned(difference)}
+                  </ComputedValue>
                 </td>
               ))}
             </tr>
