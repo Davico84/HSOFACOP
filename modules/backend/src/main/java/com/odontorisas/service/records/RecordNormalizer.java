@@ -4,10 +4,12 @@ import com.odontorisas.common.PatientSex;
 import com.odontorisas.service.records.content.Anamnesis;
 import com.odontorisas.service.records.content.AngleRelation;
 import com.odontorisas.service.records.content.AvailableSpace;
+import com.odontorisas.service.records.content.BoltonAnalysis;
 import com.odontorisas.service.records.content.Diagnosis;
 import com.odontorisas.service.records.content.FacialAnalysis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
 import com.odontorisas.service.records.content.FdiTeeth;
+import com.odontorisas.service.records.content.FirstMolarWidths;
 import com.odontorisas.service.records.content.FunctionalAnalysis;
 import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
@@ -175,6 +177,7 @@ public final class RecordNormalizer {
         TransversalAnalysis t = m.transversal() != null ? m.transversal() : TransversalAnalysis.empty();
         MoyersAnalysis y = m.moyers() != null ? m.moyers() : MoyersAnalysis.empty();
         NanceAnalysis n = m.nance() != null ? m.nance() : NanceAnalysis.empty();
+        BoltonAnalysis b = m.bolton() != null ? m.bolton() : BoltonAnalysis.empty();
         return new ModelAnalysis(
             new TransversalAnalysis(
                 t.intercanineUpper(), t.intercanineLower(), t.intermolarUpper(), t.intermolarLower(),
@@ -191,7 +194,11 @@ public final class RecordNormalizer {
                 n.analysisDate(), n.availableUpper(), n.availableLower(),
                 n.upperWidths() != null ? n.upperWidths() : UpperArchWidths.empty(),
                 n.lowerWidths() != null ? n.lowerWidths() : LowerArchWidths.empty(),
-                text(n.conclusionUpper()), text(n.conclusionLower()), text(n.interpretation())));
+                text(n.conclusionUpper()), text(n.conclusionLower()), text(n.interpretation())),
+            new BoltonAnalysis(
+                b.analysisDate(),
+                b.firstMolars() != null ? b.firstMolars() : FirstMolarWidths.empty(),
+                text(b.interpretation())));
     }
 
     static RadiographicAnalysis radiographic(RadiographicAnalysis r) {

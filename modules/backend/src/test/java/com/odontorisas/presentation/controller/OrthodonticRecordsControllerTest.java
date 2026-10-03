@@ -231,6 +231,17 @@ class OrthodonticRecordsControllerTest {
     }
 
     @Test
+    void bolton_molar_out_of_range_and_future_date_are_400() throws Exception {
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"bolton\":{\"firstMolars\":{\"tooth46\":10.25}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.bolton.firstMolars.tooth46"));
+        String tomorrow = java.time.LocalDate.now().plusDays(1).toString();
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"bolton\":{\"analysisDate\":\"" + tomorrow + "\"}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.bolton.analysisDate"));
+    }
+
+    @Test
     void moyers_date_in_the_future_is_400() throws Exception {
         String tomorrow = java.time.LocalDate.now().plusDays(1).toString();
         create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"analysisDate\":\"" + tomorrow + "\"}}}}")

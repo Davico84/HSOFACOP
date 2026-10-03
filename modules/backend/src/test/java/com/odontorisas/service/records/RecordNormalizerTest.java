@@ -7,10 +7,12 @@ import com.odontorisas.service.records.content.Anamnesis;
 import com.odontorisas.service.records.content.AngleClass;
 import com.odontorisas.service.records.content.AngleRelation;
 import com.odontorisas.service.records.content.AvailableSpace;
+import com.odontorisas.service.records.content.BoltonAnalysis;
 import com.odontorisas.service.records.content.Diagnosis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
 import com.odontorisas.service.records.content.FacialAnalysis.PatternIIFeature;
 import com.odontorisas.service.records.content.FacialAnalysis;
+import com.odontorisas.service.records.content.FirstMolarWidths;
 import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
 import com.odontorisas.service.records.content.FunctionalAnalysis.TongueActivity;
@@ -254,11 +256,12 @@ class RecordNormalizerTest {
         assertThat(out.models().transversal().walaToEv()).isNotNull();
         assertThat(out.models().moyers()).isEqualTo(MoyersAnalysis.empty());
         assertThat(out.models().nance()).isEqualTo(NanceAnalysis.empty());
-        assertThat(out.schemaVersion()).isEqualTo(5);
+        assertThat(out.models().bolton()).isEqualTo(BoltonAnalysis.empty());
+        assertThat(out.schemaVersion()).isEqualTo(6);
 
         TransversalAnalysis t = new TransversalAnalysis(new BigDecimal("34.5"), null, new BigDecimal("50.1"), null,
             null, null, null, new BigDecimal("50.0"), null, "  Compresión maxilar leve ");
-        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t, null, null)).transversal();
+        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t, null, null, null)).transversal();
         assertThat(kept.intermolarUpper()).isEqualByComparingTo("50.1");
         assertThat(kept.xIdealWidth()).isEqualByComparingTo("50.0");
         assertThat(kept.walaToEv()).isEqualTo(WalaToEv.empty());
@@ -267,13 +270,13 @@ class RecordNormalizerTest {
 
     @Test
     void moyers_subsection_is_filled_when_missing_and_its_parts_kept() {
-        ModelAnalysis withoutMoyers = new ModelAnalysis(TransversalAnalysis.empty(), null, null);
+        ModelAnalysis withoutMoyers = new ModelAnalysis(TransversalAnalysis.empty(), null, null, null);
         assertThat(RecordNormalizer.models(withoutMoyers).moyers()).isEqualTo(MoyersAnalysis.empty());
 
         LowerIncisors incisors = new LowerIncisors(new BigDecimal("6.0"), new BigDecimal("5.5"), null, null);
         MoyersAnalysis y = new MoyersAnalysis(LocalDate.of(2026, 9, 1), incisors, null, " ", null, " Mandíbula derecho ",
             "  Discrepancia negativa ");
-        MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y, null)).moyers();
+        MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y, null, null)).moyers();
         assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
         assertThat(kept.lowerIncisors()).isEqualTo(incisors);
         assertThat(kept.availableSpace()).isEqualTo(AvailableSpace.empty());
@@ -284,17 +287,28 @@ class RecordNormalizerTest {
 
     @Test
     void nance_subsection_is_filled_when_missing_and_texts_trimmed() {
-        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null)).nance()).isEqualTo(NanceAnalysis.empty());
+        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null, null)).nance()).isEqualTo(NanceAnalysis.empty());
 
         NanceAnalysis n = new NanceAnalysis(LocalDate.of(2026, 9, 1), new BigDecimal("70.5"), null, null, null,
             "  Falta de espacio leve ", " ", " Discrepancia negativa ");
-        NanceAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, n)).nance();
+        NanceAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, n, null)).nance();
         assertThat(kept.availableUpper()).isEqualByComparingTo("70.5");
         assertThat(kept.upperWidths()).isEqualTo(UpperArchWidths.empty());
         assertThat(kept.lowerWidths()).isEqualTo(LowerArchWidths.empty());
         assertThat(kept.conclusionUpper()).isEqualTo("Falta de espacio leve");
         assertThat(kept.conclusionLower()).isNull();
         assertThat(kept.interpretation()).isEqualTo("Discrepancia negativa");
+    }
+
+    @Test
+    void bolton_subsection_is_filled_when_missing_and_interpretation_trimmed() {
+        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null, null)).bolton()).isEqualTo(BoltonAnalysis.empty());
+
+        BoltonAnalysis b = new BoltonAnalysis(LocalDate.of(2026, 9, 1), null, "  Exceso mandibular ");
+        BoltonAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, null, b)).bolton();
+        assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
+        assertThat(kept.firstMolars()).isEqualTo(FirstMolarWidths.empty());
+        assertThat(kept.interpretation()).isEqualTo("Exceso mandibular");
     }
 
     // --- Radiográfico, diagnóstico y firmas ---

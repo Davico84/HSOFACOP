@@ -305,7 +305,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(5);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
     }
 
     @Test
@@ -339,7 +339,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
         assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(5);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
             String.class, id)).isEqualTo("2026-09-01");
     }
@@ -369,7 +369,33 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(n.get("upperWidths").get("tooth25").decimalValue()).isEqualByComparingTo("6.9");
         assertThat(n.get("lowerWidths").get("tooth31").decimalValue()).isEqualByComparingTo("5.4");
         assertThat(n.get("conclusionUpper").stringValue()).isEqualTo("Falta de espacio leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(5);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
+    }
+
+    @Test
+    void bolton_analysis_is_saved_and_a_record_without_it_still_opens() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana").get("id").asLong();
+
+        // Historia guardada antes del análisis de Bolton (schemaVersion 5, sin "bolton").
+        jdbc.update("UPDATE orthodontic_records SET content = jsonb_set(content #- '{models,bolton}', '{schemaVersion}', '5') WHERE id = ?", id);
+        JsonNode old = read(getRecord(torres, id));
+        assertThat(old.get("content").get("models").get("bolton").get("firstMolars").isObject()).isTrue();
+
+        ObjectNode body = json.createObjectNode();
+        body.put("version", old.get("version").asLong());
+        body.put("patientName", "Ana");
+        ObjectNode bolton = body.putObject("content").putObject("models").putObject("bolton");
+        bolton.put("analysisDate", "2026-09-01").put("interpretation", " Exceso mandibular ");
+        bolton.putObject("firstMolars").put("tooth16", 10.2).put("tooth36", 11.2);
+
+        JsonNode saved = read(save(torres, id, json.writeValueAsString(body)));
+
+        JsonNode b = saved.get("content").get("models").get("bolton");
+        assertThat(b.get("firstMolars").get("tooth16").decimalValue()).isEqualByComparingTo("10.2");
+        assertThat(b.get("firstMolars").get("tooth36").decimalValue()).isEqualByComparingTo("11.2");
+        assertThat(b.get("interpretation").stringValue()).isEqualTo("Exceso mandibular");
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
     }
 
     @Test
