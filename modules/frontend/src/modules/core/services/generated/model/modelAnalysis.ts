@@ -8,9 +8,11 @@
 import type { TransversalAnalysis } from './transversalAnalysis';
 import type { MoyersAnalysis } from './moyersAnalysis';
 import type { NanceAnalysis } from './nanceAnalysis';
+import type { BoltonAnalysis } from './boltonAnalysis';
 
 export interface ModelAnalysis {
   transversal: TransversalAnalysis;
   moyers: MoyersAnalysis;
   nance: NanceAnalysis;
+  bolton: BoltonAnalysis;
 }

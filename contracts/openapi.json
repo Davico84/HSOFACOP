@@ -896,6 +896,23 @@
           }
         }
       },
+      "BoltonAnalysis": {
+        "type": "object",
+        "properties": {
+          "analysisDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "firstMolars": {
+            "$ref": "#/components/schemas/FirstMolarWidths"
+          },
+          "interpretation": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
       "Diagnosis": {
         "type": "object",
         "properties": {
@@ -1104,6 +1121,31 @@
               "INCREASED",
               "DECREASED"
             ]
+          }
+        }
+      },
+      "FirstMolarWidths": {
+        "type": "object",
+        "properties": {
+          "tooth16": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth26": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth46": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth36": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
           }
         }
       },
@@ -1337,9 +1379,13 @@
           },
           "nance": {
             "$ref": "#/components/schemas/NanceAnalysis"
+          },
+          "bolton": {
+            "$ref": "#/components/schemas/BoltonAnalysis"
           }
         },
         "required": [
+          "bolton",
           "moyers",
           "nance",
           "transversal"

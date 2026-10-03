@@ -14,7 +14,7 @@ export function emptyContent(): RecordContent {
     facial: {},
     functional: { suckingHabitTypes: ["NONE"] },
     occlusal: {},
-    models: { transversal: { walaToEv: {} }, moyers: { lowerIncisors: {}, availableSpace: {} }, nance: { upperWidths: {}, lowerWidths: {} } },
+    models: { transversal: { walaToEv: {} }, moyers: { lowerIncisors: {}, availableSpace: {} }, nance: { upperWidths: {}, lowerWidths: {} }, bolton: { firstMolars: {} } },
     radiographic: {},
     diagnosis: { problemList: [], treatmentGoals: [] },
     signatures: {},

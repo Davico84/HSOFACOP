@@ -131,7 +131,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
 
   it("hoja del análisis transversal tras el oclusal, con las diferencias calculadas", async () => {
     serve(withContent(
-      { models: { transversal: { intermolarUpper: 50.1, intermolarLower: 45.8, walaToEv: { firstMolar: 2.6 }, interpretation: "Compresión leve" }, moyers: {}, nance: {} } },
+      { models: { transversal: { intermolarUpper: 50.1, intermolarLower: 45.8, walaToEv: { firstMolar: 2.6 }, interpretation: "Compresión leve" }, moyers: {}, nance: {}, bolton: {} } },
       { patientSex: "FEMALE", ageYears: 13 },
     ));
     renderRecordRoutes("/historias/10/imprimir");
@@ -156,7 +156,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
         availableSpace: { mandibleRight: 21.0, mandibleLeft: 22.6, maxillaRight: 23.5, maxillaLeft: 22.6 },
         crowdingNegative: "Mandíbula derecho",
         interpretation: "Discrepancia negativa leve",
-      }, nance: {} } },
+      }, nance: {}, bolton: {} } },
       { ageYears: 13 },
     ));
     renderRecordRoutes("/historias/10/imprimir");
@@ -186,7 +186,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
         lowerWidths: { tooth31: 5.4 },
         conclusionUpper: "Falta de espacio leve",
         interpretation: "Discrepancia negativa en el maxilar",
-      } } },
+      }, bolton: {} } },
       { ageYears: 13 },
     ));
     renderRecordRoutes("/historias/10/imprimir");
