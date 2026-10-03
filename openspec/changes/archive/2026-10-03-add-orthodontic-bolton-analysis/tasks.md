@@ -14,9 +14,9 @@
 - [x] 2.3 `BoltonFormula` (fracción como en el PDF) y grilla de anchos que comparte los campos de Nance
 - [x] 2.4 Panel 4 "Análisis de Bolton" en el paso 5 (fecha, grilla, relación total y anterior, interpretación)
 - [x] 2.5 `PrintBoltonSection` tras Nance
-- [ ] 2.6 Tests Vitest (panel, anchos compartidos, cálculos, impresión) y E2E (13 hojas); `pnpm validate` verde; impresión verificada con Edge headless
+- [x] 2.6 Tests Vitest (panel, anchos compartidos, cálculos, impresión) y E2E (13 hojas); `pnpm validate` verde; impresión verificada con Edge headless
 
 ## 3. Docs y cierre
 
 - [x] 3.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 3.2 Al archivar — `docs/domain.md`: análisis de Bolton en `OrthodonticRecord` y glosario
+- [x] 3.2 Al archivar — `docs/domain.md`: análisis de Bolton en `OrthodonticRecord` y glosario

@@ -39,6 +39,7 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | WALA–EV | Distancia del borde WALA (unión mucogingival) al eje vestibular (EV) de cada diente inferior; normas: canino 0,6, 1er premolar 0,8, 2do premolar 1,3, 1er molar 2,0, 2do molar 2,2 mm. |
 | Análisis de Moyers | Predicción del espacio requerido para canino y premolares a partir de la suma de los incisivos inferiores (42, 41, 31, 32), con la tabla de Moyers al 75 % (suma redondeada al 0,5 mm; tabla de 19,5 a 29,0 mm). Diferencia = espacio disponible − requerido, por arcada y lado. |
 | Análisis de Nance (Nance & Carey) | Discrepancia óseo dentaria por arcada: SA (espacio disponible o longitud de arco, medido) − ST (espacio requerido: suma de los anchos mesiodistales de 15→25 o 45→35, de mesial a mesial del 1er molar). Negativa = falta espacio. |
+| Análisis de Bolton | Discrepancia de tamaño dentario entre arcadas: relación total (12 piezas, 1er molar a 1er molar; media 91,3 %, rango 87,5–94,8) y relación anterior (6 piezas; media 77,2 %, rango 74,5–80,4) = suma mandibular ÷ suma maxilar × 100. Sobre la media hay exceso mandibular; bajo la media, exceso maxilar (real, ideal y diferencia de esa arcada). |
 | Predisposición de apiñamiento | Tabla 2 de la ficha de Moyers: el odontólogo anota qué arcada/lado resulta positivo (sobra espacio), nulo o negativo (falta espacio). |
 | Apoderado | Quien firma por un paciente menor de 18 años. |
 
@@ -78,15 +79,15 @@ Cuenta de acceso al sistema.
 Token de refresco persistido para rotación y revocación real (logout). Se guarda el **hash** del token, nunca el valor en claro.
 - `user` (FK), `tokenHash` (único), `expiresAt`, `revoked`, `createdAt`. El access token es JWT stateless (no se persiste).
 
-### `orthodontic-records` → **OrthodonticRecord** *(construida, fases 1, 2.1, 2.2 y 2.3)*
+### `orthodontic-records` → **OrthodonticRecord** *(construida, fases 1 y 2)*
 Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o busca; el contenido clínico va en JSON (JSONB) tipado por paso.
 - `author` (FK `User`, nunca cambia) y `recordSeq` / `recordNumber`: correlativo **por autor** (`AEO-001`, `AEO-002`…), asignado al crear y no editable.
 - Paciente embebido (sin registro maestro de pacientes): `patientName` (obligatorio), `documentType` (`DNI` 8 dígitos | `FOREIGNER_CARD` 9 | `PASSPORT` 6–12, solo dígitos) + `documentNumber`, `patientSex` (`FEMALE` | `MALE`), `birthDate`, `birthPlace`, `address`, `phone`, `treatmentStartDate`, `treatingDentist` (por defecto el autor).
 - Edad **calculada** (años cumplidos a la fecha de inicio de tratamiento o a hoy); menor de 18 → firma el apoderado.
-- `content` (JSON, `schemaVersion` 5): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`, `models.moyers` y `models.nance`: medidas en mm 0–99,9 con un decimal, fechas de análisis no futuras, predisposición de apiñamiento y conclusiones escritas, interpretaciones; las diferencias con promedios y normas, la suma de incisivos, el requerido de Moyers, el ST y la discrepancia de Nance se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
+- `content` (JSON, `schemaVersion` 6): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`, `models.moyers`, `models.nance` y `models.bolton` —este solo guarda los 1eros molares; el resto de sus anchos son los de Nance—: medidas en mm 0–99,9 con un decimal, fechas de análisis no futuras, predisposición de apiñamiento y conclusiones escritas, interpretaciones; las diferencias con promedios y normas, la suma de incisivos, el requerido de Moyers, el ST y la discrepancia de Nance y las relaciones de Bolton se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
 - `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
 - Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
-- Pendiente (fases 2 y 3): análisis de Bolton y notas de evolución digitalizadas (hoy se imprime la hoja en blanco).
+- Pendiente (fase 3): notas de evolución digitalizadas (hoy se imprime la hoja en blanco).
 
 ---
 
