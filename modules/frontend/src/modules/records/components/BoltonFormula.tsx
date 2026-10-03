@@ -31,13 +31,16 @@ export function BoltonFormula({ count, mandibular, maxillary, quotient, ratio, p
       role="group"
       aria-label={`Fórmula: suma mandibular ${count} sobre suma maxilar ${count}, por 100`}
     >
-      <div className="inline-flex flex-col">
-        <span className="flex items-center gap-2 px-1 pb-1">
-          Suma mandibular {count} <span className={box} aria-label={`Suma mandibular ${count}`}>{value(mandibular)}</span> mm
-        </span>
-        <span className="flex items-center gap-2 border-t border-foreground px-1 pt-1">
-          Suma maxilar {count} <span className={box} aria-label={`Suma maxilar ${count}`}>{value(maxillary)}</span> mm
-        </span>
+      {/* Etiqueta · recuadro · unidad en columnas: los dos recuadros quedan uno sobre otro, y la
+          línea de fracción cruza todo el ancho. */}
+      <div className="inline-grid grid-cols-[auto_auto_auto] items-center gap-x-2">
+        <span className="px-1 pb-1">Suma mandibular {count}</span>
+        <span className={cn(box, "mb-1")} aria-label={`Suma mandibular ${count}`}>{value(mandibular)}</span>
+        <span className="pb-1 pr-1">mm</span>
+        <span className="col-span-3 border-t border-foreground" aria-hidden="true" />
+        <span className="px-1 pt-1">Suma maxilar {count}</span>
+        <span className={cn(box, "mt-1")} aria-label={`Suma maxilar ${count}`}>{value(maxillary)}</span>
+        <span className="pt-1 pr-1">mm</span>
       </div>
       <span>=</span>
       <span className={box}>{quotientText}</span>
