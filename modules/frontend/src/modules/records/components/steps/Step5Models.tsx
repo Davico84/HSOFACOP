@@ -18,10 +18,13 @@ import { NanceSpaceRows } from "../fields/NanceSpaceRows";
 import { NanceWidthsTable } from "../fields/NanceWidthsTable";
 import { WalaToEvTable } from "../fields/WalaToEvTable";
 import { ArchDiagram } from "../ArchDiagram";
+import { BoltonRatioBlock } from "../fields/BoltonRatioBlock";
+import { BoltonWidthsGrid } from "../fields/BoltonWidthsGrid";
+import { BOLTON_RATIOS } from "../../config/bolton";
 
 /**
- * Paso 5 (págs. 5–7): análisis de modelos, uno por panel plegable para no recorrer los cuatro
- * (transversal, Moyers y Nance; Bolton se agrega en su propio change). Se abre el transversal;
+ * Paso 5 (págs. 5–9): los cuatro análisis de modelos (transversal, Moyers, Nance y Bolton), uno
+ * por panel plegable para no recorrerlos todos. Se abre el transversal;
  * un análisis con errores de validación se abre solo para que el error no quede oculto. Paciente,
  * edad y sexo se toman del paso 1.
  */
@@ -102,6 +105,26 @@ export function Step5Models() {
         </div>
         <NanceResultTable />
         <TextAreaField name="content.models.nance.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
+      </AccordionSection>
+
+      <AccordionSection
+        value="bolton"
+        index={4}
+        title="Análisis de Bolton"
+        description="pág. 9 · discrepancia de tamaño dentario entre arcadas: relación total y anterior"
+        status={<FilledStatus name="content.models.bolton" />}
+      >
+        <TextField
+          name="content.models.bolton.analysisDate"
+          label="Fecha del análisis"
+          type="date"
+          hint="Puede ser anterior al inicio del tratamiento."
+        />
+        <BoltonWidthsGrid />
+        {BOLTON_RATIOS.map((def) => (
+          <BoltonRatioBlock key={def.key} def={def} />
+        ))}
+        <TextAreaField name="content.models.bolton.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
       </AccordionSection>
     </Accordion>
   );

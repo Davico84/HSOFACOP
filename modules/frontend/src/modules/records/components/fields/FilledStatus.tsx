@@ -5,7 +5,7 @@ import { countFilled, filledLabel } from "../../utils/filled";
 
 interface FilledStatusProps {
   /** Análisis de modelos cuyo avance se muestra. */
-  name: "content.models.transversal" | "content.models.moyers" | "content.models.nance";
+  name: "content.models.transversal" | "content.models.moyers" | "content.models.nance" | "content.models.bolton";
 }
 
 /**

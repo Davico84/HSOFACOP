@@ -4,6 +4,7 @@ import { PrintEvolutionNotesSection } from "./PrintEvolutionNotesSection";
 import { PrintFacialSection } from "./PrintFacialSection";
 import { PrintFunctionalSection } from "./PrintFunctionalSection";
 import { PrintModelsSection } from "./PrintModelsSection";
+import { PrintBoltonSection } from "./PrintBoltonSection";
 import { PrintMoyersSection } from "./PrintMoyersSection";
 import { PrintNanceSection } from "./PrintNanceSection";
 import { PrintOcclusalSection } from "./PrintOcclusalSection";
@@ -29,6 +30,7 @@ export function RecordPrintDocument({ record }: RecordPrintDocumentProps) {
       <PrintModelsSection record={record} />
       <PrintMoyersSection record={record} />
       <PrintNanceSection record={record} />
+      <PrintBoltonSection record={record} />
       <PrintRadiographicSection record={record} />
       <PrintDiagnosisSection record={record} />
       <PrintSignaturesSection record={record} />

@@ -207,6 +207,32 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(within(nance).getByText("Discrepancia negativa en el maxilar")).toBeInTheDocument();
   });
 
+  it("hoja de Bolton tras la de Nance, en español, con las relaciones calculadas", async () => {
+    const boltonModels = {
+      transversal: {},
+      moyers: {},
+      nance: {
+        upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
+        lowerWidths: { tooth45: 7.2, tooth44: 7.0, tooth43: 6.9, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1, tooth33: 6.8, tooth34: 7.1, tooth35: 7.3 },
+      },
+      bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, interpretation: "Exceso mandibular leve" },
+    };
+    serve(withContent({ models: boltonModels }, { ageYears: 13 }));
+    renderRecordRoutes("/historias/10/imprimir");
+    const sheets = await screen.findAllByRole("article");
+
+    const titles = sheets.map((sheet) => within(sheet).queryAllByRole("heading", { level: 2 })[0]?.textContent ?? "");
+    const index = titles.indexOf("Análisis de Bolton");
+    expect(index).toBe(titles.indexOf("Análisis de Nance · discrepancia óseo dentaria") + 1);
+    const bolton = sheets[index];
+    expect(within(bolton).getByLabelText("Pieza 16")).toHaveTextContent("10,2");
+    expect(within(bolton).getByLabelText("Pieza 11")).toHaveTextContent("8,6");
+    const total = within(bolton).getByRole("region", { name: "Relación total" });
+    expect(within(total).getByLabelText("Relación total (%)")).toHaveTextContent("92,9 %");
+    expect(within(total).getAllByRole("row").map((r) => r.textContent)).toContain("87,5 mm86,0 mm+1,5 mm");
+    expect(within(bolton).getByText("Exceso mandibular leve")).toBeInTheDocument();
+  });
+
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {
     serve(recordResponse({ patientSex: "MALE" }));
     renderRecordRoutes("/historias/10/imprimir");

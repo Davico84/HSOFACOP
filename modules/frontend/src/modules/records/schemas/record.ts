@@ -251,7 +251,16 @@ const nance = z.object({
   interpretation: text(LONG_TEXT),
 });
 
-const models = z.object({ transversal, moyers, nance });
+const bolton = z.object({
+  analysisDate: z
+    .string()
+    .refine((d) => !d || d <= today(), "La fecha del análisis no puede ser futura.")
+    .nullish(),
+  firstMolars: z.object({ tooth16: modelMm, tooth26: modelMm, tooth46: modelMm, tooth36: modelMm }).nullish(),
+  interpretation: text(LONG_TEXT),
+});
+
+const models = z.object({ transversal, moyers, nance, bolton });
 
 const radiographic = z.object({
   panoramicDiagnosis: text(LONG_TEXT),

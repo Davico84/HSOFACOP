@@ -461,3 +461,55 @@ describe("orthodontic-records — Análisis de Nance (paso 5)", () => {
     expect(screen.getByLabelText("Discrepancia superior")).toHaveTextContent("—");
   });
 });
+
+describe("orthodontic-records — Análisis de Bolton (paso 5)", () => {
+  const boltonModels = {
+    transversal: {},
+    moyers: {},
+    nance: {
+      upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
+      lowerWidths: { tooth45: 7.2, tooth44: 7.0, tooth43: 6.9, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1, tooth33: 6.8, tooth34: 7.1, tooth35: 7.3 },
+    },
+    bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, interpretation: "Exceso mandibular leve" },
+  };
+
+  async function openPanel(name: RegExp) {
+    await userEvent.click(await screen.findByRole("button", { name }));
+  }
+
+  it("los anchos de 15 a 25 y 45 a 35 son los mismos de Nance, en los dos sentidos", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Nance/);
+    await openPanel(/^Análisis de Bolton/);
+
+    await userEvent.type(screen.getByLabelText("Ancho mesiodistal, pieza 11 (mm)"), "8.6");
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(8.6);
+    await userEvent.clear(screen.getByLabelText("Bolton, pieza 31 (mm)"));
+    await userEvent.type(screen.getByLabelText("Bolton, pieza 31 (mm)"), "5.4");
+    expect(screen.getByLabelText("Ancho mesiodistal, pieza 31 (mm)")).toHaveValue(5.4);
+  });
+
+  it("calcula la relación total y la anterior con su lado, y guarda los molares", async () => {
+    const { calls } = mockRecord({ content: { ...recordResponse().content, models: boltonModels } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+
+    // Total: 87,5 / 94,2 → 92,9 %, exceso mandibular: ideal 86,0, diferencia +1,5.
+    expect(screen.getByLabelText("Suma mandibular 12")).toHaveTextContent("87,5");
+    expect(screen.getByLabelText("Suma maxilar 12")).toHaveTextContent("94,2");
+    expect(screen.getByLabelText("Relación total (%)")).toHaveTextContent("92,9 %");
+    expect(screen.getByLabelText("Relación total > 91,3 %: Ideal mandibular 12")).toHaveTextContent("86,0 mm");
+    expect(screen.getByLabelText("Relación total > 91,3 %: Diferencia")).toHaveTextContent("+1,5 mm");
+    expect(screen.getByLabelText("Relación total < 91,3 %: Diferencia")).toHaveTextContent("—");
+    // Anterior: 36,7 / 45,9 → 80,0 %, dentro del rango.
+    expect(screen.getByLabelText("Relación anterior (%)")).toHaveTextContent("80,0 %");
+    expect(screen.getAllByText("Dentro del rango")).toHaveLength(2);
+
+    await userEvent.clear(screen.getByLabelText("Bolton, pieza 26 (mm)"));
+    await userEvent.type(screen.getByLabelText("Bolton, pieza 26 (mm)"), "10.3");
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    await waitFor(() => expect(calls.put).toHaveLength(1));
+    expect(calls.put[0].content?.models.bolton.firstMolars).toEqual({ tooth16: 10.2, tooth26: 10.3, tooth46: 11, tooth36: 11.2 });
+  });
+});
