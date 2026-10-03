@@ -1226,6 +1226,61 @@
           }
         }
       },
+      "LowerArchWidths": {
+        "type": "object",
+        "properties": {
+          "tooth45": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth44": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth43": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth42": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth41": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth31": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth32": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth33": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth34": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth35": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          }
+        }
+      },
       "LowerIncisors": {
         "type": "object",
         "properties": {
@@ -1279,10 +1334,14 @@
           },
           "moyers": {
             "$ref": "#/components/schemas/MoyersAnalysis"
+          },
+          "nance": {
+            "$ref": "#/components/schemas/NanceAnalysis"
           }
         },
         "required": [
           "moyers",
+          "nance",
           "transversal"
         ]
       },
@@ -1310,6 +1369,46 @@
             "minLength": 0
           },
           "crowdingNegative": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "interpretation": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
+      "NanceAnalysis": {
+        "type": "object",
+        "properties": {
+          "analysisDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "availableUpper": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "availableLower": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "upperWidths": {
+            "$ref": "#/components/schemas/UpperArchWidths"
+          },
+          "lowerWidths": {
+            "$ref": "#/components/schemas/LowerArchWidths"
+          },
+          "conclusionUpper": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "conclusionLower": {
             "type": "string",
             "maxLength": 200,
             "minLength": 0
@@ -1696,6 +1795,61 @@
           "patientName",
           "version"
         ]
+      },
+      "UpperArchWidths": {
+        "type": "object",
+        "properties": {
+          "tooth15": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth14": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth13": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth12": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth11": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth21": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth22": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth23": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth24": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "tooth25": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          }
+        }
       },
       "WalaToEv": {
         "type": "object",
