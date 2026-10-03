@@ -431,7 +431,9 @@ describe("orthodontic-records — Análisis de Nance (paso 5)", () => {
     }
     expect(screen.getByLabelText("Total superior")).toHaveTextContent("73,9");
     await userEvent.type(screen.getByLabelText("SA, espacio disponible superior (mm)"), "70.5");
-    expect(screen.getByLabelText("ST, espacio requerido superior")).toHaveTextContent("73,9 mm");
+    // Punto 2 (ST) y la tabla final repiten el total; la tabla final repite también el SA.
+    expect(screen.getAllByLabelText("ST, espacio requerido superior").map((e) => e.textContent)).toEqual(["73,9 mm", "73,9 mm"]);
+    expect(screen.getByLabelText("SA, espacio disponible superior")).toHaveTextContent("70,5 mm");
     expect(screen.getByLabelText("Discrepancia superior")).toHaveTextContent("−3,4 mm");
     expect(screen.getByLabelText("Conclusión superior")).toHaveValue("");
     await userEvent.type(screen.getByLabelText("Conclusión superior"), "Falta de espacio leve");

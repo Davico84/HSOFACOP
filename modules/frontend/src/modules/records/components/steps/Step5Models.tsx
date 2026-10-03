@@ -14,6 +14,7 @@ import { IntermolarField } from "../fields/IntermolarField";
 import { MoyersIncisorsField } from "../fields/MoyersIncisorsField";
 import { MoyersSpaceTable } from "../fields/MoyersSpaceTable";
 import { NanceResultTable } from "../fields/NanceResultTable";
+import { NanceSpaceRows } from "../fields/NanceSpaceRows";
 import { NanceWidthsTable } from "../fields/NanceWidthsTable";
 import { WalaToEvTable } from "../fields/WalaToEvTable";
 import { ArchDiagram } from "../ArchDiagram";
@@ -94,6 +95,7 @@ export function Step5Models() {
           type="date"
           hint="Puede ser anterior al inicio del tratamiento."
         />
+        <NanceSpaceRows />
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
           <ArchDiagram className="mx-auto max-w-60" />
           <NanceWidthsTable />
