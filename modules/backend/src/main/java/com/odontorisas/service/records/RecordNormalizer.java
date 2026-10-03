@@ -12,10 +12,12 @@ import com.odontorisas.service.records.content.FunctionalAnalysis;
 import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
 import com.odontorisas.service.records.content.FunctionalAnalysis.TongueActivity;
+import com.odontorisas.service.records.content.LowerArchWidths;
 import com.odontorisas.service.records.content.LowerIncisors;
 import com.odontorisas.service.records.content.Midline;
 import com.odontorisas.service.records.content.ModelAnalysis;
 import com.odontorisas.service.records.content.MoyersAnalysis;
+import com.odontorisas.service.records.content.NanceAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
@@ -25,6 +27,7 @@ import com.odontorisas.service.records.content.RecordContent;
 import com.odontorisas.service.records.content.SideRelations;
 import com.odontorisas.service.records.content.Signatures;
 import com.odontorisas.service.records.content.TransversalAnalysis;
+import com.odontorisas.service.records.content.UpperArchWidths;
 import com.odontorisas.service.records.content.WalaToEv;
 import com.odontorisas.service.records.content.YesNo;
 
@@ -171,6 +174,7 @@ public final class RecordNormalizer {
     static ModelAnalysis models(ModelAnalysis m) {
         TransversalAnalysis t = m.transversal() != null ? m.transversal() : TransversalAnalysis.empty();
         MoyersAnalysis y = m.moyers() != null ? m.moyers() : MoyersAnalysis.empty();
+        NanceAnalysis n = m.nance() != null ? m.nance() : NanceAnalysis.empty();
         return new ModelAnalysis(
             new TransversalAnalysis(
                 t.intercanineUpper(), t.intercanineLower(), t.intermolarUpper(), t.intermolarLower(),
@@ -182,7 +186,12 @@ public final class RecordNormalizer {
                 y.lowerIncisors() != null ? y.lowerIncisors() : LowerIncisors.empty(),
                 y.availableSpace() != null ? y.availableSpace() : AvailableSpace.empty(),
                 text(y.crowdingPositive()), text(y.crowdingNeutral()), text(y.crowdingNegative()),
-                text(y.interpretation())));
+                text(y.interpretation())),
+            new NanceAnalysis(
+                n.analysisDate(), n.availableUpper(), n.availableLower(),
+                n.upperWidths() != null ? n.upperWidths() : UpperArchWidths.empty(),
+                n.lowerWidths() != null ? n.lowerWidths() : LowerArchWidths.empty(),
+                text(n.conclusionUpper()), text(n.conclusionLower()), text(n.interpretation())));
     }
 
     static RadiographicAnalysis radiographic(RadiographicAnalysis r) {

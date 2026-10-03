@@ -3,34 +3,37 @@ package com.odontorisas.service.records;
 import com.odontorisas.common.DocumentType;
 import com.odontorisas.common.PatientSex;
 import com.odontorisas.service.records.content.AfaiChange;
+import com.odontorisas.service.records.content.Anamnesis;
 import com.odontorisas.service.records.content.AngleClass;
 import com.odontorisas.service.records.content.AngleRelation;
-import com.odontorisas.service.records.content.Anamnesis;
+import com.odontorisas.service.records.content.AvailableSpace;
 import com.odontorisas.service.records.content.Diagnosis;
-import com.odontorisas.service.records.content.FacialAnalysis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
 import com.odontorisas.service.records.content.FacialAnalysis.PatternIIFeature;
-import com.odontorisas.service.records.content.FunctionalAnalysis;
+import com.odontorisas.service.records.content.FacialAnalysis;
 import com.odontorisas.service.records.content.FunctionalAnalysis.Bruxism;
 import com.odontorisas.service.records.content.FunctionalAnalysis.SuckingHabit;
 import com.odontorisas.service.records.content.FunctionalAnalysis.TongueActivity;
-import com.odontorisas.service.records.content.Midline;
-import com.odontorisas.service.records.content.AvailableSpace;
+import com.odontorisas.service.records.content.FunctionalAnalysis;
+import com.odontorisas.service.records.content.LowerArchWidths;
 import com.odontorisas.service.records.content.LowerIncisors;
+import com.odontorisas.service.records.content.Midline;
 import com.odontorisas.service.records.content.ModelAnalysis;
 import com.odontorisas.service.records.content.MoyersAnalysis;
-import com.odontorisas.service.records.content.OcclusalAnalysis;
+import com.odontorisas.service.records.content.NanceAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Vertical;
+import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.Presence;
-import com.odontorisas.service.records.content.RadiographicAnalysis;
 import com.odontorisas.service.records.content.RadiographicAnalysis.CephalometricAnalysis;
+import com.odontorisas.service.records.content.RadiographicAnalysis;
 import com.odontorisas.service.records.content.RecordContent;
 import com.odontorisas.service.records.content.Side;
 import com.odontorisas.service.records.content.SideRelations;
 import com.odontorisas.service.records.content.Signatures;
 import com.odontorisas.service.records.content.TransversalAnalysis;
+import com.odontorisas.service.records.content.UpperArchWidths;
 import com.odontorisas.service.records.content.WalaToEv;
 import com.odontorisas.service.records.content.YesNo;
 import org.junit.jupiter.api.Test;
@@ -250,11 +253,12 @@ class RecordNormalizerTest {
         assertThat(out.models().transversal()).isNotNull();
         assertThat(out.models().transversal().walaToEv()).isNotNull();
         assertThat(out.models().moyers()).isEqualTo(MoyersAnalysis.empty());
-        assertThat(out.schemaVersion()).isEqualTo(4);
+        assertThat(out.models().nance()).isEqualTo(NanceAnalysis.empty());
+        assertThat(out.schemaVersion()).isEqualTo(5);
 
         TransversalAnalysis t = new TransversalAnalysis(new BigDecimal("34.5"), null, new BigDecimal("50.1"), null,
             null, null, null, new BigDecimal("50.0"), null, "  Compresión maxilar leve ");
-        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t, null)).transversal();
+        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t, null, null)).transversal();
         assertThat(kept.intermolarUpper()).isEqualByComparingTo("50.1");
         assertThat(kept.xIdealWidth()).isEqualByComparingTo("50.0");
         assertThat(kept.walaToEv()).isEqualTo(WalaToEv.empty());
@@ -263,18 +267,33 @@ class RecordNormalizerTest {
 
     @Test
     void moyers_subsection_is_filled_when_missing_and_its_parts_kept() {
-        ModelAnalysis withoutMoyers = new ModelAnalysis(TransversalAnalysis.empty(), null);
+        ModelAnalysis withoutMoyers = new ModelAnalysis(TransversalAnalysis.empty(), null, null);
         assertThat(RecordNormalizer.models(withoutMoyers).moyers()).isEqualTo(MoyersAnalysis.empty());
 
         LowerIncisors incisors = new LowerIncisors(new BigDecimal("6.0"), new BigDecimal("5.5"), null, null);
         MoyersAnalysis y = new MoyersAnalysis(LocalDate.of(2026, 9, 1), incisors, null, " ", null, " Mandíbula derecho ",
             "  Discrepancia negativa ");
-        MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y)).moyers();
+        MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y, null)).moyers();
         assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
         assertThat(kept.lowerIncisors()).isEqualTo(incisors);
         assertThat(kept.availableSpace()).isEqualTo(AvailableSpace.empty());
         assertThat(kept.crowdingPositive()).isNull();
         assertThat(kept.crowdingNegative()).isEqualTo("Mandíbula derecho");
+        assertThat(kept.interpretation()).isEqualTo("Discrepancia negativa");
+    }
+
+    @Test
+    void nance_subsection_is_filled_when_missing_and_texts_trimmed() {
+        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null)).nance()).isEqualTo(NanceAnalysis.empty());
+
+        NanceAnalysis n = new NanceAnalysis(LocalDate.of(2026, 9, 1), new BigDecimal("70.5"), null, null, null,
+            "  Falta de espacio leve ", " ", " Discrepancia negativa ");
+        NanceAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, n)).nance();
+        assertThat(kept.availableUpper()).isEqualByComparingTo("70.5");
+        assertThat(kept.upperWidths()).isEqualTo(UpperArchWidths.empty());
+        assertThat(kept.lowerWidths()).isEqualTo(LowerArchWidths.empty());
+        assertThat(kept.conclusionUpper()).isEqualTo("Falta de espacio leve");
+        assertThat(kept.conclusionLower()).isNull();
         assertThat(kept.interpretation()).isEqualTo("Discrepancia negativa");
     }
 

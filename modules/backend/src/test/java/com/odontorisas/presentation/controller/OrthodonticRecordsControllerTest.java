@@ -217,6 +217,20 @@ class OrthodonticRecordsControllerTest {
     }
 
     @Test
+    void nance_measures_out_of_range_and_future_date_are_400() throws Exception {
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"nance\":{\"upperWidths\":{\"tooth21\":8.55}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.nance.upperWidths.tooth21"));
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"nance\":{\"availableLower\":100}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.nance.availableLower"));
+        String tomorrow = java.time.LocalDate.now().plusDays(1).toString();
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"nance\":{\"analysisDate\":\"" + tomorrow + "\"}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.nance.analysisDate"));
+    }
+
+    @Test
     void moyers_date_in_the_future_is_400() throws Exception {
         String tomorrow = java.time.LocalDate.now().plusDays(1).toString();
         create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"analysisDate\":\"" + tomorrow + "\"}}}}")

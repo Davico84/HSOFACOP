@@ -305,7 +305,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(4);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(5);
     }
 
     @Test
@@ -339,9 +339,37 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
         assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(4);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(5);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
             String.class, id)).isEqualTo("2026-09-01");
+    }
+
+    @Test
+    void nance_analysis_is_saved_and_a_record_without_it_still_opens() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana").get("id").asLong();
+
+        // Historia guardada antes del análisis de Nance (schemaVersion 4, sin "nance").
+        jdbc.update("UPDATE orthodontic_records SET content = jsonb_set(content #- '{models,nance}', '{schemaVersion}', '4') WHERE id = ?", id);
+        JsonNode old = read(getRecord(torres, id));
+        assertThat(old.get("content").get("models").get("nance").get("upperWidths").isObject()).isTrue();
+
+        ObjectNode body = json.createObjectNode();
+        body.put("version", old.get("version").asLong());
+        body.put("patientName", "Ana");
+        ObjectNode nance = body.putObject("content").putObject("models").putObject("nance");
+        nance.put("analysisDate", "2026-09-01").put("availableUpper", 70.5).put("conclusionUpper", " Falta de espacio leve ");
+        nance.putObject("upperWidths").put("tooth15", 7.0).put("tooth25", 6.9);
+        nance.putObject("lowerWidths").put("tooth31", 5.4);
+
+        JsonNode saved = read(save(torres, id, json.writeValueAsString(body)));
+
+        JsonNode n = saved.get("content").get("models").get("nance");
+        assertThat(n.get("availableUpper").decimalValue()).isEqualByComparingTo("70.5");
+        assertThat(n.get("upperWidths").get("tooth25").decimalValue()).isEqualByComparingTo("6.9");
+        assertThat(n.get("lowerWidths").get("tooth31").decimalValue()).isEqualByComparingTo("5.4");
+        assertThat(n.get("conclusionUpper").stringValue()).isEqualTo("Falta de espacio leve");
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(5);
     }
 
     @Test
