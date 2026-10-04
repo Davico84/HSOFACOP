@@ -12,9 +12,9 @@
 - [x] 2.1 `pnpm generate:api`; Zod: `toothMm` (4–13) en los anchos de pieza y `bolton.incisors`; valores iniciales
 - [x] 2.2 `config/bolton.ts`: compartidas con Nance solo caninos y premolares; incisivos y molares propios (`boltonWidthPath` / `boltonWidth`) + tests
 - [x] 2.3 Grilla de Bolton: sombreado solo en compartidas y aviso corregido; `NumberInput min={4} max={13}` en todos los anchos de pieza (Moyers, Nance, Bolton)
-- [ ] 2.4 Tests Vitest: compartidas en ambos sentidos; incisivos sin efecto Nance→Bolton ni Bolton→Nance (ni en el ST); aviso y sombreado; flechas desde 4,0 en Moyers, Nance y Bolton; valor guardado fuera de rango que abre sin error y se marca al guardar. E2E; `pnpm validate` verde; impresión verificada
+- [x] 2.4 Tests Vitest: compartidas en ambos sentidos; incisivos sin efecto Nance→Bolton ni Bolton→Nance (ni en el ST); aviso y sombreado; flechas desde 4,0 en Moyers, Nance y Bolton; valor guardado fuera de rango que abre sin error y se marca al guardar. E2E; `pnpm validate` verde; impresión verificada
 
 ## 3. Docs y cierre
 
 - [x] 3.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 3.2 Al archivar — `docs/domain.md`: Bolton comparte con Nance solo caninos y premolares; rango de pieza 4,0–13,0 mm
+- [x] 3.2 Al archivar — `docs/domain.md`: Bolton comparte con Nance solo caninos y premolares; rango de pieza 4,0–13,0 mm
