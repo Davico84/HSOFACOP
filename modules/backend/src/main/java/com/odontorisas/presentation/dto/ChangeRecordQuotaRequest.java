@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  * como decimal para rechazar con 400 un valor con decimales (como entero, Jackson lo truncaría).
  */
 public record ChangeRecordQuotaRequest(
-    @Schema(description = "Cupo de historias (entero 0–9999); nulo = sin límite", nullable = true, type = "integer", format = "int32")
+    @Schema(description = "Cupo de historias (entero 0–9999); nulo = sin límite", types = {"integer", "null"}, format = "int32")
     @DecimalMin(value = "0", message = "El cupo no puede ser negativo")
     @DecimalMax(value = "9999", message = "El cupo no puede ser mayor que 9999")
     @Digits(integer = 4, fraction = 0, message = "El cupo debe ser un número entero")
