@@ -318,11 +318,15 @@ describe("app-shell — Barra lateral contraíble en escritorio", () => {
     await waitFor(() => expect(within(sidebar()).getByRole("button", { name: "Expandir barra lateral" })).toBeInTheDocument());
   });
 
-  it("Ancho máximo: el contenido y la cabecera se limitan a 1536 px centrados", async () => {
+  it("Ancho máximo: la app (barra + cabecera + contenido) se limita a 1920 px centrada; el contenido a 1536 px", async () => {
     signIn();
     renderApp("/");
     await screen.findByRole("heading", { level: 1, name: "Hola, Ana Pérez" });
 
+    const frame = document.querySelector("[data-app-frame]") as HTMLElement;
+    expect(frame).toHaveClass("mx-auto", "max-w-[1920px]");
+    expect(frame).toContainElement(sidebar());
+    expect(frame).toContainElement(screen.getByRole("banner"));
     const content = screen.getByRole("main").firstElementChild as HTMLElement;
     expect(content).toHaveClass("mx-auto", "w-full", "max-w-screen-2xl");
     expect(screen.getByRole("banner").firstElementChild).toHaveClass("mx-auto", "max-w-screen-2xl");
