@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 /**
  * Regresión responsive del módulo de historia clínica (update-orthodontic-records-responsive): a
- * 375 px (celular) y 768 px (tablet), el listado, los 8 pasos (con los paneles del paso 5 abiertos)
+ * 375 px (celular), 768 px (tablet) y 1280 px (escritorio), el listado, los 8 pasos (con los paneles del paso 5 abiertos)
  * y la vista previa no se desplazan de lado y dejan visibles sus acciones. Necesita backend y
  * PostgreSQL: `E2E_BACKEND=1 pnpm test:e2e`.
  */
@@ -29,7 +29,7 @@ async function expectNoHorizontalScroll(page: Page, where: string) {
   expect(scroll, `desplazamiento horizontal en ${where}`).toBeLessThanOrEqual(client);
 }
 
-for (const width of [375, 768]) {
+for (const width of [375, 768, 1280]) {
   test(`módulo de historia clínica usable a ${width} px`, async ({ page }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width, height: 900 });
@@ -48,8 +48,15 @@ for (const width of [375, 768]) {
     for (let paso = 2; paso <= 8; paso++) {
       await page.goto(`/historias/${id}?paso=${paso}`);
       await page.getByRole("heading", { level: 2 }).first().waitFor();
-      // El paso actual está a la vista en el indicador (antes de abrir paneles, que bajan la página).
-      await expect(page.getByRole("navigation", { name: "Pasos de la historia clínica" }).locator('[aria-current="step"]')).toBeInViewport();
+      // El paso actual se ve (antes de abrir paneles, que bajan la página): en escritorio, resaltado en
+      // la columna lateral; en celular y tablet, "Paso N de 8" con el botón "Pasos".
+      const nav = page.getByRole("navigation", { name: "Pasos de la historia clínica" });
+      if (width >= 1024) {
+        await expect(nav.locator('[aria-current="step"]')).toBeInViewport();
+      } else {
+        await expect(nav.getByText(new RegExp(`^Paso ${paso} de 8`))).toBeInViewport();
+        await expect(nav.getByRole("button", { name: /Pasos/ })).toBeInViewport();
+      }
       if (paso === 5) {
         for (const name of [/^Análisis de Moyers/, /^Análisis de Nance/, /^Análisis de Bolton/]) {
           await page.getByRole("button", { name }).click();
