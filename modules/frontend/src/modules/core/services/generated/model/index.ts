@@ -17,6 +17,7 @@ export * from './apiProblem';
 export * from './authResponse';
 export * from './availableSpace';
 export * from './boltonAnalysis';
+export * from './boltonIncisors';
 export * from './changeUserStatusRequest';
 export * from './changeUserStatusRequestStatus';
 export * from './createRecordRequest';

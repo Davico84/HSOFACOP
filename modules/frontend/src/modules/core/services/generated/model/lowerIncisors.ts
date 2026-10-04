@@ -8,23 +8,23 @@
 
 export interface LowerIncisors {
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth42?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth41?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth31?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth32?: number;
 }

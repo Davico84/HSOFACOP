@@ -6,22 +6,27 @@
  * OpenAPI spec version: v1
  */
 
-export interface LowerArchWidths {
+export interface BoltonIncisors {
   /**
    * @minimum 4
    * @maximum 13
    */
-  tooth45?: number;
+  tooth12?: number;
   /**
    * @minimum 4
    * @maximum 13
    */
-  tooth44?: number;
+  tooth11?: number;
   /**
    * @minimum 4
    * @maximum 13
    */
-  tooth43?: number;
+  tooth21?: number;
+  /**
+   * @minimum 4
+   * @maximum 13
+   */
+  tooth22?: number;
   /**
    * @minimum 4
    * @maximum 13
@@ -42,19 +47,4 @@ export interface LowerArchWidths {
    * @maximum 13
    */
   tooth32?: number;
-  /**
-   * @minimum 4
-   * @maximum 13
-   */
-  tooth33?: number;
-  /**
-   * @minimum 4
-   * @maximum 13
-   */
-  tooth34?: number;
-  /**
-   * @minimum 4
-   * @maximum 13
-   */
-  tooth35?: number;
 }

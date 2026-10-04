@@ -6,10 +6,12 @@
  * OpenAPI spec version: v1
  */
 import type { FirstMolarWidths } from './firstMolarWidths';
+import type { BoltonIncisors } from './boltonIncisors';
 
 export interface BoltonAnalysis {
   analysisDate?: string;
   firstMolars?: FirstMolarWidths;
+  incisors?: BoltonIncisors;
   /**
    * @minLength 0
    * @maxLength 4000

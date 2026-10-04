@@ -906,10 +906,58 @@
           "firstMolars": {
             "$ref": "#/components/schemas/FirstMolarWidths"
           },
+          "incisors": {
+            "$ref": "#/components/schemas/BoltonIncisors"
+          },
           "interpretation": {
             "type": "string",
             "maxLength": 4000,
             "minLength": 0
+          }
+        }
+      },
+      "BoltonIncisors": {
+        "type": "object",
+        "properties": {
+          "tooth12": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
+          },
+          "tooth11": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
+          },
+          "tooth21": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
+          },
+          "tooth22": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
+          },
+          "tooth42": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
+          },
+          "tooth41": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
+          },
+          "tooth31": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
+          },
+          "tooth32": {
+            "type": "number",
+            "maximum": 13,
+            "minimum": 4
           }
         }
       },
@@ -1129,23 +1177,23 @@
         "properties": {
           "tooth16": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth26": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth46": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth36": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           }
         }
       },
@@ -1273,53 +1321,53 @@
         "properties": {
           "tooth45": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth44": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth43": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth42": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth41": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth31": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth32": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth33": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth34": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth35": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           }
         }
       },
@@ -1328,23 +1376,23 @@
         "properties": {
           "tooth42": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth41": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth31": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth32": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           }
         }
       },
@@ -1847,53 +1895,53 @@
         "properties": {
           "tooth15": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth14": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth13": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth12": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth11": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth21": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth22": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth23": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth24": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           },
           "tooth25": {
             "type": "number",
-            "maximum": 99.9,
-            "minimum": 0
+            "maximum": 13,
+            "minimum": 4
           }
         }
       },
