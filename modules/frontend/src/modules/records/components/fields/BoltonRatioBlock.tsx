@@ -38,7 +38,7 @@ export function BoltonRatioBlock({ def }: BoltonRatioBlockProps) {
       <div className="flex flex-wrap items-center gap-3">
         <BoltonFormula count={def.count} mandibular={r.mandibular} maxillary={r.maxillary} quotient={r.quotient} ratio={r.ratio} />
         {r.inRange === null ? null : (
-          <SectionStatus active={r.inRange}>{r.inRange ? "Dentro del rango" : "Fuera del rango"}</SectionStatus>
+          <SectionStatus tone={r.inRange ? "success" : "danger"}>{r.inRange ? "Dentro del rango" : "Fuera del rango"}</SectionStatus>
         )}
       </div>
       <div className="grid gap-4 md:grid-cols-2">

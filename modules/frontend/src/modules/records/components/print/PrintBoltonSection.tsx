@@ -74,7 +74,7 @@ export function PrintBoltonSection({ record }: PrintBoltonSectionProps) {
             </p>
             <div className="mt-[4pt] flex items-center gap-[6mm]">
               <BoltonFormula print count={def.count} mandibular={r.mandibular} maxillary={r.maxillary} quotient={r.quotient} ratio={r.ratio} />
-              {r.inRange === null ? null : <span className="text-[10pt] italic">{r.inRange ? "Dentro del rango" : "Fuera del rango"}</span>}
+              {r.inRange === null ? null : r.inRange ? <span className="text-[10pt] italic">Dentro del rango</span> : <span className="text-[10pt] font-bold">⚠ Fuera del rango</span>}
             </div>
             <table className="mt-[6pt] w-full border-collapse">
               <thead>

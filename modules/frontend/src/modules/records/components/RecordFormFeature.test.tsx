@@ -530,6 +530,20 @@ describe("orthodontic-records — Análisis de Bolton (paso 5)", { timeout: 15_0
     expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(4);
   });
 
+  it("una relación fuera del rango se resalta como alerta", async () => {
+    // Molares inferiores de 13,0: 91,3 / 94,2 → 96,9 %, sobre el rango 87,5–94,8.
+    const out = { ...boltonModels, bolton: { ...boltonModels.bolton, firstMolars: { ...boltonModels.bolton.firstMolars, tooth46: 13, tooth36: 13 } } };
+    mockRecord({ content: { ...recordResponse().content, models: out } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+
+    expect(screen.getByLabelText("Relación total (%)")).toHaveTextContent("96,9 %");
+    const alert = screen.getByText("Fuera del rango");
+    expect(alert).toHaveClass("text-destructive");
+    expect(alert.querySelector("svg")).not.toBeNull();
+    expect(screen.getByText("Dentro del rango")).toHaveClass("text-success");
+  });
+
   it("un ancho guardado fuera de rango abre sin error y se marca al guardar", async () => {
     const outOfRange = { ...boltonModels, bolton: { ...boltonModels.bolton, incisors: { ...boltonModels.bolton.incisors, tooth11: 0.3 } } };
     const { calls } = mockRecord({ content: { ...recordResponse().content, models: outOfRange } });
