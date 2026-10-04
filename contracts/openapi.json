@@ -559,6 +559,16 @@
               }
             }
           },
+          "409": {
+            "description": "El tratante llegó a su cupo de historias (record-quota-reached)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error inesperado",
             "content": {
@@ -694,6 +704,108 @@
         }
       }
     },
+    "/api/users/{id}/record-quota": {
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Asignar, cambiar o quitar el cupo de historias de una cuenta USER",
+        "operationId": "changeRecordQuota",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRecordQuotaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Cuenta con su cupo actual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cupo inválido (negativo, mayor que 9999 o no entero)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La cuenta no existe",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La cuenta no es USER: el cupo no aplica",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users": {
       "get": {
         "tags": [
@@ -744,6 +856,57 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orthodontic-records/quota": {
+      "get": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Cupo de historias del usuario autenticado y cuántas creó",
+        "operationId": "getRecordQuota",
+        "responses": {
+          "200": {
+            "description": "Cupo y uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordQuotaResponse"
                 }
               }
             }
@@ -2366,15 +2529,44 @@
               "ACTIVE",
               "DISABLED"
             ]
+          },
+          "recordQuota": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN)"
+          },
+          "recordCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Historias clínicas creadas por la cuenta"
           }
         },
         "required": [
           "email",
           "fullName",
           "id",
+          "recordCount",
           "role",
           "status"
         ]
+      },
+      "ChangeRecordQuotaRequest": {
+        "type": "object",
+        "properties": {
+          "recordQuota": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Cupo de historias (entero 0–9999); nulo = sin límite",
+            "maximum": 9999,
+            "minimum": 0
+          }
+        }
       },
       "PageResponseUserSummaryResponse": {
         "type": "object",
@@ -2504,6 +2696,32 @@
           "patientName",
           "recordNumber",
           "updatedAt"
+        ]
+      },
+      "RecordQuotaResponse": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Cupo; nulo = sin límite"
+          },
+          "used": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Historias creadas"
+          },
+          "reached": {
+            "type": "boolean",
+            "description": "Llegó al cupo: no puede crear más"
+          }
+        },
+        "required": [
+          "reached",
+          "used"
         ]
       }
     }

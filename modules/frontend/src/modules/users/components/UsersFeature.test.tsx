@@ -10,9 +10,9 @@ import { UsersFeature } from "./UsersFeature";
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));
 
-const ADMIN: UserSummaryResponse = { id: 1, email: "admin@empresa.test", fullName: "Admin Uno", role: "ADMIN", status: "ACTIVE" };
-const ANA: UserSummaryResponse = { id: 2, email: "ana@empresa.test", fullName: "Ana Pérez", role: "USER", status: "ACTIVE" };
-const LUIS: UserSummaryResponse = { id: 3, email: "luis@empresa.test", fullName: "Luis Gómez", role: "USER", status: "DISABLED" };
+const ADMIN: UserSummaryResponse = { id: 1, email: "admin@empresa.test", fullName: "Admin Uno", role: "ADMIN", status: "ACTIVE", recordQuota: null, recordCount: 0 };
+const ANA: UserSummaryResponse = { id: 2, email: "ana@empresa.test", fullName: "Ana Pérez", role: "USER", status: "ACTIVE", recordQuota: null, recordCount: 0 };
+const LUIS: UserSummaryResponse = { id: 3, email: "luis@empresa.test", fullName: "Luis Gómez", role: "USER", status: "DISABLED", recordQuota: null, recordCount: 0 };
 
 function page(content: UserSummaryResponse[], pageNumber = 0, totalPages = 1) {
   return {
