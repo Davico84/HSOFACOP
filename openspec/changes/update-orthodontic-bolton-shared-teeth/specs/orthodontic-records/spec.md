@@ -62,6 +62,10 @@ El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia
 - **WHEN** se guarda un ancho de pieza menor que 4,0 mm o mayor que 13,0 mm, un SA negativo o de 100 mm o más, una medida con dos decimales, o una fecha futura
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda
 
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
+
 #### Scenario: Historias guardadas antes del cambio
 - **WHEN** se abre una historia guardada antes de existir el análisis de Nance
 - **THEN** el panel aparece vacío y la historia se guarda sin errores
@@ -93,7 +97,11 @@ El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en espa
 
 #### Scenario: Incisivos propios de Bolton
 - **WHEN** el usuario escribe el ancho de la pieza 11 en el análisis de Nance
-- **THEN** la pieza 11 de Bolton no cambia, y la de Bolton se registra por separado
+- **THEN** la pieza 11 de Bolton no cambia
+
+#### Scenario: Incisivos de Bolton no afectan a Nance
+- **WHEN** el usuario escribe el ancho de la pieza 11 en el análisis de Bolton
+- **THEN** la pieza 11 de Nance no cambia, ni su total (ST)
 
 #### Scenario: Aviso de las piezas sombreadas
 - **WHEN** el usuario abre el análisis de Bolton
@@ -107,9 +115,22 @@ El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en espa
 - **WHEN** se guarda un ancho menor que 4,0 mm o mayor que 13,0 mm, con dos decimales, o una fecha futura
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda
 
-#### Scenario: Historias guardadas antes del cambio
-- **WHEN** se abre una historia guardada con Bolton antes de que tuviera incisivos propios
-- **THEN** Bolton muestra en sus incisivos los valores que esa historia tenía en Nance, y la historia se guarda sin errores
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
+
+#### Scenario: Ancho guardado fuera de rango
+- **WHEN** se abre una historia que tiene guardado un ancho fuera de 4,0–13,0 mm (de antes de este cambio)
+- **THEN** la historia se abre y muestra el valor sin error
+- **AND** al intentar guardar, el error aparece junto a ese campo y no se guarda hasta corregirlo
+
+#### Scenario: Historias con incisivos en Nance guardadas antes del cambio
+- **WHEN** se abre una historia guardada antes de este cambio que tenía incisivos registrados en Nance
+- **THEN** Bolton muestra esos mismos valores como incisivos propios (los copió la migración), y Nance conserva los suyos
+
+#### Scenario: Historias sin incisivos en Nance guardadas antes del cambio
+- **WHEN** se abre una historia guardada antes de este cambio sin incisivos en Nance
+- **THEN** los incisivos de Bolton aparecen vacíos y la historia se guarda sin errores
 
 #### Scenario: Hoja impresa de Bolton
 - **WHEN** se imprime una historia
