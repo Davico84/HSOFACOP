@@ -1,6 +1,7 @@
 package com.odontorisas.presentation.controller;
 
 import com.odontorisas.presentation.dto.ApiProblem;
+import com.odontorisas.presentation.dto.ChangeRecordQuotaRequest;
 import com.odontorisas.presentation.dto.ChangeUserStatusRequest;
 import com.odontorisas.presentation.dto.PageResponse;
 import com.odontorisas.presentation.dto.UserSummaryResponse;
@@ -78,5 +79,20 @@ public class UsersController {
     public ResponseEntity<UserSummaryResponse> changeUserStatus(
             @PathVariable Long id, @Valid @RequestBody ChangeUserStatusRequest request) {
         return ResponseEntity.ok(UserSummaryResponse.from(userAdmin.changeStatus(id, request.status())));
+    }
+
+    @Operation(operationId = "changeRecordQuota", summary = "Asignar, cambiar o quitar el cupo de historias de una cuenta USER")
+    @ApiResponse(responseCode = "200", description = "Cuenta con su cupo actual",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserSummaryResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Cupo inválido (negativo, mayor que 9999 o no entero)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
+    @ApiResponse(responseCode = "404", description = "La cuenta no existe",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @ApiResponse(responseCode = "409", description = "La cuenta no es USER: el cupo no aplica",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PatchMapping("/{id}/record-quota")
+    public ResponseEntity<UserSummaryResponse> changeRecordQuota(
+            @PathVariable Long id, @Valid @RequestBody ChangeRecordQuotaRequest request) {
+        return ResponseEntity.ok(UserSummaryResponse.from(userAdmin.changeRecordQuota(id, request.quota())));
     }
 }

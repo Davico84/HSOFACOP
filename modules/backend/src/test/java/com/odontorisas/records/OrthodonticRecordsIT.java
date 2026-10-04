@@ -410,4 +410,141 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         mockMvc.perform(post(BASE).contentType(MediaType.APPLICATION_JSON).content("{\"patientName\":\"Ana\"}"))
             .andExpect(status().isUnauthorized());
     }
+
+    // --- Cupo de historias por tratante (add-record-quota) ---
+
+    private static final String QUOTA_DETAIL = "Alcanzaste el máximo de 2 historias clínicas. Comunícate con el administrador para solicitar más.";
+
+    private JsonNode quota(Session as) throws Exception {
+        return read(mockMvc.perform(get(BASE + "/quota").header("Authorization", "Bearer " + as.token())).andReturn());
+    }
+
+    private void setQuota(Session admin, long userId, String value) throws Exception {
+        MvcResult result = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .patch("/api/users/" + userId + "/record-quota").header("Authorization", "Bearer " + admin.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":" + value + "}"))
+            .andReturn();
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void without_quota_a_user_creates_freely_and_quota_reports_no_limit() throws Exception {
+        Session torres = register("Dra. Torres");
+        createOk(torres, "Ana");
+        createOk(torres, "Luis");
+        JsonNode q = quota(torres);
+        assertThat(q.get("limit").isNull()).isTrue();
+        assertThat(q.get("used").asLong()).isEqualTo(2);
+        assertThat(q.get("reached").asBoolean()).isFalse();
+    }
+
+    @Test
+    void full_quota_rejects_creation_with_409_but_editing_still_works() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "2");
+        long first = createOk(torres, "Ana").get("id").asLong();
+        createOk(torres, "Luis");
+
+        MvcResult rejected = create(torres, "{\"patientName\":\"Rosa\"}");
+        assertThat(rejected.getResponse().getStatus()).isEqualTo(409);
+        JsonNode problem = read(rejected);
+        assertThat(problem.get("type").stringValue()).endsWith("/errors/record-quota-reached");
+        assertThat(problem.get("detail").stringValue()).isEqualTo(QUOTA_DETAIL);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM orthodontic_records WHERE author_id = ?", Long.class, torres.id()))
+            .isEqualTo(2);
+        assertThat(quota(torres).get("reached").asBoolean()).isTrue();
+
+        // Editar una existente con el cupo lleno funciona igual.
+        JsonNode loaded = read(getRecord(torres, first));
+        MvcResult saved = save(torres, first, "{\"version\":" + loaded.get("version").asLong() + ",\"patientName\":\"Ana María\"}");
+        assertThat(saved.getResponse().getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void quota_below_what_was_created_keeps_the_records_and_blocks_new_ones() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        createOk(torres, "Ana");
+        createOk(torres, "Luis");
+        createOk(torres, "Rosa");
+        setQuota(admin, torres.id(), "2");
+
+        assertThat(create(torres, "{\"patientName\":\"Pía\"}").getResponse().getStatus()).isEqualTo(409);
+        assertThat(numbers(list(torres, null))).hasSize(3);
+    }
+
+    @Test
+    void zero_quota_allows_no_records() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "0");
+        assertThat(create(torres, "{\"patientName\":\"Ana\"}").getResponse().getStatus()).isEqualTo(409);
+        assertThat(quota(torres).get("reached").asBoolean()).isTrue();
+    }
+
+    @Test
+    void admin_never_has_a_quota() throws Exception {
+        Session admin = admin();
+        jdbc.update("UPDATE users SET record_quota = 0 WHERE id = ?", admin.id());
+        createOk(admin, "Ana");
+        JsonNode q = quota(admin);
+        assertThat(q.get("limit").isNull()).isTrue();
+        assertThat(q.get("used").asLong()).isEqualTo(1);
+        assertThat(q.get("reached").asBoolean()).isFalse();
+    }
+
+    @Test
+    void concurrent_creations_cannot_exceed_the_quota() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "2");
+        createOk(torres, "Ana");
+
+        int threads = 4;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<Integer>> results = new ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            int n = i;
+            Callable<Integer> task = () -> {
+                start.await();
+                return create(torres, "{\"patientName\":\"Paciente " + n + "\"}").getResponse().getStatus();
+            };
+            results.add(pool.submit(task));
+        }
+        start.countDown();
+        List<Integer> statuses = new ArrayList<>();
+        for (Future<Integer> f : results) {
+            statuses.add(f.get());
+        }
+        pool.shutdown();
+
+        assertThat(statuses).filteredOn(s -> s == 201).hasSize(1);
+        assertThat(statuses).filteredOn(s -> s == 409).hasSize(threads - 1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM orthodontic_records WHERE author_id = ?", Long.class, torres.id()))
+            .isEqualTo(2);
+    }
+
+    @Test
+    void users_listing_includes_quota_and_record_count() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "5");
+        createOk(torres, "Ana");
+        createOk(torres, "Luis");
+        createOk(torres, "Rosa");
+
+        JsonNode page = read(mockMvc.perform(get("/api/users").param("size", "100")
+            .header("Authorization", "Bearer " + admin.token())).andReturn());
+        JsonNode row = null;
+        for (JsonNode r : page.get("content")) {
+            if (r.get("id").asLong() == torres.id()) {
+                row = r;
+            }
+        }
+        assertThat(row).isNotNull();
+        assertThat(row.get("recordQuota").asInt()).isEqualTo(5);
+        assertThat(row.get("recordCount").asLong()).isEqualTo(3);
+    }
 }

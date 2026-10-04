@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrthodonticRecordRepository
@@ -18,6 +20,21 @@ public interface OrthodonticRecordRepository
     /** Último correlativo del autor (0 si no tiene historias). Llamar con la fila del autor bloqueada. */
     @Query("select coalesce(max(r.recordSeq), 0) from OrthodonticRecord r where r.author.id = :authorId")
     int findMaxRecordSeq(@Param("authorId") Long authorId);
+
+    /** Historias creadas por un autor (uso de su cupo). */
+    long countByAuthorId(Long authorId);
+
+    /** Historias por autor para una página de cuentas, en una sola consulta (sin N+1). */
+    @Query("select r.author.id as authorId, count(r) as total from OrthodonticRecord r "
+        + "where r.author.id in :authorIds group by r.author.id")
+    List<AuthorRecordCount> countByAuthorIds(@Param("authorIds") Collection<Long> authorIds);
+
+    /** Proyección de {@link #countByAuthorIds}. */
+    interface AuthorRecordCount {
+        Long getAuthorId();
+
+        long getTotal();
+    }
 
     /** Listado con el autor cargado en la misma consulta (columna "Autor", sin N+1). */
     @Override

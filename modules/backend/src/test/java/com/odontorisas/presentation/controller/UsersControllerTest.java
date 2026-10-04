@@ -4,6 +4,7 @@ import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
 import com.odontorisas.infra.security.JwtAuthenticationFilter;
 import com.odontorisas.service.users.AccountStatusNotChangeableException;
+import com.odontorisas.service.users.QuotaNotApplicableException;
 import com.odontorisas.service.users.UserAdminService;
 import com.odontorisas.service.users.UserNotFoundException;
 import com.odontorisas.service.users.UserSummaryView;
@@ -59,7 +60,7 @@ class UsersControllerTest {
     UserAdminService userAdmin;
 
     private static final UserSummaryView ANA =
-        new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.DISABLED);
+        new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.DISABLED, 5, 3L);
 
     private static String body(String json) {
         return json;
@@ -152,5 +153,58 @@ class UsersControllerTest {
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.type").value("/errors/account-status-not-changeable"))
             .andExpect(jsonPath("$.detail").value("Solo se puede cambiar el estado de cuentas con rol USER."));
+    }
+
+    // --- Cupo de historias (add-record-quota) ---
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void admin_sets_a_record_quota_and_gets_the_account_with_quota_and_count() throws Exception {
+        when(userAdmin.changeRecordQuota(2L, 5)).thenReturn(ANA);
+
+        mockMvc.perform(patch("/api/users/2/record-quota").contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":5}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.recordQuota").value(5))
+            .andExpect(jsonPath("$.recordCount").value(3));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void null_quota_removes_the_limit() throws Exception {
+        when(userAdmin.changeRecordQuota(2L, null)).thenReturn(
+            new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.ACTIVE, null, 3L));
+
+        mockMvc.perform(patch("/api/users/2/record-quota").contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":null}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.recordQuota").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void invalid_quota_is_400_and_does_not_call_the_service() throws Exception {
+        for (String value : new String[] {"-1", "10000", "2.5"}) {
+            mockMvc.perform(patch("/api/users/2/record-quota").contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"recordQuota\":" + value + "}"))
+                .andExpect(status().isBadRequest());
+        }
+        verify(userAdmin, never()).changeRecordQuota(any(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void quota_on_an_admin_account_is_409() throws Exception {
+        when(userAdmin.changeRecordQuota(1L, 5)).thenThrow(new QuotaNotApplicableException());
+
+        mockMvc.perform(patch("/api/users/1/record-quota").contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":5}"))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.type").value(org.hamcrest.Matchers.endsWith("/errors/quota-not-applicable")));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void user_cannot_change_a_quota() throws Exception {
+        mockMvc.perform(patch("/api/users/2/record-quota").contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":5}"))
+            .andExpect(status().isForbidden());
+        verify(userAdmin, never()).changeRecordQuota(any(), any());
     }
 }

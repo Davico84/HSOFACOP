@@ -1,5 +1,6 @@
 package com.odontorisas.presentation.controller;
 
+import com.odontorisas.presentation.dto.RecordQuotaResponse;
 import com.odontorisas.presentation.dto.ApiProblem;
 import com.odontorisas.presentation.dto.CreateRecordRequest;
 import com.odontorisas.presentation.dto.PageResponse;
@@ -78,11 +79,21 @@ public class OrthodonticRecordsController {
         content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = RecordResponse.class)))
     @ApiResponse(responseCode = "400", description = "Datos inválidos",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
+    @ApiResponse(responseCode = "409", description = "El tratante llegó a su cupo de historias (record-quota-reached)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @PostMapping
     public ResponseEntity<RecordResponse> createRecord(
             @Valid @RequestBody CreateRecordRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(RecordResponse.from(service.create(currentActor(), request.toData())));
+    }
+
+    @Operation(operationId = "getRecordQuota", summary = "Cupo de historias del usuario autenticado y cuántas creó")
+    @ApiResponse(responseCode = "200", description = "Cupo y uso",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = RecordQuotaResponse.class)))
+    @GetMapping(value = "/quota", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RecordQuotaResponse> getRecordQuota() {
+        return ResponseEntity.ok(RecordQuotaResponse.from(service.quota(currentActor())));
     }
 
     @Operation(operationId = "getRecord", summary = "Obtener una historia")
