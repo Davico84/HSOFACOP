@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
@@ -480,24 +480,69 @@ describe("orthodontic-records — Análisis de Bolton (paso 5)", { timeout: 15_0
       upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
       lowerWidths: { tooth45: 7.2, tooth44: 7.0, tooth43: 6.9, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1, tooth33: 6.8, tooth34: 7.1, tooth35: 7.3 },
     },
-    bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, interpretation: "Exceso mandibular leve" },
+    bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, incisors: { tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 }, interpretation: "Exceso mandibular leve" },
   };
 
   async function openPanel(name: RegExp) {
     await userEvent.click(await screen.findByRole("button", { name }));
   }
 
-  it("los anchos de 15 a 25 y 45 a 35 son los mismos de Nance, en los dos sentidos", async () => {
+  it("caninos y premolares son los mismos de Nance, en los dos sentidos, y van sombreados", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Nance/);
+    await openPanel(/^Análisis de Bolton/);
+
+    await fill("Ancho mesiodistal, pieza 13 (mm)", "7.8");
+    expect(screen.getByLabelText("Bolton, pieza 13 (mm)")).toHaveValue(7.8);
+    await fill("Bolton, pieza 33 (mm)", "6.8");
+    expect(screen.getByLabelText("Ancho mesiodistal, pieza 33 (mm)")).toHaveValue(6.8);
+
+    expect(screen.getByLabelText("Bolton, pieza 13 (mm)").closest("td")).toHaveClass("bg-muted/40");
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)").closest("td")).not.toHaveClass("bg-muted/40");
+    expect(screen.getByLabelText("Bolton, pieza 16 (mm)").closest("td")).not.toHaveClass("bg-muted/40");
+    expect(screen.getByText(/Las piezas sombreadas \(caninos y premolares\) se comparten con el análisis de Nance/)).toBeInTheDocument();
+    expect(screen.getByText(/Los incisivos y los primeros molares corresponden exclusivamente al cálculo de Bolton/)).toBeInTheDocument();
+  });
+
+  it("los incisivos de Bolton y de Nance son independientes (ni el ST de Nance cambia)", async () => {
     mockRecord();
     renderRecordRoutes("/historias/10?paso=5");
     await openPanel(/^Análisis de Nance/);
     await openPanel(/^Análisis de Bolton/);
 
     await fill("Ancho mesiodistal, pieza 11 (mm)", "8.6");
-    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(8.6);
-    await userEvent.clear(screen.getByLabelText("Bolton, pieza 31 (mm)"));
-    await fill("Bolton, pieza 31 (mm)", "5.4");
-    expect(screen.getByLabelText("Ancho mesiodistal, pieza 31 (mm)")).toHaveValue(5.4);
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(null);
+    await fill("Bolton, pieza 21 (mm)", "8.5");
+    expect(screen.getByLabelText("Ancho mesiodistal, pieza 21 (mm)")).toHaveValue(null);
+    expect(screen.getByLabelText("Total superior")).toHaveTextContent("—");
+  });
+
+  it("las flechas de un ancho de pieza parten de 4,0 y no salen de 4,0–13,0", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+
+    const cell = screen.getByLabelText("Bolton, pieza 11 (mm)").closest("td") as HTMLElement;
+    await userEvent.click(within(cell).getByRole("button", { name: "Aumentar" }));
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(4);
+    await userEvent.click(within(cell).getByRole("button", { name: "Disminuir" }));
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(4);
+  });
+
+  it("un ancho guardado fuera de rango abre sin error y se marca al guardar", async () => {
+    const outOfRange = { ...boltonModels, bolton: { ...boltonModels.bolton, incisors: { ...boltonModels.bolton.incisors, tooth11: 0.3 } } };
+    const { calls } = mockRecord({ content: { ...recordResponse().content, models: outOfRange } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(0.3);
+    expect(screen.queryByText(/Pieza 11:/)).not.toBeInTheDocument();
+    await userEvent.clear(screen.getByLabelText("Bolton, pieza 26 (mm)"));
+    await fill("Bolton, pieza 26 (mm)", "10.3");
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    expect(await screen.findByText("Pieza 11: Mínimo 4 mm.")).toBeInTheDocument();
+    expect(calls.put).toHaveLength(0);
   });
 
   it("calcula la relación total y la anterior con su lado, y guarda los molares", async () => {

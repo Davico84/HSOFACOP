@@ -2,7 +2,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { ComputedValue } from "@/modules/core/components/form/ComputedValue";
 import { fieldError } from "@/modules/core/components/form/fieldError";
 import { NumberInput } from "@/modules/core/ui/number-input";
-import type { RecordFormValues } from "../../schemas/record";
+import { MAX_TOOTH_MM, MIN_TOOTH_MM, type RecordFormValues } from "../../schemas/record";
 import { NANCE_ARCHES, NANCE_MISSING_TEETH, widthPath } from "../../config/nance";
 import { archTotal, measuredTeeth } from "../../utils/nance";
 import { formatMm } from "../../utils/transversal";
@@ -54,6 +54,8 @@ export function NanceWidthsTable() {
                           render={({ field }) => (
                             <NumberInput
                               step={0.1}
+                              min={MIN_TOOTH_MM}
+                              max={MAX_TOOTH_MM}
                               compact
                               className="w-14"
                               inputClassName="h-8 pl-1 text-center"

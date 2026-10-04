@@ -3,14 +3,13 @@ import { FieldHint } from "@/modules/core/components/form/FieldHint";
 import { fieldError } from "@/modules/core/components/form/fieldError";
 import { NumberInput } from "@/modules/core/ui/number-input";
 import { cn } from "@/modules/core/utils/cn";
-import type { RecordFormValues } from "../../schemas/record";
-import { FIRST_MOLARS, LOWER_BOLTON_TEETH, UPPER_BOLTON_TEETH, boltonWidthPath } from "../../config/bolton";
-
-const isMolar = (tooth: number) => (FIRST_MOLARS as readonly number[]).includes(tooth);
+import { MAX_TOOTH_MM, MIN_TOOTH_MM, type RecordFormValues } from "../../schemas/record";
+import { BOLTON_SHARED_NOTE, LOWER_BOLTON_TEETH, UPPER_BOLTON_TEETH, boltonWidthPath, isSharedWithNance } from "../../config/bolton";
 
 /**
- * Anchos mesiodistales de Bolton (de 1er molar a 1er molar, R…L). Las piezas 15→25 y 45→35 usan
- * los mismos campos que Nance: escribir aquí cambia allá y al revés. Los molares son de Bolton.
+ * Anchos mesiodistales de Bolton (de 1er molar a 1er molar, R…L). Caninos y premolares usan los
+ * mismos campos que Nance (sombreados): escribir aquí cambia allá y al revés. Incisivos y primeros
+ * molares son propios de Bolton.
  */
 export function BoltonWidthsGrid() {
   const { control, formState } = useFormContext<RecordFormValues>();
@@ -32,7 +31,7 @@ export function BoltonWidthsGrid() {
     <tr>
       <td />
       {teeth.map((t) => (
-        <td key={t} className={cn("px-1 py-1.5", !isMolar(t) && "bg-muted/40")}>
+        <td key={t} className={cn("px-1 py-1.5", isSharedWithNance(t) && "bg-muted/40")}>
           <Controller
             control={control}
             name={boltonWidthPath(t)}
@@ -40,6 +39,8 @@ export function BoltonWidthsGrid() {
               <NumberInput
                 compact
                 step={0.1}
+                min={MIN_TOOTH_MM}
+                max={MAX_TOOTH_MM}
                 className="w-14"
                 inputClassName="h-8 pl-1 text-center"
                 aria-label={`Bolton, pieza ${t} (mm)`}
@@ -70,10 +71,7 @@ export function BoltonWidthsGrid() {
           </tbody>
         </table>
       </div>
-      <FieldHint>
-        Las piezas sombreadas (15 a 25 y 45 a 35) son las mismas del análisis de Nance: si cambias una aquí, cambia allá.
-        Solo los primeros molares (16, 26, 46 y 36) son propios de Bolton.
-      </FieldHint>
+      <FieldHint>{BOLTON_SHARED_NOTE}</FieldHint>
       {errors.length ? (
         <ul role="alert" className="text-xs text-destructive">
           {errors.map((e) => (
