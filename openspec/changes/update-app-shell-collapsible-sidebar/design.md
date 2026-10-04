@@ -55,11 +55,21 @@ En los dos casos el tooltip es solo visual, como hoy (`aria-describedby={undefin
 - **`aside`:** `transition-[width] duration-200 motion-reduce:transition-none overflow-x-hidden`.
 - **Textos de los ítems:** `truncate whitespace-nowrap`, para que no salten de renglón mientras cambia el ancho.
 
+### D8. Ancho máximo del contenido
+- **`<main>`** (`AppLayout`) envuelve el `Outlet` en `mx-auto w-full max-w-screen-2xl` (1536 px). El padding (`p-4 sm:p-6 lg:p-8`) se queda en `<main>`, así que el contenido mide hasta 1536 px menos el padding.
+- **Cabecera:** el borde y el fondo siguen a todo el ancho; su contenido (botón de menú, usuario, tema) va en un contenedor `mx-auto w-full max-w-screen-2xl` con el mismo padding horizontal que `<main>`. Así el usuario queda alineado con el borde derecho del contenido.
+- **La barra lateral** sigue pegada a la izquierda; el contenido se centra en el espacio que deja libre.
+- **Una sola regla en el shell:** las pantallas no fijan anchos propios. Con 1536 px, la columna del paso de la historia clínica queda en unos 1.180 px, suficiente para sus tablas (que además tienen `ScrollableX`) y cómodo para leer los campos de texto. Si en el futuro una pantalla necesita todo el ancho, se agregará una opción explícita del layout; hoy ninguna la necesita.
+- **Vista previa de impresión:** está fuera del shell y no se ve afectada. Sus hojas ya se centran solas.
+- **Anchos resultantes** (barra expandida / contraída): a 1280 px, el contenido mide ~976 / ~1.152 px; a 1920 px y a 2560 px, 1.536 px centrados en ambos casos.
+- Bajo 1536 px no cambia nada: tablet y celular siguen igual.
+
 ### D7. Pruebas
 - **Store:** estado inicial, `toggle` y persistencia (lee y escribe en `localStorage`).
 - **`AppLayout`, en escritorio** (`matchMedia` o las clases de la barra): el botón contrae y expande, `aria-expanded` y su nombre cambian, los textos pasan a `sr-only`, aparecen los tooltips y el ícono de la marca reemplaza al logo.
 - **Recarga:** con la preferencia guardada, la barra arranca contraída.
 - **Tablet y celular:** el botón no se ve en tablet (`hidden lg:flex`) y el cajón móvil no cambia (los tests existentes siguen pasando).
+- **Ancho máximo:** en el E2E, a 2560 px, el contenido de `<main>` mide como máximo 1536 px y está centrado (márgenes izquierdo y derecho iguales, ±1 px) con la barra expandida y contraída.
 
 ## Risks / Trade-offs
 
