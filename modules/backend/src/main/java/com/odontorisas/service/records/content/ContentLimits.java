@@ -15,6 +15,9 @@ public final class ContentLimits {
     public static final String MAX_MM = "30.0";
     /** Medidas de los análisis de modelos: 0–99,9 mm con un decimal. */
     public static final String MAX_MODEL_MM = "99.9";
+    /** Ancho mesiodistal de una pieza: 4,0–13,0 mm con un decimal (lo que mide un diente real). */
+    public static final String MIN_TOOTH_MM = "4.0";
+    public static final String MAX_TOOTH_MM = "13.0";
     /** Desviación mínima de la línea media cuando está desviada. */
     public static final String MIN_MIDLINE_MM = "0.5";
 

@@ -5,6 +5,7 @@ import com.odontorisas.service.records.content.Anamnesis;
 import com.odontorisas.service.records.content.AngleRelation;
 import com.odontorisas.service.records.content.AvailableSpace;
 import com.odontorisas.service.records.content.BoltonAnalysis;
+import com.odontorisas.service.records.content.BoltonIncisors;
 import com.odontorisas.service.records.content.Diagnosis;
 import com.odontorisas.service.records.content.FacialAnalysis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
@@ -198,6 +199,7 @@ public final class RecordNormalizer {
             new BoltonAnalysis(
                 b.analysisDate(),
                 b.firstMolars() != null ? b.firstMolars() : FirstMolarWidths.empty(),
+                b.incisors() != null ? b.incisors() : BoltonIncisors.empty(),
                 text(b.interpretation())));
     }
 
