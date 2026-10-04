@@ -88,34 +88,37 @@ for (const width of [375, 768, 1280]) {
   });
 }
 
-test("pantalla muy ancha (2560 px): contenido de 1536 px como máximo y centrado, con la barra expandida y contraída", async ({ page }) => {
+test("pantalla muy ancha (2560 px): la app mide 1920 px como máximo y va centrada, con la barra junto al contenido", async ({ page }) => {
   await page.setViewportSize({ width: 2560, height: 1200 });
   await registerAndEnter(page, 2560);
   await page.goto("/historias");
   await page.getByRole("heading", { level: 1 }).first().waitFor();
 
-  const box = async () =>
+  const measure = async () =>
     page.evaluate(() => {
-      const main = document.querySelector("main") as HTMLElement;
-      const content = main.firstElementChild as HTMLElement;
-      const m = main.getBoundingClientRect();
-      const c = content.getBoundingClientRect();
-      const style = getComputedStyle(main);
+      const frame = (document.querySelector("[data-app-frame]") as HTMLElement).getBoundingClientRect();
+      const sidebar = (document.getElementById("app-sidebar") as HTMLElement).getBoundingClientRect();
+      const content = ((document.querySelector("main") as HTMLElement).firstElementChild as HTMLElement).getBoundingClientRect();
       return {
-        width: c.width,
-        left: c.left - (m.left + parseFloat(style.paddingLeft)),
-        right: m.right - parseFloat(style.paddingRight) - c.right,
+        frameWidth: frame.width,
+        frameLeft: frame.left,
+        frameRight: window.innerWidth - frame.right,
+        sidebarLeft: sidebar.left,
+        contentWidth: content.width,
       };
     });
 
-  for (const action of ["expandida", "contraída"]) {
-    if (action === "contraída") {
+  for (const state of ["expandida", "contraída"]) {
+    if (state === "contraída") {
       await page.getByRole("button", { name: "Contraer barra lateral" }).click();
       await page.waitForTimeout(300);
     }
-    const { width, left, right } = await box();
-    expect(width, `ancho del contenido (${action})`).toBeLessThanOrEqual(1536);
-    expect(Math.abs(left - right), `centrado (${action})`).toBeLessThanOrEqual(1);
+    const m = await measure();
+    expect(m.frameWidth, `ancho de la app (${state})`).toBeLessThanOrEqual(1920);
+    expect(Math.abs(m.frameLeft - m.frameRight), `app centrada (${state})`).toBeLessThanOrEqual(1);
+    // La barra va pegada al borde del marco, no al de la pantalla.
+    expect(Math.abs(m.sidebarLeft - m.frameLeft), `barra junto al marco (${state})`).toBeLessThanOrEqual(1);
+    expect(m.contentWidth, `ancho del contenido (${state})`).toBeLessThanOrEqual(1536);
   }
   await expectNoHorizontalScroll(page, "2560 px");
 });
