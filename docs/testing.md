@@ -94,7 +94,7 @@ Usa `renderHook` con un `wrapper` que provea un `QueryClient` nuevo por test (co
 - `playwright.config.ts` levanta el dev server y lo reutiliza si ya corre. Para entorno desplegado: `E2E_BASE_URL=... pnpm test:e2e`.
 - **CI**: job `e2e-smoke` en `.github/workflows/frontend.yml`, instala Chromium y corre contra el dev server — **sin backend**.
 
-- **Flujo real contra el backend**: los specs `e2e/*.backend.spec.ts` (p. ej. `records.backend.spec.ts`: registrarse → crear una historia clínica → llenar pasos → imprimir a PDF con `page.pdf()`) solo corren con `E2E_BACKEND=1 pnpm test:e2e` y el backend + PostgreSQL levantados en local. Se saltan en CI.
+- **Flujo real contra el backend**: los specs `e2e/*.backend.spec.ts` (p. ej. `records.backend.spec.ts`: registrarse → crear una historia clínica → llenar pasos → imprimir a PDF con `page.pdf()`) solo corren con `E2E_BACKEND=1 pnpm test:e2e` y el backend + PostgreSQL levantados en local. Se saltan en CI. Los que necesitan un `ADMIN` (p. ej. `quota.backend.spec.ts`) piden además `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD` de una cuenta ADMIN existente; sin ellas se saltan.
 
 > [!IMPORTANT]
 > **En CI los specs son "smoke", no CRUD real.** Cubren solo flujos que degradan con
