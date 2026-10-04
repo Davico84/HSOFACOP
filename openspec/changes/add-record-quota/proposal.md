@@ -10,7 +10,7 @@ La clínica necesita poder poner un tope a cuántas historias clínicas crea cad
 
 - **Cupo de historias por usuario** (`users`): cada cuenta `USER` tiene un cupo opcional (vacío = sin límite). En la pantalla "Usuarios", el `ADMIN` ve, por cuenta, las historias creadas y el cupo ("3 de 5" o "3 · sin límite"), y puede asignarlo, cambiarlo o quitarlo. El cupo puede quedar por debajo de las ya creadas: no se borra nada, solo deja de poder crear.
 - **Límite al crear** (`orthodontic-records`): si un `USER` ya creó tantas historias como su cupo, el sistema no le deja crear otra.
-  - El backend responde `409` (`/errors/record-quota-reached`) con "Alcanzaste el máximo de N historias clínicas.".
+  - El backend responde `409` (`/errors/record-quota-reached`) con "Alcanzaste el máximo de N historias clínicas. Comunícate con el administrador para solicitar más.".
   - En el listado, "Nueva historia" queda deshabilitado con el mismo aviso visible.
   - Editar, imprimir y buscar sus historias sigue igual. El `ADMIN` no tiene cupo.
 - **Uso actual para el tratante**: el listado muestra "N de M historias" cuando el usuario tiene cupo.

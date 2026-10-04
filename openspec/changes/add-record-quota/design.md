@@ -27,7 +27,7 @@ El uso es `count(*) from orthodontic_records where author_id = ?`. Como las hist
 ### D3. Verificación al crear (backend)
 En `create`, después del `findByIdForUpdate(author)`:
 - si el autor es `USER` y `recordQuota != null` y `uso >= recordQuota`, se lanza `RecordQuotaReachedException`;
-- es una `BusinessException`: `GlobalExceptionHandler` la convierte en `409` `ProblemDetail` con `type=/errors/record-quota-reached` y `detail="Alcanzaste el máximo de {N} historias clínicas."`. **Sin propiedades extra**: el `detail` ya lleva el número, y el esquema `ApiProblem` no admite otras (lo vigila `OpenApiContractIT`);
+- es una `BusinessException`: `GlobalExceptionHandler` la convierte en `409` `ProblemDetail` con `type=/errors/record-quota-reached` y `detail="Alcanzaste el máximo de {N} historias clínicas. Comunícate con el administrador para solicitar más."`. **Sin propiedades extra**: el `detail` ya lleva el número, y el esquema `ApiProblem` no admite otras (lo vigila `OpenApiContractIT`);
 - `createRecord` documenta el `@ApiResponse(409, ApiProblem)`.
 
 Al hacerse bajo el mismo bloqueo que el correlativo, dos creaciones simultáneas no pueden pasar el tope. `create` es la única vía de creación. El `ADMIN` nunca se limita. Editar (`PUT`) no consulta el cupo; el uso cuenta por `author_id`, que nunca cambia, así que un `ADMIN` que edita historias ajenas no altera el uso de nadie.
@@ -47,7 +47,7 @@ El requirement "Listado de usuarios" se modifica para incluir estos dos campos.
 
 ### D6. Frontend
 - **Listado de historias:**
-  - con `reached`, "Nueva historia" se deshabilita, con un tooltip y además un `FieldHint` visible: "Alcanzaste el máximo de N historias clínicas. Pide al administrador ampliar tu cupo.". Vale para los **dos** botones: el de la cabecera y el del estado vacío (`RecordsEmptyState`), que es el que ve un tratante con cupo 0;
+  - con `reached`, "Nueva historia" se deshabilita, con un tooltip y además un `FieldHint` visible: "Alcanzaste el máximo de N historias clínicas. Comunícate con el administrador para solicitar más.". Vale para los **dos** botones: el de la cabecera y el del estado vacío (`RecordsEmptyState`), que es el que ve un tratante con cupo 0;
   - con cupo, se muestra "N de M historias" junto al título;
   - **`/historias/nueva` abierto directamente** con el cupo lleno: el formulario consulta `useRecordQuota`, muestra el aviso desde el inicio y deshabilita "Crear historia";
   - si aun así el servidor responde `409 record-quota-reached` (carrera), `onSaveError` muestra el `detail` del servidor y no navega;
