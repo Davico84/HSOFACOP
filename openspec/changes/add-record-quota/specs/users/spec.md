@@ -19,6 +19,10 @@ Un `ADMIN` SHALL poder asignar, cambiar o quitar el cupo de historias clínicas 
 - **WHEN** se envía un cupo negativo, con decimales o mayor que 9999
 - **THEN** la API responde `400` con el error en `recordQuota`
 
+#### Scenario: Historias de una cuenta ADMIN
+- **WHEN** un `ADMIN` ve en la pantalla "Usuarios" una cuenta `ADMIN` con 3 historias creadas
+- **THEN** la columna de historias muestra "3 · no aplica" y no ofrece la acción de cupo
+
 #### Scenario: Cuenta ADMIN
 - **WHEN** un `ADMIN` intenta asignar un cupo a una cuenta `ADMIN`
 - **THEN** la API responde `409` y no cambia nada

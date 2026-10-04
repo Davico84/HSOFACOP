@@ -15,6 +15,15 @@ Al crear una historia clínica, si el autor es un `USER` con cupo y ya creó tan
 - **WHEN** un `USER` con el cupo lleno abre el listado de historias
 - **THEN** "Nueva historia" está deshabilitado y se ve el aviso "Alcanzaste el máximo de 5 historias clínicas. Pide al administrador ampliar tu cupo."
 
+#### Scenario: Cupo cero sin historias
+- **WHEN** un `USER` con cupo 0 y ninguna historia abre el listado
+- **THEN** el estado vacío muestra "Nueva historia" deshabilitado con el aviso de que alcanzó el máximo
+
+#### Scenario: Abrir el formulario nuevo con el cupo lleno
+- **WHEN** un `USER` con el cupo lleno abre directamente la pantalla de nueva historia
+- **THEN** ve el aviso desde el inicio y "Crear historia" está deshabilitado
+- **AND** si el servidor rechaza una creación por cupo, el formulario muestra el aviso y no navega
+
 #### Scenario: Editar con el cupo lleno
 - **WHEN** un `USER` con el cupo lleno edita, guarda o imprime una de sus historias
 - **THEN** todo funciona como siempre
