@@ -29,14 +29,14 @@ Los de Tailwind: `sm` 640, `md` 768, `lg` 1024.
 Componente nuevo del módulo, con los mismos datos que la tabla:
 - **Contenido:** número, paciente (enlace), documento, tratante, inicio y modificada.
 - **Acciones:** `RecordEditLink` y `RecordPrintLink` siempre visibles.
-- **Responsive:** `RecordsTable` se muestra con `hidden lg:block` y las tarjetas con `lg:hidden`. Comparten datos, paginación y búsqueda.
+- **Responsive:** se renderiza una sola de las dos vistas según `useMediaQuery("(min-width: 1024px)")` (`core/hooks`). Si se ocultaran con CSS, cada enlace quedaría dos veces en el DOM. Comparten datos, paginación y búsqueda. Sin `matchMedia` (jsdom) se muestra la tabla.
 - **Accesibilidad:** las tarjetas son una lista (`ul`/`li`) con encabezado por historia.
 
 **Alternativa descartada:** ocultar columnas con breakpoints. A 375 px no caben ni las acciones.
 
 ### D3. Vista previa escalada en pantalla
 La hoja sigue midiendo 210 mm, para que imprimir no cambie nada.
-- **Contenedor:** el documento va dentro de un contenedor que mide su ancho (`ResizeObserver`) y aplica `zoom` = ancho disponible ÷ 794 px (máximo 1).
+- **Contenedor:** `core/components/ScaleToFit` mide su ancho de contenido (sin padding, con `ResizeObserver`) y aplica `zoom` = ancho disponible ÷ 794 px (máximo 1; `core/utils/fitScale`).
 - **Por qué `zoom`:** a diferencia de `transform: scale`, reduce también el alto del flujo. Hoy lo soportan Chrome, Edge, Safari y Firefox ≥ 126.
 - **Impresión:** `@media print` anula el zoom (`zoom: 1`), así que lo impreso es igual.
 - **Barra superior:** "Volver" e "Imprimir" en una fila; el texto de ayuda va debajo.
@@ -47,13 +47,13 @@ La hoja sigue midiendo 210 mm, para que imprimir no cambie nada.
 - **Lector de pantalla:** cada botón conserva su título en el nombre accesible.
 
 ### D5. Paso 5 en celular
-- **Contenedor de desplazamiento:** `core/components/ScrollableX` para todas las tablas anchas (WALA–EV, espacios de Moyers, anchos de Nance, grilla de Bolton). Envuelve la tabla en `overflow-x-auto` y muestra un degradado en el borde por donde queda contenido, que se oculta al llegar al extremo. La primera columna (etiquetas) queda fija con `sticky left-0` y fondo.
+- **Contenedor de desplazamiento:** `core/components/ScrollableX` (y `min-w-0` en los `fieldset`, que si no impiden encogerse) para todas las tablas anchas (WALA–EV, espacios de Moyers, anchos de Nance, grilla de Bolton). Envuelve la tabla en `overflow-x-auto` y muestra un degradado en el borde por donde queda contenido, que se oculta al llegar al extremo. La primera columna (etiquetas) queda fija con `sticky left-0` y fondo.
 - **Nance, puntos 1 y 2** (`NanceSpaceRows`) **y tabla de discrepancia** (`NanceResultTable`): pasan de `<table>` a una sola grilla CSS que se reacomoda: bajo `sm`, cada fila es un bloque con la etiqueta arriba y "Superior [campo]" e "Inferior [campo]" en 2 columnas; desde `sm`, la misma grilla forma las columnas de la tabla actual (etiqueta · Superior · Inferior). Hay un solo DOM: cada campo existe una vez, con el mismo nombre accesible. Las cabeceras de columna llevan `role`/`aria` de tabla (`role="table"`, `row`, `rowheader`, `columnheader`, `cell`) para que se sigan leyendo como tabla.
 - **Fórmula de Bolton:** bajo `sm` se apila; la fracción va en un renglón y "= cociente × 100 = relación %" debajo, centrado.
 
 ### D6. Barra de acciones
 Bajo `sm`, las tres acciones van en una fila:
-- "Anterior" y "Siguiente" muestran solo el icono, con nombre accesible y tooltip.
+- "Anterior" y "Siguiente" muestran solo el icono; el texto queda como nombre accesible (`sr-only sm:not-sr-only`). Sin tooltip: en celular no hay hover, y desde `sm` el texto ya se ve.
 - "Guardar" conserva el texto.
 
 La barra pasa de ~120 px a ~56 px. No se toca nada desde `sm`.
