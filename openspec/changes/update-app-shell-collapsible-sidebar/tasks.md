@@ -15,3 +15,11 @@
 
 - [x] 3.1 Tests de `AppLayout`: contraer/expandir, `aria-expanded` y nombre, textos ocultos y tooltips, logo → ícono, preferencia recordada al recargar; los tests existentes de tablet y cajón siguen verdes; E2E a 2560 px: contenido ≤ 1536 px y centrado con la barra expandida y contraída; `pnpm validate` y E2E verdes
 - [x] 3.2 `docs/frontend.md` (patrón de barra contraíble y `useSidebarStore`); `docs/vision.md`: 🚧 al proponer, ✅ al archivar
+
+## 4. Pendiente (revisión del usuario, antes de archivar)
+
+- [ ] 4.1 Decidir el alcance del ancho máximo. Hoy (D8) limita solo el contenido: en pantallas muy anchas (p. ej. 2679 px) queda un hueco entre la barra lateral, pegada al borde, y el contenido centrado. Opciones:
+  - **A (recomendada):** limitar el marco completo de la app (barra + cabecera + contenido, ~1920 px) y centrarlo; la barra viaja con el contenido.
+  - **B:** contenido de 1536 px como máximo alineado a la izquierda, junto a la barra; el sobrante queda a la derecha.
+
+  Al decidir: actualizar el requirement "Ancho máximo del contenido", D8, `AppLayout`/`Header` y el E2E a 2560 px.
