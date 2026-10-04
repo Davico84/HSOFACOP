@@ -195,6 +195,22 @@ describe("orthodontic-records — Abrir un paso no cuenta como cambio", () => {
   });
 });
 
+describe("orthodontic-records — Vista previa con cambios sin guardar", () => {
+  it("se deshabilita y un tooltip explica que hay que guardar", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=1");
+    await stepHeading(/Paciente y anamnesis/);
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Paciente" }), " B");
+    const button = screen.getByRole("button", { name: /Vista previa/ });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription("Guarda los cambios para ver la vista previa e imprimir");
+
+    await userEvent.hover(button.parentElement as HTMLElement);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Guarda los cambios para ver la vista previa e imprimir");
+  });
+});
+
 describe("orthodontic-records — Edición concurrente y acceso", () => {
   it("guardar sobre una versión desactualizada (409) muestra el aviso y permite recargar", async () => {
     const backend = mockRecord();
