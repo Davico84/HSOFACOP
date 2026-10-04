@@ -87,3 +87,35 @@ for (const width of [375, 768, 1280]) {
     expect(Math.round(Number(box![2]))).toBe(842);
   });
 }
+
+test("pantalla muy ancha (2560 px): contenido de 1536 px como máximo y centrado, con la barra expandida y contraída", async ({ page }) => {
+  await page.setViewportSize({ width: 2560, height: 1200 });
+  await registerAndEnter(page, 2560);
+  await page.goto("/historias");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+
+  const box = async () =>
+    page.evaluate(() => {
+      const main = document.querySelector("main") as HTMLElement;
+      const content = main.firstElementChild as HTMLElement;
+      const m = main.getBoundingClientRect();
+      const c = content.getBoundingClientRect();
+      const style = getComputedStyle(main);
+      return {
+        width: c.width,
+        left: c.left - (m.left + parseFloat(style.paddingLeft)),
+        right: m.right - parseFloat(style.paddingRight) - c.right,
+      };
+    });
+
+  for (const action of ["expandida", "contraída"]) {
+    if (action === "contraída") {
+      await page.getByRole("button", { name: "Contraer barra lateral" }).click();
+      await page.waitForTimeout(300);
+    }
+    const { width, left, right } = await box();
+    expect(width, `ancho del contenido (${action})`).toBeLessThanOrEqual(1536);
+    expect(Math.abs(left - right), `centrado (${action})`).toBeLessThanOrEqual(1);
+  }
+  await expectNoHorizontalScroll(page, "2560 px");
+});
