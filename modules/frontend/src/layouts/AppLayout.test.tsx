@@ -9,6 +9,7 @@ import { appRoutes } from "@/routes";
 import { RouteError } from "@/modules/core/components/RouteError";
 import { TooltipProvider } from "@/modules/core/ui/tooltip";
 import { useSessionStore, type SessionUser } from "@/store/useSessionStore";
+import { useSidebarStore } from "@/store/useSidebarStore";
 
 const ANA: SessionUser = { id: 1, email: "ana@empresa.test", role: "USER", fullName: "Ana Pérez" };
 
@@ -39,6 +40,8 @@ const mainNav = () => screen.getByRole("navigation", { name: "Navegación princi
 
 beforeEach(() => {
   useSessionStore.setState({ accessToken: null, user: null, status: "unauthenticated" });
+  localStorage.clear();
+  useSidebarStore.setState({ collapsed: false });
 });
 
 describe("app-shell — Layout privado común", () => {
@@ -258,5 +261,70 @@ describe("app-shell — Navegación responsive (cajón móvil)", () => {
 
     expect(screen.queryByRole("dialog", { name: "Menú de navegación" })).not.toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/");
+  });
+});
+
+describe("app-shell — Barra lateral contraíble en escritorio", () => {
+  const sidebar = () => document.getElementById("app-sidebar") as HTMLElement;
+
+  it("Contraer y expandir: el botón refleja el estado y la barra pasa a solo íconos con el ícono de la marca", async () => {
+    signIn();
+    renderApp("/");
+    await screen.findByRole("heading", { level: 1, name: "Hola, Ana Pérez" });
+
+    const toggle = within(sidebar()).getByRole("button", { name: "Contraer barra lateral" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveAttribute("aria-controls", "app-sidebar");
+    expect(toggle).toHaveClass("flex");
+    expect(toggle.parentElement).toHaveClass("lg:flex");
+    expect(sidebar()).toHaveClass("lg:w-60");
+
+    await userEvent.click(toggle);
+    const expand = within(sidebar()).getByRole("button", { name: "Expandir barra lateral" });
+    expect(expand).toHaveAttribute("aria-expanded", "false");
+    expect(sidebar()).toHaveClass("w-16");
+    expect(sidebar()).not.toHaveClass("lg:w-60");
+    // Solo íconos también en escritorio: el texto queda para el lector de pantalla.
+    const inicio = within(mainNav()).getByRole("link", { name: "Inicio" });
+    expect(within(inicio).getByText("Inicio")).toHaveClass("sr-only");
+    expect(within(inicio).getByText("Inicio")).not.toHaveClass("lg:not-sr-only");
+    expect(within(sidebar()).getByRole("img", { name: /HS FACOP/i })).toHaveAttribute("src", "/favicon.svg");
+    expect(useSidebarStore.getState().collapsed).toBe(true);
+
+    await userEvent.click(expand);
+    expect(within(sidebar()).getByRole("button", { name: "Contraer barra lateral" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("Tooltips en la barra contraída: al enfocar un ítem aparece su nombre también en escritorio", async () => {
+    signIn();
+    useSidebarStore.setState({ collapsed: true });
+    renderApp("/");
+    await screen.findByRole("heading", { level: 1, name: "Hola, Ana Pérez" });
+
+    const link = within(mainNav()).getByRole("link", { name: "Historias clínicas" });
+    link.focus();
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Historias clínicas");
+    expect(tooltip.parentElement?.className ?? "").not.toContain("lg:hidden");
+    expect(link).not.toHaveAttribute("title");
+  });
+
+  it("La preferencia se recuerda: con la barra contraída guardada, arranca contraída", async () => {
+    localStorage.setItem("hsfacop.sidebar", JSON.stringify({ state: { collapsed: true }, version: 0 }));
+    await useSidebarStore.persist.rehydrate();
+    signIn();
+    renderApp("/historias");
+
+    await waitFor(() => expect(within(sidebar()).getByRole("button", { name: "Expandir barra lateral" })).toBeInTheDocument());
+  });
+
+  it("Ancho máximo: el contenido y la cabecera se limitan a 1536 px centrados", async () => {
+    signIn();
+    renderApp("/");
+    await screen.findByRole("heading", { level: 1, name: "Hola, Ana Pérez" });
+
+    const content = screen.getByRole("main").firstElementChild as HTMLElement;
+    expect(content).toHaveClass("mx-auto", "w-full", "max-w-screen-2xl");
+    expect(screen.getByRole("banner").firstElementChild).toHaveClass("mx-auto", "max-w-screen-2xl");
   });
 });
