@@ -5,22 +5,32 @@ import type { UserSummaryResponse } from "@/modules/core/services/generated/mode
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
 import { useUsers } from "../hooks/useUsers";
 import { useChangeUserStatus } from "../hooks/useChangeUserStatus";
+import { useChangeRecordQuota } from "../hooks/useChangeRecordQuota";
 import { UsersTable } from "./UsersTable";
 import { UsersPagination } from "./UsersPagination";
 import { UsersEmptyState } from "./UsersEmptyState";
 import { ChangeStatusDialog } from "./ChangeStatusDialog";
+import { RecordQuotaDialog } from "./RecordQuotaDialog";
 
-/** Gestión de cuentas (solo ADMIN): listado paginado y activar/deshabilitar cuentas USER. */
+/** Gestión de cuentas (solo ADMIN): listado paginado, activar/deshabilitar cuentas USER y su cupo de historias. */
 export function UsersFeature() {
   const [page, setPage] = useState(0);
   const [target, setTarget] = useState<UserSummaryResponse | null>(null);
   const users = useUsers(page);
   const change = useChangeUserStatus();
   const pendingId = change.isPending ? (change.variables?.id ?? null) : null;
+  const [quotaTarget, setQuotaTarget] = useState<UserSummaryResponse | null>(null);
+  const changeQuota = useChangeRecordQuota();
+  const quotaPendingId = changeQuota.isPending ? (changeQuota.variables?.id ?? null) : null;
 
   const confirm = (user: UserSummaryResponse) => {
     setTarget(null);
     change.mutate({ id: user.id, status: user.status === "ACTIVE" ? "DISABLED" : "ACTIVE" });
+  };
+
+  const confirmQuota = (user: UserSummaryResponse, recordQuota: number | null) => {
+    setQuotaTarget(null);
+    changeQuota.mutate({ id: user.id, recordQuota });
   };
 
   let content;
@@ -44,7 +54,13 @@ export function UsersFeature() {
   } else {
     content = (
       <>
-        <UsersTable users={users.data.content} pendingId={pendingId} onRequestChange={setTarget} />
+        <UsersTable
+          users={users.data.content}
+          pendingId={pendingId}
+          quotaPendingId={quotaPendingId}
+          onRequestChange={setTarget}
+          onRequestQuota={setQuotaTarget}
+        />
         <UsersPagination
           page={users.data.page}
           totalPages={users.data.totalPages}
@@ -62,10 +78,11 @@ export function UsersFeature() {
         <h1 id="users-title" className="text-2xl font-bold">
           Usuarios
         </h1>
-        <p className="text-muted-foreground">Activa o deshabilita las cuentas de los usuarios.</p>
+        <p className="text-muted-foreground">Activa o deshabilita las cuentas de los usuarios y fija cuántas historias pueden crear.</p>
       </header>
       {content}
       <ChangeStatusDialog user={target} onConfirm={confirm} onCancel={() => setTarget(null)} />
+      <RecordQuotaDialog user={quotaTarget} onConfirm={confirmQuota} onCancel={() => setQuotaTarget(null)} />
     </section>
   );
 }

@@ -173,3 +173,68 @@ describe("orthodontic-records — Listado en celular y tablet", () => {
     expect(within(card).getByText("Dr. Carlos Medina")).toBeInTheDocument();
   });
 });
+
+/** Cupo del tratante autenticado (reemplaza el "sin límite" global). */
+function mockQuota(limit: number | null, used: number) {
+  server.use(
+    http.get("*/api/orthodontic-records/quota", () =>
+      HttpResponse.json({ limit, used, reached: limit != null && used >= limit }),
+    ),
+  );
+}
+
+const QUOTA_FULL = "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más.";
+
+describe("orthodontic-records — Cupo de historias en el listado", () => {
+  it("sin cupo: no muestra el uso y 'Nueva historia' está disponible", async () => {
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "USER");
+    await screen.findByRole("row", { name: /AEO-001/ });
+
+    expect(screen.queryByText(/de \d+ historias/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Nueva historia/ })).toHaveAttribute("href", "/historias/nueva");
+  });
+
+  it("por debajo del cupo: muestra 'N de M historias' y se puede crear", async () => {
+    mockQuota(5, 3);
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "USER");
+
+    expect(await screen.findByText("3 de 5 historias")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Nueva historia/ })).toHaveAttribute("href", "/historias/nueva");
+    expect(screen.queryByText(QUOTA_FULL)).not.toBeInTheDocument();
+  });
+
+  it("cupo lleno: 'Nueva historia' deshabilitado y el aviso visible", async () => {
+    mockQuota(5, 5);
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "USER");
+
+    expect(await screen.findByText(QUOTA_FULL)).toBeInTheDocument();
+    expect(screen.getByText("5 de 5 historias")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Nueva historia/ });
+    expect(link).toHaveAttribute("aria-disabled", "true");
+    expect(link).not.toHaveAttribute("href");
+  });
+
+  it("cupo 0 sin historias: el botón del estado vacío también queda deshabilitado", async () => {
+    mockQuota(0, 0);
+    mockList(() => page([]));
+    renderRecordRoutes("/historias", "USER");
+
+    expect(await screen.findByText("Todavía no hay historias clínicas.")).toBeInTheDocument();
+    await waitFor(() =>
+      screen.getAllByRole("link", { name: /Nueva historia/ }).forEach((link) => expect(link).toHaveAttribute("aria-disabled", "true")),
+    );
+    expect(screen.getByText(/Alcanzaste el máximo de 0 historias clínicas/)).toBeInTheDocument();
+  });
+
+  it("ADMIN no ve uso de cupo", async () => {
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "ADMIN");
+    await screen.findByRole("row", { name: /AEO-001/ });
+
+    expect(screen.queryByText(/de \d+ historias/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Nueva historia/ })).toHaveAttribute("href", "/historias/nueva");
+  });
+});

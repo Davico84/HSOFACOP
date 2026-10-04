@@ -5,7 +5,11 @@ export const recordKeys = {
   list: (params: { q: string; page: number; size: number }) => [...recordKeys.lists(), params] as const,
   details: () => [...recordKeys.all, "detail"] as const,
   detail: (id: number) => [...recordKeys.details(), id] as const,
+  quota: () => [...recordKeys.all, "quota"] as const,
 };
+
+/** `type` del 409 por cupo de historias lleno. */
+export const RECORD_QUOTA_REACHED_TYPE = "/errors/record-quota-reached";
 
 /** Tamaño de página del listado (el backend recorta a 100 como máximo). */
 export const RECORDS_PAGE_SIZE = 20;

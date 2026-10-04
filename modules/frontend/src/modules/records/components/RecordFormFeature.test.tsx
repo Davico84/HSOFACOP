@@ -82,6 +82,34 @@ describe("orthodontic-records — Crear una historia", () => {
   });
 });
 
+describe("orthodontic-records — Cupo de historias al crear", () => {
+  it("con el cupo lleno, el formulario nuevo avisa desde el inicio y no deja crear", async () => {
+    const { calls } = mockRecord();
+    server.use(http.get("*/api/orthodontic-records/quota", () => HttpResponse.json({ limit: 5, used: 5, reached: true })));
+    renderRecordRoutes("/historias/nueva");
+
+    expect(await screen.findByText("Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Crear historia/ })).toBeDisabled();
+    expect(calls.post).toBe(0);
+  });
+
+  it("si el servidor rechaza por cupo lleno (409), muestra el mensaje y no navega", async () => {
+    mockRecord();
+    server.use(
+      http.post("*/api/orthodontic-records", () =>
+        HttpResponse.json({ type: "/errors/record-quota-reached", detail: "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más." }, { status: 409 }),
+      ),
+    );
+    const { router } = renderRecordRoutes("/historias/nueva");
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Paciente" }), "Ana Quispe");
+    await userEvent.click(screen.getByRole("button", { name: /Crear historia/ }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más."));
+    expect(router.state.location.pathname).toBe("/historias/nueva");
+  });
+});
+
 describe("orthodontic-records — Formulario por pasos con guardado de borrador", () => {
   it("avanzar con cambios guarda y muestra el paso siguiente", async () => {
     const { calls } = mockRecord();

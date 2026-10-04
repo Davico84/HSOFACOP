@@ -1,8 +1,6 @@
-import { Link } from "react-router-dom";
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
-import { buttonVariants } from "@/modules/core/ui/button-variants";
-import { PATHS } from "@/routes/paths";
+import { NewRecordLink } from "./NewRecordLink";
 
 interface RecordsEmptyStateProps {
   /** Hay una búsqueda activa sin resultados. */
@@ -37,9 +35,7 @@ export function RecordsEmptyState({ searching, onClear, onBack }: RecordsEmptySt
     <div className="flex flex-col items-center gap-3 py-12 text-center">
       <ClipboardList className="size-10 text-muted-foreground" aria-hidden="true" />
       <p className="text-muted-foreground">Todavía no hay historias clínicas.</p>
-      <Link to={PATHS.RECORD_NEW} className={buttonVariants()}>
-        <Plus className="size-4" aria-hidden="true" /> Nueva historia
-      </Link>
+      <NewRecordLink />
     </div>
   );
 }

@@ -12,9 +12,12 @@ import { recordPath } from "@/routes/paths";
 import { recordFormSchema, type RecordFormValues } from "../schemas/record";
 import { parseStep, RECORD_STEPS, stepOfField } from "../config/recordSteps";
 import { emptyRecordValues, toFormValues } from "../utils/recordForm";
-import { STALE_RECORD_TYPE } from "../hooks/recordKeys";
+import { RECORD_QUOTA_REACHED_TYPE, STALE_RECORD_TYPE } from "../hooks/recordKeys";
 import { errorPaths } from "../hooks/useStepStatus";
 import { useSaveRecord } from "../hooks/useSaveRecord";
+import { useRecordQuota } from "../hooks/useRecordQuota";
+import { quotaReachedMessage } from "../utils/quota";
+import { FieldHint } from "@/modules/core/components/form/FieldHint";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { RecordStepNav, type StepChange } from "./RecordStepNav";
 import { RecordStepContent } from "./RecordStepContent";
@@ -51,6 +54,9 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
   const [stale, setStale] = useState(false);
   const [reloading, setReloading] = useState(false);
   const dirty = form.formState.isDirty;
+  // Historia nueva con el cupo lleno: aviso desde el inicio y "Crear historia" deshabilitado.
+  const quota = useRecordQuota(!record);
+  const quotaLimit = !record && quota.data?.reached ? quota.data.limit : null;
   const { blocker, allowNextNavigation } = useLeaveGuard(dirty);
 
   const showStep = (target: number) => setSearchParams({ paso: String(target) });
@@ -58,6 +64,12 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
   const onSaveError = (error: unknown, retry: () => void) => {
     if (problemType(error) === STALE_RECORD_TYPE) {
       setStale(true);
+      return;
+    }
+    // Cupo lleno: reintentar no sirve; se vuelve a consultar el cupo para mostrar el aviso.
+    if (problemType(error) === RECORD_QUOTA_REACHED_TYPE) {
+      toast.error(getUserFriendlyError(error));
+      void quota.refetch();
       return;
     }
     const marked = applyServerFieldErrors(error, form.setError);
@@ -146,6 +158,8 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
           {record && dirty ? <RecordPrintPending /> : null}
         </header>
 
+        {quotaLimit != null ? <FieldHint>{quotaReachedMessage(quotaLimit)}</FieldHint> : null}
+
         {stale ? (
           <StaleRecordBanner reloading={reloading} onReload={() => void reload()} onDismiss={() => setStale(false)} />
         ) : null}
@@ -180,7 +194,7 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
                   </Button>
                 ) : null}
                 {step < RECORD_STEPS.length ? (
-                  <Button type="submit" disabled={saving}>
+                  <Button type="submit" disabled={saving || quotaLimit != null}>
                     {saving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
                     {record ? <span className="sr-only sm:not-sr-only">Siguiente</span> : "Crear historia"}{" "}
                     <ArrowRight className="size-4" aria-hidden="true" />
