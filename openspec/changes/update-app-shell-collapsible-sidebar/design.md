@@ -55,21 +55,23 @@ En los dos casos el tooltip es solo visual, como hoy (`aria-describedby={undefin
 - **`aside`:** `transition-[width] duration-200 motion-reduce:transition-none overflow-x-hidden`.
 - **Textos de los ítems:** `truncate whitespace-nowrap`, para que no salten de renglón mientras cambia el ancho.
 
-### D8. Ancho máximo del contenido
-- **`<main>`** (`AppLayout`) envuelve el `Outlet` en `mx-auto w-full max-w-screen-2xl` (1536 px). El padding (`p-4 sm:p-6 lg:p-8`) se queda en `<main>`, así que el contenido mide hasta 1536 px menos el padding.
-- **Cabecera:** el borde y el fondo siguen a todo el ancho; su contenido (botón de menú, usuario, tema) va en un contenedor `mx-auto w-full max-w-screen-2xl` con el mismo padding horizontal que `<main>`. Así el usuario queda alineado con el borde derecho del contenido.
-- **La barra lateral** sigue pegada a la izquierda; el contenido se centra en el espacio que deja libre.
-- **Una sola regla en el shell:** las pantallas no fijan anchos propios. Con 1536 px, la columna del paso de la historia clínica queda en unos 1.180 px, suficiente para sus tablas (que además tienen `ScrollableX`) y cómodo para leer los campos de texto. Si en el futuro una pantalla necesita todo el ancho, se agregará una opción explícita del layout; hoy ninguna la necesita.
-- **Vista previa de impresión:** está fuera del shell y no se ve afectada. Sus hojas ya se centran solas.
-- **Anchos resultantes** (barra expandida / contraída): a 1280 px, el contenido mide ~976 / ~1.152 px; a 1920 px y a 2560 px, 1.536 px centrados en ambos casos.
-- Bajo 1536 px no cambia nada: tablet y celular siguen igual.
+### D8. Ancho máximo de la app y del contenido
+- **Marco de la app** (`AppLayout`): un contenedor `mx-auto flex w-full max-w-[1920px]` (`data-app-frame`) envuelve la barra lateral, la cabecera y `<main>`. Va centrado y, desde 1920 px, lleva borde a los lados; afuera se ve el fondo (`bg-muted/40`). Así la barra viaja con el contenido: en pantallas muy anchas no queda pegada al borde con un hueco hasta el formulario (opción A, elegida por el usuario al verlo a 2679 px).
+- **Contenido** (`<main>`): dentro del marco, el `Outlet` va en `mx-auto w-full max-w-screen-2xl` (1536 px). El padding (`p-4 sm:p-6 lg:p-8`) se queda en `<main>`.
+- **Cabecera:** su contenido (menú, usuario, tema) va en un contenedor `mx-auto w-full max-w-screen-2xl` con el mismo padding horizontal que `<main>`, así el usuario queda alineado con el borde derecho del contenido.
+- **Una sola regla en el shell:** las pantallas no fijan anchos propios. Con 1536 px, la columna del paso de la historia clínica queda en unos 1.180 px.
+- **Vista previa de impresión:** está fuera del shell y no se ve afectada.
+- **Anchos resultantes** (barra expandida / contraída):
+  - a 1280 px: contenido ~976 / ~1.152 px, sin marco visible;
+  - a 1920 px y más: marco de 1920 px centrado; contenido de 1536 px centrado en la columna principal (a ~40 px de la barra expandida y ~160 px de la contraída).
+- Bajo 1920 px el marco no se nota, y bajo 1536 px tampoco el límite del contenido: tablet y celular siguen igual.
 
 ### D7. Pruebas
 - **Store:** estado inicial, `toggle` y persistencia (lee y escribe en `localStorage`).
 - **`AppLayout`, en escritorio** (`matchMedia` o las clases de la barra): el botón contrae y expande, `aria-expanded` y su nombre cambian, los textos pasan a `sr-only`, aparecen los tooltips y el ícono de la marca reemplaza al logo.
 - **Recarga:** con la preferencia guardada, la barra arranca contraída.
 - **Tablet y celular:** el botón no se ve en tablet (`hidden lg:flex`) y el cajón móvil no cambia (los tests existentes siguen pasando).
-- **Ancho máximo:** en el E2E, a 2560 px, el contenido de `<main>` mide como máximo 1536 px y está centrado (márgenes izquierdo y derecho iguales, ±1 px) con la barra expandida y contraída.
+- **Ancho máximo:** en el E2E, a 2560 px, con la barra expandida y contraída: el marco mide como máximo 1920 px y está centrado (márgenes iguales, ±1 px), la barra empieza en el borde del marco y el contenido mide como máximo 1536 px.
 
 ## Risks / Trade-offs
 

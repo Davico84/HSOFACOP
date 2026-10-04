@@ -30,21 +30,22 @@ En pantallas de 1024 px o más, el sistema SHALL permitir contraer la barra late
 - **WHEN** la aplicación se abre en una pantalla de menos de 1024 px
 - **THEN** el botón para contraer o expandir no se muestra, y siguen la barra compacta en tablet y el cajón en celular
 
-### Requirement: Ancho máximo del contenido
-En pantallas anchas, el contenido de las pantallas privadas SHALL medir como máximo 1536 px y quedar centrado en el espacio libre junto a la barra lateral. La cabecera SHALL alinear su contenido (usuario, tema) a ese mismo ancho. En pantallas de hasta 1536 px el contenido SHALL seguir ocupando el ancho disponible, como hasta ahora.
+### Requirement: Ancho máximo de la app y del contenido
+En pantallas anchas, el marco de las pantallas privadas (barra lateral, cabecera y contenido) SHALL medir como máximo 1920 px y quedar centrado, con la barra lateral junto al contenido; fuera del marco SHALL verse el fondo. Dentro del marco, el contenido SHALL medir como máximo 1536 px, y la cabecera SHALL alinear su contenido (usuario, tema) a ese mismo ancho. En pantallas de hasta 1536 px el contenido SHALL seguir ocupando el ancho disponible, como hasta ahora.
 
-#### Scenario: Contenido limitado y centrado en una pantalla muy ancha
+#### Scenario: App centrada en una pantalla muy ancha
 - **WHEN** el usuario abre una pantalla privada en un monitor de 2560 px de ancho
-- **THEN** el contenido mide como máximo 1536 px y queda centrado, con el mismo margen a ambos lados
-- **AND** el usuario y el botón de tema de la cabecera quedan alineados con el borde derecho del contenido
+- **THEN** la app (barra lateral, cabecera y contenido) mide como máximo 1920 px y queda centrada, con el mismo margen a ambos lados
+- **AND** la barra lateral empieza en el borde de la app, junto al contenido, y no en el borde de la pantalla
+- **AND** el contenido mide como máximo 1536 px y el usuario y el tema de la cabecera quedan alineados con su borde derecho
 
 #### Scenario: Igual con la barra contraída
 - **WHEN** en esa pantalla el usuario contrae la barra lateral
-- **THEN** el contenido sigue midiendo como máximo 1536 px y se vuelve a centrar en el espacio libre
+- **THEN** la app sigue midiendo como máximo 1920 px y centrada, y el contenido como máximo 1536 px
 
 #### Scenario: Pantallas comunes sin cambios
 - **WHEN** el usuario abre una pantalla privada a 1280 px de ancho
-- **THEN** el contenido ocupa todo el ancho disponible junto a la barra lateral, como hasta ahora
+- **THEN** la app ocupa toda la pantalla y el contenido todo el ancho disponible junto a la barra lateral, como hasta ahora
 
 ## MODIFIED Requirements
 

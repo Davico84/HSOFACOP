@@ -11,7 +11,7 @@ El shell ya tiene una barra de solo íconos con tooltips, pero solo en tablet. L
 - **Logo**: con la barra contraída se muestra el ícono de la marca (`brand.favicon`); expandida, el logo completo.
 - Transición del ancho sin saltos de texto; sin animación con `prefers-reduced-motion`.
 - **Tablet y celular no cambian**: en tablet sigue la barra de íconos fija y en celular el cajón.
-- **Ancho máximo del contenido:** en pantallas muy anchas (p. ej. 2679 px), el contenido se estiraba a todo el ancho. Los campos de texto pasaban de 1.500 px, las opciones quedaban a la izquierda con un gran vacío a la derecha, y el usuario y el tema de la cabecera quedaban lejos del contenido. El contenido del shell pasa a medir como máximo 1536 px (`max-w-screen-2xl`) y va centrado; la cabecera alinea su contenido a ese mismo ancho. La barra lateral sigue pegada a la izquierda. Revisado con un agente externo, que coincidió en el valor y en ponerlo en el shell.
+- **Ancho máximo del contenido:** en pantallas muy anchas (p. ej. 2679 px), el contenido se estiraba a todo el ancho. Los campos de texto pasaban de 1.500 px, las opciones quedaban a la izquierda con un gran vacío a la derecha, y el usuario y el tema de la cabecera quedaban lejos del contenido. El **marco completo de la app** (barra lateral, cabecera y contenido) pasa a medir como máximo 1920 px y va centrado: la barra viaja junto al contenido, sin el hueco que dejaba pegada al borde de la pantalla, y fuera del marco se ve el fondo. Dentro del marco, el contenido mide como máximo 1536 px (`max-w-screen-2xl`) y la cabecera alinea al usuario y el tema con él. Revisado con un agente externo (el valor de 1536 px y ponerlo en el shell); el usuario eligió limitar el marco completo (opción A) al ver el hueco a 2679 px.
 
 ## Non-goals
 
@@ -25,10 +25,10 @@ El shell ya tiene una barra de solo íconos con tooltips, pero solo en tablet. L
 <!-- Ninguna -->
 
 ### Modified Capabilities
-- `app-shell`: la barra lateral se puede contraer a solo íconos en escritorio y recuerda la preferencia; "Navegación responsive" se ajusta para que en escritorio sea expandida o contraída según el usuario; el contenido tiene un ancho máximo centrado.
+- `app-shell`: la barra lateral se puede contraer a solo íconos en escritorio y recuerda la preferencia; "Navegación responsive" se ajusta para que en escritorio sea expandida o contraída según el usuario; la app tiene un ancho máximo centrado (marco de 1920 px y contenido de 1536 px).
 
 ## Impact
 
-- **Frontend**: `store/useSidebarStore.ts` (Zustand con `persist`); `Sidebar`, `NavItem` y `SidebarLogoutButton` (modo contraído en escritorio y tooltips); `AppLayout` (pasa la preferencia y el botón, y limita el ancho de `<main>`); `Header` (contenido alineado al mismo ancho máximo).
+- **Frontend**: `store/useSidebarStore.ts` (Zustand con `persist`); `Sidebar`, `NavItem` y `SidebarLogoutButton` (modo contraído en escritorio y tooltips); `AppLayout` (pasa la preferencia y el botón; marco de la app con máximo de 1920 px y contenido de `<main>` con máximo de 1536 px); `Header` (contenido alineado al mismo ancho máximo).
 - **Tests**: `AppLayout.test.tsx` y casos nuevos; el E2E responsive de la historia clínica sigue igual (la barra arranca expandida).
 - **Backend / contrato**: sin cambios.
