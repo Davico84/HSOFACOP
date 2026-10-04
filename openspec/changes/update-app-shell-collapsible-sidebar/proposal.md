@@ -17,7 +17,7 @@ El shell ya tiene una barra de solo íconos con tooltips, pero solo en tablet. L
 
 - Contraer la barra automáticamente según la pantalla o la ruta (descartado en la revisión).
 - Atajo de teclado (Ctrl+B choca con los marcadores de Firefox y con la negrita en campos de texto). Se puede agregar después con otra combinación.
-- Cambiar el cajón móvil o la cabecera.
+- Cambiar el cajón móvil, o la cabecera más allá de alinear su contenido al ancho máximo.
 
 ## Capabilities
 
