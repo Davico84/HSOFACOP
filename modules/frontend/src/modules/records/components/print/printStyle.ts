@@ -12,6 +12,9 @@ export const PRINT_MARGINS = { top: "20mm", right: "24mm", bottom: "20mm", left:
  */
 export const PAGE_CSS = "@page { size: A4; margin: 0; }";
 
+/** Ancho de una hoja A4 en pantalla (210 mm a 96 ppp), para reducirla en pantallas angostas. */
+export const SHEET_WIDTH_PX = 794;
+
 /** Alto de un renglón del PDF. */
 export const ROW = "h-[17.3pt]";
 export const ROW_MIN = "min-h-[17.3pt]";

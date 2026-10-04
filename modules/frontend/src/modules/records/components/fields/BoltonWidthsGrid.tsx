@@ -1,4 +1,5 @@
 import { Controller, useFormContext } from "react-hook-form";
+import { ScrollableX } from "@/modules/core/components/ScrollableX";
 import { FieldHint } from "@/modules/core/components/form/FieldHint";
 import { fieldError } from "@/modules/core/components/form/fieldError";
 import { NumberInput } from "@/modules/core/ui/number-input";
@@ -20,7 +21,7 @@ export function BoltonWidthsGrid() {
 
   const header = (teeth: readonly number[]) => (
     <tr className="bg-muted text-xs text-muted-foreground">
-      <th scope="row" className="px-2 py-1 font-semibold">R</th>
+      <th scope="row" className="sticky left-0 z-10 bg-muted px-2 py-1 font-semibold">R</th>
       {teeth.map((t) => (
         <th key={t} scope="col" className="px-1 py-1 text-center font-medium">{t}</th>
       ))}
@@ -29,7 +30,7 @@ export function BoltonWidthsGrid() {
   );
   const inputs = (teeth: readonly number[]) => (
     <tr>
-      <td />
+      <td className="sticky left-0 z-10 bg-background" />
       {teeth.map((t) => (
         <td key={t} className={cn("px-1 py-1.5", isSharedWithNance(t) && "bg-muted/40")}>
           <Controller
@@ -61,7 +62,7 @@ export function BoltonWidthsGrid() {
   return (
     <fieldset className="flex min-w-0 flex-col gap-1.5">
       <legend className="mb-1.5 text-sm font-medium">Ancho mesiodistal de las piezas (mm)</legend>
-      <div className="overflow-x-auto">
+      <ScrollableX>
         <table className="border-collapse border border-border text-sm">
           <tbody>
             {header(UPPER_BOLTON_TEETH)}
@@ -70,7 +71,7 @@ export function BoltonWidthsGrid() {
             {header(LOWER_BOLTON_TEETH)}
           </tbody>
         </table>
-      </div>
+      </ScrollableX>
       <FieldHint>{BOLTON_SHARED_NOTE}</FieldHint>
       {errors.length ? (
         <ul role="alert" className="text-xs text-destructive">

@@ -148,9 +148,11 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
           </h2>
           <RecordStepContent step={step} recordNumber={record?.recordNumber} />
 
-          <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-background py-4">
+          {/* En celular cabe en una fila: "Anterior" y "Siguiente" muestran solo el icono (el texto queda
+              para el lector de pantalla). */}
+          <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-border bg-background py-3 sm:gap-3 sm:py-4">
             <Button type="button" variant="outline" disabled={step === 1 || saving} onClick={() => void goTo(step - 1)}>
-              <ArrowLeft className="size-4" aria-hidden="true" /> Anterior
+              <ArrowLeft className="size-4" aria-hidden="true" /> <span className="sr-only sm:not-sr-only">Anterior</span>
             </Button>
             <div className="flex gap-2">
               {record ? (
@@ -161,7 +163,8 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
               {step < RECORD_STEPS.length ? (
                 <Button type="submit" disabled={saving}>
                   {saving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
-                  {record ? "Siguiente" : "Crear historia"} <ArrowRight className="size-4" aria-hidden="true" />
+                  {record ? <span className="sr-only sm:not-sr-only">Siguiente</span> : "Crear historia"}{" "}
+                  <ArrowRight className="size-4" aria-hidden="true" />
                 </Button>
               ) : null}
             </div>

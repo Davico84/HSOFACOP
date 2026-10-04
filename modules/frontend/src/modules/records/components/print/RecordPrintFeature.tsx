@@ -4,13 +4,14 @@ import { AxiosError } from "axios";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
 import { buttonVariants } from "@/modules/core/ui/button-variants";
+import { ScaleToFit } from "@/modules/core/components/ScaleToFit";
 import { recordPath } from "@/routes/paths";
 import { useRecord } from "../../hooks/useRecord";
 import { RecordLoading } from "../RecordLoading";
 import { RecordLoadError } from "../RecordLoadError";
 import { RecordNotFound } from "../RecordNotFound";
 import { RecordPrintDocument } from "./RecordPrintDocument";
-import { PAGE_CSS } from "./printStyle";
+import { PAGE_CSS, SHEET_WIDTH_PX } from "./printStyle";
 
 /**
  * Vista preliminar de impresión de una historia (fuera del shell): muestra las hojas A4 tal como
@@ -51,20 +52,22 @@ export function RecordPrintFeature() {
   return (
     <main className="min-h-dvh bg-muted print:bg-background">
       <style>{PAGE_CSS}</style>
-      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-6 py-3 print:hidden">
-        <div className="flex items-center gap-3">
-          <Link to={returnTo ?? recordPath(record.data.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
-            <ArrowLeft className="size-4" aria-hidden="true" /> Volver
-          </Link>
-          <p className="text-sm text-muted-foreground">
-            Vista preliminar de la historia {record.data.recordNumber}: revisa las hojas y pulsa Imprimir.
-          </p>
-        </div>
-        <Button onClick={() => window.print()}>
+      {/* En celular: "Volver" e "Imprimir" en una fila y la ayuda debajo. */}
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-background px-4 py-3 sm:px-6 print:hidden">
+        <Link to={returnTo ?? recordPath(record.data.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <ArrowLeft className="size-4" aria-hidden="true" /> Volver
+        </Link>
+        <Button onClick={() => window.print()} className="sm:order-last">
           <Printer className="size-4" aria-hidden="true" /> Imprimir
         </Button>
+        <p className="w-full text-sm text-muted-foreground sm:w-auto sm:flex-1">
+          Vista preliminar de la historia {record.data.recordNumber}: revisa las hojas y pulsa Imprimir.
+        </p>
       </div>
-      <RecordPrintDocument record={record.data} />
+      {/* Las hojas miden 210 mm: en pantallas más angostas se reducen para caber (al imprimir, A4 real). */}
+      <ScaleToFit naturalWidth={SHEET_WIDTH_PX} className="px-2 sm:px-6 print:px-0">
+        <RecordPrintDocument record={record.data} />
+      </ScaleToFit>
     </main>
   );
 }

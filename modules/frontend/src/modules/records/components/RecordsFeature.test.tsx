@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -130,5 +130,46 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
 
     expect(await screen.findByRole("heading", { level: 2, name: /Paciente y anamnesis/ })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/historias/10");
+  });
+});
+
+describe("orthodontic-records — Listado en celular y tablet", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** Pantalla de menos de 1024 px: la media query de escritorio no se cumple. */
+  function narrowScreen() {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+  }
+
+  it("bajo 1024 px cada historia es una tarjeta con sus datos y sus acciones visibles", async () => {
+    narrowScreen();
+    mockList(() => page([summary({ documentType: "DNI", documentNumber: "74125896", treatmentStartDate: "2026-05-19" })]));
+    renderRecordRoutes("/historias", "USER");
+
+    const list = await screen.findByRole("list", { name: "Historias clínicas" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    const card = within(list).getAllByRole("listitem")[0];
+    expect(within(card).getByText("AEO-001")).toBeInTheDocument();
+    expect(within(card).getByRole("heading", { name: "Ana Quispe" })).toBeInTheDocument();
+    expect(within(card).getByText("DNI 74125896")).toBeInTheDocument();
+    expect(within(card).getByText("19/05/2026")).toBeInTheDocument();
+    expect(within(card).queryByText("Autor")).not.toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: "Editar historia AEO-001" })).toHaveAttribute("href", "/historias/10?paso=1");
+    expect(within(card).getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toHaveAttribute("href", "/historias/10/imprimir");
+  });
+
+  it("ADMIN ve el autor en cada tarjeta", async () => {
+    narrowScreen();
+    mockList(() => page([summary({ authorName: "Dr. Carlos Medina" })]));
+    renderRecordRoutes("/historias", "ADMIN");
+
+    const card = (await screen.findAllByRole("listitem"))[0];
+    expect(within(card).getByText("Autor")).toBeInTheDocument();
+    expect(within(card).getByText("Dr. Carlos Medina")).toBeInTheDocument();
   });
 });

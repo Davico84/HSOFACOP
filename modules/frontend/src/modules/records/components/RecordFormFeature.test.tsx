@@ -473,6 +473,21 @@ describe("orthodontic-records — Análisis de Nance (paso 5)", { timeout: 15_00
     expect(n?.conclusionLower).toBeUndefined();
   });
 
+  it("los puntos 1 y 2 y la discrepancia se leen como tablas (grillas que se apilan en celular)", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openNance();
+
+    const points = screen.getByRole("table", { name: "Espacio disponible y requerido" });
+    expect(within(points).getAllByRole("rowheader").map((h) => h.textContent)).toEqual([
+      "1. SA · espacio disponible o longitud de arco",
+      "2. ST · espacio requerido, ancho m-d de los mesiales al 1er molar",
+    ]);
+    const result = screen.getByRole("table", { name: "Discrepancia óseo dentaria" });
+    expect(within(result).getAllByRole("columnheader").map((h) => h.textContent)).toContain("Discrepancia");
+    expect(within(result).getAllByRole("rowheader").map((h) => h.textContent)).toEqual(["Superior", "Inferior"]);
+  });
+
   it("si falta una pieza no hay ST ni discrepancia y se avisa", async () => {
     mockRecord();
     renderRecordRoutes("/historias/10?paso=5");

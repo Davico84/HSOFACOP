@@ -5,10 +5,12 @@ import { Button } from "@/modules/core/ui/button";
 import { buttonVariants } from "@/modules/core/ui/button-variants";
 import { IconInput } from "@/modules/core/ui/icon-input";
 import { useDebouncedValue } from "@/modules/core/hooks/useDebouncedValue";
+import { useMediaQuery } from "@/modules/core/hooks/useMediaQuery";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
 import { useSessionStore } from "@/store/useSessionStore";
 import { PATHS } from "@/routes/paths";
 import { useRecords } from "../hooks/useRecords";
+import { RecordsCardList } from "./RecordsCardList";
 import { RecordsTable } from "./RecordsTable";
 import { RecordsPagination } from "./RecordsPagination";
 import { RecordsEmptyState } from "./RecordsEmptyState";
@@ -24,6 +26,8 @@ export function RecordsFeature() {
   const [search, setSearch] = useState(query);
   const debounced = useDebouncedValue(search, 300);
   const records = useRecords(query, page);
+  // Tabla desde 1024 px; debajo, tarjetas (la tabla dejaba las acciones fuera de la pantalla).
+  const desktop = useMediaQuery("(min-width: 1024px)", true);
   const isAdmin = useSessionStore((s) => s.user?.role === "ADMIN");
 
   // Lo escrito pasa a la URL al dejar de teclear (y vuelve a la página 1).
@@ -85,7 +89,11 @@ export function RecordsFeature() {
   } else {
     content = (
       <>
-        <RecordsTable records={records.data.content} showAuthor={isAdmin} />
+        {desktop ? (
+          <RecordsTable records={records.data.content} showAuthor={isAdmin} />
+        ) : (
+          <RecordsCardList records={records.data.content} showAuthor={isAdmin} />
+        )}
         <RecordsPagination
           page={records.data.page}
           totalPages={records.data.totalPages}
