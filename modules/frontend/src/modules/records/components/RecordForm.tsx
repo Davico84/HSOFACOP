@@ -13,9 +13,10 @@ import { recordFormSchema, type RecordFormValues } from "../schemas/record";
 import { parseStep, RECORD_STEPS, stepOfField } from "../config/recordSteps";
 import { emptyRecordValues, toFormValues } from "../utils/recordForm";
 import { STALE_RECORD_TYPE } from "../hooks/recordKeys";
+import { errorPaths } from "../hooks/useStepStatus";
 import { useSaveRecord } from "../hooks/useSaveRecord";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
-import { RecordStepper } from "./RecordStepper";
+import { RecordStepNav, type StepChange } from "./RecordStepNav";
 import { RecordStepContent } from "./RecordStepContent";
 import { StaleRecordBanner } from "./StaleRecordBanner";
 import { LeaveConfirmDialog } from "./LeaveConfirmDialog";
@@ -70,31 +71,47 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
     toast.error(getUserFriendlyError(error), { action: { label: "Reintentar", onClick: retry } });
   };
 
-  /** Guarda (si hace falta) y abre `target`; `target === step` = solo guardar. */
-  const goTo = async (target: number) => {
-    if (save.isPending) return;
+  /**
+   * Guarda (si hace falta) y abre `target`; `target === step` = solo guardar. Resuelve "invalid" si
+   * el paso actual no pasa la validación, "failed" si el guardado falla y "ok" en otro caso.
+   */
+  const goTo = async (target: number): Promise<StepChange> => {
+    if (save.isPending) return "failed";
     if (record && !dirty) {
       if (target !== step) showStep(target);
-      return;
+      return "ok";
     }
     const valid = await form.trigger(RECORD_STEPS[step - 1].fields, { shouldFocus: true });
-    if (!valid) return;
-    save.mutate(
-      { values: form.getValues(), existing: record ? { id: record.id, version: record.version } : undefined },
-      {
-        onSuccess: (saved) => {
-          form.reset(toFormValues(saved));
-          if (!record) {
-            allowNextNavigation();
-            navigate(recordPath(saved.id, target === step ? 2 : target), { replace: true });
-          } else {
-            toast.success(`Historia ${saved.recordNumber} guardada`);
-            if (target !== step) showStep(target);
-          }
+    if (!valid) return "invalid";
+    return new Promise<StepChange>((resolve) => {
+      save.mutate(
+        { values: form.getValues(), existing: record ? { id: record.id, version: record.version } : undefined },
+        {
+          onSuccess: (saved) => {
+            form.reset(toFormValues(saved));
+            if (!record) {
+              allowNextNavigation();
+              navigate(recordPath(saved.id, target === step ? 2 : target), { replace: true });
+            } else {
+              toast.success(`Historia ${saved.recordNumber} guardada`);
+              if (target !== step) showStep(target);
+            }
+            resolve("ok");
+          },
+          onError: (error) => {
+            onSaveError(error, () => void goTo(target));
+            resolve("failed");
+          },
         },
-        onError: (error) => onSaveError(error, () => void goTo(target)),
-      },
-    );
+      );
+    });
+  };
+
+  /** Desde el panel de pasos (celular): el paso actual tiene errores; enfocar el primero y avisar. */
+  const onInvalidStep = () => {
+    const first = errorPaths(form.formState.errors)[0];
+    if (first) form.setFocus(first as Parameters<typeof form.setFocus>[0]);
+    toast.error("Corrige los campos marcados del paso actual antes de cambiar de paso.");
   };
 
   const reload = async () => {
@@ -133,43 +150,46 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
           <StaleRecordBanner reloading={reloading} onReload={() => void reload()} onDismiss={() => setStale(false)} />
         ) : null}
 
-        <RecordStepper current={step} disabled={saving || !record} onSelect={(n) => void goTo(n)} />
+        {/* Desde 1024 px: columna lateral de pasos + el paso; más angosto, una columna. */}
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+          <RecordStepNav current={step} disabled={saving || !record} onSelect={goTo} onInvalid={onInvalidStep} />
 
-        <form
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            void goTo(step < RECORD_STEPS.length ? step + 1 : step);
-          }}
-          className="flex flex-col gap-6"
-        >
-          <h2 className="text-xl font-semibold">
-            {current.number}. {current.title} <span className="text-sm font-normal text-muted-foreground">({current.pages})</span>
-          </h2>
-          <RecordStepContent step={step} recordNumber={record?.recordNumber} />
+          <form
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              void goTo(step < RECORD_STEPS.length ? step + 1 : step);
+            }}
+            className="flex min-w-0 flex-col gap-6"
+          >
+            <h2 className="text-xl font-semibold">
+              {current.number}. {current.title} <span className="text-sm font-normal text-muted-foreground">({current.pages})</span>
+            </h2>
+            <RecordStepContent step={step} recordNumber={record?.recordNumber} />
 
-          {/* En celular cabe en una fila: "Anterior" y "Siguiente" muestran solo el icono (el texto queda
-              para el lector de pantalla). */}
-          <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-border bg-background py-3 sm:gap-3 sm:py-4">
-            <Button type="button" variant="outline" disabled={step === 1 || saving} onClick={() => void goTo(step - 1)}>
-              <ArrowLeft className="size-4" aria-hidden="true" /> <span className="sr-only sm:not-sr-only">Anterior</span>
-            </Button>
-            <div className="flex gap-2">
-              {record ? (
-                <Button type="button" variant="outline" disabled={saving || !dirty} onClick={() => void goTo(step)}>
-                  <Save className="size-4" aria-hidden="true" /> Guardar
-                </Button>
-              ) : null}
-              {step < RECORD_STEPS.length ? (
-                <Button type="submit" disabled={saving}>
-                  {saving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
-                  {record ? <span className="sr-only sm:not-sr-only">Siguiente</span> : "Crear historia"}{" "}
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Button>
-              ) : null}
+            {/* En celular cabe en una fila: "Anterior" y "Siguiente" muestran solo el icono (el texto queda
+                para el lector de pantalla). */}
+            <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-border bg-background py-3 sm:gap-3 sm:py-4">
+              <Button type="button" variant="outline" disabled={step === 1 || saving} onClick={() => void goTo(step - 1)}>
+                <ArrowLeft className="size-4" aria-hidden="true" /> <span className="sr-only sm:not-sr-only">Anterior</span>
+              </Button>
+              <div className="flex gap-2">
+                {record ? (
+                  <Button type="button" variant="outline" disabled={saving || !dirty} onClick={() => void goTo(step)}>
+                    <Save className="size-4" aria-hidden="true" /> Guardar
+                  </Button>
+                ) : null}
+                {step < RECORD_STEPS.length ? (
+                  <Button type="submit" disabled={saving}>
+                    {saving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+                    {record ? <span className="sr-only sm:not-sr-only">Siguiente</span> : "Crear historia"}{" "}
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </Button>
+                ) : null}
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </section>
 
       <LeaveConfirmDialog
