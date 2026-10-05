@@ -99,6 +99,10 @@ public class OrthodonticRecord {
     @Column(nullable = false, columnDefinition = "jsonb")
     private String content;
 
+    /** Último paso del formulario (1–8) en que se guardaron cambios; nulo = paso 1. */
+    @Column(name = "last_step")
+    private Integer lastStep;
+
     @Version
     @Column(nullable = false)
     private long version;

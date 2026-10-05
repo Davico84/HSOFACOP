@@ -2,13 +2,13 @@
 
 ## 1. Backend
 
-- [ ] 1.1 `V12__record_last_step.sql` (`last_step SMALLINT NULL`, `CHECK 1..8`) y `OrthodonticRecord.lastStep`
-- [ ] 1.2 `UpdateRecordRequest.lastStep` opcional (`@Min(1) @Max(8)`, ausente = no cambia) y `RecordResponse.lastStep` (nullable); servicio lo guarda en `update`
-- [ ] 1.3 Tests: controller (400 con 0 y 9), IT (guarda y devuelve `lastStep`; ausente lo conserva; historia previa sin paso → `null`); regenerar contrato; `mvn verify` verde
+- [x] 1.1 `V12__record_last_step.sql` (`last_step INTEGER NULL`, `CHECK 1..8`) y `OrthodonticRecord.lastStep`
+- [x] 1.2 `UpdateRecordRequest.lastStep` opcional (`@Min(1) @Max(8)`, ausente = no cambia) y `RecordResponse.lastStep` (nullable); servicio lo guarda en `update`
+- [x] 1.3 Tests: controller (400 con 0 y 9), IT (guarda y devuelve `lastStep`; ausente lo conserva; historia previa sin paso → `null`); regenerar contrato; `mvn verify` verde
 
 ## 2. Contrato y cliente
 
-- [ ] 2.1 `contracts/openapi.json` regenerado y `pnpm generate:api`
+- [x] 2.1 `contracts/openapi.json` regenerado y `pnpm generate:api`
 
 ## 3. Frontend
 

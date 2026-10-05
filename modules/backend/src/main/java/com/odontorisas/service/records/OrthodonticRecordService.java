@@ -94,11 +94,20 @@ public class OrthodonticRecordService {
      */
     @Transactional
     public RecordView update(RecordActor actor, Long id, long expectedVersion, RecordData data) {
+        return update(actor, id, expectedVersion, data, null);
+    }
+
+    /** Guarda la historia; {@code lastStep} (1–8) es el paso en que se trabajó, nulo = no cambia. */
+    @Transactional
+    public RecordView update(RecordActor actor, Long id, long expectedVersion, RecordData data, Integer lastStep) {
         OrthodonticRecord record = load(actor, id);
         if (record.getVersion() != expectedVersion) {
             throw new StaleRecordException();
         }
         apply(record, normalize(data));
+        if (lastStep != null) {
+            record.setLastStep(lastStep);
+        }
         try {
             return toView(records.saveAndFlush(record));
         } catch (ObjectOptimisticLockingFailureException ex) {
@@ -160,7 +169,7 @@ public class OrthodonticRecordService {
         return new RecordView(r.getId(), r.getRecordNumber(), r.getAuthor().getId(), r.getAuthor().getFullName(),
             r.getTreatingDentist(), r.getPatientName(), r.getDocumentType(), r.getDocumentNumber(), r.getPatientSex(),
             r.getBirthDate(), r.getBirthPlace(), r.getAddress(), r.getPhone(), r.getTreatmentStartDate(), age,
-            content, r.getVersion(), r.getCreatedAt(), r.getUpdatedAt());
+            content, r.getLastStep(), r.getVersion(), r.getCreatedAt(), r.getUpdatedAt());
     }
 
     private static RecordSummaryView toSummary(OrthodonticRecord r) {

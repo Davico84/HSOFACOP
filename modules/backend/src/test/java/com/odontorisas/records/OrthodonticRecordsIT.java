@@ -168,6 +168,30 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
     // --- Alcance ---
 
     @Test
+    void last_step_is_saved_returned_and_kept_when_absent() throws Exception {
+        Session torres = register("Dra. Torres");
+        JsonNode created = createOk(torres, "Ana Quispe");
+        long id = created.get("id").asLong();
+        assertThat(created.get("lastStep").isNull()).isTrue();
+
+        JsonNode saved = read(save(torres, id, "{\"version\":0,\"patientName\":\"Ana Quispe\",\"lastStep\":6}"));
+        assertThat(saved.get("lastStep").asInt()).isEqualTo(6);
+
+        // Sin lastStep, el guardado conserva el último paso.
+        JsonNode again = read(save(torres, id, "{\"version\":" + saved.get("version").asLong()
+            + ",\"patientName\":\"Ana Lucía Quispe\"}"));
+        assertThat(again.get("lastStep").asInt()).isEqualTo(6);
+        assertThat(read(getRecord(torres, id)).get("lastStep").asInt()).isEqualTo(6);
+
+        // Fuera de rango: 400 en lastStep y no se guarda.
+        MvcResult invalid = save(torres, id, "{\"version\":" + again.get("version").asLong()
+            + ",\"patientName\":\"X\",\"lastStep\":9}");
+        assertThat(invalid.getResponse().getStatus()).isEqualTo(400);
+        assertThat(read(invalid).get("errors").get(0).get("field").stringValue()).isEqualTo("lastStep");
+        assertThat(read(getRecord(torres, id)).get("patientName").stringValue()).isEqualTo("Ana Lucía Quispe");
+    }
+
+    @Test
     void user_lists_only_own_records() throws Exception {
         Session torres = register("Dra. Torres");
         Session medina = register("Dr. Medina");

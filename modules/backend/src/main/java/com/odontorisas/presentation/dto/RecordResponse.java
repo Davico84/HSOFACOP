@@ -30,6 +30,7 @@ public record RecordResponse(
     @Schema(description = "Años cumplidos a la fecha de inicio de tratamiento (o a hoy); vacío sin fecha de nacimiento")
     Integer ageYears,
     @Schema(requiredMode = REQUIRED) RecordContent content,
+    @Schema(description = "Último paso (1–8) en que se guardaron cambios; vacío = paso 1") Integer lastStep,
     @Schema(requiredMode = REQUIRED, description = "Versión actual: se envía al guardar") long version,
     @Schema(requiredMode = REQUIRED) Instant createdAt,
     @Schema(requiredMode = REQUIRED) Instant updatedAt) {
@@ -37,7 +38,7 @@ public record RecordResponse(
     public static RecordResponse from(RecordView v) {
         return new RecordResponse(v.id(), v.recordNumber(), v.authorId(), v.authorName(), v.treatingDentist(),
             v.patientName(), v.documentType(), v.documentNumber(), v.patientSex(), v.birthDate(), v.birthPlace(),
-            v.address(), v.phone(), v.treatmentStartDate(), v.ageYears(), v.content(), v.version(),
+            v.address(), v.phone(), v.treatmentStartDate(), v.ageYears(), v.content(), v.lastStep(), v.version(),
             v.createdAt(), v.updatedAt());
     }
 }

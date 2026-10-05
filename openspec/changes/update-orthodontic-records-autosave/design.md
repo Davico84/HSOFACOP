@@ -26,7 +26,7 @@
 - `useLeaveGuard` no cambia: con un guardado pendiente o fallido sigue avisando al salir.
 
 ### Último paso (backend + frontend)
-- **Columna `last_step SMALLINT NULL`** con `CHECK (last_step BETWEEN 1 AND 8)` (V12). Nula = historias anteriores → paso 1.
+- **Columna `last_step INTEGER NULL`** con `CHECK (last_step BETWEEN 1 AND 8)` (V12). Nula = historias anteriores → paso 1.
 - **`UpdateRecordRequest.lastStep`** opcional (`@Min(1) @Max(8)`); ausente = no cambia. `RecordResponse.lastStep` (nullable). Crear (`POST`) no lo recibe: la historia nueva queda con `null` (se abre en el paso 1, donde se trabajó) hasta su primer guardado con cambios.
 - **Qué paso se envía**: al cambiar de paso, el destino; al autoguardar o "Guardar", el paso actual. Recorrer pasos sin cambios no guarda, así que no lo cambia (decisión: "donde se dejó" = donde se trabajó, no donde se miró).
 - **Abrir en el último paso**: `RecordFormFeature`, si la URL no trae `paso`, reemplaza la URL por `?paso=<lastStep ?? 1>` (`replace`, sin entrada nueva en el historial). Los enlaces del listado ("Editar" incluido) dejan de fijar `paso=1`.

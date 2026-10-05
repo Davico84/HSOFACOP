@@ -6,6 +6,8 @@ import com.odontorisas.service.records.RecordData;
 import com.odontorisas.service.records.content.RecordContent;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
@@ -33,7 +35,10 @@ public record UpdateRecordRequest(
     @Size(max = 200) String address,
     @Size(max = 20) String phone,
     LocalDate treatmentStartDate,
-    @Valid RecordContent content) implements PatientFields {
+    @Valid RecordContent content,
+    @Schema(description = "Paso del formulario (1–8) en que se trabajó; se abre ahí al volver. Ausente = no cambia")
+    @Min(value = 1, message = "El paso debe estar entre 1 y 8.") @Max(value = 8, message = "El paso debe estar entre 1 y 8.")
+    Integer lastStep) implements PatientFields {
 
     public RecordData toData() {
         return new RecordData(treatingDentist, patientName, documentType, documentNumber, patientSex, birthDate,
