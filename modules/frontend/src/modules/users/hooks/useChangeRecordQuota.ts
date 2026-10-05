@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { changeRecordQuota } from "@/modules/core/services/generated/users";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
+import { dashboardKeys } from "@/modules/dashboard/hooks/dashboardKeys";
 import { userKeys } from "./userKeys";
 
 export interface ChangeRecordQuotaInput {
@@ -22,6 +23,10 @@ export function useChangeRecordQuota() {
           : `Cupo de ${user.fullName}: ${user.recordQuota} ${user.recordQuota === 1 ? "historia" : "historias"}`,
       ),
     onError: (error) => toast.error(getUserFriendlyError(error)),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: userKeys.all }),
+    onSettled: () => {
+      // Las métricas de Inicio del ADMIN cuentan cuentas y cupos.
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      return queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 }

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { changeUserStatus } from "@/modules/core/services/generated/users";
 import type { ChangeUserStatusRequestStatus } from "@/modules/core/services/generated/model";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
+import { dashboardKeys } from "@/modules/dashboard/hooks/dashboardKeys";
 import { userKeys } from "./userKeys";
 
 export interface ChangeUserStatusInput {
@@ -21,6 +22,10 @@ export function useChangeUserStatus() {
     onSuccess: (user) =>
       toast.success(user.status === "DISABLED" ? `Cuenta de ${user.fullName} deshabilitada` : `Cuenta de ${user.fullName} activada`),
     onError: (error) => toast.error(getUserFriendlyError(error)),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: userKeys.all }),
+    onSettled: () => {
+      // Las métricas de Inicio del ADMIN cuentan cuentas y cupos.
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      return queryClient.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 }

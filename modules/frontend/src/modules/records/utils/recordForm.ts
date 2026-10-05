@@ -49,14 +49,27 @@ export function toFormValues(record: RecordResponse): RecordFormValues {
   return completeValues(values);
 }
 
-/** Valores del formulario → cuerpo del POST (sin vacíos: el servidor los trata como nulos). */
-export function toCreateRequest(values: RecordFormValues): CreateRecordRequest {
-  return withoutEmpty(values) as CreateRecordRequest;
+/**
+ * Valores del formulario → cuerpo del POST (sin vacíos: el servidor los trata como nulos), con los
+ * pasos que tienen datos.
+ */
+export function toCreateRequest(values: RecordFormValues, filledSteps?: number[]): CreateRecordRequest {
+  return { ...(withoutEmpty(values) as CreateRecordRequest), ...(filledSteps ? { filledSteps } : {}) };
 }
 
 /** Valores del formulario + versión cargada → cuerpo del PUT. */
-export function toUpdateRequest(values: RecordFormValues, version: number, lastStep?: number): UpdateRecordRequest {
-  return { ...(withoutEmpty(values) as CreateRecordRequest), version, ...(lastStep ? { lastStep } : {}) };
+export function toUpdateRequest(
+  values: RecordFormValues,
+  version: number,
+  lastStep?: number,
+  filledSteps?: number[],
+): UpdateRecordRequest {
+  return {
+    ...(withoutEmpty(values) as CreateRecordRequest),
+    version,
+    ...(lastStep ? { lastStep } : {}),
+    ...(filledSteps ? { filledSteps } : {}),
+  };
 }
 
 /** Copia profunda sin `null` (los arrays se conservan). */
