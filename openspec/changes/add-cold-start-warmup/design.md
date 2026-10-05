@@ -21,6 +21,13 @@
 ### `show-details` por variable
 - `show-details: ${HEALTH_SHOW_DETAILS:always}`. En Render, `HEALTH_SHOW_DETAILS=never`: `/actuator/health` responde solo `status` sin detallar la BD ni el disco a cualquiera de internet. Local sigue igual.
 
+### Base en Neon que duerme: pool sin conexiones ociosas
+- Neon (gratis, sin caducidad) suspende el cómputo tras ~5 min sin uso y despierta en < 1 s: frente al arranque de Spring Boot no se nota, y dejarla dormir es lo que hace que el cupo gratuito de horas de cómputo alcance (despierta 24/7 lo superaría).
+- Lo que la mantendría despierta es el propio backend: HikariCP abre `minimum-idle` = `maximum-pool-size` (10) conexiones y las conserva, y HikariCP reciente hace keepalive periódico por defecto.
+- `spring.datasource.hikari`: `minimum-idle: ${DB_POOL_MIN_IDLE:0}`, `idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:60000}`, `keepalive-time: 0` (desactivado), `maximum-pool-size: ${DB_POOL_MAX_SIZE:5}`. Tras 1 min sin peticiones no queda ninguna conexión abierta; la siguiente petición abre una nueva (Neon despierta en ese momento). Mismos valores en local: el costo de reconectar es mínimo.
+- Conexión: cadena **directa** de Neon con `sslmode=require` en `DB_URL`. No la `-pooler` (PgBouncer en modo transacción): Flyway usa *advisory locks* de sesión que ese modo no garantiza. Región de Neon igual o cercana a la de Render.
+- Con el ping a liveness (que no toca la BD), Render queda despierto y Neon duerme cuando nadie trabaja.
+
 ### Aviso en el splash, no un ping aparte desde el navegador
 - La primera petición de cada carga ya es el refresh de sesión y el splash ya la espera. Medir esa espera es exacto: si tarda más de 4 s, el usuario está esperando de verdad. Un ping aparte sería una segunda petición midiendo lo mismo.
 - `useSlowWait(active, ms)` (hook genérico en `modules/core/hooks/`): `true` cuando `active` lleva más de `ms`. `RootLayout` cambia el texto del splash por el mensaje del arranque en frío (`role="status"`, `aria-live="polite"`) con un spinner.
@@ -31,4 +38,6 @@
 
 - El ping externo es un servicio de terceros: si falla, el arranque en frío vuelve, pero ahora con el aviso.
 - 750 h/mes cubren **un** servicio despierto 24/7; un segundo servicio gratuito despierto todo el mes no cabría.
+- "No caduca" no es copia de seguridad: un borrado por error o un cambio del plan gratuito siguen siendo riesgo. Las copias (`pg_dump` diario fuera de Neon + restauración probada) van en `add-database-backups`.
+- Si Neon tarda más en despertar, la primera petición espera dentro del `connection-timeout` de Hikari (30 s por defecto), suficiente.
 - axios no tiene timeout configurado, así que el refresh espera el arranque completo; si en el futuro se pone un timeout, debe superar ~90 s.

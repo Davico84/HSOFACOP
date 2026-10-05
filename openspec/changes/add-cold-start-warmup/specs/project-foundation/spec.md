@@ -15,6 +15,17 @@ El backend SHALL exponer `GET /actuator/health/liveness` sin autenticación, res
 - **WHEN** la aplicación arranca con `HEALTH_SHOW_DETAILS=never` y se llama a `GET /actuator/health`
 - **THEN** la respuesta solo trae `status`, sin `components` ni detalles
 
+### Requirement: Pool de conexiones que permite suspender la base
+El pool de conexiones del backend SHALL NOT retener conexiones ociosas ni enviar keepalive a la base de datos, de modo que una base que se suspende por inactividad (Neon) pueda dormir cuando no hay peticiones. Sus límites SHALL configurarse por variables (`DB_POOL_MIN_IDLE`, `DB_POOL_IDLE_TIMEOUT_MS`, `DB_POOL_MAX_SIZE`).
+
+#### Scenario: Sin conexiones ociosas retenidas
+- **WHEN** la aplicación arranca con la configuración por defecto
+- **THEN** el pool tiene `minimumIdle` 0, `keepaliveTime` 0 (desactivado), `idleTimeout` de 60 s y como máximo 5 conexiones
+
+#### Scenario: La base responde tras quedar sin conexiones
+- **WHEN** el pool cerró todas sus conexiones ociosas y llega una petición que consulta la base
+- **THEN** el pool abre una conexión nueva y la petición responde con normalidad
+
 ### Requirement: Aviso de arranque en frío al cargar la app
 Mientras la app espera la primera respuesta del backend al cargar (restauración de la sesión), SHALL mostrar "Cargando…" durante los primeros 4 segundos y, si la espera se prolonga, SHALL mostrar el mensaje "Estamos preparando tu consultorio digital para iniciar el día, esto puede tomar un minuto…" anunciado a lectores de pantalla, hasta que el backend responda.
 

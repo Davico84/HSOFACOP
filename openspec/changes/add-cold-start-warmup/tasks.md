@@ -3,7 +3,8 @@
 ## 1. Backend
 
 - [ ] 1.1 `application.yml`: `management.endpoint.health.probes.enabled: true` y `show-details: ${HEALTH_SHOW_DETAILS:always}`
-- [ ] 1.2 `HealthPingIT`: liveness sin sesión → `200` `UP`; liveness sin `db`; con `HEALTH_SHOW_DETAILS=never`, `/actuator/health` sin `components`. `mvn verify` verde
+- [ ] 1.2 `application.yml`: `spring.datasource.hikari` con `minimum-idle: ${DB_POOL_MIN_IDLE:0}`, `idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:60000}`, `keepalive-time: 0`, `maximum-pool-size: ${DB_POOL_MAX_SIZE:5}`; sumar las variables a `secrets.properties.example`
+- [ ] 1.3 `HealthPingIT`: liveness sin sesión → `200` `UP`; liveness sin `db`; con `HEALTH_SHOW_DETAILS=never`, `/actuator/health` sin `components`. `DataSourcePoolIT`: `HikariDataSource` con los valores por defecto; tras `softEvictConnections` (pool vacío) una consulta responde. `mvn verify` verde
 
 ## 2. Frontend
 
@@ -13,6 +14,6 @@
 
 ## 3. Docs
 
-- [ ] 3.1 `docs/backend.md` §11.1: probes, liveness sin BD y `HEALTH_SHOW_DETAILS`
-- [ ] 3.2 `docs/deployment.md` (nuevo): ping externo a `/actuator/health/liveness` cada 10 min (UptimeRobot o cron-job.org), 750 h/mes, `HEALTH_SHOW_DETAILS=never`; enlazar en `CLAUDE.md`
+- [ ] 3.1 `docs/backend.md` §11.1: probes, liveness sin BD y `HEALTH_SHOW_DETAILS`; pool de Hikari y por qué no retiene conexiones
+- [ ] 3.2 `docs/deployment.md` (nuevo): Render (ping externo a `/actuator/health/liveness` cada 10 min con UptimeRobot o cron-job.org, health check de Render a la misma ruta, 750 h/mes, `HEALTH_SHOW_DETAILS=never`) y Neon (cadena directa con `sslmode=require`, no `-pooler`, misma región, la base duerme y el pool lo permite, copias pendientes en `add-database-backups`); enlazar en `CLAUDE.md`
 - [ ] 3.3 Al archivar: `docs/vision.md` ✅
