@@ -11,6 +11,7 @@ import { TooltipProvider } from "@/modules/core/ui/tooltip";
 import { useSessionStore, type SessionUser } from "@/store/useSessionStore";
 import { useRecordsListStore } from "@/store/useRecordsListStore";
 import { useSidebarStore } from "@/store/useSidebarStore";
+import { project } from "@/config/project";
 
 const ANA: SessionUser = { id: 1, email: "ana@empresa.test", role: "USER", fullName: "Ana Pérez" };
 
@@ -292,7 +293,7 @@ describe("app-shell — Barra lateral contraíble en escritorio", () => {
     const inicio = within(mainNav()).getByRole("link", { name: "Inicio" });
     expect(within(inicio).getByText("Inicio")).toHaveClass("sr-only");
     expect(within(inicio).getByText("Inicio")).not.toHaveClass("lg:not-sr-only");
-    expect(within(sidebar()).getByRole("img", { name: /HS FACOP/i })).toHaveAttribute("src", "/favicon.svg");
+    expect(within(sidebar()).getByRole("img", { name: project.name })).toHaveAttribute("src", project.brand.favicon);
     expect(useSidebarStore.getState().collapsed).toBe(true);
 
     await userEvent.click(expand);
