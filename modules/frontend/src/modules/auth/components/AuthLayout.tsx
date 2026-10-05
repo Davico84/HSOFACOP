@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/modules/core/ui/theme-toggle";
 import { Logo } from "@/modules/core/ui/logo";
-import { project } from "@/config/project";
+import { BrandPanel } from "@/modules/core/components/BrandPanel";
 
 interface AuthLayoutProps {
   title: string;
@@ -12,7 +12,7 @@ interface AuthLayoutProps {
 }
 
 /**
- * Marco split-screen de las pantallas de auth: panel de marca en Roxo (token
+ * Marco split-screen de las pantallas de auth: panel de marca (`BrandPanel`, token
  * brand-start), logo en blanco, tagline y descripción de
  * project.config.json a un lado, y el formulario al otro. En móvil colapsa a
  * una sola columna con el logo (a color) arriba.
@@ -20,15 +20,7 @@ interface AuthLayoutProps {
 export function AuthLayout({ title, description, children, footer }: AuthLayoutProps) {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Panel de marca: Roxo liso con el logo en blanco, como las piezas del manual de FACOP */}
-      <aside className="relative hidden flex-col justify-between bg-brand-start p-12 text-white lg:flex">
-        <Logo variant="white" className="h-12 w-auto self-start" />
-        <div className="max-w-md">
-          <h2 className="text-balance text-3xl font-semibold leading-tight">{project.tagline}</h2>
-          <p className="mt-3 text-white/80">{project.description}</p>
-        </div>
-        <p className="text-sm text-white/70">© {project.name}</p>
-      </aside>
+      <BrandPanel />
 
       {/* Panel del formulario */}
       <main className="relative flex items-center justify-center px-6 py-10">

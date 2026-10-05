@@ -21,19 +21,19 @@
 
 ## 2. Frontend
 
-- [ ] 2.1 Hooks genéricos en `modules/core/hooks/` con sus tests:
+- [x] 2.1 Hooks genéricos en `modules/core/hooks/` con sus tests:
   - `useElapsedWhile(active)`: segundos mientras `active`; se reinicia al pasar a inactivo; limpia el intervalo al desmontar;
   - `useOnlineStatus()`: `navigator.onLine` + eventos `online`/`offline`.
-- [ ] 2.2 `BrandPanel` (en `modules/core/components/`), extraído de `AuthLayout` sin cambio visual; `AuthLayout` lo usa.
-- [ ] 2.3 `ServerWarmupScreen` (`modules/core/components/`):
+- [x] 2.2 `BrandPanel` (en `modules/core/components/`), extraído de `AuthLayout` sin cambio visual; `AuthLayout` lo usa.
+- [x] 2.3 `ServerWarmupScreen` (`modules/core/components/`):
   - estados `loading` / `warming` / `stuck` / `offline` con umbrales 4 s, 45 s y 90 s en constantes;
   - barra estimada `92 × (1 − e^(−s/22))` animada con `transform`;
   - split con `BrandPanel` en escritorio y una columna en móvil;
   - solo tokens, con modo oscuro y `prefers-reduced-motion`;
   - región `status` que cambia solo por estado;
   - foco en "Reintentar"; "Reintentar" recarga; recarga al volver la red.
-- [ ] 2.4 `RootLayout` renderiza `ServerWarmupScreen` mientras `status` es `idle`/`loading`.
-- [ ] 2.5 Tests (uno por scenario, `vi.useFakeTimers()` + `advanceTimersByTimeAsync`, refresh retenido con MSW, `window.location.reload` simulado):
+- [x] 2.4 `RootLayout` renderiza `ServerWarmupScreen` mientras `status` es `idle`/`loading`.
+- [x] 2.5 Tests (uno por scenario, `vi.useFakeTimers()` + `advanceTimersByTimeAsync`, refresh retenido con MSW, `window.location.reload` simulado):
   - rápido sin pantalla;
   - a los 4 s: título, mensaje y `progressbar` < 100;
   - a los 90 s: "Reintentar" con foco y recarga al pulsarlo;
@@ -41,10 +41,10 @@
   - sin red: el mensaje, y recarga al volver;
   - éxito tras la espera;
   - error tras la espera, login sin pantalla;
-  - StrictMode envuelto explícitamente (`main.tsx` no aplica en los tests): una sola petición de refresh, la pantalla una vez, y `vi.getTimerCount()` 0 tras resolver y desmontar.
+  - StrictMode envuelto explícitamente (`main.tsx` no aplica en los tests): una sola petición de refresh, la pantalla una vez, y todo `setInterval` creado queda limpiado tras resolver y desmontar (espías sobre `setInterval`/`clearInterval`: el `vi.getTimerCount()` global incluye timers de React Query y del router, ajenos al contador).
 
   `pnpm validate` verde.
-- [ ] 2.6 Verificación visual con Playwright (API simulada con `page.route` que retiene `/auth/refresh`; `vite preview`): capturas de escritorio y móvil, en claro y oscuro, de `warming`, `stuck` y `offline`, comparadas con el mockup.
+- [x] 2.6 Verificación visual con Playwright (API simulada con `page.route` que retiene `/auth/refresh`; `vite preview`): capturas de escritorio y móvil, en claro y oscuro, de `warming`, `stuck` y `offline`, comparadas con el mockup.
 
 ## 3. Docs
 
