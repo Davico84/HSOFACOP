@@ -47,4 +47,10 @@ export interface UpdateRecordRequest {
   phone?: string;
   treatmentStartDate?: string;
   content?: RecordContent;
+  /**
+   * Paso del formulario (1–8) en que se trabajó; se abre ahí al volver. Ausente = no cambia
+   * @minimum 1
+   * @maximum 8
+   */
+  lastStep?: number;
 }
