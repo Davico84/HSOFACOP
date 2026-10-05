@@ -14,6 +14,11 @@ interface ChoiceFieldProps<T extends FieldValues> {
   referenceImage?: string;
   /** Opciones en columna (textos largos). */
   vertical?: boolean;
+  /**
+   * Solo lectura: se ve la elegida pero no se puede cambiar. El valor sigue en el formulario (no es
+   * el `disabled` de react-hook-form, que lo quitaría de lo que se guarda).
+   */
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -22,7 +27,7 @@ interface ChoiceFieldProps<T extends FieldValues> {
  * traen imagen se pintan como tarjetas: pulsar la imagen selecciona igual que la etiqueta.
  */
 export function ChoiceField<T extends FieldValues>({
-  name, label, options, hint, referenceImage, vertical, className,
+  name, label, options, hint, referenceImage, vertical, readOnly = false, className,
 }: ChoiceFieldProps<T>) {
   const { control, formState } = useFormContext<T>();
   const id = fieldId(name);
@@ -44,6 +49,7 @@ export function ChoiceField<T extends FieldValues>({
               aria-labelledby={`${id}-label`}
               aria-describedby={describedBy(id, hint, error)}
               aria-invalid={error ? true : undefined}
+              aria-readonly={readOnly || undefined}
               className={cn(
                 withImages ? "grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2" : "flex flex-wrap gap-2",
                 vertical && !withImages && "flex-col items-start",
@@ -55,7 +61,8 @@ export function ChoiceField<T extends FieldValues>({
                   <label
                     key={option.value}
                     className={cn(
-                      "flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm transition-colors",
+                      "flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm transition-colors",
+                      readOnly ? "cursor-not-allowed opacity-70" : "cursor-pointer",
                       "has-focus-visible:ring-2 has-focus-visible:ring-ring",
                       withImages && "flex-col p-2 text-center",
                       checked && "border-primary bg-primary/10",
@@ -69,7 +76,10 @@ export function ChoiceField<T extends FieldValues>({
                         value={option.value}
                         checked={checked}
                         onChange={() => undefined}
-                        onClick={() => field.onChange(checked ? null : option.value)}
+                        onClick={() => {
+                          if (!readOnly) field.onChange(checked ? null : option.value);
+                        }}
+                        disabled={readOnly && !checked}
                         onBlur={field.onBlur}
                         className="accent-primary"
                       />

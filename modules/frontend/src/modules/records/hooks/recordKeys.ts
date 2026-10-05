@@ -16,3 +16,6 @@ export const RECORDS_PAGE_SIZE = 20;
 
 /** `type` del 409 por edición concurrente. */
 export const STALE_RECORD_TYPE = "/errors/stale-record";
+
+/** `type` del 409 al cambiar datos del paciente fijados al imprimir. */
+export const PATIENT_LOCKED_TYPE = "/errors/patient-locked";

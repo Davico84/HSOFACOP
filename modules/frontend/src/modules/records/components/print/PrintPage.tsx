@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import logoAeo from "@/assets/records/logo-aeo.png";
 import logoFacop from "@/assets/records/logo-facop.webp";
 import { cn } from "@/modules/core/utils/cn";
 import { PrintTitle } from "./PrintTitle";
+import { PrintStampContext, stampText } from "./printStamp";
 
 interface PrintPageProps {
   recordNumber: string;
@@ -22,6 +23,7 @@ interface PrintPageProps {
  * impresa no tiene margen propio, ver `PAGE_CSS`); cada sección empieza en hoja nueva.
  */
 export function PrintPage({ recordNumber, title, first = false, wide = false, children }: PrintPageProps) {
+  const stamp = stampText(useContext(PrintStampContext));
   return (
     <article
       className={cn(
@@ -34,6 +36,18 @@ export function PrintPage({ recordNumber, title, first = false, wide = false, ch
         !first && "print:break-before-page",
       )}
     >
+      {/* Marca de avance: en el margen superior, en posición absoluta (no mueve el contenido). */}
+      {stamp ? (
+        <p
+          data-print-stamp
+          className={cn(
+            "absolute top-[8mm] text-[8pt] font-semibold leading-none tracking-wide",
+            wide ? "left-[15mm]" : "left-[25mm]",
+          )}
+        >
+          {stamp}
+        </p>
+      ) : null}
       {first ? (
         <header className="mb-[14pt] flex items-end gap-[6mm]">
           <div className="flex w-[34mm] shrink-0 flex-col items-center gap-[1mm]">

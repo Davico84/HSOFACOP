@@ -13,7 +13,7 @@ import { recordFormSchema, type RecordFormValues } from "../schemas/record";
 import { parseStep, RECORD_STEPS, stepOfField } from "../config/recordSteps";
 import { emptyRecordValues, toFormValues } from "../utils/recordForm";
 import { diffPaths, relatedPaths, valueAt } from "../utils/formDiff";
-import { RECORD_QUOTA_REACHED_TYPE, STALE_RECORD_TYPE } from "../hooks/recordKeys";
+import { PATIENT_LOCKED_TYPE, RECORD_QUOTA_REACHED_TYPE, STALE_RECORD_TYPE } from "../hooks/recordKeys";
 import { errorPaths } from "../hooks/useStepStatus";
 import { useSaveRecord } from "../hooks/useSaveRecord";
 import { useRecordQuota } from "../hooks/useRecordQuota";
@@ -28,6 +28,7 @@ import { LeaveConfirmDialog } from "./LeaveConfirmDialog";
 import { RecordPrintLink } from "./RecordPrintLink";
 import { RecordPrintPending } from "./RecordPrintPending";
 import { RecordsBackLink } from "./RecordsBackLink";
+import { PatientLockNotice } from "./PatientLockNotice";
 import { RecordSaveStatus } from "./RecordSaveStatus";
 
 interface RecordFormProps {
@@ -151,6 +152,11 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
       setStale(true);
       return;
     }
+    // Datos del paciente fijos (p. ej. otra pestaña desactualizada): reintentar no sirve.
+    if (problemType(error) === PATIENT_LOCKED_TYPE) {
+      toast.error(getUserFriendlyError(error));
+      return;
+    }
     // Cupo lleno: reintentar no sirve; se vuelve a consultar el cupo para mostrar el aviso.
     if (problemType(error) === RECORD_QUOTA_REACHED_TYPE) {
       toast.error(getUserFriendlyError(error));
@@ -252,6 +258,7 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
         </header>
 
         {quotaLimit != null ? <FieldHint>{quotaReachedMessage(quotaLimit)}</FieldHint> : null}
+        {record ? <PatientLockNotice record={record} /> : null}
 
         {stale ? (
           <StaleRecordBanner reloading={reloading} onReload={() => void reload()} onDismiss={() => setStale(false)} />
@@ -272,7 +279,7 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
             <h2 className="text-xl font-semibold">
               {current.number}. {current.title} <span className="text-sm font-normal text-muted-foreground">({current.pages})</span>
             </h2>
-            <RecordStepContent step={step} recordNumber={record?.recordNumber} />
+            <RecordStepContent step={step} recordNumber={record?.recordNumber} patientLocked={Boolean(record?.patientLockedAt)} />
 
             {/* En celular cabe en una fila: "Anterior" y "Siguiente" muestran solo el icono (el texto queda
                 para el lector de pantalla). */}

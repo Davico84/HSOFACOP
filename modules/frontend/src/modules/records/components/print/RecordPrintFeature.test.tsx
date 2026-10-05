@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
@@ -7,14 +7,29 @@ import type { RecordResponse } from "@/modules/core/services/generated/model";
 import { recordResponse } from "../../test/fixtures";
 import { renderRecordRoutes } from "../../test/renderRecordRoutes";
 
-function serve(record: RecordResponse) {
+/** Historia y registro de la impresión; `printed` cuenta los registros y guarda el cuerpo enviado. */
+function serve(record: RecordResponse, printResponse: { status?: number; clinicalFilledSteps?: number } = {}) {
+  const printed: { calls: number; body: unknown } = { calls: 0, body: null };
   server.use(
     http.get("*/api/orthodontic-records/:id", ({ params }) =>
       Number(params.id) === record.id
         ? HttpResponse.json(record)
         : HttpResponse.json({ type: "/errors/record-not-found", detail: "No se encontró la historia clínica." }, { status: 404 }),
     ),
+    http.post("*/api/orthodontic-records/:id/print", async ({ request }) => {
+      printed.calls += 1;
+      printed.body = await request.json().catch(() => null);
+      if (printResponse.status && printResponse.status >= 400) {
+        return HttpResponse.json({ detail: "Ocurrió un error inesperado." }, { status: printResponse.status });
+      }
+      return HttpResponse.json({
+        record: { ...record, patientLockedAt: "2026-10-05T15:00:00Z" },
+        printedOn: "2026-10-05",
+        clinicalFilledSteps: printResponse.clinicalFilledSteps ?? 1,
+      });
+    }),
   );
+  return printed;
 }
 
 function withContent(content: Partial<RecordResponse["content"]>, rest: Partial<RecordResponse> = {}): RecordResponse {
@@ -48,7 +63,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(print).not.toHaveBeenCalled();
 
     await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Imprimir" }));
-    expect(print).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
   });
 
   it("opciones con la elegida marcada: ☒ Mesofacial ☐ Dolicofacial ☐ Braquifacial", async () => {
@@ -305,3 +320,79 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(screen.queryByRole("article")).not.toBeInTheDocument();
   });
 });
+
+describe("orthodontic-records — Impresión registrada en el servidor", () => {
+  it("'Imprimir' registra la impresión antes de abrir el diálogo y habilita las hojas solo mientras imprime", async () => {
+    const printed = serve(recordResponse());
+    let readyDuringPrint = false;
+    print.mockImplementation(() => {
+      readyDuringPrint = document.querySelector("[data-print-ready]") !== null;
+    });
+    renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+    expect(document.querySelector("[data-print-ready]")).toBeNull();
+
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Imprimir" }));
+
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+    expect(printed.calls).toBe(1);
+    expect(printed.body).toEqual({ filledSteps: [1] });
+    expect(readyDuringPrint).toBe(true);
+    // Al volver del diálogo las hojas vuelven a estar ocultas para imprimir.
+    await waitFor(() => expect(document.querySelector("[data-print-ready]")).toBeNull());
+  });
+
+  it("si el registro falla no abre el diálogo", async () => {
+    const printed = serve(recordResponse(), { status: 500 });
+    renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Imprimir" }));
+
+    await waitFor(() => expect(printed.calls).toBe(1));
+    await vi.advanceTimersByTimeAsync(500);
+    expect(print).not.toHaveBeenCalled();
+    expect(document.querySelector("[data-print-ready]")).toBeNull();
+  });
+
+  it("imprimir por otro medio saca el aviso: las hojas están ocultas al imprimir por defecto", async () => {
+    serve(recordResponse());
+    renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+
+    expect(screen.getByText("Usa el botón Imprimir de la vista preliminar.")).toHaveClass("print-guard-notice");
+    expect(document.querySelector(".print-sheets")).not.toBeNull();
+    const css = [...document.querySelectorAll("style")].map((el) => el.textContent).join(" ");
+    expect(css).toContain(".print-sheets { display: none; }");
+    expect(css).toContain("[data-print-ready] .print-sheets { display: block; }");
+  });
+});
+
+describe("orthodontic-records — Marca de avance en impresiones incompletas", () => {
+  it("cada hoja de una historia incompleta lleva la marca; al imprimir usa la fecha y el avance del servidor", async () => {
+    serve(recordResponse(), { clinicalFilledSteps: 4 });
+    renderRecordRoutes("/historias/10/imprimir");
+    const sheets = await screen.findAllByRole("article");
+    for (const sheet of sheets) {
+      expect(within(sheet).getByText(/^AVANCE · 1 de 7 pasos clínicos con datos · impreso el \d{2}\/\d{2}\/\d{4}$/)).toBeInTheDocument();
+    }
+
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Imprimir" }));
+
+    await waitFor(() =>
+      expect(within(sheets[0]).getByText("AVANCE · 4 de 7 pasos clínicos con datos · impreso el 05/10/2026")).toBeInTheDocument(),
+    );
+  });
+
+  it("una historia completa se imprime sin la marca", async () => {
+    serve(recordResponse(), { clinicalFilledSteps: 7 });
+    renderRecordRoutes("/historias/10/imprimir");
+    await screen.findAllByRole("article");
+
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Imprimir" }));
+
+    await waitFor(() => expect(print).toHaveBeenCalled());
+    expect(screen.queryByText(/^AVANCE ·/)).not.toBeInTheDocument();
+  });
+});
+

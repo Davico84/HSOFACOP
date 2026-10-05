@@ -4,6 +4,7 @@ import type { RecordSummaryResponse } from "@/modules/core/services/generated/mo
 import { recordPath } from "@/routes/paths";
 import { formatDate, formatDateTime, formatDocument } from "../utils/recordDisplay";
 import { RecordEditLink } from "./RecordEditLink";
+import { RecordLockIcon } from "./RecordLockIcon";
 import { RecordPrintLink } from "./RecordPrintLink";
 
 interface RecordsTableProps {
@@ -30,7 +31,12 @@ export function RecordsTable({ records, showAuthor }: RecordsTableProps) {
       <TableBody>
         {records.map((record) => (
           <TableRow key={record.id}>
-            <TableCell className="font-medium whitespace-nowrap">{record.recordNumber}</TableCell>
+            <TableCell className="font-medium whitespace-nowrap">
+              <span className="inline-flex items-center gap-1.5">
+                {record.recordNumber}
+                {record.patientLocked ? <RecordLockIcon /> : null}
+              </span>
+            </TableCell>
             <TableCell>
               <Link to={recordPath(record.id)} className="font-medium text-primary underline-offset-4 hover:underline">
                 {record.patientName}

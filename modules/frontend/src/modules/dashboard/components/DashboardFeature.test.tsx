@@ -239,6 +239,35 @@ describe("dashboard — Métricas globales del ADMIN en Inicio", () => {
     expect(screen.getByText("Se muestran los 2 más cerca del tope.")).toBeInTheDocument();
   });
 
+  it("Solicitudes de desbloqueo: más antiguas primero, con motivo y enlace a la historia", async () => {
+    mockAdmin(
+      adminDashboard({
+        unlockRequests: {
+          total: 14,
+          items: [
+            { recordId: 21, recordNumber: "AEO-004", patientName: "Rosa Díaz", authorName: "Dra. Torres", requestedAt: "2026-10-01T15:00:00Z", reason: "Error en el DNI" },
+            { recordId: 22, recordNumber: "AEO-002", patientName: "Luis Rojas", authorName: "Dr. Medina", requestedAt: "2026-10-03T15:00:00Z", reason: "Nombre mal escrito" },
+          ],
+        },
+      }),
+    );
+    renderWithProviders(<DashboardFeature />);
+
+    expect(await screen.findByText("14 solicitudes")).toBeInTheDocument();
+    expect(screen.getByText(/Dra\. Torres · 01\/10\/2026 · «Error en el DNI»/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Revisar la solicitud de la historia AEO-004" })).toHaveAttribute(
+      "href",
+      "/historias/21?paso=1",
+    );
+    expect(screen.getByText("Se muestran las 2 más antiguas.")).toBeInTheDocument();
+  });
+
+  it("Sin solicitudes de desbloqueo", async () => {
+    mockAdmin(adminDashboard());
+    renderWithProviders(<DashboardFeature />);
+    expect(await screen.findByText("No hay solicitudes de desbloqueo.")).toBeInTheDocument();
+  });
+
   it("El ADMIN no ve métricas de tratante", async () => {
     mockAdmin(adminDashboard());
     renderWithProviders(<DashboardFeature />);

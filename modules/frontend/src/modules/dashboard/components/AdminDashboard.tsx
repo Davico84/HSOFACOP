@@ -5,6 +5,7 @@ import { historias } from "../utils/format";
 import { MonthlyBars } from "./MonthlyBars";
 import { QuotaAlerts } from "./QuotaAlerts";
 import { TopAuthorsList } from "./TopAuthorsList";
+import { UnlockRequestsList } from "./UnlockRequestsList";
 
 interface AdminDashboardProps {
   data: AdminDashboardResponse;
@@ -12,7 +13,7 @@ interface AdminDashboardProps {
 
 /** Inicio del ADMIN: solo métricas globales (cuentas, historias, tratantes y cupos). */
 export function AdminDashboard({ data }: AdminDashboardProps) {
-  const { users, records, topAuthors, quotas } = data;
+  const { users, records, topAuthors, quotas, unlockRequests } = data;
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="kpis-title" className="flex flex-col gap-2">
@@ -46,6 +47,7 @@ export function AdminDashboard({ data }: AdminDashboardProps) {
           </p>
         ) : null}
       </section>
+      <UnlockRequestsList requests={unlockRequests} />
       <MonthlyBars months={records.perMonth} />
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <TopAuthorsList authors={topAuthors} />
