@@ -44,6 +44,8 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | Apoderado | Quien firma por un paciente menor de 18 años. |
 | Cupo de historias | Máximo de historias clínicas que un tratante (`USER`) puede crear; toda cuenta nueva nace con el cupo inicial (1 por defecto) y el `ADMIN` lo ajusta por cuenta. Sin cupo = sin límite. Al llegar al tope no crea más, pero edita e imprime las suyas. |
 | Historia completa | Historia con datos en los 7 pasos clínicos (1–7); Firmas (paso 8) no cuenta. Una historia anterior a las métricas, aún no vuelta a guardar, figura "sin calcular". |
+| Datos fijos del paciente | Nombre, documento, fecha y lugar de nacimiento y sexo: quedan fijos al imprimir la historia por primera vez; solo el ADMIN los desbloquea (a pedido del tratante). |
+| Avance impreso | Impresión de una ficha incompleta: lleva la marca "AVANCE · N de 7". |
 
 ---
 
@@ -91,6 +93,9 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 - `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
 - `lastStep` (1–8 o nulo = paso 1): último paso del formulario en que se guardaron cambios (`update-orthodontic-records-autosave`); la historia se abre ahí desde el listado, en cualquier dispositivo. Recorrer pasos sin cambios no lo modifica. Las historias existentes se autoguardan (no las nuevas, que se crean con "Crear historia").
 - `filledSteps` (máscara de bits, bit n-1 = paso n; nula = "sin calcular", historias guardadas antes de `add-dashboard-metrics`): pasos con algún dato según el último guardado, informados por el formulario (mismo criterio que la navegación de pasos); el servidor marca siempre el paso 1. Una historia está **completa** con los 7 pasos clínicos (1–7) con datos: Firmas no cuenta porque se completa a mano. Alimenta las métricas de Inicio (`dashboard`).
+- Datos del paciente fijos (`add-patient-identity-lock`): `patientLockedAt` = primera impresión registrada (`POST /print`, esté completa o no). Desde entonces nombre, tipo y número de documento, fecha y lugar de nacimiento y sexo no cambian; se comparan en forma canónica (NFKC, sin tildes, mayúsculas ni espacios sobrantes; documento por dígitos), así corregir la escritura se permite. Domicilio, teléfono, fecha de inicio y contenido clínico siguen editables. Imprimir y guardar se serializan con bloqueo de fila; estas columnas no cuentan para `version`. Evita reusar una historia (con el cupo) para otro paciente.
+- Desbloqueo: el autor pide `unlockRequest` (fecha + motivo ≤ 200, una pendiente a la vez); el `ADMIN` desbloquea (vuelve a fijarse en la próxima impresión) o descarta. Cada acción del ADMIN queda en `RecordUnlockEvent` (historia, ADMIN, acción `UNLOCKED`/`DISCARDED`, motivo, fecha), solo inserción.
+- Impresión: las hojas solo salen desde el botón "Imprimir" (registra primero); las fichas incompletas llevan la marca "AVANCE · N de 7 pasos clínicos con datos · impreso el <fecha>" con fecha y conteo del servidor.
 - Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
 - Notas de evolución: no se registran en el sistema; se imprime la hoja en blanco (pág. 14 del PDF) y se llena a mano (decisión del usuario).
 
@@ -104,6 +109,8 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 erDiagram
     User ||--o{ RefreshToken : "tiene"
     User ||--o{ OrthodonticRecord : "es autor de"
+    OrthodonticRecord ||--o{ RecordUnlockEvent : "desbloqueos"
+    User ||--o{ RecordUnlockEvent : "desbloquea (ADMIN)"
 
     User {
         Long id PK
@@ -138,6 +145,8 @@ erDiagram
         Json content
         Integer lastStep
         Integer filledSteps
+        DateTime patientLockedAt
+        DateTime unlockRequestedAt
         Long version
     }
 ```

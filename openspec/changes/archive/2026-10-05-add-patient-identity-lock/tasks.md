@@ -26,4 +26,4 @@
 ## 4. Docs y cierre
 
 - [x] 4.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 4.2 Al archivar — `docs/domain.md` (datos fijos, forma canónica, eventos de desbloqueo, solicitudes) y `docs/vision.md` ✅
+- [x] 4.2 Al archivar — `docs/domain.md` (datos fijos, forma canónica, eventos de desbloqueo, solicitudes) y `docs/vision.md` ✅

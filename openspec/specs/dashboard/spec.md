@@ -2,7 +2,6 @@
 
 ## Purpose
 Métricas de Inicio por rol, calculadas en el servidor con consultas agregadas (sin leer el contenido clínico): el tratante (`USER`) ve el avance de sus historias —cantidad, cupo, completitud sobre los 7 pasos clínicos, datos faltantes y qué retomar en su último paso—; el `ADMIN` ve solo métricas globales —cuentas, historias por mes, tratantes con más historias y cupos cerca del tope—. Reemplaza el dashboard de ejemplo de la plantilla.
-
 ## Requirements
 ### Requirement: Métricas del tratante en Inicio
 Para un `USER`, Inicio SHALL mostrar métricas de sus propias historias, calculadas en el servidor (`GET /api/dashboard/me`, solo para `USER`; un `ADMIN` recibe `403`): total de historias, creadas en el mes en curso (según la zona horaria de la app), uso del cupo ("N de M" o "sin límite"), historias completas, en progreso y sin calcular, el promedio de pasos clínicos con datos (sobre las calculadas, con un decimal; vacío si no hay calculadas), cuántas no tienen documento, fecha de nacimiento o fecha de inicio de tratamiento, y, para cada paso clínico (1–7), cuántas historias calculadas lo tienen vacío. Una historia es **completa** si tiene datos en los 7 pasos clínicos (1–7); el paso 8 (Firmas) no cuenta, porque se completa a mano sobre el papel. Los pasos vacíos SHALL listarse siempre los 7, ordenados de más a menos frecuente y, a igual frecuencia, por número de paso. Si hay historias sin calcular, Inicio SHALL indicarlo junto a la completitud ("N sin calcular: se calculan al volver a guardarlas"). Las métricas NO SHALL incluir historias de otros tratantes.
@@ -104,4 +103,23 @@ Para un `ADMIN`, Inicio SHALL mostrar solo métricas globales, calculadas en el 
 #### Scenario: El ADMIN no ve métricas de tratante
 - **WHEN** un `ADMIN` abre Inicio
 - **THEN** ve solo las métricas globales, sin "Para retomar" ni su cupo
+
+### Requirement: Solicitudes de desbloqueo en Inicio del ADMIN
+Inicio del `ADMIN` SHALL listar las solicitudes de desbloqueo pendientes, de la más antigua a la más nueva, hasta 10 más el total, con número de historia, paciente, tratante, fecha y motivo; cada una SHALL enlazar a la historia, donde el ADMIN desbloquea o descarta. Sin solicitudes SHALL indicar "No hay solicitudes de desbloqueo". La lista SHALL ser siempre un arreglo (vacío si no hay).
+
+#### Scenario: Solicitudes pendientes
+- **WHEN** hay 3 solicitudes de desbloqueo pendientes
+- **THEN** Inicio del ADMIN las muestra de la más antigua a la más nueva, con su motivo y un enlace a cada historia
+
+#### Scenario: Sin solicitudes
+- **WHEN** no hay solicitudes pendientes
+- **THEN** Inicio del ADMIN indica "No hay solicitudes de desbloqueo"
+
+#### Scenario: Muchas solicitudes
+- **WHEN** hay 14 solicitudes pendientes
+- **THEN** se muestran las 10 más antiguas y el total "14 solicitudes"
+
+#### Scenario: Solicitud resuelta
+- **WHEN** el ADMIN desbloquea o descarta una solicitud y vuelve a Inicio
+- **THEN** ya no aparece
 
