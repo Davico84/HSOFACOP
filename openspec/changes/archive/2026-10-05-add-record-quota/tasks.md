@@ -18,4 +18,4 @@
 ## 3. Docs y cierre
 
 - [x] 3.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 3.2 Al archivar — `docs/domain.md`: `User.recordQuota` y la regla de cupo; `docs/vision.md` ✅
+- [x] 3.2 Al archivar — `docs/domain.md`: `User.recordQuota` y la regla de cupo; `docs/vision.md` ✅
