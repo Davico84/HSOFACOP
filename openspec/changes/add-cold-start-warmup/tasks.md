@@ -48,12 +48,12 @@
 
 ## 3. Docs
 
-- [ ] 3.1 `docs/backend.md` §11.1:
+- [x] 3.1 `docs/backend.md` §11.1:
   - probes y liveness sin BD;
   - `HEALTH_SHOW_DETAILS`;
   - `/actuator/info` autenticado;
   - pool de Hikari, por qué no retiene conexiones ni hace keepalive.
-- [ ] 3.2 Crear `docs/deployment.md`, con un enlace en `CLAUDE.md`:
+- [x] 3.2 Crear `docs/deployment.md`, con un enlace en `CLAUDE.md`:
   - **Render**: el monitor externo a `/actuator/health/liveness` cada 10 min (UptimeRobot o cron-job.org) es obligatorio. El health check de Render, a la misma ruta, no lo sustituye. Presupuesto de 750 h/mes. `HEALTH_SHOW_DETAILS=never`. Medir RSS y arranque en el primer despliegue y ajustar `JAVA_TOOL_OPTIONS` solo tras medir.
   - **Neon**: cadena directa con `sslmode=require`, no `-pooler`. Misma región. La base duerme y el pool lo permite. Copias de seguridad pendientes en `add-database-backups`.
   - **Condición previa a desplegar**: la cookie de refresh `SameSite=Lax` exige el mismo *site* entre frontend y API. Opciones: proxy/rewrite al mismo origen (preferida), dominio propio con subdominios o `SameSite=None` (descartada). El proxy debe esperar el arranque en frío: Vercel Hobby compatible (120 s), Netlify no compatible (26 s), Render Static Sites a validar con una prueba real. La decisión y la prueba van en el change de despliegue.
