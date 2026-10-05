@@ -8,6 +8,9 @@ import com.odontorisas.service.records.RecordNotFoundException;
 import com.odontorisas.service.records.RecordSummaryView;
 import com.odontorisas.service.records.RecordView;
 import com.odontorisas.service.records.StaleRecordException;
+import com.odontorisas.service.records.PatientLockedException;
+import com.odontorisas.service.records.PatientNotLockedException;
+import com.odontorisas.service.records.UnlockAlreadyRequestedException;
 import com.odontorisas.service.records.content.RecordContent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,6 +46,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -69,7 +73,7 @@ class OrthodonticRecordsControllerTest {
 
     private static final RecordView ANA = new RecordView(10L, "AEO-001", 1L, "Dra. María Torres", "Dra. María Torres",
         "Ana Quispe", null, null, null, LocalDate.of(2012, 5, 20), null, null, null, LocalDate.of(2026, 5, 19), 13,
-        RecordContent.empty(), null, null, 2L, Instant.parse("2026-10-01T10:00:00Z"), Instant.parse("2026-10-01T10:00:00Z"));
+        RecordContent.empty(), null, null, null, null, null, null, null, 2L, Instant.parse("2026-10-01T10:00:00Z"), Instant.parse("2026-10-01T10:00:00Z"));
 
     private static RequestPostProcessor as(long userId, String role) {
         var auth = new UsernamePasswordAuthenticationToken("u" + userId, null,
@@ -372,6 +376,64 @@ class OrthodonticRecordsControllerTest {
             .andExpect(jsonPath("$.errors[0].field").value("version"));
     }
 
+    // --- Datos del paciente fijos ---
+
+    @Test
+    void changing_locked_patient_data_is_409_with_its_type() throws Exception {
+        when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenThrow(new PatientLockedException());
+        update("{\"version\":1,\"patientName\":\"Otra\"}")
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.type").value("/errors/patient-locked"));
+    }
+
+    @Test
+    void print_of_someone_elses_record_is_404() throws Exception {
+        when(service.print(any(), eq(10L), any())).thenThrow(new RecordNotFoundException());
+        mockMvc.perform(post("/api/orthodontic-records/10/print").with(as(2, "USER")))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void user_cannot_unlock_or_discard() throws Exception {
+        mockMvc.perform(delete("/api/orthodontic-records/10/patient-lock").with(as(1, "USER")))
+            .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/orthodontic-records/10/unlock-request").with(as(1, "USER")))
+            .andExpect(status().isForbidden());
+        verify(service, never()).unlockPatient(any(), anyLong());
+        verify(service, never()).discardUnlockRequest(any(), anyLong());
+    }
+
+    @Test
+    void admin_unlock_is_204_and_not_locked_is_409() throws Exception {
+        mockMvc.perform(delete("/api/orthodontic-records/10/patient-lock").with(as(9, "ADMIN")))
+            .andExpect(status().isNoContent());
+        org.mockito.Mockito.doThrow(new PatientNotLockedException()).when(service).unlockPatient(any(), eq(11L));
+        mockMvc.perform(delete("/api/orthodontic-records/11/patient-lock").with(as(9, "ADMIN")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.type").value("/errors/patient-not-locked"));
+    }
+
+    @Test
+    void unlock_request_needs_a_reason_of_up_to_200() throws Exception {
+        mockMvc.perform(post("/api/orthodontic-records/10/unlock-request").with(as(1, "USER"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"  \"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("reason"));
+        mockMvc.perform(post("/api/orthodontic-records/10/unlock-request").with(as(1, "USER"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"" + "x".repeat(201) + "\"}"))
+            .andExpect(status().isBadRequest());
+        verify(service, never()).requestUnlock(any(), anyLong(), any());
+    }
+
+    @Test
+    void repeated_unlock_request_is_409_with_its_type() throws Exception {
+        org.mockito.Mockito.doThrow(new UnlockAlreadyRequestedException()).when(service).requestUnlock(any(), anyLong(), any());
+        mockMvc.perform(post("/api/orthodontic-records/10/unlock-request").with(as(1, "USER"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"Error en el DNI\"}"))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.type").value("/errors/unlock-already-requested"));
+    }
+
     @Test
     void stale_version_is_409_with_its_type() throws Exception {
         when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenThrow(new StaleRecordException());
@@ -385,7 +447,7 @@ class OrthodonticRecordsControllerTest {
     @Test
     void list_uses_fixed_sort_capped_size_and_search_term() throws Exception {
         RecordSummaryView row = new RecordSummaryView(10L, "AEO-001", "Ana Quispe", null, null, "Dra. Torres",
-            null, "Dra. Torres", Instant.parse("2026-10-01T10:00:00Z"));
+            null, "Dra. Torres", Instant.parse("2026-10-01T10:00:00Z"), false);
         when(service.list(any(), eq("quispe"), any(Pageable.class))).thenAnswer(inv ->
             new PageImpl<>(List.of(row), inv.getArgument(2), 1));
 

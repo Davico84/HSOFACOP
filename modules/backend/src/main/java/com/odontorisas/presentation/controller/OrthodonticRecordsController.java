@@ -1,5 +1,9 @@
 package com.odontorisas.presentation.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
+import com.odontorisas.presentation.dto.UnlockRequestRequest;
+import com.odontorisas.presentation.dto.PrintRecordResponse;
+import com.odontorisas.presentation.dto.PrintRecordRequest;
 import com.odontorisas.presentation.dto.RecordQuotaResponse;
 import com.odontorisas.presentation.dto.ApiProblem;
 import com.odontorisas.presentation.dto.CreateRecordRequest;
@@ -113,7 +117,7 @@ public class OrthodonticRecordsController {
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
     @ApiResponse(responseCode = "404", description = "No existe o no está a tu alcance",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
-    @ApiResponse(responseCode = "409", description = "La historia cambió desde que se cargó (stale-record)",
+    @ApiResponse(responseCode = "409", description = "La historia cambió desde que se cargó (stale-record) o cambia datos del paciente fijos (patient-locked)",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @PutMapping("/{id}")
     public ResponseEntity<RecordResponse> updateRecord(
@@ -121,6 +125,60 @@ public class OrthodonticRecordsController {
         return ResponseEntity.ok(RecordResponse.from(
             service.update(currentActor(), id, request.version(), request.toData(), request.lastStep(),
                 request.filledSteps())));
+    }
+
+    @Operation(operationId = "printRecord",
+        summary = "Registrar una impresión: la primera fija los datos del paciente; devuelve la fecha y el avance")
+    @ApiResponse(responseCode = "200", description = "Impresión registrada",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = PrintRecordResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Pasos inválidos",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
+    @ApiResponse(responseCode = "404", description = "No existe o no está a tu alcance",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PostMapping(value = "/{id}/print", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PrintRecordResponse> printRecord(
+            @PathVariable Long id, @Valid @RequestBody(required = false) PrintRecordRequest request) {
+        return ResponseEntity.ok(PrintRecordResponse.from(
+            service.print(currentActor(), id, request == null ? null : request.filledSteps())));
+    }
+
+    @Operation(operationId = "unlockPatient", summary = "Desbloquear los datos del paciente (solo ADMIN; queda registrado)")
+    @ApiResponse(responseCode = "204", description = "Desbloqueada")
+    @ApiResponse(responseCode = "404", description = "No existe",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @ApiResponse(responseCode = "409", description = "Los datos no estaban fijos (patient-not-locked)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}/patient-lock")
+    public ResponseEntity<Void> unlockPatient(@PathVariable Long id) {
+        service.unlockPatient(currentActor(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(operationId = "requestPatientUnlock", summary = "Solicitar el desbloqueo de los datos del paciente")
+    @ApiResponse(responseCode = "204", description = "Solicitud registrada")
+    @ApiResponse(responseCode = "400", description = "Motivo inválido",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
+    @ApiResponse(responseCode = "404", description = "No existe o no está a tu alcance",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @ApiResponse(responseCode = "409", description = "Datos no fijos (patient-not-locked) o solicitud ya pendiente (unlock-already-requested)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PostMapping("/{id}/unlock-request")
+    public ResponseEntity<Void> requestPatientUnlock(
+            @PathVariable Long id, @Valid @RequestBody UnlockRequestRequest request) {
+        service.requestUnlock(currentActor(), id, request.reason());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(operationId = "discardPatientUnlockRequest", summary = "Descartar la solicitud de desbloqueo (solo ADMIN; queda registrado)")
+    @ApiResponse(responseCode = "204", description = "Descartada (o no había)")
+    @ApiResponse(responseCode = "404", description = "No existe",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}/unlock-request")
+    public ResponseEntity<Void> discardPatientUnlockRequest(@PathVariable Long id) {
+        service.discardUnlockRequest(currentActor(), id);
+        return ResponseEntity.noContent().build();
     }
 
     /** El filtro JWT deja el id del usuario en los {@code details} y el rol como autoridad. */

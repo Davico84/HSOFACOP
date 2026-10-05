@@ -1,5 +1,6 @@
 package com.odontorisas.service.dashboard;
 
+import java.time.Instant;
 import java.util.List;
 
 /** Métricas globales de Inicio para el ADMIN. */
@@ -10,7 +11,8 @@ public record AdminDashboardView(
     DashboardService.Completeness completeness,
     List<MonthItem> perMonth,
     List<AuthorItem> topAuthors,
-    Quotas quotas) {
+    Quotas quotas,
+    UnlockRequests unlockRequests) {
 
     public record Users(long total, long active, long disabled, long newThisMonth) {
     }
@@ -28,5 +30,13 @@ public record AdminDashboardView(
     }
 
     public record QuotaItem(long userId, String fullName, long used, int limit, boolean reached) {
+    }
+
+    /** Solicitudes de desbloqueo pendientes: hasta 10 ({@code items}, más antiguas primero) y el total. */
+    public record UnlockRequests(long total, List<UnlockRequestItem> items) {
+    }
+
+    public record UnlockRequestItem(long recordId, String recordNumber, String patientName, String authorName,
+                                    Instant requestedAt, String reason) {
     }
 }

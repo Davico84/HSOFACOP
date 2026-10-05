@@ -230,7 +230,8 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         assertThat(ids).doesNotHaveDuplicates()
             .containsExactlyInAnyOrder("register", "login", "refresh", "logout", "listUsers", "changeUserStatus",
                 "listRecords", "createRecord", "getRecord", "updateRecord", "changeRecordQuota", "getRecordQuota",
-                "getMyDashboard", "getAdminDashboard");
+                "getMyDashboard", "getAdminDashboard",
+                "printRecord", "unlockPatient", "requestPatientUnlock", "discardPatientUnlockRequest");
     }
 
     // --- Gestión de usuarios (add-user-account-status) ---

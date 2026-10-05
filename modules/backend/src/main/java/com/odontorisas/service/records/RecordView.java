@@ -28,6 +28,11 @@ public record RecordView(
     RecordContent content,
     Integer lastStep,
     List<Integer> filledSteps,
+    Instant patientLockedAt,
+    String lastUnlockBy,
+    Instant lastUnlockAt,
+    Instant unlockRequestedAt,
+    String unlockRequestReason,
     long version,
     Instant createdAt,
     Instant updatedAt) {

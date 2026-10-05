@@ -19,7 +19,8 @@
 
 ### Concurrencia
 - `print`, `update`, `requestUnlock`, `discardUnlockRequest` y `unlock` cargan la historia con bloqueo de fila (`@Lock(PESSIMISTIC_WRITE)` en un `findWithAuthorByIdForUpdate`), así se serializan.
-- La **primera** impresión fija `patient_locked_at` (cambio de la entidad → `@Version` sube). Un `PUT` con la versión anterior recibe `409 stale-record` y no guarda nada. **Reimpresión**: no modifica la entidad (idempotente, versión igual).
+- `patient_locked_at`, `unlock_requested_at` y `unlock_request_reason` llevan `@OptimisticLock(excluded = true)`: imprimir, solicitar o desbloquear **no** cambian la versión, así el formulario abierto del tratante o del ADMIN no queda desactualizado (su autoguardado seguiría funcionando). La seguridad no depende de la versión sino del **bloqueo de fila**: `update` compara la identidad bajo el mismo bloqueo que `print`, así un guardado de otra pestaña o simultáneo nunca cambia datos fijados (→ `409 patient-locked`). Probado con impresión y guardado concurrentes. **Reimpresión**: no modifica la entidad (idempotente).
+  - *Cambio respecto de la propuesta revisada*: la revisión pedía que la primera impresión subiera la versión; al implementarlo, eso dejaba desactualizado el formulario abierto tras solicitar o desbloquear. El bloqueo de fila cubre el mismo riesgo sin ese efecto.
 - Solicitar/descartar/desbloquear son condicionales al estado leído bajo el bloqueo (fijada, pendiente o no), así dos solicitudes simultáneas dejan una sola y la otra recibe `409`.
 
 ### Registro de la impresión (servidor = autoridad)

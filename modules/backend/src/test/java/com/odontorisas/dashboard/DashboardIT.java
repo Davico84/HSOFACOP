@@ -431,6 +431,33 @@ class DashboardIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void unlock_requests_oldest_first_10_and_total() throws Exception {
+        Session admin = admin("Admin");
+        Session torres = register("Dra. Torres");
+        List<Long> ids = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            long id = record(torres);
+            ids.add(id);
+            jdbc.update("UPDATE orthodontic_records SET patient_locked_at = ?, unlock_requested_at = ?,"
+                + " unlock_request_reason = ? WHERE id = ?", at(2030, 10, 1), at(2030, 10, 1 + i), "Motivo " + i, id);
+        }
+        JsonNode requests = adminDashboard(admin).get("unlockRequests");
+        assertThat(requests.get("total").asLong()).isEqualTo(12);
+        assertThat(requests.get("items")).hasSize(10);
+        assertThat(requests.get("items").get(0).get("recordId").asLong()).isEqualTo(ids.get(0));
+        assertThat(requests.get("items").get(0).get("reason").stringValue()).isEqualTo("Motivo 0");
+        assertThat(requests.get("items").get(0).get("authorName").stringValue()).isEqualTo("Dra. Torres");
+    }
+
+    @Test
+    void no_unlock_requests_is_an_empty_list() throws Exception {
+        JsonNode requests = adminDashboard(admin("Admin")).get("unlockRequests");
+        assertThat(requests.get("total").asLong()).isZero();
+        assertThat(requests.get("items").isArray()).isTrue();
+        assertThat(requests.get("items")).isEmpty();
+    }
+
+    @Test
     void user_cannot_read_admin_dashboard() throws Exception {
         Session torres = register("Dra. Torres");
         mockMvc.perform(get("/api/dashboard/admin").header("Authorization", "Bearer " + torres.token()))

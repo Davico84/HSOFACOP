@@ -34,6 +34,7 @@ public class DashboardService {
     static final int RESUME_LIMIT = 5;
     static final int TOP_AUTHORS_LIMIT = 5;
     static final int QUOTAS_LIMIT = 10;
+    static final int UNLOCK_REQUESTS_LIMIT = 10;
     static final int MONTHS = 6;
     private static final DateTimeFormatter MONTH = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -94,12 +95,17 @@ public class DashboardService {
                 q.used() >= q.quota()))
             .toList();
         long quotaTotal = quotaRows.isEmpty() ? 0 : quotaRows.getFirst().total();
+        var requestRows = queries.unlockRequests(UNLOCK_REQUESTS_LIMIT);
+        var unlockRequests = new AdminDashboardView.UnlockRequests(
+            requestRows.isEmpty() ? 0 : requestRows.getFirst().total(),
+            requestRows.stream().map(r -> new AdminDashboardView.UnlockRequestItem(r.recordId(), r.recordNumber(),
+                r.patientName(), r.authorName(), r.requestedAt(), r.reason())).toList());
         return new AdminDashboardView(
             new AdminDashboardView.Users(users.total(), users.active(), users.disabled(), users.newThisMonth()),
             totals.total(), totals.createdThisMonth(),
             new Completeness(totals.complete(), totals.inProgress(), totals.notComputed(),
                 round(totals.averageFilled())),
-            perMonth, topAuthors, new AdminDashboardView.Quotas(quotaTotal, quotaItems));
+            perMonth, topAuthors, new AdminDashboardView.Quotas(quotaTotal, quotaItems), unlockRequests);
     }
 
     private ZoneId zone() {

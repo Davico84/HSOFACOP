@@ -19,10 +19,12 @@ public record RecordSummaryResponse(
     String treatingDentist,
     LocalDate treatmentStartDate,
     @Schema(requiredMode = REQUIRED) String authorName,
-    @Schema(requiredMode = REQUIRED) Instant updatedAt) {
+    @Schema(requiredMode = REQUIRED) Instant updatedAt,
+    @Schema(requiredMode = REQUIRED, description = "Datos del paciente fijos (ya se imprimió)") boolean patientLocked) {
 
     public static RecordSummaryResponse from(RecordSummaryView v) {
         return new RecordSummaryResponse(v.id(), v.recordNumber(), v.patientName(), v.documentType(),
-            v.documentNumber(), v.treatingDentist(), v.treatmentStartDate(), v.authorName(), v.updatedAt());
+            v.documentNumber(), v.treatingDentist(), v.treatmentStartDate(), v.authorName(), v.updatedAt(),
+            v.patientLocked());
     }
 }

@@ -31,9 +31,13 @@ La primera impresión registrada de una historia, esté completa o no, SHALL fij
 - **WHEN** el autoguardado guarda un cambio en otro paso de una historia fijada
 - **THEN** el cuerpo enviado conserva los datos fijos sin cambios y el guardado funciona
 
-#### Scenario: Guardado con versión anterior a la primera impresión
-- **WHEN** otra pestaña guarda con la versión que tenía antes de la primera impresión
-- **THEN** la API responde `409` (historia desactualizada) y no guarda nada
+#### Scenario: Guardado de otra pestaña después de imprimir
+- **WHEN** otra pestaña, abierta antes de la primera impresión, guarda un cambio en el nombre del paciente
+- **THEN** la API responde `409` de datos fijos y no guarda nada
+
+#### Scenario: Impresión y guardado simultáneos
+- **WHEN** se imprime una historia al mismo tiempo que se guarda con otro nombre de paciente
+- **THEN** o el guardado entra antes y se imprime y fija ese nombre, o la impresión fija el nombre anterior y el guardado recibe `409`; nunca queda fijo un nombre distinto del impreso
 
 #### Scenario: Historia de autor ADMIN
 - **WHEN** un `ADMIN` imprime una historia propia y luego intenta cambiar el nombre
@@ -44,7 +48,7 @@ La primera impresión registrada de una historia, esté completa o no, SHALL fij
 - **THEN** sus datos están desbloqueados hasta la próxima impresión registrada
 
 ### Requirement: Impresión registrada en el servidor
-La vista preliminar SHALL imprimir las hojas solo con su botón "Imprimir", que primero registra la impresión en el servidor (`POST /api/orthodontic-records/{id}/print`). El registro SHALL responder la fecha de impresión (zona horaria de la app) y los pasos clínicos con datos de la historia guardada, calculados en el servidor. Las hojas SHALL estar ocultas al imprimir por defecto y mostrarse solo durante la impresión iniciada por el botón tras un registro exitoso; si se imprime de otra forma (Ctrl+P, menú del navegador), o se cancela o termina esa impresión, SHALL salir solo el aviso "Usa el botón Imprimir de la vista preliminar." Si el registro falla, el diálogo NO SHALL abrirse y se SHALL mostrar el error con opción de reintentar. Registrar una impresión ya registrada SHALL ser idempotente (no cambia la versión de la historia); la primera SHALL cambiarla. Registrar la impresión de una historia ajena SHALL responder `404` a un `USER`.
+La vista preliminar SHALL imprimir las hojas solo con su botón "Imprimir", que primero registra la impresión en el servidor (`POST /api/orthodontic-records/{id}/print`). El registro SHALL responder la fecha de impresión (zona horaria de la app) y los pasos clínicos con datos de la historia guardada, calculados en el servidor. Las hojas SHALL estar ocultas al imprimir por defecto y mostrarse solo durante la impresión iniciada por el botón tras un registro exitoso; si se imprime de otra forma (Ctrl+P, menú del navegador), o se cancela o termina esa impresión, SHALL salir solo el aviso "Usa el botón Imprimir de la vista preliminar." Si el registro falla, el diálogo NO SHALL abrirse y se SHALL mostrar el error con opción de reintentar. Registrar la impresión NO SHALL cambiar la versión de la historia (un formulario abierto no queda desactualizado); registrar una ya registrada SHALL ser idempotente. Imprimir y guardar SHALL serializarse, de modo que un guardado nunca cambie datos fijados por una impresión simultánea. Registrar la impresión de una historia ajena SHALL responder `404` a un `USER`.
 
 #### Scenario: Imprimir con el botón
 - **WHEN** el usuario pulsa "Imprimir" en la vista preliminar

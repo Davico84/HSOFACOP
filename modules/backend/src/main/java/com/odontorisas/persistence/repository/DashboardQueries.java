@@ -125,6 +125,20 @@ public class DashboardQueries {
                 rs.getInt("quota"), rs.getLong("total")));
     }
 
+    /** Solicitudes de desbloqueo pendientes, más antiguas primero; {@code total} = todas las pendientes. */
+    public List<UnlockRequestRow> unlockRequests(int limit) {
+        String sql = "SELECT r.id, r.record_number, r.patient_name, u.full_name AS author_name,"
+            + " r.unlock_requested_at, r.unlock_request_reason, count(*) OVER () AS total"
+            + " FROM orthodontic_records r JOIN users u ON u.id = r.author_id"
+            + " WHERE r.unlock_requested_at IS NOT NULL"
+            + " ORDER BY r.unlock_requested_at ASC, r.id ASC LIMIT :limit";
+        return jdbc.query(sql, new MapSqlParameterSource("limit", limit),
+            (rs, i) -> new UnlockRequestRow(rs.getLong("id"), rs.getString("record_number"),
+                rs.getString("patient_name"), rs.getString("author_name"),
+                rs.getTimestamp("unlock_requested_at").toInstant(), rs.getString("unlock_request_reason"),
+                rs.getLong("total")));
+    }
+
     private static Integer nullableInt(ResultSet rs, String column) throws SQLException {
         int value = rs.getInt(column);
         return rs.wasNull() ? null : value;
@@ -150,5 +164,9 @@ public class DashboardQueries {
     }
 
     public record QuotaRow(long userId, String fullName, long used, int quota, long total) {
+    }
+
+    public record UnlockRequestRow(long recordId, String recordNumber, String patientName, String authorName,
+                                   Instant requestedAt, String reason, long total) {
     }
 }

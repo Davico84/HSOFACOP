@@ -2,18 +2,18 @@
 
 ## 1. Backend
 
-- [ ] 1.1 `V14__record_patient_lock.sql`: columnas `patient_locked_at`, `unlock_requested_at`, `unlock_request_reason VARCHAR(200)` + índice parcial de pendientes; tabla `record_unlock_events` (acción `UNLOCKED`/`DISCARDED`, FK `RESTRICT`); entidades y `findWithAuthorByIdForUpdate`
-- [ ] 1.2 `PatientIdentity` (NFKC + sin tildes/mayúsculas/espacios; documento por tipo y dígitos) y rechazo en `update` bajo bloqueo de fila: `PatientLockedException` → `409 /errors/patient-locked`
-- [ ] 1.3 `printRecord` (bloqueo de fila, primera vez fija y sube versión, reimpresión idempotente, guarda `filledSteps` si faltaban, responde `printedOn` en la zona del `Clock` y `clinicalFilledSteps`)
-- [ ] 1.4 `unlockPatient`, `requestPatientUnlock`, `discardPatientUnlockRequest` (bloqueo de fila, condicionales, eventos); `RecordResponse` (`patientLockedAt`, `lastUnlock`, `unlockRequest`) y `RecordSummaryResponse.patientLocked`; `GET /api/dashboard/admin` con `unlockRequests` (hasta 10 + total, más antiguas primero)
-- [ ] 1.5 Tests (uno por scenario, `Clock.fixed` en `America/Lima`):
+- [x] 1.1 `V14__record_patient_lock.sql`: columnas `patient_locked_at`, `unlock_requested_at`, `unlock_request_reason VARCHAR(200)` + índice parcial de pendientes; tabla `record_unlock_events` (acción `UNLOCKED`/`DISCARDED`, FK `RESTRICT`); entidades y `findWithAuthorByIdForUpdate`
+- [x] 1.2 `PatientIdentity` (NFKC + sin tildes/mayúsculas/espacios; documento por tipo y dígitos) y rechazo en `update` bajo bloqueo de fila: `PatientLockedException` → `409 /errors/patient-locked`
+- [x] 1.3 `printRecord` (bloqueo de fila, primera vez fija sin cambiar la versión, reimpresión idempotente, guarda `filledSteps` si faltaban, responde `printedOn` en la zona del `Clock` y `clinicalFilledSteps`)
+- [x] 1.4 `unlockPatient`, `requestPatientUnlock`, `discardPatientUnlockRequest` (bloqueo de fila, condicionales, eventos); `RecordResponse` (`patientLockedAt`, `lastUnlock`, `unlockRequest`) y `RecordSummaryResponse.patientLocked`; `GET /api/dashboard/admin` con `unlockRequests` (hasta 10 + total, más antiguas primero)
+- [x] 1.5 Tests (uno por scenario, `Clock.fixed` en `America/Lima`):
   - controller: 403 de desbloquear/descartar para USER, 404 ajena, 400 de motivo, 409 con cada tipo;
-  - IT: corregir antes de imprimir; primera impresión fija (también un avance); cambio de cada dato fijo rechazado sin guardar; corregir escritura (mayúsculas, tildes, NFKC, espacios, mismo DNI) permitido; domicilio/teléfono/fecha de inicio/clínico libres y reimpresión idempotente sin cambiar versión; `PUT` con versión previa a la primera impresión → 409 stale; impresión concurrente con guardado; historia de autor ADMIN; historia anterior a V14; `filled_steps` nulo calculado al imprimir; `printedOn` en zona de la app; desbloqueo con y sin solicitud y re-fijado; eventos acumulados y último desbloqueo; desbloquear sin fijar → 409; solicitar/repetida/simultáneas/sin fijar/descartar/desbloquear cierra; candado en el listado; solicitudes en el dashboard del ADMIN (vacío, orden, 10 + total);
+  - IT: corregir antes de imprimir; primera impresión fija (también un avance); cambio de cada dato fijo rechazado sin guardar; corregir escritura (mayúsculas, tildes, NFKC, espacios, mismo DNI) permitido; domicilio/teléfono/fecha de inicio/clínico libres y reimpresión idempotente sin cambiar versión; guardado de otra pestaña tras imprimir con otro nombre → 409 patient-locked; impresión concurrente con guardado; historia de autor ADMIN; historia anterior a V14; `filled_steps` nulo calculado al imprimir; `printedOn` en zona de la app; desbloqueo con y sin solicitud y re-fijado; eventos acumulados y último desbloqueo; desbloquear sin fijar → 409; solicitar/repetida/simultáneas/sin fijar/descartar/desbloquear cierra; candado en el listado; solicitudes en el dashboard del ADMIN (vacío, orden, 10 + total);
   - `operationId` (`printRecord`, `unlockPatient`, `requestPatientUnlock`, `discardPatientUnlockRequest`) en `OpenApiContractIT`; regenerar contrato; `mvn verify` verde
 
 ## 2. Contrato y cliente
 
-- [ ] 2.1 `contracts/openapi.json` regenerado y `pnpm generate:api`
+- [x] 2.1 `contracts/openapi.json` regenerado y `pnpm generate:api`
 
 ## 3. Frontend
 

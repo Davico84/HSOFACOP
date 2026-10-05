@@ -4,6 +4,7 @@ import com.odontorisas.common.UserStatus;
 import com.odontorisas.service.dashboard.AdminDashboardView;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.Instant;
 import java.util.List;
 
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
@@ -13,7 +14,8 @@ public record AdminDashboardResponse(
     @Schema(requiredMode = REQUIRED) Users users,
     @Schema(requiredMode = REQUIRED) Records records,
     @Schema(requiredMode = REQUIRED, description = "Cuentas USER con más historias (hasta 5)") List<AuthorItem> topAuthors,
-    @Schema(requiredMode = REQUIRED) Quotas quotas) {
+    @Schema(requiredMode = REQUIRED) Quotas quotas,
+    @Schema(requiredMode = REQUIRED) UnlockRequests unlockRequests) {
 
     @Schema(name = "AdminDashboardUsers")
     public record Users(
@@ -65,6 +67,22 @@ public record AdminDashboardResponse(
         @Schema(requiredMode = REQUIRED, description = "Cupo lleno (también si lo creado lo supera)") boolean reached) {
     }
 
+    @Schema(name = "AdminDashboardUnlockRequests")
+    public record UnlockRequests(
+        @Schema(requiredMode = REQUIRED, description = "Solicitudes de desbloqueo pendientes") long total,
+        @Schema(requiredMode = REQUIRED, description = "Las 10 más antiguas") List<UnlockRequestItem> items) {
+    }
+
+    @Schema(name = "DashboardUnlockRequest")
+    public record UnlockRequestItem(
+        @Schema(requiredMode = REQUIRED) long recordId,
+        @Schema(requiredMode = REQUIRED, example = "AEO-001") String recordNumber,
+        @Schema(requiredMode = REQUIRED) String patientName,
+        @Schema(requiredMode = REQUIRED, description = "Tratante (autor de la historia)") String authorName,
+        @Schema(requiredMode = REQUIRED) Instant requestedAt,
+        @Schema(requiredMode = REQUIRED) String reason) {
+    }
+
     public static AdminDashboardResponse from(AdminDashboardView v) {
         var c = v.completeness();
         return new AdminDashboardResponse(
@@ -74,6 +92,9 @@ public record AdminDashboardResponse(
             v.topAuthors().stream().map(a -> new AuthorItem(a.userId(), a.fullName(), UserStatus.valueOf(a.status()),
                 a.records(), a.averageFilledSteps())).toList(),
             new Quotas(v.quotas().total(), v.quotas().items().stream()
-                .map(q -> new QuotaItem(q.userId(), q.fullName(), q.used(), q.limit(), q.reached())).toList()));
+                .map(q -> new QuotaItem(q.userId(), q.fullName(), q.used(), q.limit(), q.reached())).toList()),
+            new UnlockRequests(v.unlockRequests().total(), v.unlockRequests().items().stream()
+                .map(r -> new UnlockRequestItem(r.recordId(), r.recordNumber(), r.patientName(), r.authorName(),
+                    r.requestedAt(), r.reason())).toList()));
     }
 }
