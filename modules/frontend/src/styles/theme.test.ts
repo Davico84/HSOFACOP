@@ -80,3 +80,100 @@ describe("project-foundation — Tema definido por tokens CSS", () => {
     expect(css).not.toContain("prefers-color-scheme");
   });
 });
+
+/** Valores `--token: hsl(...)` del bloque de primer nivel `header` (sin comentarios). */
+function valuesOf(header: ":root" | ".dark"): Map<string, [number, number, number]> {
+  const css = globalsCss.replace(/\/\*[\s\S]*?\*\//g, "");
+  const match = new RegExp(`^${header.replace(".", "\\.")}\\s*\\{([^}]*)\\}`, "m").exec(css);
+  if (!match) throw new Error(`globals.css no tiene un bloque ${header} de primer nivel`);
+  const out = new Map<string, [number, number, number]>();
+  for (const [, name, h, s, l] of match[1].matchAll(/--([\w-]+):\s*hsl\(([\d.]+) ([\d.]+)% ([\d.]+)%\)/g)) {
+    out.set(name, [Number(h), Number(s), Number(l)]);
+  }
+  return out;
+}
+
+function toRgb([h, s, l]: [number, number, number]): [number, number, number] {
+  const sat = s / 100;
+  const lig = l / 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = sat * Math.min(lig, 1 - lig);
+  const f = (n: number) => lig - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [f(0), f(8), f(4)].map((v) => Math.round(v * 255)) as [number, number, number];
+}
+
+const hex = (hsl: [number, number, number]) =>
+  `#${toRgb(hsl)
+    .map((v) => v.toString(16).padStart(2, "0"))
+    .join("")}`.toUpperCase();
+
+function contrast(a: [number, number, number], b: [number, number, number]): number {
+  const lum = (hsl: [number, number, number]) => {
+    const [r, g, bl] = toRgb(hsl).map((v) => {
+      const c = v / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+const SEMANTIC = /^(destructive|success|warning)/;
+const READING_PAIRS: [string, string][] = [
+  ["foreground", "background"],
+  ["muted-foreground", "background"],
+  ["muted-foreground", "muted"],
+  ["primary-foreground", "primary"],
+  ["secondary-foreground", "secondary"],
+  ["accent-foreground", "accent"],
+];
+
+/**
+ * La paleta FACOP es de este proyecto, no de la plantilla: en un proyecto derivado con otra marca
+ * (p. ej. el ensayo "Acme CRM" de CI) `project:apply` cambia el primario y estos checks no aplican.
+ */
+const projectConfig = JSON.parse(readFileSync(path.join(stylesDir, "../../../../project.config.json"), "utf8")) as {
+  brand: { colors: { light: { primary: string } } };
+};
+const FACOP_ROXO = "hsl(297.4 50.8% 35.1%)";
+const isFacopBrand = projectConfig.brand.colors.light.primary === FACOP_ROXO;
+
+describe.skipIf(!isFacopBrand)("project-foundation — Paleta de la marca FACOP", () => {
+  it("Color principal en modo claro: Roxo #832C87 y texto en Grafite #3C3C3B", () => {
+    const light = valuesOf(":root");
+    expect(hex(light.get("primary")!)).toBe("#832C87");
+    expect(hex(light.get("foreground")!)).toBe("#3C3C3B");
+  });
+
+  it("Sin turquesa: fuera de los semánticos, solo tonos de Roxo o grises neutros", () => {
+    for (const header of [":root", ".dark"] as const) {
+      const offPalette = [...valuesOf(header)]
+        .filter(([name]) => !SEMANTIC.test(name))
+        .filter(([, [h, s]]) => s > 2 && Math.abs(h - 297) > 1)
+        .map(([name]) => `${header} --${name}`);
+      expect(offPalette).toEqual([]);
+    }
+  });
+
+  it("Contraste de lectura: cada par texto/fondo cumple WCAG AA (4,5:1) en claro y en oscuro", () => {
+    for (const header of [":root", ".dark"] as const) {
+      const values = valuesOf(header);
+      const failing = READING_PAIRS.filter(([text, bg]) => contrast(values.get(text)!, values.get(bg)!) < 4.5).map(
+        ([text, bg]) => `${header} ${text}/${bg}`,
+      );
+      expect(failing).toEqual([]);
+    }
+  });
+
+  it("Gris oficial no usado para texto: el texto secundario no es el Cinza #808080", () => {
+    expect(hex(valuesOf(":root").get("muted-foreground")!)).not.toBe("#808080");
+  });
+
+  it("Hoja impresa en negro: el token de tinta es #000000 y genera text-ink/border-ink", () => {
+    expect(hex(valuesOf(":root").get("ink")!)).toBe("#000000");
+    const css = build(["text-ink", "border-ink"]);
+    expect(ruleFor(css, ".text-ink")).toContain("var(--ink)");
+    expect(ruleFor(css, ".border-ink")).toContain("var(--ink)");
+  });
+});

@@ -10,6 +10,8 @@ import com.odontorisas.service.records.RecordView;
 import com.odontorisas.service.records.StaleRecordException;
 import com.odontorisas.service.records.content.RecordContent;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -37,6 +39,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,7 +69,7 @@ class OrthodonticRecordsControllerTest {
 
     private static final RecordView ANA = new RecordView(10L, "AEO-001", 1L, "Dra. María Torres", "Dra. María Torres",
         "Ana Quispe", null, null, null, LocalDate.of(2012, 5, 20), null, null, null, LocalDate.of(2026, 5, 19), 13,
-        RecordContent.empty(), 2L, Instant.parse("2026-10-01T10:00:00Z"), Instant.parse("2026-10-01T10:00:00Z"));
+        RecordContent.empty(), null, 2L, Instant.parse("2026-10-01T10:00:00Z"), Instant.parse("2026-10-01T10:00:00Z"));
 
     private static RequestPostProcessor as(long userId, String role) {
         var auth = new UsernamePasswordAuthenticationToken("u" + userId, null,
@@ -311,11 +314,27 @@ class OrthodonticRecordsControllerTest {
 
     @Test
     void update_passes_version_and_actor_admin_flag() throws Exception {
-        when(service.update(any(), anyLong(), anyLong(), any())).thenReturn(ANA);
+        when(service.update(any(), anyLong(), anyLong(), any(), any())).thenReturn(ANA);
         mockMvc.perform(put("/api/orthodontic-records/10").with(as(9, "ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON).content("{\"version\":2,\"patientName\":\"Ana\",\"recordNumber\":\"AEO-999\"}"))
             .andExpect(status().isOk());
-        verify(service).update(eq(new RecordActor(9L, true)), eq(10L), eq(2L), any(RecordData.class));
+        verify(service).update(eq(new RecordActor(9L, true)), eq(10L), eq(2L), any(RecordData.class), isNull());
+    }
+
+    @Test
+    void update_passes_last_step() throws Exception {
+        when(service.update(any(), anyLong(), anyLong(), any(), any())).thenReturn(ANA);
+        update("{\"version\":2,\"patientName\":\"Ana\",\"lastStep\":6}").andExpect(status().isOk());
+        verify(service).update(eq(new RecordActor(1L, false)), eq(10L), eq(2L), any(RecordData.class), eq(6));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 9})
+    void last_step_out_of_range_is_400(int step) throws Exception {
+        update("{\"version\":2,\"patientName\":\"Ana\",\"lastStep\":" + step + "}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("lastStep"));
+        verify(service, never()).update(any(), anyLong(), anyLong(), any(), any());
     }
 
     @Test
@@ -327,7 +346,7 @@ class OrthodonticRecordsControllerTest {
 
     @Test
     void stale_version_is_409_with_its_type() throws Exception {
-        when(service.update(any(), anyLong(), anyLong(), any())).thenThrow(new StaleRecordException());
+        when(service.update(any(), anyLong(), anyLong(), any(), any())).thenThrow(new StaleRecordException());
         update("{\"version\":1,\"patientName\":\"Ana\"}")
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.type").value("/errors/stale-record"));

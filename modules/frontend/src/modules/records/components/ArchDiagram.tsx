@@ -18,10 +18,13 @@ const MEASURED = new Set<number>(UPPER_NANCE_TEETH);
 export function ArchDiagram({ print = false, className }: ArchDiagramProps) {
   const tooth = (measured: boolean) =>
     measured
-      ? print ? "fill-muted stroke-foreground" : "fill-primary/15 stroke-primary"
-      : print ? "fill-background stroke-muted-foreground" : "fill-muted stroke-muted-foreground/60";
-  const groove = (measured: boolean) => (measured && !print ? "stroke-primary/70" : "stroke-muted-foreground/70");
-  const label = (measured: boolean) => (measured ? "fill-foreground font-semibold" : "fill-muted-foreground");
+      ? print ? "fill-muted stroke-ink" : "fill-primary/15 stroke-primary"
+      : print ? "fill-background stroke-ink/50" : "fill-muted stroke-muted-foreground/60";
+  const groove = (measured: boolean) =>
+    print ? "stroke-ink/50" : measured ? "stroke-primary/70" : "stroke-muted-foreground/70";
+  // En papel los números se leen en negro (Preto); el medido va en negrita.
+  const label = (measured: boolean) =>
+    cn(print ? "fill-ink" : measured ? "fill-foreground" : "fill-muted-foreground", measured && "font-semibold");
 
   return (
     <svg
@@ -44,9 +47,9 @@ export function ArchDiagram({ print = false, className }: ArchDiagramProps) {
           </g>
         );
       })}
-      <polyline points={ARCH_MEASURE_LINE} fill="none" strokeWidth={2} strokeDasharray="5 3" className="stroke-foreground" />
+      <polyline points={ARCH_MEASURE_LINE} fill="none" strokeWidth={2} strokeDasharray="5 3" className={print ? "stroke-ink" : "stroke-foreground"} />
       {ARCH_MEASURE_ENDS.map((p) => (
-        <circle key={`${p.x}-${p.y}`} cx={p.x} cy={p.y} r={4} className="fill-foreground" />
+        <circle key={`${p.x}-${p.y}`} cx={p.x} cy={p.y} r={4} className={print ? "fill-ink" : "fill-foreground"} />
       ))}
     </svg>
   );

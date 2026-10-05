@@ -25,6 +25,7 @@ public record RecordView(
     LocalDate treatmentStartDate,
     Integer ageYears,
     RecordContent content,
+    Integer lastStep,
     long version,
     Instant createdAt,
     Instant updatedAt) {

@@ -12,16 +12,16 @@ interface AuthLayoutProps {
 }
 
 /**
- * Marco split-screen de las pantallas de auth: panel de marca con gradiente
- * (tokens brand-start → brand-end), logo en blanco, tagline y descripción de
+ * Marco split-screen de las pantallas de auth: panel de marca en Roxo (token
+ * brand-start), logo en blanco, tagline y descripción de
  * project.config.json a un lado, y el formulario al otro. En móvil colapsa a
  * una sola columna con el logo (a color) arriba.
  */
 export function AuthLayout({ title, description, children, footer }: AuthLayoutProps) {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Panel de marca (gradiente + logo blanco) */}
-      <aside className="relative hidden flex-col justify-between bg-linear-150 from-brand-start to-brand-end p-12 text-white lg:flex">
+      {/* Panel de marca: Roxo liso con el logo en blanco, como las piezas del manual de FACOP */}
+      <aside className="relative hidden flex-col justify-between bg-brand-start p-12 text-white lg:flex">
         <Logo variant="white" className="h-12 w-auto self-start" />
         <div className="max-w-md">
           <h2 className="text-balance text-3xl font-semibold leading-tight">{project.tagline}</h2>

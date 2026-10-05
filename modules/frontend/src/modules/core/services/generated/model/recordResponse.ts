@@ -27,6 +27,8 @@ export interface RecordResponse {
   /** Años cumplidos a la fecha de inicio de tratamiento (o a hoy); vacío sin fecha de nacimiento */
   ageYears?: number;
   content: RecordContent;
+  /** Último paso (1–8) en que se guardaron cambios; vacío = paso 1 */
+  lastStep?: number;
   /** Versión actual: se envía al guardar */
   version: number;
   createdAt: string;

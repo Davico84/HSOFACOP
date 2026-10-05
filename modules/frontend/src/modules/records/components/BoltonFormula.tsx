@@ -22,7 +22,7 @@ const value = (v: number | null) => (v === null ? "" : formatMm(v));
 export function BoltonFormula({ count, mandibular, maxillary, quotient, ratio, print = false, className }: BoltonFormulaProps) {
   const box = cn(
     "inline-flex min-w-14 justify-center rounded-sm border px-1.5 tabular-nums",
-    print ? "min-w-[14mm] border-foreground" : "border-input bg-muted text-muted-foreground",
+    print ? "min-w-[14mm] border-ink" : "border-input bg-muted text-muted-foreground",
   );
   const quotientText = quotient === null ? "" : quotient.toFixed(4).replace(".", ",");
   return (
@@ -42,7 +42,7 @@ export function BoltonFormula({ count, mandibular, maxillary, quotient, ratio, p
         <span className="px-1 pb-1">Suma mandibular {count}</span>
         <span className={cn(box, "mb-1")} aria-label={`Suma mandibular ${count}`}>{value(mandibular)}</span>
         <span className="pb-1 pr-1">mm</span>
-        <span className="col-span-3 border-t border-foreground" aria-hidden="true" />
+        <span className={cn("col-span-3 border-t", print ? "border-ink" : "border-foreground")} aria-hidden="true" />
         <span className="px-1 pt-1">Suma maxilar {count}</span>
         <span className={cn(box, "mt-1")} aria-label={`Suma maxilar ${count}`}>{value(maxillary)}</span>
         <span className="pt-1 pr-1">mm</span>

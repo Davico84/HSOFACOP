@@ -119,7 +119,7 @@ public class OrthodonticRecordsController {
     public ResponseEntity<RecordResponse> updateRecord(
             @PathVariable Long id, @Valid @RequestBody UpdateRecordRequest request) {
         return ResponseEntity.ok(RecordResponse.from(
-            service.update(currentActor(), id, request.version(), request.toData())));
+            service.update(currentActor(), id, request.version(), request.toData(), request.lastStep())));
     }
 
     /** El filtro JWT deja el id del usuario en los {@code details} y el rol como autoridad. */

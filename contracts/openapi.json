@@ -2046,6 +2046,13 @@
           },
           "content": {
             "$ref": "#/components/schemas/RecordContent"
+          },
+          "lastStep": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Paso del formulario (1–8) en que se trabajó; se abre ahí al volver. Ausente = no cambia",
+            "maximum": 8,
+            "minimum": 1
           }
         },
         "required": [
@@ -2204,6 +2211,11 @@
           },
           "content": {
             "$ref": "#/components/schemas/RecordContent"
+          },
+          "lastStep": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Último paso (1–8) en que se guardaron cambios; vacío = paso 1"
           },
           "version": {
             "type": "integer",

@@ -55,8 +55,8 @@ export function toCreateRequest(values: RecordFormValues): CreateRecordRequest {
 }
 
 /** Valores del formulario + versión cargada → cuerpo del PUT. */
-export function toUpdateRequest(values: RecordFormValues, version: number): UpdateRecordRequest {
-  return { ...(withoutEmpty(values) as CreateRecordRequest), version };
+export function toUpdateRequest(values: RecordFormValues, version: number, lastStep?: number): UpdateRecordRequest {
+  return { ...(withoutEmpty(values) as CreateRecordRequest), version, ...(lastStep ? { lastStep } : {}) };
 }
 
 /** Copia profunda sin `null` (los arrays se conservan). */

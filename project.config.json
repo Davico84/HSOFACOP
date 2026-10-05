@@ -19,16 +19,16 @@
     "favicon": "/favicon.svg",
     "colors": {
       "light": {
-        "primary": "hsl(292 72% 36%)",
-        "ring": "hsl(292 72% 45%)",
-        "brand-start": "hsl(174 70% 40%)",
-        "brand-end": "hsl(292 72% 42%)"
+        "primary": "hsl(297.4 50.8% 35.1%)",
+        "ring": "hsl(297.4 50.8% 45%)",
+        "brand-start": "hsl(297.4 50.8% 35.1%)",
+        "brand-end": "hsl(297.4 50.8% 35.1%)"
       },
       "dark": {
-        "primary": "hsl(292 65% 66%)",
-        "ring": "hsl(292 65% 66%)",
-        "brand-start": "hsl(174 70% 40%)",
-        "brand-end": "hsl(292 72% 42%)"
+        "primary": "hsl(297 45% 72%)",
+        "ring": "hsl(297 45% 72%)",
+        "brand-start": "hsl(297.4 50.8% 35.1%)",
+        "brand-end": "hsl(297.4 50.8% 35.1%)"
       }
     }
   }
