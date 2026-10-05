@@ -43,6 +43,7 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | Predisposición de apiñamiento | Tabla 2 de la ficha de Moyers: el odontólogo anota qué arcada/lado resulta positivo (sobra espacio), nulo o negativo (falta espacio). |
 | Apoderado | Quien firma por un paciente menor de 18 años. |
 | Cupo de historias | Máximo de historias clínicas que un tratante (`USER`) puede crear; lo fija el `ADMIN` por cuenta. Sin cupo = sin límite. Al llegar al tope no crea más, pero edita e imprime las suyas. |
+| Historia completa | Historia con datos en los 7 pasos clínicos (1–7); Firmas (paso 8) no cuenta. Una historia anterior a las métricas, aún no vuelta a guardar, figura "sin calcular". |
 
 ---
 
@@ -89,6 +90,7 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 - `content` (JSON, `schemaVersion` 7): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`, `models.moyers`, `models.nance` y `models.bolton` —guarda sus incisivos y 1eros molares; caninos y premolares son los de Nance—: anchos de pieza en 4,0–13,0 mm y demás medidas en 0–99,9 mm, con un decimal, fechas de análisis no futuras, predisposición de apiñamiento y conclusiones escritas, interpretaciones; las diferencias con promedios y normas, la suma de incisivos, el requerido de Moyers, el ST y la discrepancia de Nance y las relaciones de Bolton se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
 - `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
 - `lastStep` (1–8 o nulo = paso 1): último paso del formulario en que se guardaron cambios (`update-orthodontic-records-autosave`); la historia se abre ahí desde el listado, en cualquier dispositivo. Recorrer pasos sin cambios no lo modifica. Las historias existentes se autoguardan (no las nuevas, que se crean con "Crear historia").
+- `filledSteps` (máscara de bits, bit n-1 = paso n; nula = "sin calcular", historias guardadas antes de `add-dashboard-metrics`): pasos con algún dato según el último guardado, informados por el formulario (mismo criterio que la navegación de pasos); el servidor marca siempre el paso 1. Una historia está **completa** con los 7 pasos clínicos (1–7) con datos: Firmas no cuenta porque se completa a mano. Alimenta las métricas de Inicio (`dashboard`).
 - Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
 - Notas de evolución: no se registran en el sistema; se imprime la hoja en blanco (pág. 14 del PDF) y se llena a mano (decisión del usuario).
 
@@ -135,6 +137,7 @@ erDiagram
         String searchText
         Json content
         Integer lastStep
+        Integer filledSteps
         Long version
     }
 ```

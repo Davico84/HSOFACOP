@@ -25,4 +25,4 @@
 ## 4. Docs y cierre
 
 - [x] 4.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 4.2 Al archivar — `docs/domain.md` (`OrthodonticRecord.filledSteps`), `docs/vision.md` (`dashboard` ✅)
+- [x] 4.2 Al archivar — `docs/domain.md` (`OrthodonticRecord.filledSteps`), `docs/vision.md` (`dashboard` ✅)
