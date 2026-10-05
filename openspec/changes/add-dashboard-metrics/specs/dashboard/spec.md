@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Métricas del tratante en Inicio
-Para un `USER`, Inicio SHALL mostrar métricas de sus propias historias, calculadas en el servidor (`GET /api/dashboard/me`): total de historias, creadas en el mes en curso (según la zona horaria de la app), uso del cupo ("N de M" o "sin límite"), historias completas, en progreso y sin calcular, el promedio de pasos clínicos con datos (sobre las calculadas, con un decimal; vacío si no hay calculadas), cuántas no tienen documento, fecha de nacimiento o fecha de inicio de tratamiento, y, para cada paso clínico (1–7), cuántas historias calculadas lo tienen vacío. Una historia es **completa** si tiene datos en los 7 pasos clínicos (1–7); el paso 8 (Firmas) no cuenta, porque se completa a mano sobre el papel. Los pasos vacíos SHALL listarse siempre los 7, ordenados de más a menos frecuente y, a igual frecuencia, por número de paso. Las métricas NO SHALL incluir historias de otros tratantes.
+Para un `USER`, Inicio SHALL mostrar métricas de sus propias historias, calculadas en el servidor (`GET /api/dashboard/me`, solo para `USER`; un `ADMIN` recibe `403`): total de historias, creadas en el mes en curso (según la zona horaria de la app), uso del cupo ("N de M" o "sin límite"), historias completas, en progreso y sin calcular, el promedio de pasos clínicos con datos (sobre las calculadas, con un decimal; vacío si no hay calculadas), cuántas no tienen documento, fecha de nacimiento o fecha de inicio de tratamiento, y, para cada paso clínico (1–7), cuántas historias calculadas lo tienen vacío. Una historia es **completa** si tiene datos en los 7 pasos clínicos (1–7); el paso 8 (Firmas) no cuenta, porque se completa a mano sobre el papel. Los pasos vacíos SHALL listarse siempre los 7, ordenados de más a menos frecuente y, a igual frecuencia, por número de paso. Si hay historias sin calcular, Inicio SHALL indicarlo junto a la completitud ("N sin calcular: se calculan al volver a guardarlas"). Las métricas NO SHALL incluir historias de otros tratantes.
 
 #### Scenario: Historias y cupo
 - **WHEN** un tratante con cupo 5 tiene 3 historias, una creada este mes
@@ -27,6 +27,14 @@ Para un `USER`, Inicio SHALL mostrar métricas de sus propias historias, calcula
 - **WHEN** dos de sus historias no tienen número de documento y una no tiene fecha de inicio de tratamiento
 - **THEN** Inicio muestra "2 sin documento" y "1 sin fecha de inicio", y los 7 pasos clínicos ordenados de más a menos historias vacías (a igual cantidad, por número de paso)
 
+#### Scenario: Aviso de historias sin calcular
+- **WHEN** el tratante tiene 4 historias sin calcular
+- **THEN** junto a la completitud se lee "4 sin calcular: se calculan al volver a guardarlas"
+
+#### Scenario: ADMIN pide las métricas de tratante
+- **WHEN** un `ADMIN` llama a `GET /api/dashboard/me`
+- **THEN** la API responde `403`
+
 #### Scenario: Solo sus historias
 - **WHEN** otro tratante tiene 10 historias
 - **THEN** no cuentan en las métricas de este tratante
@@ -51,7 +59,7 @@ Inicio del `USER` SHALL listar sus historias no completas (en progreso o sin cal
 - **THEN** "Para retomar" indica que no hay historias pendientes
 
 ### Requirement: Métricas globales del ADMIN en Inicio
-Para un `ADMIN`, Inicio SHALL mostrar solo métricas globales, calculadas en el servidor (`GET /api/dashboard/admin`): cuentas totales, activas, deshabilitadas y nuevas en el mes en curso; historias totales, creadas en el mes, completas, en progreso y sin calcular (mismo criterio de completa que el tratante); historias creadas por mes en los últimos 6 meses (incluido el actual, meses según la zona horaria de la app, con cero en los meses sin historias); hasta 5 tratantes con más historias (desempate por nombre) con su promedio de pasos clínicos con datos; y las cuentas `USER` con cupo lleno o al 80 % o más, las 10 más cerca del tope (las llenas primero) más el total que cumple la condición. Un `USER` que pida estas métricas SHALL recibir `403`.
+Para un `ADMIN`, Inicio SHALL mostrar solo métricas globales, calculadas en el servidor (`GET /api/dashboard/admin`): cuentas totales, activas, deshabilitadas y nuevas en el mes en curso; historias totales, creadas en el mes, completas, en progreso y sin calcular (mismo criterio de completa que el tratante; cuentan todas las historias, también las de autor `ADMIN` o de cuentas deshabilitadas); historias creadas por mes en los últimos 6 meses (incluido el actual, meses según la zona horaria de la app, con cero en los meses sin historias); hasta 5 cuentas `USER` (activas o deshabilitadas, marcadas como tales) con más historias (desempate por nombre) con su promedio de pasos clínicos con datos; y las cuentas `USER` **activas** con cupo lleno (también si lo creado supera el cupo o el cupo es 0) o al 80 % o más, las 10 más cerca del tope (las llenas primero) más el total que cumple la condición. Solo se exponen id y nombre de las cuentas (no el correo). Un `USER` que pida estas métricas SHALL recibir `403`.
 
 #### Scenario: Usuarios
 - **WHEN** hay 12 cuentas, 2 deshabilitadas y 3 creadas este mes
@@ -69,9 +77,17 @@ Para un `ADMIN`, Inicio SHALL mostrar solo métricas globales, calculadas en el 
 - **WHEN** hay 8 tratantes con historias
 - **THEN** se muestran los 5 con más historias, de más a menos, con su completitud promedio
 
+#### Scenario: Historias de un ADMIN y cuentas deshabilitadas
+- **WHEN** un `ADMIN` es autor de 6 historias y un tratante deshabilitado tiene 9
+- **THEN** las 15 cuentan en los totales; el ADMIN no aparece en tratantes con más historias y el deshabilitado sí, marcado "deshabilitada"
+
 #### Scenario: Cupos cerca del tope
 - **WHEN** un tratante usa 4 de 5 y otro 5 de 5
-- **THEN** ambos aparecen en cupos, el lleno primero; un tratante sin cupo nunca aparece y uno con cupo 0 figura como lleno
+- **THEN** ambos aparecen en cupos, el lleno primero; un tratante sin cupo nunca aparece; uno con cupo 0, o con más historias que su cupo (cupo reducido), figura como lleno
+
+#### Scenario: Cuenta deshabilitada con el cupo lleno
+- **WHEN** un tratante deshabilitado tiene 5 de 5
+- **THEN** no aparece en cupos (no puede crear historias)
 
 #### Scenario: Muchos cupos cerca del tope
 - **WHEN** 14 tratantes están al 80 % o más de su cupo
