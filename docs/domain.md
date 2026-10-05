@@ -88,6 +88,7 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 - Edad **calculada** (años cumplidos a la fecha de inicio de tratamiento o a hoy); menor de 18 → firma el apoderado.
 - `content` (JSON, `schemaVersion` 7): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`, `models.moyers`, `models.nance` y `models.bolton` —guarda sus incisivos y 1eros molares; caninos y premolares son los de Nance—: anchos de pieza en 4,0–13,0 mm y demás medidas en 0–99,9 mm, con un decimal, fechas de análisis no futuras, predisposición de apiñamiento y conclusiones escritas, interpretaciones; las diferencias con promedios y normas, la suma de incisivos, el requerido de Moyers, el ST y la discrepancia de Nance y las relaciones de Bolton se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
 - `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
+- `lastStep` (1–8 o nulo = paso 1): último paso del formulario en que se guardaron cambios (`update-orthodontic-records-autosave`); la historia se abre ahí desde el listado, en cualquier dispositivo. Recorrer pasos sin cambios no lo modifica. Las historias existentes se autoguardan (no las nuevas, que se crean con "Crear historia").
 - Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
 - Notas de evolución: no se registran en el sistema; se imprime la hoja en blanco (pág. 14 del PDF) y se llena a mano (decisión del usuario).
 
@@ -133,6 +134,7 @@ erDiagram
         Date treatmentStartDate
         String searchText
         Json content
+        Integer lastStep
         Long version
     }
 ```

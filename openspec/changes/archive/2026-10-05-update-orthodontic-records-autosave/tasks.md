@@ -21,4 +21,4 @@
 
 - [x] 4.1 `docs/vision.md`: estado 🚧 del change
 - [x] 4.2 `docs/frontend.md`: patrón de autoguardado (debounce, `keepDirtyValues`, un guardado a la vez, indicador)
-- [ ] 4.3 Al archivar — `docs/domain.md` (`OrthodonticRecord.lastStep`) y `docs/vision.md` ✅
+- [x] 4.3 Al archivar — `docs/domain.md` (`OrthodonticRecord.lastStep`) y `docs/vision.md` ✅
