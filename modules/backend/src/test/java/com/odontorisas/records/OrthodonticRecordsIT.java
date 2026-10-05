@@ -605,14 +605,19 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         createOk(torres, "Luis");
         createOk(torres, "Rosa");
 
-        JsonNode page = read(mockMvc.perform(get("/api/users").param("size", "100")
-            .header("Authorization", "Bearer " + admin.token())).andReturn());
+        // La BD de los IT es compartida y el listado va por id: la cuenta nueva puede caer en cualquier página.
         JsonNode row = null;
-        for (JsonNode r : page.get("content")) {
-            if (r.get("id").asLong() == torres.id()) {
-                row = r;
+        JsonNode page;
+        int number = 0;
+        do {
+            page = read(mockMvc.perform(get("/api/users").param("size", "100").param("page", String.valueOf(number++))
+                .header("Authorization", "Bearer " + admin.token())).andReturn());
+            for (JsonNode r : page.get("content")) {
+                if (r.get("id").asLong() == torres.id()) {
+                    row = r;
+                }
             }
-        }
+        } while (row == null && !page.get("last").asBoolean());
         assertThat(row).isNotNull();
         assertThat(row.get("recordQuota").asInt()).isEqualTo(5);
         assertThat(row.get("recordCount").asLong()).isEqualTo(3);
