@@ -8,7 +8,7 @@ interface PrintEvolutionNotesSectionProps {
 /** Renglones de la tabla del PDF (pág. 14). */
 const EVOLUTION_ROWS = 37;
 
-const CELL = "h-[6.25mm] border border-foreground px-[2mm] align-middle";
+const CELL = "h-[6.25mm] border border-ink px-[2mm] align-middle";
 
 /**
  * Pág. 14: "Notas de evolución" en blanco para llenar a mano (fecha, trabajo realizado y firma

@@ -22,7 +22,7 @@ interface RecordPrintDocumentProps {
  */
 export function RecordPrintDocument({ record }: RecordPrintDocumentProps) {
   return (
-    <div className="flex flex-col gap-8 py-8 font-[Arial,Helvetica,sans-serif] text-[10pt] leading-[17.3pt] text-foreground print:gap-0 print:py-0">
+    <div className="flex flex-col gap-8 py-8 font-[Arial,Helvetica,sans-serif] text-[10pt] leading-[17.3pt] text-ink print:gap-0 print:py-0">
       <PrintPatientSection record={record} />
       <PrintFacialSection record={record} />
       <PrintFunctionalSection record={record} />

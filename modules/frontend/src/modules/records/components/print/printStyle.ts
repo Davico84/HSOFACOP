@@ -27,7 +27,7 @@ export const ROW_LEADING = "leading-[17.3pt]";
 export const LABEL = "text-[11pt]";
 
 /** Celda de una tabla impresa (fichas de Moyers y Nance): borde fino, valor en 10 pt. */
-export const TABLE_CELL = "border border-foreground px-[4pt] py-[2pt]";
+export const TABLE_CELL = "border border-ink px-[4pt] py-[2pt]";
 
 /**
  * Celda de etiqueta de una tabla impresa: sombreada y en 11 pt, para distinguirla de los valores

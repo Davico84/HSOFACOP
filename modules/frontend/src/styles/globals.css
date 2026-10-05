@@ -11,6 +11,7 @@
 */
 @theme inline {
   --color-border: var(--border);
+  --color-ink: var(--ink);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-background: var(--background);
@@ -52,68 +53,71 @@
 }
 
 /*
-  Paleta de la marca: la ÚNICA fuente de color de la app. Para cambiar la marca
+  Paleta de la marca FACOP (manual de marca: Roxo #832C87, Grafite #3C3C3B, Preto #000000):
+  la ÚNICA fuente de color de la app. Para cambiar la marca
   de un proyecto derivado se editan solo estos valores (claro en :root, oscuro
   en .dark). Cada token es un color completo (hsl(...)), formato de shadcn v4.
 */
 :root {
   --background: hsl(0 0% 100%); /* #ffffff */
-  --foreground: hsl(289 26% 12%); /* #241727 */
+  --foreground: hsl(60 0.8% 23.3%); /* #3c3c3b Grafite */
   --card: hsl(0 0% 100%); /* #ffffff */
-  --card-foreground: hsl(289 26% 12%); /* #241727 */
+  --card-foreground: hsl(60 0.8% 23.3%); /* #3c3c3b Grafite */
   --popover: hsl(0 0% 100%); /* #ffffff */
-  --popover-foreground: hsl(289 26% 12%); /* #241727 */
+  --popover-foreground: hsl(60 0.8% 23.3%); /* #3c3c3b Grafite */
   --primary-foreground: hsl(0 0% 100%); /* #ffffff */
-  --secondary: hsl(174 44% 93%); /* #e5f7f5 */
-  --secondary-foreground: hsl(175 84% 20%); /* #085e57 */
-  --muted: hsl(290 20% 96%); /* #f7f3f8 */
-  --muted-foreground: hsl(289 10% 42%); /* #736175 */
-  --accent: hsl(174 60% 92%); /* #dbf6f3 */
-  --accent-foreground: hsl(175 84% 20%); /* #085e57 */
+  --secondary: hsl(297 45% 95%); /* #f7edf8 tinte de Roxo */
+  --secondary-foreground: hsl(297.4 50.8% 35.1%); /* #832c87 Roxo */
+  --muted: hsl(0 0% 96%); /* #f5f5f5 */
+  --muted-foreground: hsl(0 0% 40%); /* #666666 (el Cinza #808080 no llega a AA) */
+  --accent: hsl(297 40% 93%); /* #f4e6f4 tinte de Roxo */
+  --accent-foreground: hsl(297 51% 28%); /* #68236c */
   --destructive: hsl(0 72% 48%); /* #d32222 */
   --destructive-foreground: hsl(0 0% 100%); /* #ffffff */
-  --success: hsl(152 55% 38%); /* #2c965c */
+  --success: hsl(152 55% 38%); /* #2c9664 */
   --success-foreground: hsl(0 0% 100%); /* #ffffff */
-  --warning: hsl(38 92% 46%); /* #e18b0a */
-  --warning-foreground: hsl(40 92% 10%); /* #311d02 */
-  --border: hsl(290 16% 89%); /* #e5dbe7 */
-  --input: hsl(290 16% 89%); /* #e5dbe7 */
+  --warning: hsl(38 92% 46%); /* #e19209 */
+  --warning-foreground: hsl(40 92% 10%); /* #312102 */
+  --ink: hsl(0 0% 0%); /* #000000 Preto: texto y líneas de la hoja impresa */
+  --border: hsl(0 0% 87%); /* #dedede */
+  --input: hsl(0 0% 87%); /* #dedede */
   --radius: 0.625rem;
   /* @template:brand — colores de marca: los escribe `pnpm project:apply` desde project.config.json */
-  --primary: hsl(292 72% 36%);
-  --ring: hsl(292 72% 45%);
-  --brand-start: hsl(174 70% 40%);
-  --brand-end: hsl(292 72% 42%);
+  --primary: hsl(297.4 50.8% 35.1%);
+  --ring: hsl(297.4 50.8% 45%);
+  --brand-start: hsl(297.4 50.8% 35.1%);
+  --brand-end: hsl(297.4 50.8% 35.1%);
   /* @end-template:brand */
 }
 
 .dark {
-  --background: hsl(289 33% 8%); /* #170d1a */
-  --foreground: hsl(290 14% 94%); /* #f2eff3 */
-  --card: hsl(289 30% 11%); /* #201224 */
-  --card-foreground: hsl(290 14% 94%); /* #f2eff3 */
-  --popover: hsl(289 30% 11%); /* #201224 */
-  --popover-foreground: hsl(290 14% 94%); /* #f2eff3 */
-  --primary-foreground: hsl(289 45% 10%); /* #230e28 */
-  --secondary: hsl(289 24% 18%); /* #322237 */
-  --secondary-foreground: hsl(174 60% 75%); /* #99e6dc */
-  --muted: hsl(289 22% 17%); /* #301f34 */
-  --muted-foreground: hsl(290 12% 66%); /* #ad9fad */
-  --accent: hsl(289 26% 20%); /* #3c2741 */
-  --accent-foreground: hsl(174 65% 72%); /* #8de3d8 */
-  --destructive: hsl(0 62% 55%); /* #d34444 */
+  --background: hsl(0 0% 9%); /* #171717 */
+  --foreground: hsl(0 0% 94%); /* #f0f0f0 */
+  --card: hsl(0 0% 12%); /* #1f1f1f */
+  --card-foreground: hsl(0 0% 94%); /* #f0f0f0 */
+  --popover: hsl(0 0% 12%); /* #1f1f1f */
+  --popover-foreground: hsl(0 0% 94%); /* #f0f0f0 */
+  --primary-foreground: hsl(297 50% 12%); /* #2c0f2e */
+  --secondary: hsl(297 20% 20%); /* #3c293d */
+  --secondary-foreground: hsl(297 45% 85%); /* #e8c8ea */
+  --muted: hsl(0 0% 16%); /* #292929 */
+  --muted-foreground: hsl(0 0% 66%); /* #a8a8a8 */
+  --accent: hsl(297 18% 22%); /* #412e42 */
+  --accent-foreground: hsl(297 45% 88%); /* #edd3ee */
+  --destructive: hsl(0 62% 55%); /* #d34545 */
   --destructive-foreground: hsl(0 0% 100%); /* #ffffff */
-  --success: hsl(152 48% 55%); /* #55c48b */
-  --success-foreground: hsl(289 45% 10%); /* #230e28 */
-  --warning: hsl(38 88% 60%); /* #f3a63e */
-  --warning-foreground: hsl(40 92% 10%); /* #311d02 */
-  --border: hsl(289 20% 22%); /* #3d2b42 */
-  --input: hsl(289 20% 22%); /* #3d2b42 */
+  --success: hsl(152 48% 55%); /* #55c390 */
+  --success-foreground: hsl(0 0% 9%); /* #171717 */
+  --warning: hsl(38 88% 60%); /* #f3b13f */
+  --warning-foreground: hsl(40 92% 10%); /* #312102 */
+  --ink: hsl(0 0% 0%); /* #000000 Preto: texto y líneas de la hoja impresa */
+  --border: hsl(0 0% 22%); /* #383838 */
+  --input: hsl(0 0% 22%); /* #383838 */
   /* @template:brand */
-  --primary: hsl(292 65% 66%);
-  --ring: hsl(292 65% 66%);
-  --brand-start: hsl(174 70% 40%);
-  --brand-end: hsl(292 72% 42%);
+  --primary: hsl(297 45% 72%);
+  --ring: hsl(297 45% 72%);
+  --brand-start: hsl(297.4 50.8% 35.1%);
+  --brand-end: hsl(297.4 50.8% 35.1%);
   /* @end-template:brand */
 }
 

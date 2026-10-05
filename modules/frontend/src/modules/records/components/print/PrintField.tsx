@@ -42,7 +42,7 @@ export function PrintField({ label, value, grow = 1, className, lined = false, c
       style={{ flexGrow: grow }}
     >
       {label ? <span className={cn("shrink-0", LABEL)}>{withColon(label, colon)}</span> : null}
-      <span className={cn("min-w-[12mm] flex-1 px-[2pt] wrap-break-word", lined && "border-b border-foreground", center && "text-center whitespace-nowrap", ROW_LEADING)}>{text}</span>
+      <span className={cn("min-w-[12mm] flex-1 px-[2pt] wrap-break-word", lined && "border-b border-ink", center && "text-center whitespace-nowrap", ROW_LEADING)}>{text}</span>
     </span>
   );
 }
