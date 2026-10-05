@@ -74,6 +74,7 @@ function adminDashboard(overrides: Partial<AdminDashboardResponse> = {}): AdminD
         { userId: 5, fullName: "Dra. Cerca", used: 4, limit: 5, reached: false },
       ],
     },
+    unlockRequests: { total: 0, items: [] },
     ...overrides,
   };
 }

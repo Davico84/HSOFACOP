@@ -9,8 +9,11 @@ import type {
   CreateRecordRequest,
   ListRecordsParams,
   PageResponseRecordSummaryResponse,
+  PrintRecordRequest,
+  PrintRecordResponse,
   RecordQuotaResponse,
   RecordResponse,
+  UnlockRequestRequest,
   UpdateRecordRequest
 } from './model';
 
@@ -70,6 +73,45 @@ export const createRecord = (
       );
     }
   /**
+ * @summary Solicitar el desbloqueo de los datos del paciente
+ */
+export const requestPatientUnlock = (
+    id: number,
+    unlockRequestRequest: UnlockRequestRequest,
+ ) => {
+      return customInstance<void>(
+      {url: `/api/orthodontic-records/${id}/unlock-request`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: unlockRequestRequest
+    },
+      );
+    }
+  /**
+ * @summary Descartar la solicitud de desbloqueo (solo ADMIN; queda registrado)
+ */
+export const discardPatientUnlockRequest = (
+    id: number,
+ ) => {
+      return customInstance<void>(
+      {url: `/api/orthodontic-records/${id}/unlock-request`, method: 'DELETE'
+    },
+      );
+    }
+  /**
+ * @summary Registrar una impresión: la primera fija los datos del paciente; devuelve la fecha y el avance
+ */
+export const printRecord = (
+    id: number,
+    printRecordRequest: PrintRecordRequest,
+ ) => {
+      return customInstance<PrintRecordResponse>(
+      {url: `/api/orthodontic-records/${id}/print`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: printRecordRequest
+    },
+      );
+    }
+  /**
  * @summary Cupo de historias del usuario autenticado y cuántas creó
  */
 export const getRecordQuota = (
@@ -80,8 +122,23 @@ export const getRecordQuota = (
     },
       );
     }
+  /**
+ * @summary Desbloquear los datos del paciente (solo ADMIN; queda registrado)
+ */
+export const unlockPatient = (
+    id: number,
+ ) => {
+      return customInstance<void>(
+      {url: `/api/orthodontic-records/${id}/patient-lock`, method: 'DELETE'
+    },
+      );
+    }
   export type GetRecordResult = NonNullable<Awaited<ReturnType<typeof getRecord>>>
 export type UpdateRecordResult = NonNullable<Awaited<ReturnType<typeof updateRecord>>>
 export type ListRecordsResult = NonNullable<Awaited<ReturnType<typeof listRecords>>>
 export type CreateRecordResult = NonNullable<Awaited<ReturnType<typeof createRecord>>>
+export type RequestPatientUnlockResult = NonNullable<Awaited<ReturnType<typeof requestPatientUnlock>>>
+export type DiscardPatientUnlockRequestResult = NonNullable<Awaited<ReturnType<typeof discardPatientUnlockRequest>>>
+export type PrintRecordResult = NonNullable<Awaited<ReturnType<typeof printRecord>>>
 export type GetRecordQuotaResult = NonNullable<Awaited<ReturnType<typeof getRecordQuota>>>
+export type UnlockPatientResult = NonNullable<Awaited<ReturnType<typeof unlockPatient>>>

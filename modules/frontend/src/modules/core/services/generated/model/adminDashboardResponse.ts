@@ -9,6 +9,7 @@ import type { AdminDashboardUsers } from './adminDashboardUsers';
 import type { AdminDashboardRecords } from './adminDashboardRecords';
 import type { DashboardTopAuthor } from './dashboardTopAuthor';
 import type { AdminDashboardQuotas } from './adminDashboardQuotas';
+import type { AdminDashboardUnlockRequests } from './adminDashboardUnlockRequests';
 
 export interface AdminDashboardResponse {
   users: AdminDashboardUsers;
@@ -16,4 +17,5 @@ export interface AdminDashboardResponse {
   /** Cuentas USER con más historias (hasta 5) */
   topAuthors: DashboardTopAuthor[];
   quotas: AdminDashboardQuotas;
+  unlockRequests: AdminDashboardUnlockRequests;
 }
