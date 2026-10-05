@@ -129,7 +129,17 @@ const READING_PAIRS: [string, string][] = [
   ["accent-foreground", "accent"],
 ];
 
-describe("project-foundation — Paleta de la marca FACOP", () => {
+/**
+ * La paleta FACOP es de este proyecto, no de la plantilla: en un proyecto derivado con otra marca
+ * (p. ej. el ensayo "Acme CRM" de CI) `project:apply` cambia el primario y estos checks no aplican.
+ */
+const projectConfig = JSON.parse(readFileSync(path.join(stylesDir, "../../../../project.config.json"), "utf8")) as {
+  brand: { colors: { light: { primary: string } } };
+};
+const FACOP_ROXO = "hsl(297.4 50.8% 35.1%)";
+const isFacopBrand = projectConfig.brand.colors.light.primary === FACOP_ROXO;
+
+describe.skipIf(!isFacopBrand)("project-foundation — Paleta de la marca FACOP", () => {
   it("Color principal en modo claro: Roxo #832C87 y texto en Grafite #3C3C3B", () => {
     const light = valuesOf(":root");
     expect(hex(light.get("primary")!)).toBe("#832C87");
