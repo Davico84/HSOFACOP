@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FormProvider, useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
@@ -12,6 +12,7 @@ import { recordPath } from "@/routes/paths";
 import { recordFormSchema, type RecordFormValues } from "../schemas/record";
 import { parseStep, RECORD_STEPS, stepOfField } from "../config/recordSteps";
 import { emptyRecordValues, toFormValues } from "../utils/recordForm";
+import { diffPaths, relatedPaths, valueAt } from "../utils/formDiff";
 import { RECORD_QUOTA_REACHED_TYPE, STALE_RECORD_TYPE } from "../hooks/recordKeys";
 import { errorPaths } from "../hooks/useStepStatus";
 import { useSaveRecord } from "../hooks/useSaveRecord";
@@ -19,6 +20,7 @@ import { useRecordQuota } from "../hooks/useRecordQuota";
 import { quotaReachedMessage } from "../utils/quota";
 import { FieldHint } from "@/modules/core/components/form/FieldHint";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
+import { useAutosave, type AutosaveResult } from "../hooks/useAutosave";
 import { RecordStepNav, type StepChange } from "./RecordStepNav";
 import { RecordStepContent } from "./RecordStepContent";
 import { StaleRecordBanner } from "./StaleRecordBanner";
@@ -26,6 +28,7 @@ import { LeaveConfirmDialog } from "./LeaveConfirmDialog";
 import { RecordPrintLink } from "./RecordPrintLink";
 import { RecordPrintPending } from "./RecordPrintPending";
 import { RecordsBackLink } from "./RecordsBackLink";
+import { RecordSaveStatus } from "./RecordSaveStatus";
 
 interface RecordFormProps {
   /** Historia cargada; `null` = nueva (se crea al guardar el paso 1). */
@@ -34,17 +37,22 @@ interface RecordFormProps {
   onReload?: () => Promise<void>;
 }
 
+/** Resultado de guardar una historia existente; "unchanged" = no había cambios (no se envía nada). */
+type PersistResult = AutosaveResult | "unchanged";
+
 /**
  * Formulario de 8 pasos de la historia. Cambiar de paso guarda antes si hay cambios (validando
  * solo el paso actual); si el guardado falla se queda en el paso. Una historia nueva se crea al
- * salir del paso 1 y pasa a su URL. Detecta ediciones concurrentes (409) y avisa al salir con
- * cambios sin guardar.
+ * salir del paso 1 y pasa a su URL. Una existente además se autoguarda y se abre en su último paso
+ * trabajado. Detecta ediciones concurrentes (409) y avisa al salir con cambios sin guardar.
  */
 export function RecordForm({ record, onReload }: RecordFormProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const fullName = useSessionStore((s) => s.user?.fullName);
-  const step = record ? parseStep(searchParams.get("paso")) : 1;
+  const stepParam = searchParams.get("paso");
+  // Sin `?paso=`, la historia se abre en su último paso trabajado.
+  const step = record ? parseStep(stepParam ?? String(record.lastStep ?? 1)) : 1;
 
   const form = useForm<RecordFormValues>({
     resolver: zodResolver(recordFormSchema),
@@ -61,6 +69,82 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
   const { blocker, allowNextNavigation } = useLeaveGuard(dirty);
 
   const showStep = (target: number) => setSearchParams({ paso: String(target) });
+
+  useEffect(() => {
+    if (record && stepParam === null) setSearchParams({ paso: String(step) }, { replace: true });
+  }, [record, stepParam, step, setSearchParams]);
+
+  // Versión de la última respuesta (el autoguardado puede encadenar guardados antes de re-renderizar).
+  const version = useRef(record?.version ?? 0);
+  // Un guardado a la vez: autoguardado, "Guardar" y cambio de paso se encolan aquí.
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const [manualSaving, setManualSaving] = useState(false);
+  const [savedOnce, setSavedOnce] = useState(false);
+  // Tras un 409 no se autoguarda más hasta recargar (cerrar el aviso no lo reanuda).
+  const [stalePaused, setStalePaused] = useState(false);
+
+  /**
+   * Toma la respuesta del servidor como lo guardado sin pisar lo escrito durante el guardado: los
+   * campos cambiados después del envío conservan su valor (y siguen pendientes); los demás toman
+   * el valor normalizado por el servidor (si no, un valor que el servidor ajusta quedaría siempre
+   * pendiente y se autoguardaría sin fin).
+   */
+  const applySaved = (saved: RecordResponse, sent: RecordFormValues) => {
+    const server = toFormValues(saved);
+    const changedAfterSend = diffPaths(sent, form.getValues());
+    form.reset(server, { keepDirtyValues: true });
+    for (const path of diffPaths(server, form.getValues())) {
+      if (changedAfterSend.some((changed) => relatedPaths(changed, path))) continue;
+      form.setValue(path as Path<RecordFormValues>, valueAt(server, path) as never, { shouldDirty: true });
+    }
+  };
+
+  /** Guarda una historia existente si hay cambios y el paso actual es válido. */
+  const persistNow = async (lastStep: number, mode: "auto" | "manual"): Promise<PersistResult> => {
+    if (!record || !form.formState.isDirty) return "unchanged";
+    const valid = await form.trigger(RECORD_STEPS[step - 1].fields, { shouldFocus: mode === "manual" });
+    if (!valid) return "invalid";
+    const sent = structuredClone(form.getValues());
+    try {
+      const saved = await save.mutateAsync({ values: sent, existing: { id: record.id, version: version.current }, lastStep });
+      version.current = saved.version;
+      applySaved(saved, sent);
+      setSavedOnce(true);
+      return "ok";
+    } catch (error) {
+      if (problemType(error) === STALE_RECORD_TYPE) {
+        setStale(true);
+        setStalePaused(true);
+        return "stale";
+      }
+      if (mode === "manual") {
+        onSaveError(error, () => void goTo(lastStep));
+        return "failed";
+      }
+      // Autoguardado: sin notificaciones; el indicador dice qué pasó.
+      return applyServerFieldErrors(error, form.setError) > 0 ? "invalid" : "failed";
+    }
+  };
+
+  const persist = (lastStep: number, mode: "auto" | "manual"): Promise<PersistResult> => {
+    const next = queue.current.then(() => persistNow(lastStep, mode));
+    queue.current = next.catch(() => undefined);
+    return next;
+  };
+
+  const subscribe = useCallback(
+    (onChange: () => void) => form.subscribe({ formState: { values: true }, callback: () => onChange() }),
+    [form],
+  );
+  const autosave = useAutosave({
+    enabled: record !== null && !stalePaused,
+    isDirty: () => form.formState.isDirty,
+    subscribe,
+    save: async () => {
+      const result = await persist(step, "auto");
+      return result === "unchanged" ? "ok" : result;
+    },
+  });
 
   const onSaveError = (error: unknown, retry: () => void) => {
     if (problemType(error) === STALE_RECORD_TYPE) {
@@ -86,29 +170,33 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
 
   /**
    * Guarda (si hace falta) y abre `target`; `target === step` = solo guardar. Resuelve "invalid" si
-   * el paso actual no pasa la validación, "failed" si el guardado falla y "ok" en otro caso.
+   * el paso actual no pasa la validación, "failed" si el guardado falla y "ok" en otro caso. En una
+   * historia existente espera al autoguardado en curso y guarda `target` como último paso.
    */
   const goTo = async (target: number): Promise<StepChange> => {
-    if (save.isPending) return "failed";
-    if (record && !dirty) {
+    if (record) {
+      if (manualSaving) return "failed";
+      autosave.cancel();
+      setManualSaving(true);
+      const result = await persist(target, "manual");
+      setManualSaving(false);
+      if (result === "invalid") return "invalid";
+      if (result === "failed" || result === "stale") return "failed";
+      if (result === "ok" && target === step) toast.success(`Historia ${record.recordNumber} guardada`);
       if (target !== step) showStep(target);
       return "ok";
     }
+    if (save.isPending) return "failed";
     const valid = await form.trigger(RECORD_STEPS[step - 1].fields, { shouldFocus: true });
     if (!valid) return "invalid";
     return new Promise<StepChange>((resolve) => {
       save.mutate(
-        { values: form.getValues(), existing: record ? { id: record.id, version: record.version } : undefined },
+        { values: form.getValues() },
         {
           onSuccess: (saved) => {
             form.reset(toFormValues(saved));
-            if (!record) {
-              allowNextNavigation();
-              navigate(recordPath(saved.id, target === step ? 2 : target), { replace: true });
-            } else {
-              toast.success(`Historia ${saved.recordNumber} guardada`);
-              if (target !== step) showStep(target);
-            }
+            allowNextNavigation();
+            navigate(recordPath(saved.id, target === step ? 2 : target), { replace: true });
             resolve("ok");
           },
           onError: (error) => {
@@ -140,7 +228,8 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
   };
 
   const current = RECORD_STEPS[step - 1];
-  const saving = save.isPending;
+  // Deshabilita la navegación solo en guardados pedidos por el usuario (no en el autoguardado).
+  const saving = record ? manualSaving : save.isPending;
 
   return (
     <FormProvider {...form}>
@@ -153,8 +242,10 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
             </h1>
             <p className="text-muted-foreground">
               {record ? record.patientName : "Completa al menos el nombre del paciente para crearla."}
-              {record && dirty ? " · Cambios sin guardar (guarda para imprimir)" : ""}
             </p>
+            {record ? (
+              <RecordSaveStatus status={autosave.status} dirty={dirty} savedOnce={savedOnce} onRetry={autosave.retry} />
+            ) : null}
           </div>
           {record && !dirty ? <RecordPrintLink id={record.id} recordNumber={record.recordNumber} /> : null}
           {record && dirty ? <RecordPrintPending /> : null}

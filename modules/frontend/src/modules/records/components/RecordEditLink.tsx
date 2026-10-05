@@ -8,11 +8,11 @@ interface RecordEditLinkProps {
   recordNumber: string;
 }
 
-/** Abre la historia en el formulario de 8 pasos (desde el paso 1). */
+/** Abre la historia en el formulario de 8 pasos, en el último paso trabajado. */
 export function RecordEditLink({ id, recordNumber }: RecordEditLinkProps) {
   return (
     <Link
-      to={recordPath(id, 1)}
+      to={recordPath(id)}
       aria-label={`Editar historia ${recordNumber}`}
       className={buttonVariants({ variant: "outline", size: "sm" })}
     >

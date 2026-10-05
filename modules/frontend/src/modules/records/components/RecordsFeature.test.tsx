@@ -30,7 +30,7 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
     expect(within(row).getByText("19/05/2026")).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Autor" })).not.toBeInTheDocument();
     expect(within(row).getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toHaveAttribute("href", "/historias/10/imprimir");
-    expect(within(row).getByRole("link", { name: "Editar historia AEO-001" })).toHaveAttribute("href", "/historias/10?paso=1");
+    expect(within(row).getByRole("link", { name: "Editar historia AEO-001" })).toHaveAttribute("href", "/historias/10");
   });
 
   it("ADMIN ve las historias de todos con la columna Autor", async () => {
@@ -159,7 +159,7 @@ describe("orthodontic-records — Listado en celular y tablet", () => {
     expect(within(card).getByText("DNI 74125896")).toBeInTheDocument();
     expect(within(card).getByText("19/05/2026")).toBeInTheDocument();
     expect(within(card).queryByText("Autor")).not.toBeInTheDocument();
-    expect(within(card).getByRole("link", { name: "Editar historia AEO-001" })).toHaveAttribute("href", "/historias/10?paso=1");
+    expect(within(card).getByRole("link", { name: "Editar historia AEO-001" })).toHaveAttribute("href", "/historias/10");
     expect(within(card).getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toHaveAttribute("href", "/historias/10/imprimir");
   });
 

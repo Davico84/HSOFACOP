@@ -9,6 +9,8 @@ export interface SaveRecordInput {
   values: RecordFormValues;
   /** Historia ya creada: id y versión cargada. Sin ella, se crea. */
   existing?: { id: number; version: number };
+  /** Paso en que se trabajó (se abre ahí al volver); solo al guardar una existente. */
+  lastStep?: number;
 }
 
 /**
@@ -18,9 +20,9 @@ export interface SaveRecordInput {
 export function useSaveRecord() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ values, existing }: SaveRecordInput): Promise<RecordResponse> =>
+    mutationFn: ({ values, existing, lastStep }: SaveRecordInput): Promise<RecordResponse> =>
       existing
-        ? updateRecord(existing.id, toUpdateRequest(values, existing.version))
+        ? updateRecord(existing.id, toUpdateRequest(values, existing.version, lastStep))
         : createRecord(toCreateRequest(values)),
     onSuccess: (record) => {
       queryClient.setQueryData(recordKeys.detail(record.id), record);
