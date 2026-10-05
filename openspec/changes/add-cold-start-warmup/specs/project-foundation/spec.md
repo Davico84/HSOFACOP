@@ -39,29 +39,50 @@ El pool de conexiones del backend SHALL permitir retirar todas las conexiones oc
 - **WHEN** el pool no tiene conexiones y llega una petición que consulta la base
 - **THEN** el pool abre una conexión nueva y la petición responde con normalidad
 
-### Requirement: Aviso de arranque en frío al cargar la app
-Mientras la app espera el intento de restaurar la sesión al cargar (la primera petición al backend), SHALL mostrar "Cargando…" durante los primeros 4 segundos. Si la espera se prolonga, SHALL mostrar el mensaje "Estamos preparando tu consultorio digital para iniciar el día, esto puede tomar un minuto…", anunciado a lectores de pantalla, hasta que el intento termine, con éxito o con error.
+### Requirement: Pantalla de arranque en frío al cargar la app
+Mientras la app espera el intento de restaurar la sesión al cargar (la primera petición al backend), SHALL mostrar una pantalla de espera con la marca del proyecto, cuyo estado depende del tiempo transcurrido y de la conexión, hasta que el intento termine, con éxito o con error:
+- 0–4 s: "Cargando…";
+- 4–90 s: el título "Preparando tu consultorio digital", el mensaje "Estamos preparando tu consultorio digital para iniciar el día, esto puede tomar un minuto…" y una barra de progreso estimada que no llega al 100 %;
+- más de 90 s: "Está tardando más de lo normal" con un botón "Reintentar";
+- sin conexión a internet: "Sin conexión a internet", en cualquier momento.
+
+Cada cambio de estado SHALL anunciarse a lectores de pantalla una sola vez.
 
 #### Scenario: Respuesta rápida
 - **WHEN** el intento de restaurar la sesión termina antes de 4 segundos
-- **THEN** solo se ve "Cargando…" y luego la app, sin el mensaje de arranque en frío
+- **THEN** solo se ve "Cargando…" y luego la app, sin la pantalla de arranque en frío
 
 #### Scenario: Servidor despertando
 - **WHEN** el intento de restaurar la sesión sigue pendiente a los 4 segundos
-- **THEN** el splash muestra el mensaje de arranque en frío en una región `status`
+- **THEN** se muestra "Preparando tu consultorio digital" con el mensaje de arranque en frío en una región `status`
+- **AND** una barra de progreso (`progressbar`) con un valor menor que 100
+
+#### Scenario: Espera demasiado larga
+- **WHEN** el intento sigue pendiente a los 90 segundos
+- **THEN** se muestra "Está tardando más de lo normal" con el botón "Reintentar", que recibe el foco
+- **AND** al pulsarlo la app se recarga
+
+#### Scenario: Llega la respuesta durante la espera larga
+- **WHEN** el intento termina después de los 90 segundos, sin que el usuario pulse "Reintentar"
+- **THEN** la pantalla desaparece y la app continúa
+
+#### Scenario: Sin conexión a internet
+- **WHEN** el navegador no tiene conexión mientras el intento está pendiente
+- **THEN** se muestra "Sin conexión a internet" en lugar de los estados de arranque
+- **AND** al volver la conexión la app se recarga
 
 #### Scenario: Restauración exitosa tras la espera
-- **WHEN** la sesión se restaura después de mostrarse el mensaje
-- **THEN** el mensaje desaparece y la app continúa con la sesión
+- **WHEN** la sesión se restaura después de mostrarse la pantalla de arranque
+- **THEN** la pantalla desaparece y la app continúa con la sesión
 
 #### Scenario: Restauración fallida tras la espera
 - **WHEN** el intento de restaurar la sesión sigue pendiente más de 4 segundos y termina con error
-- **THEN** el mensaje desaparece
+- **THEN** la pantalla desaparece
 - **AND** la sesión queda limpia
-- **AND** se muestra el login sin el aviso de arranque
+- **AND** se muestra el login sin la pantalla de arranque
 
 #### Scenario: Montaje doble en StrictMode
 - **WHEN** el layout se monta, se desmonta y se vuelve a montar bajo React StrictMode
 - **THEN** no se dispara una petición adicional de restauración
-- **AND** el aviso aparece una sola vez a los 4 segundos
+- **AND** la pantalla de arranque aparece una sola vez a los 4 segundos
 - **AND** al terminar no quedan timers pendientes

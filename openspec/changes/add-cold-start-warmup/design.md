@@ -47,15 +47,36 @@
 - La siguiente petición abre una conexión nueva y Neon despierta en ese momento. Mismos valores en local: el costo de reconectar es mínimo.
 - **Conexión**: cadena **directa** de Neon con `sslmode=require` en `DB_URL`. El endpoint `-pooler` es PgBouncer en modo transacción y no conserva estado de sesión; Flyway necesita semántica de sesión para sus locks. La directa es la opción soportada y segura, y no se depende del pooler sin una prueba específica. Región de Neon igual o cercana a la de Render.
 
-### Aviso en el splash, no un ping aparte desde el navegador
+### Medir la espera del splash, no un ping aparte desde el navegador
 - La primera petición de cada carga ya es el refresh de sesión y el splash ya la espera. Medir esa espera es exacto: si tarda más de 4 s, el usuario está esperando de verdad. Un ping aparte sería una segunda petición midiendo lo mismo.
-- `useSlowWait(active, ms)` (hook genérico en `modules/core/hooks/`):
-  - devuelve `true` cuando `active` lleva más de `ms`;
-  - vuelve a `false` al pasar a inactivo;
-  - limpia su timer al desmontar (el doble montaje de StrictMode no deja timers activos ni duplica el aviso).
-- `RootLayout` cambia el texto del splash por el mensaje del arranque en frío (`role="status"`, `aria-live="polite"`) con un spinner.
-- **En cada carga, no solo la primera del día**: el servidor puede dormirse varias veces al día si el monitor falla. Como el mensaje solo aparece cuando la espera supera 4 s, en las cargas normales no se ve. Recordar "ya se mostró hoy" en `localStorage` ocultaría el aviso justo cuando hace falta.
-- **Fin de la espera**: al terminar el intento de restauración, con éxito o con error, el splash desaparece. Error = comportamiento actual: sesión limpia y login, sin aviso residual.
+- **En cada carga, no solo la primera del día**: el servidor puede dormirse varias veces al día si el monitor falla. Como la pantalla solo aparece cuando la espera supera 4 s, en las cargas normales no se ve. Recordar "ya se mostró hoy" en `localStorage` la ocultaría justo cuando hace falta.
+- **Fin de la espera**: al terminar el intento de restauración, con éxito o con error, la pantalla desaparece sin animación de cierre. Error = comportamiento actual: sesión limpia y login, sin aviso residual.
+
+### Pantalla de arranque en frío
+Mockup revisado con el usuario antes de codear (local, no publicado: lleva la marca de FACOP).
+
+- **Estados** (por segundos de espera; umbrales en constantes con nombre):
+
+  | Espera | Estado | Contenido |
+  |---|---|---|
+  | 0–4 s | `loading` | Logo + spinner + "Cargando…" (como hoy) |
+  | 4–90 s | `warming` | Icono, título "Preparando tu consultorio digital", el mensaje, barra estimada, ayuda "Esto suele tardar menos de un minuto. No cierres esta pestaña: continuará sola." (desde 45 s: "Ya casi está…") |
+  | > 90 s | `stuck` | Icono de reloj (tono `warning`), "Está tardando más de lo normal", "El servidor todavía no responde. Puedes seguir esperando o volver a intentarlo.", botón **Reintentar**, "Si el problema continúa, avisa al administrador." |
+  | sin red | `offline` | "Sin conexión a internet", "Revisa tu wifi o tus datos móviles. Volveremos a intentarlo solos cuando regrese la conexión.", botón secundario "Reintentar ahora" |
+
+  `offline` tiene prioridad sobre los demás desde el segundo 0 (`navigator.onLine` falso), así no se confunde una red caída con el servidor dormido. Al volver la red (`online`), recarga.
+- **Barra estimada, honesta**: `92 × (1 − e^(−s/22))` %. Avanza rápido al inicio, ronda el 85 % al minuto y nunca llega al 100 % por sí sola. No muestra pasos inventados ("conectando a la base…") que no se pueden medir. `role="progressbar"` con `aria-valuenow`. Se anima con `transform: scaleX`, no con `width`.
+- **Reintentar** = `window.location.reload()`: reinicia el bootstrap. La petición en curso no se cancela antes; si responde mientras tanto, la app entra.
+- **Marco**: en escritorio, el mismo split que el login (`AuthLayout`: panel `brand-start` con el logo blanco y el tagline). La mayoría de arranques en frío terminan en el login, así la transición no salta. En móvil, una columna con el logo a color. Solo tokens (`primary`, `secondary`, `muted`, `warning`), con modo oscuro.
+- **Accesibilidad**:
+  - región `role="status"` / `aria-live="polite"` que se anuncia **una vez por cambio de estado**, no en cada tic de la barra;
+  - el foco va a "Reintentar" cuando aparece `stuck`;
+  - `prefers-reduced-motion` desactiva el spinner, el pulso del icono y la transición de la barra.
+- **Ubicación** (frontend-guard):
+  - `useElapsedWhile(active)` en `modules/core/hooks/`: genérico, segundos transcurridos mientras `active`; se reinicia al pasar a inactivo y limpia su intervalo al desmontar (StrictMode);
+  - `useOnlineStatus()` en `modules/core/hooks/`;
+  - `ServerWarmupScreen` en `modules/core/components/`: no conoce el dominio; recibe los segundos y si hay red; los textos del proyecto salen de `project`;
+  - `RootLayout` la renderiza mientras `status` es `idle`/`loading`. Se extrae el panel de marca de `AuthLayout` a un componente compartido (`BrandPanel`) para no duplicarlo.
 
 ### Cookie de sesión entre dominios (condición de despliegue, otro change)
 - Con `SameSite=Lax`, el navegador no envía la cookie de refresh si el frontend y el backend son *sites* distintos. `*.vercel.app` y `*.onrender.com` lo son, porque ambos sufijos están en la Public Suffix List. `withCredentials` y CORS no lo compensan.

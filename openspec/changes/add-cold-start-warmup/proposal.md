@@ -21,9 +21,13 @@ Se atacan los dos lados, gratis:
   - los límites se configuran por variables `DB_POOL_*`.
 
   Hikari puede retirar todas las conexiones ociosas, pero no al segundo exacto: su revisión periódica tiene tolerancia.
-- **Aviso de arranque en frío en el frontend**: la app ya espera al backend al cargar. El splash del `RootLayout` se muestra mientras restaura la sesión con `/auth/refresh`, que es siempre la primera petición.
-  - Si esa espera pasa de **4 segundos**, el splash cambia a "Estamos preparando tu consultorio digital para iniciar el día, esto puede tomar un minuto…".
-  - Al terminar el intento de restauración, con éxito o con error, la app sigue como siempre.
+- **Pantalla de arranque en frío en el frontend** (interfaz profesional, con la marca): la app ya espera al backend al cargar. El splash del `RootLayout` se muestra mientras restaura la sesión con `/auth/refresh`, que es siempre la primera petición. Según cuánto dura esa espera:
+  - **0–4 s**: igual que hoy (logo + "Cargando…"). En una carga normal no se ve nada distinto.
+  - **4–90 s**: pantalla "Preparando tu consultorio digital" con el mensaje "Estamos preparando tu consultorio digital para iniciar el día, esto puede tomar un minuto…", una barra de progreso **estimada** que se frena cerca del 92 % sin llegar al final, y la ayuda "No cierres esta pestaña: continuará sola" (desde los 45 s: "Ya casi está…").
+  - **Más de 90 s**: "Está tardando más de lo normal", botón **Reintentar** y "Si el problema continúa, avisa al administrador". La petición sigue viva: si el servidor responde, la app entra sola.
+  - **Sin internet**: un mensaje distinto, porque el problema no es el servidor; reintenta solo al volver la conexión.
+
+  Mismo marco que el login (panel Roxo con el logo en escritorio, una columna en móvil), tokens de color con modo oscuro, accesible y con "reducir movimiento". Al terminar el intento, con éxito o con error, la app sigue como siempre.
 - **Guía de despliegue** (`docs/deployment.md`):
   - el monitor externo, que es el único mecanismo que mantiene despierto el servicio; el health check de Render no lo sustituye;
   - la conexión a Neon: cadena directa con `sslmode=require` para Flyway, misma región que Render;
@@ -38,7 +42,7 @@ Se atacan los dos lados, gratis:
 <!-- ninguna -->
 
 ### Modified Capabilities
-- `project-foundation`: nuevos requisitos "Endpoint de ping para mantener el backend despierto", "Superficie pública de Actuator mínima", "Pool de conexiones que permite suspender la base" y "Aviso de arranque en frío al cargar la app".
+- `project-foundation`: nuevos requisitos "Endpoint de ping para mantener el backend despierto", "Superficie pública de Actuator mínima", "Pool de conexiones que permite suspender la base" y "Pantalla de arranque en frío al cargar la app".
 
 ## Impact
 
@@ -48,7 +52,7 @@ Se atacan los dos lados, gratis:
   - tests de health, de la configuración del pool y del pool en integración.
 
   Sin endpoints nuevos en el contrato OpenAPI (Actuator no está en él).
-- Frontend: `RootLayout` (splash) y un hook genérico en `modules/core/hooks/`. Sin dependencias nuevas.
+- Frontend: `RootLayout`; `ServerWarmupScreen` y `BrandPanel` (extraído de `AuthLayout`) en `modules/core/components/`; dos hooks genéricos en `modules/core/hooks/`. Sin dependencias nuevas.
 - Docs:
   - `docs/backend.md` §11.1;
   - nueva guía `docs/deployment.md`;
