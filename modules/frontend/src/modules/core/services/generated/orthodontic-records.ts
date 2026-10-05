@@ -9,6 +9,7 @@ import type {
   CreateRecordRequest,
   ListRecordsParams,
   PageResponseRecordSummaryResponse,
+  RecordQuotaResponse,
   RecordResponse,
   UpdateRecordRequest
 } from './model';
@@ -68,7 +69,19 @@ export const createRecord = (
     },
       );
     }
+  /**
+ * @summary Cupo de historias del usuario autenticado y cuántas creó
+ */
+export const getRecordQuota = (
+    
+ ) => {
+      return customInstance<RecordQuotaResponse>(
+      {url: `/api/orthodontic-records/quota`, method: 'GET'
+    },
+      );
+    }
   export type GetRecordResult = NonNullable<Awaited<ReturnType<typeof getRecord>>>
 export type UpdateRecordResult = NonNullable<Awaited<ReturnType<typeof updateRecord>>>
 export type ListRecordsResult = NonNullable<Awaited<ReturnType<typeof listRecords>>>
 export type CreateRecordResult = NonNullable<Awaited<ReturnType<typeof createRecord>>>
+export type GetRecordQuotaResult = NonNullable<Awaited<ReturnType<typeof getRecordQuota>>>

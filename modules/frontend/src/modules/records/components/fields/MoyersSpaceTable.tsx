@@ -1,4 +1,5 @@
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { ScrollableX } from "@/modules/core/components/ScrollableX";
 import { NumberInput } from "@/modules/core/ui/number-input";
 import { ComputedValue } from "@/modules/core/components/form/ComputedValue";
 import { fieldError } from "@/modules/core/components/form/fieldError";
@@ -23,18 +24,18 @@ export function MoyersSpaceTable() {
   const cell = "w-28 px-2 py-1.5 text-center tabular-nums";
 
   return (
-    <fieldset className="flex flex-col gap-1.5">
+    <fieldset className="flex min-w-0 flex-col gap-1.5">
       <legend className="mb-1.5 text-sm font-medium">Espacio disponible, requerido y diferencia (mm)</legend>
-      <div className="overflow-x-auto">
+      <ScrollableX>
         <table className="border-collapse border border-border text-sm">
           <thead>
             <tr className="bg-muted text-xs text-muted-foreground">
-              <td />
+              <td className="sticky left-0 z-10 bg-muted" />
               <th scope="colgroup" colSpan={2} className="px-2 py-1 text-center font-medium">Mandíbula</th>
               <th scope="colgroup" colSpan={2} className="px-2 py-1 text-center font-medium">Maxilar</th>
             </tr>
             <tr className="bg-muted text-xs text-muted-foreground">
-              <td />
+              <td className="sticky left-0 z-10 bg-muted" />
               {MOYERS_SIDES.map(({ key, side, label }) => (
                 <th key={key} scope="col" className="w-28 px-2 py-1 text-center font-medium" aria-label={label}>
                   {side}
@@ -44,7 +45,7 @@ export function MoyersSpaceTable() {
           </thead>
           <tbody>
             <tr className="border-t border-border">
-              <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Espacio disponible</th>
+              <th scope="row" className="sticky left-0 z-10 bg-muted px-3 py-1.5 text-left font-medium">Espacio disponible</th>
               {MOYERS_SIDES.map(({ key, label }) => {
                 const name = `content.models.moyers.availableSpace.${key}` as const;
                 const error = fieldError(formState.errors, name);
@@ -73,7 +74,7 @@ export function MoyersSpaceTable() {
               })}
             </tr>
             <tr className="border-t border-border">
-              <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Espacio requerido (Moyers 75 %)</th>
+              <th scope="row" className="sticky left-0 z-10 bg-muted px-3 py-1.5 text-left font-medium">Espacio requerido (Moyers 75 %)</th>
               {sides.map(({ key, label, required }) => (
                 <td key={key} className={cell}>
                   <ComputedValue label={`Espacio requerido, ${label}`} className="mx-auto w-24">
@@ -83,7 +84,7 @@ export function MoyersSpaceTable() {
               ))}
             </tr>
             <tr className="border-t border-border">
-              <th scope="row" className="bg-muted px-3 py-1.5 text-left font-medium">Diferencia</th>
+              <th scope="row" className="sticky left-0 z-10 bg-muted px-3 py-1.5 text-left font-medium">Diferencia</th>
               {sides.map(({ key, label, difference }) => (
                 <td key={key} className={cell}>
                   <ComputedValue label={`Diferencia, ${label}`} className="mx-auto w-24">
@@ -94,7 +95,7 @@ export function MoyersSpaceTable() {
             </tr>
           </tbody>
         </table>
-      </div>
+      </ScrollableX>
     </fieldset>
   );
 }

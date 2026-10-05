@@ -27,8 +27,9 @@ public record RecordContent(
      * 4: subsección {@code models.moyers}; sin migración, llega vacía.
      * 5: subsección {@code models.nance}; sin migración, llega vacía.
      * 6: subsección {@code models.bolton}; sin migración, llega vacía.
+     * 7: {@code models.bolton.incisors} propios de Bolton (migración V10 los copia de Nance).
      */
-    public static final int CURRENT_SCHEMA_VERSION = 6;
+    public static final int CURRENT_SCHEMA_VERSION = 7;
 
     public static RecordContent empty() {
         return new RecordContent(CURRENT_SCHEMA_VERSION, Anamnesis.empty(), FacialAnalysis.empty(),

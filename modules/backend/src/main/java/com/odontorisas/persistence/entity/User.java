@@ -59,6 +59,13 @@ public class User {
     private UserStatus status = UserStatus.ACTIVE;
 
     /**
+     * Cupo de historias clínicas (capacidad {@code users}): {@code null} = sin límite; solo aplica a
+     * cuentas USER. Lo cambia {@code UserAdminService} con la fila bloqueada.
+     */
+    @Column(name = "record_quota")
+    private Integer recordQuota;
+
+    /**
      * Bloqueo temporal por intentos fallidos: solo lectura. Lo modifican únicamente
      * los UPDATE atómicos de {@code UserRepository}; tras ellos no se relee aquí.
      */

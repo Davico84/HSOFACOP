@@ -1,6 +1,6 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { MeasureField } from "@/modules/core/components/form/MeasureField";
-import type { RecordFormValues } from "../../schemas/record";
+import { MAX_TOOTH_MM, MIN_TOOTH_MM, type RecordFormValues } from "../../schemas/record";
 import { LOWER_INCISORS, MOYERS_OUT_OF_RANGE } from "../../config/moyers";
 import { incisorSum, requiredSpace } from "../../utils/moyers";
 import { formatMm } from "../../utils/transversal";
@@ -17,7 +17,7 @@ export function MoyersIncisorsField() {
       <legend className="mb-1.5 text-sm font-medium">Ancho mesiodistal de los incisivos inferiores</legend>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {LOWER_INCISORS.map(({ key, label }) => (
-          <MeasureField key={key} name={`content.models.moyers.lowerIncisors.${key}`} label={`Pieza ${label}`} unit="mm" />
+          <MeasureField key={key} name={`content.models.moyers.lowerIncisors.${key}`} label={`Pieza ${label}`} unit="mm" min={MIN_TOOTH_MM} max={MAX_TOOTH_MM} />
         ))}
       </div>
       <p className="text-sm" aria-live="polite">

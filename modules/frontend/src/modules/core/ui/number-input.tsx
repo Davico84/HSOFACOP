@@ -47,8 +47,12 @@ export function NumberInput({
   const decimals = decimalsOf(step);
 
   function nudge(direction: 1 | -1) {
-    const base = value ?? min ?? 0;
-    let next = Number((base + direction * step).toFixed(decimals));
+    // Vacío con mínimo: la primera pulsación pone el mínimo (p. ej. 4,0 mm en el ancho de una pieza).
+    if ((value === null || value === undefined) && min !== undefined) {
+      onChange(min);
+      return;
+    }
+    let next = Number(((value ?? 0) + direction * step).toFixed(decimals));
     if (min !== undefined) next = Math.max(min, next);
     if (max !== undefined) next = Math.min(max, next);
     onChange(next);

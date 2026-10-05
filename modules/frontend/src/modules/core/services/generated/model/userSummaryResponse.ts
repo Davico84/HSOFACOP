@@ -7,6 +7,7 @@
  */
 import type { UserSummaryResponseRole } from './userSummaryResponseRole';
 import type { UserSummaryResponseStatus } from './userSummaryResponseStatus';
+import type { UserSummaryResponseRecordQuota } from './userSummaryResponseRecordQuota';
 
 export interface UserSummaryResponse {
   id: number;
@@ -14,4 +15,8 @@ export interface UserSummaryResponse {
   fullName: string;
   role: UserSummaryResponseRole;
   status: UserSummaryResponseStatus;
+  /** Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN) */
+  recordQuota?: UserSummaryResponseRecordQuota;
+  /** Historias clínicas creadas por la cuenta */
+  recordCount: number;
 }

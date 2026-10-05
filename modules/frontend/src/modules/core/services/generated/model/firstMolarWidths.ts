@@ -8,23 +8,23 @@
 
 export interface FirstMolarWidths {
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth16?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth26?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth46?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth36?: number;
 }

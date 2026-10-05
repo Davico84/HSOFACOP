@@ -16,9 +16,13 @@ public record UserSummaryResponse(
     @Schema(requiredMode = REQUIRED) String email,
     @Schema(requiredMode = REQUIRED) String fullName,
     @Schema(requiredMode = REQUIRED) Role role,
-    @Schema(requiredMode = REQUIRED) UserStatus status) {
+    @Schema(requiredMode = REQUIRED) UserStatus status,
+    @Schema(description = "Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN)", nullable = true)
+    Integer recordQuota,
+    @Schema(requiredMode = REQUIRED, description = "Historias clínicas creadas por la cuenta") long recordCount) {
 
     public static UserSummaryResponse from(UserSummaryView view) {
-        return new UserSummaryResponse(view.id(), view.email(), view.fullName(), view.role(), view.status());
+        return new UserSummaryResponse(view.id(), view.email(), view.fullName(), view.role(), view.status(),
+            view.recordQuota(), view.recordCount());
     }
 }

@@ -305,7 +305,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
     }
 
     @Test
@@ -339,7 +339,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
         assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
             String.class, id)).isEqualTo("2026-09-01");
     }
@@ -369,7 +369,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(n.get("upperWidths").get("tooth25").decimalValue()).isEqualByComparingTo("6.9");
         assertThat(n.get("lowerWidths").get("tooth31").decimalValue()).isEqualByComparingTo("5.4");
         assertThat(n.get("conclusionUpper").stringValue()).isEqualTo("Falta de espacio leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
     }
 
     @Test
@@ -385,9 +385,12 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         ObjectNode body = json.createObjectNode();
         body.put("version", old.get("version").asLong());
         body.put("patientName", "Ana");
-        ObjectNode bolton = body.putObject("content").putObject("models").putObject("bolton");
+        ObjectNode models = body.putObject("content").putObject("models");
+        ObjectNode bolton = models.putObject("bolton");
         bolton.put("analysisDate", "2026-09-01").put("interpretation", " Exceso mandibular ");
         bolton.putObject("firstMolars").put("tooth16", 10.2).put("tooth36", 11.2);
+        bolton.putObject("incisors").put("tooth11", 8.7);
+        models.putObject("nance").putObject("upperWidths").put("tooth11", 8.6);
 
         JsonNode saved = read(save(torres, id, json.writeValueAsString(body)));
 
@@ -395,12 +398,153 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(b.get("firstMolars").get("tooth16").decimalValue()).isEqualByComparingTo("10.2");
         assertThat(b.get("firstMolars").get("tooth36").decimalValue()).isEqualByComparingTo("11.2");
         assertThat(b.get("interpretation").stringValue()).isEqualTo("Exceso mandibular");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(6);
+        // Incisivos propios de Bolton: la misma pieza puede valer distinto en Nance.
+        assertThat(b.get("incisors").get("tooth11").decimalValue()).isEqualByComparingTo("8.7");
+        assertThat(saved.get("content").get("models").get("nance").get("upperWidths").get("tooth11").decimalValue())
+            .isEqualByComparingTo("8.6");
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
     }
 
     @Test
     void without_session_is_401() throws Exception {
         mockMvc.perform(post(BASE).contentType(MediaType.APPLICATION_JSON).content("{\"patientName\":\"Ana\"}"))
             .andExpect(status().isUnauthorized());
+    }
+
+    // --- Cupo de historias por tratante (add-record-quota) ---
+
+    private static final String QUOTA_DETAIL = "Alcanzaste el máximo de 2 historias clínicas. Comunícate con el administrador para solicitar más.";
+
+    private JsonNode quota(Session as) throws Exception {
+        return read(mockMvc.perform(get(BASE + "/quota").header("Authorization", "Bearer " + as.token())).andReturn());
+    }
+
+    private void setQuota(Session admin, long userId, String value) throws Exception {
+        MvcResult result = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .patch("/api/users/" + userId + "/record-quota").header("Authorization", "Bearer " + admin.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":" + value + "}"))
+            .andReturn();
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void without_quota_a_user_creates_freely_and_quota_reports_no_limit() throws Exception {
+        Session torres = register("Dra. Torres");
+        createOk(torres, "Ana");
+        createOk(torres, "Luis");
+        JsonNode q = quota(torres);
+        assertThat(q.get("limit").isNull()).isTrue();
+        assertThat(q.get("used").asLong()).isEqualTo(2);
+        assertThat(q.get("reached").asBoolean()).isFalse();
+    }
+
+    @Test
+    void full_quota_rejects_creation_with_409_but_editing_still_works() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "2");
+        long first = createOk(torres, "Ana").get("id").asLong();
+        createOk(torres, "Luis");
+
+        MvcResult rejected = create(torres, "{\"patientName\":\"Rosa\"}");
+        assertThat(rejected.getResponse().getStatus()).isEqualTo(409);
+        JsonNode problem = read(rejected);
+        assertThat(problem.get("type").stringValue()).endsWith("/errors/record-quota-reached");
+        assertThat(problem.get("detail").stringValue()).isEqualTo(QUOTA_DETAIL);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM orthodontic_records WHERE author_id = ?", Long.class, torres.id()))
+            .isEqualTo(2);
+        assertThat(quota(torres).get("reached").asBoolean()).isTrue();
+
+        // Editar una existente con el cupo lleno funciona igual.
+        JsonNode loaded = read(getRecord(torres, first));
+        MvcResult saved = save(torres, first, "{\"version\":" + loaded.get("version").asLong() + ",\"patientName\":\"Ana María\"}");
+        assertThat(saved.getResponse().getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void quota_below_what_was_created_keeps_the_records_and_blocks_new_ones() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        createOk(torres, "Ana");
+        createOk(torres, "Luis");
+        createOk(torres, "Rosa");
+        setQuota(admin, torres.id(), "2");
+
+        assertThat(create(torres, "{\"patientName\":\"Pía\"}").getResponse().getStatus()).isEqualTo(409);
+        assertThat(numbers(list(torres, null))).hasSize(3);
+    }
+
+    @Test
+    void zero_quota_allows_no_records() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "0");
+        assertThat(create(torres, "{\"patientName\":\"Ana\"}").getResponse().getStatus()).isEqualTo(409);
+        assertThat(quota(torres).get("reached").asBoolean()).isTrue();
+    }
+
+    @Test
+    void admin_never_has_a_quota() throws Exception {
+        Session admin = admin();
+        jdbc.update("UPDATE users SET record_quota = 0 WHERE id = ?", admin.id());
+        createOk(admin, "Ana");
+        JsonNode q = quota(admin);
+        assertThat(q.get("limit").isNull()).isTrue();
+        assertThat(q.get("used").asLong()).isEqualTo(1);
+        assertThat(q.get("reached").asBoolean()).isFalse();
+    }
+
+    @Test
+    void concurrent_creations_cannot_exceed_the_quota() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "2");
+        createOk(torres, "Ana");
+
+        int threads = 4;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<Integer>> results = new ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            int n = i;
+            Callable<Integer> task = () -> {
+                start.await();
+                return create(torres, "{\"patientName\":\"Paciente " + n + "\"}").getResponse().getStatus();
+            };
+            results.add(pool.submit(task));
+        }
+        start.countDown();
+        List<Integer> statuses = new ArrayList<>();
+        for (Future<Integer> f : results) {
+            statuses.add(f.get());
+        }
+        pool.shutdown();
+
+        assertThat(statuses).filteredOn(s -> s == 201).hasSize(1);
+        assertThat(statuses).filteredOn(s -> s == 409).hasSize(threads - 1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM orthodontic_records WHERE author_id = ?", Long.class, torres.id()))
+            .isEqualTo(2);
+    }
+
+    @Test
+    void users_listing_includes_quota_and_record_count() throws Exception {
+        Session admin = admin();
+        Session torres = register("Dra. Torres");
+        setQuota(admin, torres.id(), "5");
+        createOk(torres, "Ana");
+        createOk(torres, "Luis");
+        createOk(torres, "Rosa");
+
+        JsonNode page = read(mockMvc.perform(get("/api/users").param("size", "100")
+            .header("Authorization", "Bearer " + admin.token())).andReturn());
+        JsonNode row = null;
+        for (JsonNode r : page.get("content")) {
+            if (r.get("id").asLong() == torres.id()) {
+                row = r;
+            }
+        }
+        assertThat(row).isNotNull();
+        assertThat(row.get("recordQuota").asInt()).isEqualTo(5);
+        assertThat(row.get("recordCount").asLong()).isEqualTo(3);
     }
 }

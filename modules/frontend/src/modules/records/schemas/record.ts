@@ -53,6 +53,9 @@ export const MAX_MM = 30;
 export const MIN_MIDLINE_MM = 0.5;
 /** Medidas de los análisis de modelos: 0–99,9 mm con un decimal (paridad con `MAX_MODEL_MM`). */
 export const MAX_MODEL_MM = 99.9;
+/** Ancho mesiodistal de una pieza: 4,0–13,0 mm (como `ContentLimits.MIN/MAX_TOOTH_MM`). */
+export const MIN_TOOTH_MM = 4;
+export const MAX_TOOTH_MM = 13;
 
 const tooLong = (max: number) => `Máximo ${max} caracteres.`;
 const text = (max: number) => z.string().max(max, tooLong(max)).nullish();
@@ -168,6 +171,8 @@ const occlusal = z.object({
 });
 
 const modelMm = decimal(0, MAX_MODEL_MM, "mm");
+/** Ancho mesiodistal de una pieza: lo que mide un diente real. */
+const toothMm = decimal(MIN_TOOTH_MM, MAX_TOOTH_MM, "mm");
 
 const transversal = z.object({
   intercanineUpper: modelMm,
@@ -196,7 +201,7 @@ const moyers = z.object({
     .refine((d) => !d || d <= today(), "La fecha del análisis no puede ser futura.")
     .nullish(),
   lowerIncisors: z
-    .object({ tooth42: modelMm, tooth41: modelMm, tooth31: modelMm, tooth32: modelMm })
+    .object({ tooth42: toothMm, tooth41: toothMm, tooth31: toothMm, tooth32: toothMm })
     .nullish(),
   availableSpace: z
     .object({ mandibleRight: modelMm, mandibleLeft: modelMm, maxillaRight: modelMm, maxillaLeft: modelMm })
@@ -210,30 +215,30 @@ const moyers = z.object({
 /** Anchos de las piezas que se miden en Nance, por arcada (de mesial a mesial del 1er molar). */
 const upperWidths = z
   .object({
-    tooth15: modelMm,
-    tooth14: modelMm,
-    tooth13: modelMm,
-    tooth12: modelMm,
-    tooth11: modelMm,
-    tooth21: modelMm,
-    tooth22: modelMm,
-    tooth23: modelMm,
-    tooth24: modelMm,
-    tooth25: modelMm,
+    tooth15: toothMm,
+    tooth14: toothMm,
+    tooth13: toothMm,
+    tooth12: toothMm,
+    tooth11: toothMm,
+    tooth21: toothMm,
+    tooth22: toothMm,
+    tooth23: toothMm,
+    tooth24: toothMm,
+    tooth25: toothMm,
   })
   .nullish();
 const lowerWidths = z
   .object({
-    tooth45: modelMm,
-    tooth44: modelMm,
-    tooth43: modelMm,
-    tooth42: modelMm,
-    tooth41: modelMm,
-    tooth31: modelMm,
-    tooth32: modelMm,
-    tooth33: modelMm,
-    tooth34: modelMm,
-    tooth35: modelMm,
+    tooth45: toothMm,
+    tooth44: toothMm,
+    tooth43: toothMm,
+    tooth42: toothMm,
+    tooth41: toothMm,
+    tooth31: toothMm,
+    tooth32: toothMm,
+    tooth33: toothMm,
+    tooth34: toothMm,
+    tooth35: toothMm,
   })
   .nullish();
 
@@ -256,7 +261,19 @@ const bolton = z.object({
     .string()
     .refine((d) => !d || d <= today(), "La fecha del análisis no puede ser futura.")
     .nullish(),
-  firstMolars: z.object({ tooth16: modelMm, tooth26: modelMm, tooth46: modelMm, tooth36: modelMm }).nullish(),
+  firstMolars: z.object({ tooth16: toothMm, tooth26: toothMm, tooth46: toothMm, tooth36: toothMm }).nullish(),
+  incisors: z
+    .object({
+      tooth12: toothMm,
+      tooth11: toothMm,
+      tooth21: toothMm,
+      tooth22: toothMm,
+      tooth42: toothMm,
+      tooth41: toothMm,
+      tooth31: toothMm,
+      tooth32: toothMm,
+    })
+    .nullish(),
   interpretation: text(LONG_TEXT),
 });
 

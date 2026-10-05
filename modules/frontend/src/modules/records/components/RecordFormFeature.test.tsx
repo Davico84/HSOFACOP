@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
@@ -79,6 +79,34 @@ describe("orthodontic-records — Crear una historia", () => {
 
     expect(await screen.findByText("Indica el nombre del paciente.")).toBeInTheDocument();
     expect(calls.post).toBe(0);
+  });
+});
+
+describe("orthodontic-records — Cupo de historias al crear", () => {
+  it("con el cupo lleno, el formulario nuevo avisa desde el inicio y no deja crear", async () => {
+    const { calls } = mockRecord();
+    server.use(http.get("*/api/orthodontic-records/quota", () => HttpResponse.json({ limit: 5, used: 5, reached: true })));
+    renderRecordRoutes("/historias/nueva");
+
+    expect(await screen.findByText("Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Crear historia/ })).toBeDisabled();
+    expect(calls.post).toBe(0);
+  });
+
+  it("si el servidor rechaza por cupo lleno (409), muestra el mensaje y no navega", async () => {
+    mockRecord();
+    server.use(
+      http.post("*/api/orthodontic-records", () =>
+        HttpResponse.json({ type: "/errors/record-quota-reached", detail: "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más." }, { status: 409 }),
+      ),
+    );
+    const { router } = renderRecordRoutes("/historias/nueva");
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Paciente" }), "Ana Quispe");
+    await userEvent.click(screen.getByRole("button", { name: /Crear historia/ }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más."));
+    expect(router.state.location.pathname).toBe("/historias/nueva");
   });
 });
 
@@ -192,6 +220,22 @@ describe("orthodontic-records — Abrir un paso no cuenta como cambio", () => {
 
     expect(screen.queryByText(/Cambios sin guardar/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toBeInTheDocument();
+  });
+});
+
+describe("orthodontic-records — Vista previa con cambios sin guardar", () => {
+  it("se deshabilita y un tooltip explica que hay que guardar", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=1");
+    await stepHeading(/Paciente y anamnesis/);
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Paciente" }), " B");
+    const button = screen.getByRole("button", { name: /Vista previa/ });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription("Guarda los cambios para ver la vista previa e imprimir");
+
+    await userEvent.hover(button.parentElement as HTMLElement);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Guarda los cambios para ver la vista previa e imprimir");
   });
 });
 
@@ -457,6 +501,21 @@ describe("orthodontic-records — Análisis de Nance (paso 5)", { timeout: 15_00
     expect(n?.conclusionLower).toBeUndefined();
   });
 
+  it("los puntos 1 y 2 y la discrepancia se leen como tablas (grillas que se apilan en celular)", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openNance();
+
+    const points = screen.getByRole("table", { name: "Espacio disponible y requerido" });
+    expect(within(points).getAllByRole("rowheader").map((h) => h.textContent)).toEqual([
+      "1. SA · espacio disponible o longitud de arco",
+      "2. ST · espacio requerido, ancho m-d de los mesiales al 1er molar",
+    ]);
+    const result = screen.getByRole("table", { name: "Discrepancia óseo dentaria" });
+    expect(within(result).getAllByRole("columnheader").map((h) => h.textContent)).toContain("Discrepancia");
+    expect(within(result).getAllByRole("rowheader").map((h) => h.textContent)).toEqual(["Superior", "Inferior"]);
+  });
+
   it("si falta una pieza no hay ST ni discrepancia y se avisa", async () => {
     mockRecord();
     renderRecordRoutes("/historias/10?paso=5");
@@ -480,24 +539,83 @@ describe("orthodontic-records — Análisis de Bolton (paso 5)", { timeout: 15_0
       upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
       lowerWidths: { tooth45: 7.2, tooth44: 7.0, tooth43: 6.9, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1, tooth33: 6.8, tooth34: 7.1, tooth35: 7.3 },
     },
-    bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, interpretation: "Exceso mandibular leve" },
+    bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, incisors: { tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 }, interpretation: "Exceso mandibular leve" },
   };
 
   async function openPanel(name: RegExp) {
     await userEvent.click(await screen.findByRole("button", { name }));
   }
 
-  it("los anchos de 15 a 25 y 45 a 35 son los mismos de Nance, en los dos sentidos", async () => {
+  it("caninos y premolares son los mismos de Nance, en los dos sentidos, y van sombreados", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Nance/);
+    await openPanel(/^Análisis de Bolton/);
+
+    await fill("Ancho mesiodistal, pieza 13 (mm)", "7.8");
+    expect(screen.getByLabelText("Bolton, pieza 13 (mm)")).toHaveValue(7.8);
+    await fill("Bolton, pieza 33 (mm)", "6.8");
+    expect(screen.getByLabelText("Ancho mesiodistal, pieza 33 (mm)")).toHaveValue(6.8);
+
+    expect(screen.getByLabelText("Bolton, pieza 13 (mm)").closest("td")).toHaveClass("bg-muted/40");
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)").closest("td")).not.toHaveClass("bg-muted/40");
+    expect(screen.getByLabelText("Bolton, pieza 16 (mm)").closest("td")).not.toHaveClass("bg-muted/40");
+    expect(screen.getByText(/Las piezas sombreadas \(caninos y premolares\) se comparten con el análisis de Nance/)).toBeInTheDocument();
+    expect(screen.getByText(/Los incisivos y los primeros molares corresponden exclusivamente al cálculo de Bolton/)).toBeInTheDocument();
+  });
+
+  it("los incisivos de Bolton y de Nance son independientes (ni el ST de Nance cambia)", async () => {
     mockRecord();
     renderRecordRoutes("/historias/10?paso=5");
     await openPanel(/^Análisis de Nance/);
     await openPanel(/^Análisis de Bolton/);
 
     await fill("Ancho mesiodistal, pieza 11 (mm)", "8.6");
-    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(8.6);
-    await userEvent.clear(screen.getByLabelText("Bolton, pieza 31 (mm)"));
-    await fill("Bolton, pieza 31 (mm)", "5.4");
-    expect(screen.getByLabelText("Ancho mesiodistal, pieza 31 (mm)")).toHaveValue(5.4);
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(null);
+    await fill("Bolton, pieza 21 (mm)", "8.5");
+    expect(screen.getByLabelText("Ancho mesiodistal, pieza 21 (mm)")).toHaveValue(null);
+    expect(screen.getByLabelText("Total superior")).toHaveTextContent("—");
+  });
+
+  it("las flechas de un ancho de pieza parten de 4,0 y no salen de 4,0–13,0", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+
+    const cell = screen.getByLabelText("Bolton, pieza 11 (mm)").closest("td") as HTMLElement;
+    await userEvent.click(within(cell).getByRole("button", { name: "Aumentar" }));
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(4);
+    await userEvent.click(within(cell).getByRole("button", { name: "Disminuir" }));
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(4);
+  });
+
+  it("una relación fuera del rango se resalta como alerta", async () => {
+    // Molares inferiores de 13,0: 91,3 / 94,2 → 96,9 %, sobre el rango 87,5–94,8.
+    const out = { ...boltonModels, bolton: { ...boltonModels.bolton, firstMolars: { ...boltonModels.bolton.firstMolars, tooth46: 13, tooth36: 13 } } };
+    mockRecord({ content: { ...recordResponse().content, models: out } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+
+    expect(screen.getByLabelText("Relación total (%)")).toHaveTextContent("96,9 %");
+    const alert = screen.getByText("Fuera del rango");
+    expect(alert).toHaveClass("text-destructive");
+    expect(alert.querySelector("svg")).not.toBeNull();
+    expect(screen.getByText("Dentro del rango")).toHaveClass("text-success");
+  });
+
+  it("un ancho guardado fuera de rango abre sin error y se marca al guardar", async () => {
+    const outOfRange = { ...boltonModels, bolton: { ...boltonModels.bolton, incisors: { ...boltonModels.bolton.incisors, tooth11: 0.3 } } };
+    const { calls } = mockRecord({ content: { ...recordResponse().content, models: outOfRange } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(0.3);
+    expect(screen.queryByText(/Pieza 11:/)).not.toBeInTheDocument();
+    await userEvent.clear(screen.getByLabelText("Bolton, pieza 26 (mm)"));
+    await fill("Bolton, pieza 26 (mm)", "10.3");
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    expect(await screen.findByText("Pieza 11: Mínimo 4 mm.")).toBeInTheDocument();
+    expect(calls.put).toHaveLength(0);
   });
 
   it("calcula la relación total y la anterior con su lado, y guarda los molares", async () => {
@@ -521,5 +639,102 @@ describe("orthodontic-records — Análisis de Bolton (paso 5)", { timeout: 15_0
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     await waitFor(() => expect(calls.put).toHaveLength(1));
     expect(calls.put[0].content?.models.bolton.firstMolars).toEqual({ tooth16: 10.2, tooth26: 10.3, tooth46: 11, tooth36: 11.2 });
+  });
+});
+
+describe("orthodontic-records — Navegación entre pasos con estado y progreso", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** Datos en los pasos 1 (paciente), 2 (facial) y 4 (oclusal). */
+  const withData = () => {
+    const base = recordResponse();
+    return { ...base, content: { ...base.content, facial: { facialType: "MESOFACIAL" }, occlusal: { overjetMm: 3 } } } as RecordResponse;
+  };
+
+  it("escritorio: columna lateral con el estado de cada paso y el progreso", async () => {
+    mockRecord(withData());
+    renderRecordRoutes("/historias/10?paso=2");
+    await stepHeading(/Análisis facial/);
+
+    const nav = screen.getByRole("navigation", { name: "Pasos de la historia clínica" });
+    const steps = within(nav).getAllByRole("button");
+    expect(steps).toHaveLength(8);
+    expect(steps[0]).toHaveAccessibleName(/Paciente y anamnesis.*· con datos/);
+    expect(steps[1]).toHaveAccessibleName(/Análisis facial.*· con datos/);
+    expect(steps[1]).toHaveAttribute("aria-current", "step");
+    expect(steps[2]).toHaveAccessibleName(/Análisis funcional.*· vacío/);
+    expect(steps[3]).toHaveAccessibleName(/Análisis oclusal.*· con datos/);
+    expect(within(nav).getByText("3 de 8 pasos con datos")).toBeInTheDocument();
+    expect(within(nav).getByRole("progressbar", { name: "Progreso de la historia" })).toHaveAttribute("aria-valuetext", "3 de 8 pasos con datos");
+  });
+
+  it("un error del servidor en otro paso lo marca 'con errores'", async () => {
+    server.use(
+      http.get("*/api/orthodontic-records/:id", () => HttpResponse.json(recordResponse())),
+      http.put("*/api/orthodontic-records/:id", () =>
+        HttpResponse.json(
+          { type: "/errors/validation", detail: "Datos inválidos.", errors: [{ field: "content.diagnosis.generalDiagnosis", message: "Máximo 4000 caracteres." }] },
+          { status: 400 },
+        ),
+      ),
+    );
+    renderRecordRoutes("/historias/10?paso=2");
+    await stepHeading(/Análisis facial/);
+
+    await userEvent.click(screen.getByRole("radio", { name: "Mesofacial" }));
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    const nav = screen.getByRole("navigation", { name: "Pasos de la historia clínica" });
+    await waitFor(() => expect(within(nav).getAllByRole("button")[6]).toHaveAccessibleName(/Diagnóstico y planes.*· con errores/));
+  });
+
+  it("historia nueva: los pasos están deshabilitados hasta crearla", async () => {
+    renderRecordRoutes("/historias/nueva");
+    const nav = await screen.findByRole("navigation", { name: "Pasos de la historia clínica" });
+    expect(within(nav).getAllByRole("button").every((b) => (b as HTMLButtonElement).disabled)).toBe(true);
+  });
+
+  /** Pantalla de celular: no se cumple ninguna media query de ancho mínimo. */
+  function phone() {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+  }
+
+  it("celular: el panel 'Pasos' lista los pasos y al elegir uno se cierra y lo abre", async () => {
+    phone();
+    mockRecord(withData());
+    renderRecordRoutes("/historias/10?paso=2");
+    await stepHeading(/Análisis facial/);
+
+    expect(screen.getByText("Paso 2 de 8 · Análisis facial")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Pasos/ }));
+    const panel = await screen.findByRole("dialog", { name: "Pasos de la historia clínica" });
+    expect(within(panel).getByText("3 de 8 pasos con datos")).toBeInTheDocument();
+    await userEvent.click(within(panel).getByRole("button", { name: /Análisis radiográfico/ }));
+
+    await stepHeading(/Análisis radiográfico/);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("celular: con un campo inválido, el panel se cierra, no cambia de paso, enfoca el campo y avisa", async () => {
+    phone();
+    const { calls } = mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await stepHeading(/Análisis de modelos/);
+
+    await userEvent.click(screen.getByRole("button", { name: /^Análisis de Moyers/ }));
+    await userEvent.type(screen.getByLabelText("Pieza 42"), "3");
+    await userEvent.click(screen.getByRole("button", { name: /Pasos/ }));
+    const panel = await screen.findByRole("dialog", { name: "Pasos de la historia clínica" });
+    await userEvent.click(within(panel).getByRole("button", { name: /Firmas/ }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByRole("heading", { level: 2, name: /Análisis de modelos/ })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("Pieza 42")).toHaveFocus());
+    expect(toast.error).toHaveBeenCalledWith("Corrige los campos marcados del paso actual antes de cambiar de paso.");
+    expect(calls.put).toHaveLength(0);
   });
 });

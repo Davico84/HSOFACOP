@@ -25,6 +25,8 @@ export function useSaveRecord() {
     onSuccess: (record) => {
       queryClient.setQueryData(recordKeys.detail(record.id), record);
       void queryClient.invalidateQueries({ queryKey: recordKeys.lists() });
+      // Crear consume cupo: se vuelve a consultar.
+      void queryClient.invalidateQueries({ queryKey: recordKeys.quota() });
     },
   });
 }

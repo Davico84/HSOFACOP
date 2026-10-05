@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countFilled, filledLabel } from "./filled";
+import { countFilled, filledLabel, hasAnyData } from "./filled";
 
 describe("datos registrados de un bloque", () => {
   it("cuenta las hojas con valor en cualquier nivel; vacíos y nulos no cuentan", () => {
@@ -12,5 +12,13 @@ describe("datos registrados de un bloque", () => {
     expect(filledLabel(0)).toBe("Sin datos");
     expect(filledLabel(1)).toBe("1 dato");
     expect(filledLabel(6)).toBe("6 datos");
+  });
+
+  it("hasAnyData: hay dato en cualquier nivel; vacíos y valores por defecto no cuentan", () => {
+    expect(hasAnyData({ a: null, b: "", c: { d: [] } })).toBe(false);
+    expect(hasAnyData({ a: { b: { c: 5.4 } } })).toBe(true);
+    expect(hasAnyData({ habits: ["NONE"] }, { habits: ["NONE"] })).toBe(false);
+    expect(hasAnyData({ habits: ["THUMB"] }, { habits: ["NONE"] })).toBe(true);
+    expect(hasAnyData({ dentist: "Dra. Torres" }, { dentist: "" })).toBe(true);
   });
 });

@@ -8,53 +8,53 @@
 
 export interface UpperArchWidths {
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth15?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth14?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth13?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth12?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth11?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth21?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth22?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth23?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth24?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth25?: number;
 }

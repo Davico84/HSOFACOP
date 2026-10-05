@@ -8,53 +8,53 @@
 
 export interface LowerArchWidths {
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth45?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth44?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth43?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth42?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth41?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth31?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth32?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth33?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth34?: number;
   /**
-   * @minimum 0
-   * @maximum 99.9
+   * @minimum 4
+   * @maximum 13
    */
   tooth35?: number;
 }

@@ -8,6 +8,7 @@ import com.odontorisas.service.records.content.AngleClass;
 import com.odontorisas.service.records.content.AngleRelation;
 import com.odontorisas.service.records.content.AvailableSpace;
 import com.odontorisas.service.records.content.BoltonAnalysis;
+import com.odontorisas.service.records.content.BoltonIncisors;
 import com.odontorisas.service.records.content.Diagnosis;
 import com.odontorisas.service.records.content.FacialAnalysis.FacialPattern;
 import com.odontorisas.service.records.content.FacialAnalysis.PatternIIFeature;
@@ -257,7 +258,7 @@ class RecordNormalizerTest {
         assertThat(out.models().moyers()).isEqualTo(MoyersAnalysis.empty());
         assertThat(out.models().nance()).isEqualTo(NanceAnalysis.empty());
         assertThat(out.models().bolton()).isEqualTo(BoltonAnalysis.empty());
-        assertThat(out.schemaVersion()).isEqualTo(6);
+        assertThat(out.schemaVersion()).isEqualTo(7);
 
         TransversalAnalysis t = new TransversalAnalysis(new BigDecimal("34.5"), null, new BigDecimal("50.1"), null,
             null, null, null, new BigDecimal("50.0"), null, "  Compresión maxilar leve ");
@@ -304,10 +305,11 @@ class RecordNormalizerTest {
     void bolton_subsection_is_filled_when_missing_and_interpretation_trimmed() {
         assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null, null)).bolton()).isEqualTo(BoltonAnalysis.empty());
 
-        BoltonAnalysis b = new BoltonAnalysis(LocalDate.of(2026, 9, 1), null, "  Exceso mandibular ");
+        BoltonAnalysis b = new BoltonAnalysis(LocalDate.of(2026, 9, 1), null, null, "  Exceso mandibular ");
         BoltonAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, null, b)).bolton();
         assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
         assertThat(kept.firstMolars()).isEqualTo(FirstMolarWidths.empty());
+        assertThat(kept.incisors()).isEqualTo(BoltonIncisors.empty());
         assertThat(kept.interpretation()).isEqualTo("Exceso mandibular");
     }
 

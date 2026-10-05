@@ -1,5 +1,6 @@
 package com.odontorisas.service.records;
 
+import com.odontorisas.common.Role;
 import com.odontorisas.common.text.SearchNormalizer;
 import com.odontorisas.persistence.entity.OrthodonticRecord;
 import com.odontorisas.persistence.entity.User;
@@ -42,12 +43,17 @@ public class OrthodonticRecordService {
 
     /**
      * Crea la historia con el siguiente correlativo del autor. La fila del autor queda bloqueada
-     * hasta el commit: dos creaciones simultáneas del mismo usuario se serializan.
+     * hasta el commit: dos creaciones simultáneas del mismo usuario se serializan, así que tampoco
+     * pueden superar juntas su cupo (un USER con cupo lleno recibe 409; un ADMIN no tiene cupo).
      */
     @Transactional
     public RecordView create(RecordActor actor, RecordData data) {
         User author = users.findByIdForUpdate(actor.userId())
             .orElseThrow(() -> new IllegalStateException("El usuario autenticado no existe"));
+        Integer quota = quotaOf(author);
+        if (quota != null && records.countByAuthorId(author.getId()) >= quota) {
+            throw new RecordQuotaReachedException(quota);
+        }
         int seq = records.findMaxRecordSeq(author.getId()) + 1;
         RecordData normalized = normalize(data);
         OrthodonticRecord record = OrthodonticRecord.builder()
@@ -60,6 +66,21 @@ public class OrthodonticRecordService {
             record.setTreatingDentist(author.getFullName());
         }
         return toView(records.saveAndFlush(record));
+    }
+
+    /** Cupo y uso del usuario autenticado (para avisar antes de crear). */
+    @Transactional(readOnly = true)
+    public RecordQuotaView quota(RecordActor actor) {
+        User user = users.findById(actor.userId())
+            .orElseThrow(() -> new IllegalStateException("El usuario autenticado no existe"));
+        Integer quota = quotaOf(user);
+        long used = records.countByAuthorId(user.getId());
+        return new RecordQuotaView(quota, used, quota != null && used >= quota);
+    }
+
+    /** El cupo solo aplica a cuentas USER; un ADMIN nunca tiene límite. */
+    private static Integer quotaOf(User user) {
+        return user.getRole() == Role.USER ? user.getRecordQuota() : null;
     }
 
     @Transactional(readOnly = true)

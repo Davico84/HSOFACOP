@@ -83,8 +83,8 @@ El sistema SHALL presentar la historia como un formulario de 8 pasos en el orden
 - **THEN** el sistema guarda la historia y muestra el paso 3
 - **AND** al reabrir la historia más tarde, los valores del paso 2 siguen ahí
 
-#### Scenario: Saltar a un paso desde el indicador
-- **WHEN** el usuario pulsa el paso 7 en el indicador de pasos estando en el paso 1 con cambios
+#### Scenario: Saltar a un paso desde la lista de pasos
+- **WHEN** el usuario pulsa el paso 7 en la lista de pasos estando en el paso 1 con cambios
 - **THEN** el sistema guarda y abre el paso 7 (los pasos intermedios pueden quedar vacíos)
 
 #### Scenario: Sin cambios no se guarda
@@ -360,7 +360,7 @@ El sistema SHALL registrar el análisis transversal de los modelos de la pág. 5
 - **THEN** después de la hoja del análisis oclusal sale "ANÁLISIS DE MODELOS · Análisis Transversal de los Modelos" con paciente, edad y sexo, las medidas, las diferencias calculadas, el texto de referencia de los promedios y la interpretación
 
 ### Requirement: Análisis de Moyers
-El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de 42, 41, 31 y 32, espacio disponible de mandíbula y maxilar por lado (derecho e izquierdo), predisposición de apiñamiento dental (un texto por fila: Positivo, Nulo y Negativo, escrito por el odontólogo) e interpretación. Las medidas SHALL estar en milímetros, entre 0 y 99,9, con a lo sumo un decimal. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión: la suma de los cuatro incisivos; el espacio requerido de cada arcada con la tabla de Moyers al 75 % a partir de la suma redondeada al 0,5 mm más cercano (igual para ambos lados); y la diferencia disponible − requerido por arcada y lado. La predisposición de apiñamiento SHALL NOT calcularse.
+El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de 42, 41, 31 y 32, espacio disponible de mandíbula y maxilar por lado (derecho e izquierdo), predisposición de apiñamiento dental (un texto por fila: Positivo, Nulo y Negativo, escrito por el odontólogo) e interpretación. Las medidas SHALL estar en milímetros con a lo sumo un decimal: los anchos de 42, 41, 31 y 32 entre 4,0 y 13,0 (el ancho real de una pieza) y los espacios disponibles entre 0 y 99,9. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión: la suma de los cuatro incisivos; el espacio requerido de cada arcada con la tabla de Moyers al 75 % a partir de la suma redondeada al 0,5 mm más cercano (igual para ambos lados); y la diferencia disponible − requerido por arcada y lado. La predisposición de apiñamiento SHALL NOT calcularse.
 
 #### Scenario: Suma y espacio requerido
 - **WHEN** se registran 42 = 6,0, 41 = 5,5, 31 = 5,4 y 32 = 6,1 mm
@@ -387,7 +387,7 @@ El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 de
 - **THEN** la historia se guarda sin errores
 
 #### Scenario: Datos fuera de rango
-- **WHEN** se guarda una medida negativa, de 100 mm o más, con dos decimales, o una fecha futura
+- **WHEN** se guarda un ancho de incisivo menor que 4,0 mm o mayor que 13,0 mm, un espacio disponible negativo o de 100 mm o más, una medida con dos decimales, o una fecha futura
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda
 
 #### Scenario: Historias guardadas antes del cambio
@@ -398,8 +398,12 @@ El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 de
 - **WHEN** se imprime una historia
 - **THEN** después de la hoja del análisis transversal sale "FICHA PARA EL ANÁLISIS DE MOYERS" con nombre, edad y fecha, la ficha con incisivos, suma, disponible, requerido y diferencia, la tabla de predisposición de apiñamiento con lo escrito y la interpretación
 
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
+
 ### Requirement: Análisis de Nance
-El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia óseo dentaria) de la pág. 7 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), espacio disponible (SA) superior e inferior, ancho mesiodistal de las piezas 15 a 25 y 45 a 35, conclusión superior e inferior (escritas por el odontólogo) e interpretación. Las medidas SHALL estar en milímetros, entre 0 y 99,9, con a lo sumo un decimal. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión, el espacio requerido (ST) de cada arcada como la suma de sus 10 piezas y la discrepancia SA − ST, y SHALL mostrar un dibujo de la arcada superior que indica las piezas que se miden. La conclusión SHALL NOT calcularse.
+El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia óseo dentaria) de la pág. 7 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), espacio disponible (SA) superior e inferior, ancho mesiodistal de las piezas 15 a 25 y 45 a 35, conclusión superior e inferior (escritas por el odontólogo) e interpretación. Las medidas SHALL estar en milímetros con a lo sumo un decimal: los anchos de las piezas entre 4,0 y 13,0 y el SA entre 0 y 99,9. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión, el espacio requerido (ST) de cada arcada como la suma de sus 10 piezas y la discrepancia SA − ST, y SHALL mostrar un dibujo de la arcada superior que indica las piezas que se miden. La conclusión SHALL NOT calcularse.
 
 #### Scenario: Espacio requerido y discrepancia
 - **WHEN** se registran las 10 piezas superiores con un total de 73,9 mm y SA superior 70,5 mm
@@ -414,8 +418,12 @@ El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia
 - **THEN** se guarda e imprime tal cual, sin completarse a partir de la discrepancia
 
 #### Scenario: Datos fuera de rango
-- **WHEN** se guarda una medida negativa, de 100 mm o más, con dos decimales, o una fecha futura
+- **WHEN** se guarda un ancho de pieza menor que 4,0 mm o mayor que 13,0 mm, un SA negativo o de 100 mm o más, una medida con dos decimales, o una fecha futura
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda
+
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
 
 #### Scenario: Historias guardadas antes del cambio
 - **WHEN** se abre una historia guardada antes de existir el análisis de Nance
@@ -427,7 +435,7 @@ El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia
 - **AND** la pág. 8 del PDF (en blanco) no se imprime
 
 ### Requirement: Análisis de Bolton
-El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en español, en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de los primeros molares 16, 26, 46 y 36, e interpretación. Los anchos de 15 a 25 y de 45 a 35 SHALL ser los mismos del análisis de Nance (un solo dato, editable desde cualquiera de los dos análisis). Las medidas SHALL estar en milímetros, entre 0 y 99,9, con a lo sumo un decimal. El sistema SHALL calcular, en pantalla y en la impresión, la relación total (12 piezas por arcada; media 91,3 %, rango 87,5–94,8) y la relación anterior (6 piezas; media 77,2 %, rango 74,5–80,4): las sumas, la relación (suma mandibular ÷ suma maxilar × 100), si está dentro del rango y, según quede sobre o bajo la media, el real, el ideal y la diferencia de la arcada mandibular o de la maxilar. La fórmula SHALL mostrarse como fracción, con la suma mandibular sobre la línea y la maxilar debajo.
+El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en español, en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de los incisivos 12, 11, 21, 22, 42, 41, 31 y 32 y de los primeros molares 16, 26, 46 y 36, e interpretación. Los anchos de los caninos y premolares (13, 14, 15, 23, 24, 25, 33, 34, 35, 43, 44 y 45) SHALL ser los mismos del análisis de Nance (un solo dato, editable desde cualquiera de los dos análisis); los incisivos y los primeros molares SHALL ser propios de Bolton. Los anchos SHALL estar entre 4,0 y 13,0 mm, con a lo sumo un decimal. El sistema SHALL calcular, en pantalla y en la impresión, la relación total (12 piezas por arcada; media 91,3 %, rango 87,5–94,8) y la relación anterior (6 piezas; media 77,2 %, rango 74,5–80,4): las sumas, la relación (suma mandibular ÷ suma maxilar × 100), si está dentro del rango y, según quede sobre o bajo la media, el real, el ideal y la diferencia de la arcada mandibular o de la maxilar. La fórmula SHALL mostrarse como fracción, con la suma mandibular sobre la línea y la maxilar debajo.
 
 #### Scenario: Relación total con exceso mandibular
 - **WHEN** la suma de los 12 superiores es 94,2 mm y la de los 12 inferiores 87,5 mm
@@ -442,23 +450,196 @@ El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en espa
 - **WHEN** la relación total es 96,0 %
 - **THEN** se indica que está fuera del rango 87,5–94,8
 
-#### Scenario: Anchos compartidos con Nance
-- **WHEN** el usuario escribe el ancho de la pieza 11 en el análisis de Nance
+#### Scenario: Caninos y premolares compartidos con Nance
+- **WHEN** el usuario escribe el ancho de la pieza 13 en el análisis de Nance
 - **THEN** el mismo valor aparece en la grilla de Bolton, y si lo cambia en Bolton cambia también en Nance
+
+#### Scenario: Incisivos propios de Bolton
+- **WHEN** el usuario escribe el ancho de la pieza 11 en el análisis de Nance
+- **THEN** la pieza 11 de Bolton no cambia
+
+#### Scenario: Incisivos de Bolton no afectan a Nance
+- **WHEN** el usuario escribe el ancho de la pieza 11 en el análisis de Bolton
+- **THEN** la pieza 11 de Nance no cambia, ni su total (ST)
+
+#### Scenario: Aviso de las piezas sombreadas
+- **WHEN** el usuario abre el análisis de Bolton
+- **THEN** solo los caninos y premolares aparecen sombreados y el aviso dice que se comparten con Nance y que los incisivos y los primeros molares corresponden exclusivamente a Bolton
 
 #### Scenario: Falta una pieza
 - **WHEN** falta el ancho de alguna pieza de una suma
 - **THEN** esa suma, su relación y sus resultados quedan vacíos
 
 #### Scenario: Datos fuera de rango
-- **WHEN** se guarda un ancho de molar negativo, de 100 mm o más, con dos decimales, o una fecha futura
+- **WHEN** se guarda un ancho menor que 4,0 mm o mayor que 13,0 mm, con dos decimales, o una fecha futura
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda
 
-#### Scenario: Historias guardadas antes del cambio
-- **WHEN** se abre una historia guardada antes de existir el análisis de Bolton
-- **THEN** el panel aparece vacío (con los anchos que ya tenga Nance) y la historia se guarda sin errores
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
+
+#### Scenario: Ancho guardado fuera de rango
+- **WHEN** se abre una historia que tiene guardado un ancho fuera de 4,0–13,0 mm (de antes de este cambio)
+- **THEN** la historia se abre y muestra el valor sin error
+- **AND** al intentar guardar, el error aparece junto a ese campo y no se guarda hasta corregirlo
+
+#### Scenario: Historias con incisivos en Nance guardadas antes del cambio
+- **WHEN** se abre una historia guardada antes de este cambio que tenía incisivos registrados en Nance
+- **THEN** Bolton muestra esos mismos valores como incisivos propios (los copió la migración), y Nance conserva los suyos
+
+#### Scenario: Historias sin incisivos en Nance guardadas antes del cambio
+- **WHEN** se abre una historia guardada antes de este cambio sin incisivos en Nance
+- **THEN** los incisivos de Bolton aparecen vacíos y la historia se guarda sin errores
 
 #### Scenario: Hoja impresa de Bolton
 - **WHEN** se imprime una historia
 - **THEN** después de la hoja de Nance sale "ANÁLISIS DE BOLTON" con fecha, los anchos de las 24 piezas, la relación total y la anterior con su fórmula, sus resultados y la interpretación
+
+### Requirement: Uso en celular y tablet
+El módulo de historia clínica (listado, formulario de 8 pasos y vista previa) SHALL poder usarse desde 375 px de ancho sin desplazamiento horizontal de la página. Las acciones de cada historia y del formulario SHALL quedar visibles sin desplazarse de lado. Las tablas que no caben en el ancho SHALL desplazarse dentro de su propia caja, con un indicador visual de que hay más contenido. La hoja impresa SHALL NOT cambiar.
+
+#### Scenario: Sin desplazamiento horizontal de página
+- **WHEN** el usuario abre el listado, cualquiera de los 8 pasos (con todos los paneles del paso 5 abiertos) o la vista previa en una pantalla de 375 px o de 768 px de ancho
+- **THEN** la página no se desplaza horizontalmente
+
+#### Scenario: Listado en tarjetas
+- **WHEN** el usuario abre el listado en una pantalla de menos de 1024 px de ancho
+- **THEN** cada historia aparece como una tarjeta con número, paciente, documento, tratante, inicio y fecha de modificación
+- **AND** los botones "Editar" y "Vista previa" de cada historia están visibles sin desplazarse
+
+#### Scenario: Listado en tabla en escritorio
+- **WHEN** el usuario abre el listado en una pantalla de 1024 px o más
+- **THEN** las historias aparecen en la tabla, como hasta ahora
+
+#### Scenario: Paso actual visible
+- **WHEN** el usuario abre un paso en una pantalla de celular
+- **THEN** el encabezado muestra "Paso N de 8" con su título y el botón "Pasos" para abrir la lista
+
+#### Scenario: Vista previa escalada
+- **WHEN** el usuario abre la vista previa en una pantalla más angosta que una hoja A4
+- **THEN** las hojas se reducen para caber en el ancho y el botón "Imprimir" queda visible
+- **AND** al imprimir, las hojas salen en tamaño A4 real, iguales que antes
+
+#### Scenario: Tablas anchas del paso 5
+- **WHEN** una grilla de piezas (Nance o Bolton) o una tabla de espacios no cabe en el ancho
+- **THEN** se desplaza dentro de su caja con la columna de etiquetas fija, y un degradado en el borde indica que hay más contenido hasta llegar al final
+
+#### Scenario: Puntos 1 y 2 de Nance en celular
+- **WHEN** el usuario abre el análisis de Nance en una pantalla de celular
+- **THEN** cada punto (SA y ST) se muestra como un bloque con su etiqueta completa y los campos "Superior" e "Inferior" visibles, sin columnas cortadas
+
+#### Scenario: Barra de acciones compacta
+- **WHEN** el usuario está en un paso del formulario en una pantalla de celular
+- **THEN** "Anterior", "Guardar" y "Siguiente" caben en una sola fila, y "Anterior" y "Siguiente" conservan su nombre para el lector de pantalla
+
+### Requirement: Navegación entre pasos con estado y progreso
+El formulario de la historia SHALL mostrar la lista de sus 8 pasos con el estado de cada uno y el progreso general. El estado de un paso SHALL ser, por prioridad: "con errores" si algún campo del paso es inválido (por la validación del formulario o por un error del servidor marcado en un campo), "con datos" si tiene algún dato registrado, y "vacío" en otro caso. Cada estado SHALL mostrarse con un ícono propio y no solo con el color, y anunciarse al lector de pantalla. El progreso SHALL indicar cuántos de los 8 pasos tienen datos. En pantallas de 1024 px o más la lista SHALL ir en una columna lateral junto al formulario; en pantallas más angostas, en un panel que se abre desde el encabezado del paso. Elegir un paso SHALL seguir guardando antes los cambios, como cualquier cambio de paso.
+
+#### Scenario: Estado de cada paso
+- **WHEN** el usuario abre una historia con datos en los pasos 1, 2 y 4 y sin datos en los demás
+- **THEN** los pasos 1, 2 y 4 aparecen "con datos" y los pasos 3, 5, 6, 7 y 8 "vacíos"
+- **AND** el progreso indica "3 de 8 pasos con datos"
+
+#### Scenario: Paso con errores
+- **WHEN** al guardar, el servidor marca como inválido un campo del paso 7 mientras el usuario está en el paso 2
+- **THEN** el paso 7 aparece "con errores", resaltado como alerta, aunque tenga otros datos
+
+#### Scenario: El estado se actualiza al escribir
+- **WHEN** el usuario escribe el primer dato de un paso vacío
+- **THEN** ese paso pasa a "con datos" y el progreso aumenta en uno, sin guardar todavía
+
+#### Scenario: Columna lateral en escritorio
+- **WHEN** el usuario abre un paso en una pantalla de 1024 px o más
+- **THEN** a la izquierda del formulario se ven los 8 pasos con su número, título, página del PDF y estado, el paso actual resaltado y la barra de progreso
+
+#### Scenario: Panel de pasos en celular
+- **WHEN** el usuario, en una pantalla de menos de 1024 px, pulsa "Pasos" en el encabezado y elige otro paso
+- **THEN** se abre un panel con los 8 pasos, sus estados y el progreso; al elegir el paso, el panel se cierra y se abre ese paso (guardando antes si hay cambios)
+
+#### Scenario: Estado accesible
+- **WHEN** el lector de pantalla recorre la lista de pasos
+- **THEN** cada paso se anuncia con su número, su título y su estado ("con datos", "vacío" o "con errores"), y el paso actual como paso actual
+
+#### Scenario: Pasos deshabilitados en historia nueva
+- **WHEN** el usuario está creando una historia que todavía no se guardó
+- **THEN** los pasos de la lista (en la columna lateral o en el panel) están deshabilitados hasta crearla
+
+#### Scenario: Navegación deshabilitada durante el guardado
+- **WHEN** se está guardando la historia
+- **THEN** los pasos de la lista están deshabilitados hasta que termine
+
+#### Scenario: Error de validación al cambiar de paso desde el panel
+- **WHEN** en una pantalla de celular el usuario elige otro paso en el panel y el paso actual tiene un campo inválido
+- **THEN** el panel se cierra, no cambia de paso, el foco va al campo inválido y un aviso pide corregir los campos marcados
+
+### Requirement: Límite de historias por tratante
+Al crear una historia clínica, si el autor es un `USER` con cupo y ya creó tantas historias como su cupo, el sistema SHALL rechazar la creación con `409` y el mensaje "Alcanzaste el máximo de N historias clínicas. Comunícate con el administrador para solicitar más.", sin crear nada. La verificación SHALL hacerse de forma que dos creaciones simultáneas no superen el cupo. Editar, imprimir y buscar las historias existentes SHALL seguir igual. Un `ADMIN` no tiene cupo. En el listado, el tratante con cupo SHALL ver cuántas historias usó de su cupo ("N de M historias"), y, si llegó al tope, "Nueva historia" SHALL estar deshabilitado con el aviso visible.
+
+#### Scenario: Crear dentro del cupo
+- **WHEN** un `USER` con cupo 5 y 4 historias crea una historia
+- **THEN** se crea normalmente y el listado muestra "5 de 5 historias"
+
+#### Scenario: Crear con el cupo lleno
+- **WHEN** un `USER` con cupo 5 y 5 historias intenta crear otra
+- **THEN** la API responde `409` (`/errors/record-quota-reached`) con "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más." y no crea la historia
+
+#### Scenario: Botón deshabilitado al llegar al tope
+- **WHEN** un `USER` con el cupo lleno abre el listado de historias
+- **THEN** "Nueva historia" está deshabilitado y se ve el aviso "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más."
+
+#### Scenario: Cupo cero sin historias
+- **WHEN** un `USER` con cupo 0 y ninguna historia abre el listado
+- **THEN** el estado vacío muestra "Nueva historia" deshabilitado con el aviso de que alcanzó el máximo
+
+#### Scenario: Abrir el formulario nuevo con el cupo lleno
+- **WHEN** un `USER` con el cupo lleno abre directamente la pantalla de nueva historia
+- **THEN** ve el aviso desde el inicio y "Crear historia" está deshabilitado
+- **AND** si el servidor rechaza una creación por cupo, el formulario muestra el aviso y no navega
+
+#### Scenario: Editar con el cupo lleno
+- **WHEN** un `USER` con el cupo lleno edita, guarda o imprime una de sus historias
+- **THEN** todo funciona como siempre
+
+#### Scenario: Sin límite por defecto
+- **WHEN** un `USER` sin cupo asignado crea historias
+- **THEN** puede crear todas las que quiera y el listado no muestra "N de M"
+
+#### Scenario: Creaciones simultáneas
+- **WHEN** un `USER` con cupo 5 y 4 historias envía dos creaciones al mismo tiempo
+- **THEN** se crea una sola y la otra recibe `409`
+
+#### Scenario: El ADMIN no tiene cupo
+- **WHEN** un `ADMIN` crea historias
+- **THEN** nunca se le aplica un límite
+
+### Requirement: Volver al listado desde la historia
+La historia clínica (edición y nueva) SHALL mostrar arriba a la izquierda, sobre el título, el enlace "Historias clínicas" con una flecha hacia atrás. El enlace SHALL llevar al listado con la búsqueda y la página que tenía la última vez que se vio en la pestaña, aunque después se haya cambiado de paso, creado la historia o abierto la vista previa; sin un listado previo SHALL llevar a `/historias`. Con cambios sin guardar SHALL pedir la misma confirmación que cualquier salida del formulario. El listado recordado SHALL borrarse al cerrar sesión.
+
+#### Scenario: Vuelve con la búsqueda y la página
+- **WHEN** el usuario busca "quispe", pasa a la página 2, abre una historia, cambia de paso y pulsa "Historias clínicas"
+- **THEN** vuelve a `/historias?q=quispe&pagina=2`
+
+#### Scenario: Después de crear una historia
+- **WHEN** el usuario abre "Nueva historia" desde el listado con la búsqueda "quispe", crea la historia y pulsa "Historias clínicas"
+- **THEN** vuelve a `/historias?q=quispe`
+
+#### Scenario: Después de la vista previa
+- **WHEN** el usuario abre la vista previa desde la historia, pulsa "Volver" y luego "Historias clínicas"
+- **THEN** vuelve al listado con la búsqueda y la página que tenía
+
+#### Scenario: Sin listado previo
+- **WHEN** el usuario abre una historia directamente por su dirección, sin haber pasado por el listado en esa pestaña, y pulsa "Historias clínicas"
+- **THEN** vuelve a `/historias`
+
+#### Scenario: Con cambios sin guardar
+- **WHEN** el usuario tiene cambios sin guardar y pulsa "Historias clínicas"
+- **THEN** se pide confirmación; al quedarse sigue en el paso con sus cambios y al salir va al listado
+
+#### Scenario: Historia no encontrada
+- **WHEN** el usuario abre una historia ajena o inexistente y pulsa "Volver a las historias"
+- **THEN** vuelve al listado con la búsqueda y la página recordadas (o a `/historias` si no hay)
+
+#### Scenario: Cierre de sesión
+- **WHEN** el usuario cierra sesión y otro inicia sesión en la misma pestaña
+- **THEN** el enlace de este último lleva a `/historias`, sin la búsqueda anterior
 

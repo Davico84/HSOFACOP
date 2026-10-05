@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -130,5 +130,111 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
 
     expect(await screen.findByRole("heading", { level: 2, name: /Paciente y anamnesis/ })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/historias/10");
+  });
+});
+
+describe("orthodontic-records — Listado en celular y tablet", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** Pantalla de menos de 1024 px: la media query de escritorio no se cumple. */
+  function narrowScreen() {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+  }
+
+  it("bajo 1024 px cada historia es una tarjeta con sus datos y sus acciones visibles", async () => {
+    narrowScreen();
+    mockList(() => page([summary({ documentType: "DNI", documentNumber: "74125896", treatmentStartDate: "2026-05-19" })]));
+    renderRecordRoutes("/historias", "USER");
+
+    const list = await screen.findByRole("list", { name: "Historias clínicas" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    const card = within(list).getAllByRole("listitem")[0];
+    expect(within(card).getByText("AEO-001")).toBeInTheDocument();
+    expect(within(card).getByRole("heading", { name: "Ana Quispe" })).toBeInTheDocument();
+    expect(within(card).getByText("DNI 74125896")).toBeInTheDocument();
+    expect(within(card).getByText("19/05/2026")).toBeInTheDocument();
+    expect(within(card).queryByText("Autor")).not.toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: "Editar historia AEO-001" })).toHaveAttribute("href", "/historias/10?paso=1");
+    expect(within(card).getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toHaveAttribute("href", "/historias/10/imprimir");
+  });
+
+  it("ADMIN ve el autor en cada tarjeta", async () => {
+    narrowScreen();
+    mockList(() => page([summary({ authorName: "Dr. Carlos Medina" })]));
+    renderRecordRoutes("/historias", "ADMIN");
+
+    const card = (await screen.findAllByRole("listitem"))[0];
+    expect(within(card).getByText("Autor")).toBeInTheDocument();
+    expect(within(card).getByText("Dr. Carlos Medina")).toBeInTheDocument();
+  });
+});
+
+/** Cupo del tratante autenticado (reemplaza el "sin límite" global). */
+function mockQuota(limit: number | null, used: number) {
+  server.use(
+    http.get("*/api/orthodontic-records/quota", () =>
+      HttpResponse.json({ limit, used, reached: limit != null && used >= limit }),
+    ),
+  );
+}
+
+const QUOTA_FULL = "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más.";
+
+describe("orthodontic-records — Cupo de historias en el listado", () => {
+  it("sin cupo: no muestra el uso y 'Nueva historia' está disponible", async () => {
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "USER");
+    await screen.findByRole("row", { name: /AEO-001/ });
+
+    expect(screen.queryByText(/de \d+ historias/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Nueva historia/ })).toHaveAttribute("href", "/historias/nueva");
+  });
+
+  it("por debajo del cupo: muestra 'N de M historias' y se puede crear", async () => {
+    mockQuota(5, 3);
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "USER");
+
+    expect(await screen.findByText("3 de 5 historias")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Nueva historia/ })).toHaveAttribute("href", "/historias/nueva");
+    expect(screen.queryByText(QUOTA_FULL)).not.toBeInTheDocument();
+  });
+
+  it("cupo lleno: 'Nueva historia' deshabilitado y el aviso visible", async () => {
+    mockQuota(5, 5);
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "USER");
+
+    expect(await screen.findByText(QUOTA_FULL)).toBeInTheDocument();
+    expect(screen.getByText("5 de 5 historias")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Nueva historia/ });
+    expect(link).toHaveAttribute("aria-disabled", "true");
+    expect(link).not.toHaveAttribute("href");
+  });
+
+  it("cupo 0 sin historias: el botón del estado vacío también queda deshabilitado", async () => {
+    mockQuota(0, 0);
+    mockList(() => page([]));
+    renderRecordRoutes("/historias", "USER");
+
+    expect(await screen.findByText("Todavía no hay historias clínicas.")).toBeInTheDocument();
+    await waitFor(() =>
+      screen.getAllByRole("link", { name: /Nueva historia/ }).forEach((link) => expect(link).toHaveAttribute("aria-disabled", "true")),
+    );
+    expect(screen.getByText(/Alcanzaste el máximo de 0 historias clínicas/)).toBeInTheDocument();
+  });
+
+  it("ADMIN no ve uso de cupo", async () => {
+    mockList(() => page([summary()]));
+    renderRecordRoutes("/historias", "ADMIN");
+    await screen.findByRole("row", { name: /AEO-001/ });
+
+    expect(screen.queryByText(/de \d+ historias/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Nueva historia/ })).toHaveAttribute("href", "/historias/nueva");
   });
 });

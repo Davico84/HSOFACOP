@@ -1,19 +1,21 @@
 import { LogOut } from "lucide-react";
 import { cn } from "@/modules/core/utils/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/modules/core/ui/tooltip";
+import { iconOnlyClasses, type IconOnly } from "./iconOnly";
 
 interface SidebarLogoutButtonProps {
   onLogout: () => void;
   isLoggingOut: boolean;
-  /** Barra compacta (tablet): solo icono; la etiqueta queda para lectores de pantalla. */
-  compact?: boolean;
+  /** Solo ícono (barra compacta o contraída); la etiqueta queda para lectores de pantalla. */
+  iconOnly?: IconOnly;
 }
 
 /**
  * Acción de cerrar sesión al pie de la barra lateral (mismo aspecto que un ítem de navegación).
- * En la barra compacta muestra "Cerrar sesión" en un tooltip solo visual (ver NavItem).
+ * En la barra compacta o contraída muestra "Cerrar sesión" en un tooltip solo visual (ver NavItem).
  */
-export function SidebarLogoutButton({ onLogout, isLoggingOut, compact = false }: SidebarLogoutButtonProps) {
+export function SidebarLogoutButton({ onLogout, isLoggingOut, iconOnly }: SidebarLogoutButtonProps) {
+  const classes = iconOnlyClasses(iconOnly);
   const button = (
     <button
       type="button"
@@ -26,20 +28,20 @@ export function SidebarLogoutButton({ onLogout, isLoggingOut, compact = false }:
         "hover:bg-destructive/10 hover:text-destructive",
         "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:pointer-events-none disabled:opacity-50",
-        compact && "justify-center lg:justify-start",
+        classes.item,
       )}
     >
       <LogOut className="size-5 shrink-0" aria-hidden="true" />
-      <span className={cn(compact && "sr-only lg:not-sr-only")}>
+      <span className={classes.label}>
         {isLoggingOut ? "Cerrando sesión…" : "Cerrar sesión"}
       </span>
     </button>
   );
-  if (!compact) return button;
+  if (!iconOnly) return button;
   return (
     <Tooltip>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="right" className="lg:hidden">
+      <TooltipContent side="right" className={classes.tooltip}>
         Cerrar sesión
       </TooltipContent>
     </Tooltip>

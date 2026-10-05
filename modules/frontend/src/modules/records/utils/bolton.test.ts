@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOLTON_RATIOS, boltonWidth } from "../config/bolton";
+import { BOLTON_RATIOS, boltonWidth, boltonWidthPath } from "../config/bolton";
 import { boltonResult, sumWidths } from "./bolton";
 
 const [total, anterior] = BOLTON_RATIOS;
@@ -38,11 +38,18 @@ describe("análisis de Bolton", () => {
     expect(boltonResult(anterior, () => null)).toMatchObject({ ratio: null, excess: null });
   });
 
-  it("los molares salen de Bolton y el resto de Nance", () => {
-    const models = { nance: { upperWidths: { tooth11: 8.6 }, lowerWidths: { tooth31: 5.4 } }, bolton: { firstMolars: { tooth16: 10.2 } } };
+  it("molares e incisivos salen de Bolton; caninos y premolares, de Nance", () => {
+    const models = {
+      nance: { upperWidths: { tooth11: 8.6, tooth13: 7.8 }, lowerWidths: { tooth31: 5.4, tooth33: 6.8 } },
+      bolton: { firstMolars: { tooth16: 10.2 }, incisors: { tooth11: 8.7 } },
+    };
     expect(boltonWidth(models, 16)).toBe(10.2);
-    expect(boltonWidth(models, 11)).toBe(8.6);
-    expect(boltonWidth(models, 31)).toBe(5.4);
-    expect(boltonWidth(models, 26)).toBeUndefined();
+    expect(boltonWidth(models, 11)).toBe(8.7);
+    expect(boltonWidth(models, 31)).toBeUndefined();
+    expect(boltonWidth(models, 13)).toBe(7.8);
+    expect(boltonWidth(models, 33)).toBe(6.8);
+    expect(boltonWidthPath(21)).toBe("content.models.bolton.incisors.tooth21");
+    expect(boltonWidthPath(44)).toBe("content.models.nance.lowerWidths.tooth44");
+    expect(() => boltonWidthPath(17)).toThrow();
   });
 });

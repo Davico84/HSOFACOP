@@ -39,9 +39,10 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | WALA–EV | Distancia del borde WALA (unión mucogingival) al eje vestibular (EV) de cada diente inferior; normas: canino 0,6, 1er premolar 0,8, 2do premolar 1,3, 1er molar 2,0, 2do molar 2,2 mm. |
 | Análisis de Moyers | Predicción del espacio requerido para canino y premolares a partir de la suma de los incisivos inferiores (42, 41, 31, 32), con la tabla de Moyers al 75 % (suma redondeada al 0,5 mm; tabla de 19,5 a 29,0 mm). Diferencia = espacio disponible − requerido, por arcada y lado. |
 | Análisis de Nance (Nance & Carey) | Discrepancia óseo dentaria por arcada: SA (espacio disponible o longitud de arco, medido) − ST (espacio requerido: suma de los anchos mesiodistales de 15→25 o 45→35, de mesial a mesial del 1er molar). Negativa = falta espacio. |
-| Análisis de Bolton | Discrepancia de tamaño dentario entre arcadas: relación total (12 piezas, 1er molar a 1er molar; media 91,3 %, rango 87,5–94,8) y relación anterior (6 piezas; media 77,2 %, rango 74,5–80,4) = suma mandibular ÷ suma maxilar × 100. Sobre la media hay exceso mandibular; bajo la media, exceso maxilar (real, ideal y diferencia de esa arcada). |
+| Análisis de Bolton | Discrepancia de tamaño dentario entre arcadas (comparte con Nance solo caninos y premolares; incisivos y 1eros molares son propios): relación total (12 piezas, 1er molar a 1er molar; media 91,3 %, rango 87,5–94,8) y relación anterior (6 piezas; media 77,2 %, rango 74,5–80,4) = suma mandibular ÷ suma maxilar × 100. Sobre la media hay exceso mandibular; bajo la media, exceso maxilar (real, ideal y diferencia de esa arcada). |
 | Predisposición de apiñamiento | Tabla 2 de la ficha de Moyers: el odontólogo anota qué arcada/lado resulta positivo (sobra espacio), nulo o negativo (falta espacio). |
 | Apoderado | Quien firma por un paciente menor de 18 años. |
+| Cupo de historias | Máximo de historias clínicas que un tratante (`USER`) puede crear; lo fija el `ADMIN` por cuenta. Sin cupo = sin límite. Al llegar al tope no crea más, pero edita e imprime las suyas. |
 
 ---
 
@@ -73,6 +74,7 @@ Cuenta de acceso al sistema.
 - `email` (único), `passwordHash` (BCrypt), `role` (`ADMIN` | `USER`), `fullName`, `createdAt`/`updatedAt`.
 - Bloqueo temporal por intentos fallidos (`add-login-lockout`): `failedLoginAttempts` (fallos consecutivos, se resetea con un login correcto o al fallar tras expirar el bloqueo) y `lockedUntil` (fin del bloqueo automático; nulo = sin bloqueo). Solo los modifican `UPDATE` atómicos; la entidad los lee pero no los escribe.
 - Estado administrativo (`users`, `add-user-account-status`): `status` (`ACTIVE` | `DISABLED`), **independiente** de `lockedUntil` (si compartieran campo, expirar el bloqueo automático reactivaría una cuenta deshabilitada a mano). Las cuentas nuevas nacen `ACTIVE`; solo un `ADMIN` cambia el estado, y solo de cuentas `USER`; una cuenta `DISABLED` no inicia ni renueva sesión.
+- Cupo de historias (`users` + `orthodontic-records`, `add-record-quota`): `recordQuota` (entero 0–9999 o nulo = sin límite, por defecto nulo). Solo aplica a cuentas `USER` y solo lo cambia un `ADMIN` (a una cuenta `ADMIN` responde 409); el `ADMIN` nunca se limita. El uso es la cantidad de historias con ese `author` (no se guarda). Se controla al crear, bajo el mismo bloqueo de la fila del autor que el correlativo (dos creaciones simultáneas no pasan el tope); cupo lleno → 409 `record-quota-reached`. Un cupo por debajo de lo creado se permite y no toca las existentes; editar no consulta el cupo.
 - Candidatos para cambios posteriores de `users` (perfil, alta por admin, roles): `username`, `phone`.
 
 ### `authentication` → **RefreshToken** *(construida)*
@@ -84,7 +86,7 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 - `author` (FK `User`, nunca cambia) y `recordSeq` / `recordNumber`: correlativo **por autor** (`AEO-001`, `AEO-002`…), asignado al crear y no editable.
 - Paciente embebido (sin registro maestro de pacientes): `patientName` (obligatorio), `documentType` (`DNI` 8 dígitos | `FOREIGNER_CARD` 9 | `PASSPORT` 6–12, solo dígitos) + `documentNumber`, `patientSex` (`FEMALE` | `MALE`), `birthDate`, `birthPlace`, `address`, `phone`, `treatmentStartDate`, `treatingDentist` (por defecto el autor).
 - Edad **calculada** (años cumplidos a la fecha de inicio de tratamiento o a hoy); menor de 18 → firma el apoderado.
-- `content` (JSON, `schemaVersion` 6): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`, `models.moyers`, `models.nance` y `models.bolton` —este solo guarda los 1eros molares; el resto de sus anchos son los de Nance—: medidas en mm 0–99,9 con un decimal, fechas de análisis no futuras, predisposición de apiñamiento y conclusiones escritas, interpretaciones; las diferencias con promedios y normas, la suma de incisivos, el requerido de Moyers, el ST y la discrepancia de Nance y las relaciones de Bolton se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
+- `content` (JSON, `schemaVersion` 7): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`, `models.moyers`, `models.nance` y `models.bolton` —guarda sus incisivos y 1eros molares; caninos y premolares son los de Nance—: anchos de pieza en 4,0–13,0 mm y demás medidas en 0–99,9 mm, con un decimal, fechas de análisis no futuras, predisposición de apiñamiento y conclusiones escritas, interpretaciones; las diferencias con promedios y normas, la suma de incisivos, el requerido de Moyers, el ST y la discrepancia de Nance y las relaciones de Bolton se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
 - `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
 - Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
 - Notas de evolución: no se registran en el sistema; se imprime la hoja en blanco (pág. 14 del PDF) y se llena a mano (decisión del usuario).
@@ -109,6 +111,7 @@ erDiagram
         int failedLoginAttempts
         DateTime lockedUntil
         String status
+        Integer recordQuota
     }
     RefreshToken {
         Long id PK

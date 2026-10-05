@@ -242,6 +242,19 @@ class OrthodonticRecordsControllerTest {
     }
 
     @Test
+    void tooth_widths_outside_4_to_13_mm_are_400() throws Exception {
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"lowerIncisors\":{\"tooth42\":3.9}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.moyers.lowerIncisors.tooth42"));
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"nance\":{\"lowerWidths\":{\"tooth35\":13.1}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.nance.lowerWidths.tooth35"));
+        create("{\"patientName\":\"A\",\"content\":{\"models\":{\"bolton\":{\"incisors\":{\"tooth21\":0.3}}}}}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("content.models.bolton.incisors.tooth21"));
+    }
+
+    @Test
     void moyers_date_in_the_future_is_400() throws Exception {
         String tomorrow = java.time.LocalDate.now().plusDays(1).toString();
         create("{\"patientName\":\"A\",\"content\":{\"models\":{\"moyers\":{\"analysisDate\":\"" + tomorrow + "\"}}}}")

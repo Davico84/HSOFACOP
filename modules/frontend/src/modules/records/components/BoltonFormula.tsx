@@ -27,7 +27,12 @@ export function BoltonFormula({ count, mandibular, maxillary, quotient, ratio, p
   const quotientText = quotient === null ? "" : quotient.toFixed(4).replace(".", ",");
   return (
     <div
-      className={cn("flex flex-wrap items-center gap-x-3 gap-y-1", print ? "text-[10pt]" : "text-sm", className)}
+      className={cn(
+        // En celular se apila: la fracción y, debajo, "= cociente × 100 = relación %".
+        "flex gap-x-3 gap-y-2",
+        print ? "flex-row items-center text-[10pt]" : "flex-col items-center text-sm sm:flex-row",
+        className,
+      )}
       role="group"
       aria-label={`Fórmula: suma mandibular ${count} sobre suma maxilar ${count}, por 100`}
     >
@@ -42,11 +47,13 @@ export function BoltonFormula({ count, mandibular, maxillary, quotient, ratio, p
         <span className={cn(box, "mt-1")} aria-label={`Suma maxilar ${count}`}>{value(maxillary)}</span>
         <span className="pt-1 pr-1">mm</span>
       </div>
-      <span>=</span>
-      <span className={box}>{quotientText}</span>
-      <span>× 100 =</span>
-      <span className={cn(box, "font-semibold")} aria-label={`Relación ${count === 12 ? "total" : "anterior"} (%)`}>
-        {ratio === null ? "" : `${formatMm(ratio)} %`}
+      <span className="flex items-center gap-x-3">
+        <span>=</span>
+        <span className={box}>{quotientText}</span>
+        <span>× 100 =</span>
+        <span className={cn(box, "font-semibold")} aria-label={`Relación ${count === 12 ? "total" : "anterior"} (%)`}>
+          {ratio === null ? "" : `${formatMm(ratio)} %`}
+        </span>
       </span>
     </div>
   );

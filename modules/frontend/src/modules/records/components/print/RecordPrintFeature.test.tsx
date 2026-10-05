@@ -215,7 +215,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
         upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
         lowerWidths: { tooth45: 7.2, tooth44: 7.0, tooth43: 6.9, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1, tooth33: 6.8, tooth34: 7.1, tooth35: 7.3 },
       },
-      bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, interpretation: "Exceso mandibular leve" },
+      bolton: { analysisDate: "2026-09-01", firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, incisors: { tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 }, interpretation: "Exceso mandibular leve" },
     };
     serve(withContent({ models: boltonModels }, { ageYears: 13 }));
     renderRecordRoutes("/historias/10/imprimir");

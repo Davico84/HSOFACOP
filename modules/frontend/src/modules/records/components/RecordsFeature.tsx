@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Loader2, Plus, Search } from "lucide-react";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { Loader2, Search } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
-import { buttonVariants } from "@/modules/core/ui/button-variants";
 import { IconInput } from "@/modules/core/ui/icon-input";
 import { useDebouncedValue } from "@/modules/core/hooks/useDebouncedValue";
+import { useMediaQuery } from "@/modules/core/hooks/useMediaQuery";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
 import { useSessionStore } from "@/store/useSessionStore";
-import { PATHS } from "@/routes/paths";
+import { useRecordsListStore } from "@/store/useRecordsListStore";
 import { useRecords } from "../hooks/useRecords";
+import { RecordsCardList } from "./RecordsCardList";
 import { RecordsTable } from "./RecordsTable";
 import { RecordsPagination } from "./RecordsPagination";
 import { RecordsEmptyState } from "./RecordsEmptyState";
+import { NewRecordLink } from "./NewRecordLink";
+import { RecordQuotaNotice } from "./RecordQuotaNotice";
 
 /**
  * Historias clínicas: búsqueda, listado paginado y acceso a crear, abrir e imprimir. La búsqueda y
@@ -24,7 +27,17 @@ export function RecordsFeature() {
   const [search, setSearch] = useState(query);
   const debounced = useDebouncedValue(search, 300);
   const records = useRecords(query, page);
+  // Tabla desde 1024 px; debajo, tarjetas (la tabla dejaba las acciones fuera de la pantalla).
+  const desktop = useMediaQuery("(min-width: 1024px)", true);
   const isAdmin = useSessionStore((s) => s.user?.role === "ADMIN");
+  const userId = useSessionStore((s) => s.user?.id);
+  const { pathname, search: urlSearch } = useLocation();
+  const setListUrl = useRecordsListStore((s) => s.setListUrl);
+
+  // Recuerda esta URL (búsqueda y página) para "← Historias clínicas" desde una historia.
+  useEffect(() => {
+    if (userId != null) setListUrl(`${pathname}${urlSearch}`, userId);
+  }, [pathname, urlSearch, userId, setListUrl]);
 
   // Lo escrito pasa a la URL al dejar de teclear (y vuelve a la página 1).
   useEffect(() => {
@@ -85,7 +98,11 @@ export function RecordsFeature() {
   } else {
     content = (
       <>
-        <RecordsTable records={records.data.content} showAuthor={isAdmin} />
+        {desktop ? (
+          <RecordsTable records={records.data.content} showAuthor={isAdmin} />
+        ) : (
+          <RecordsCardList records={records.data.content} showAuthor={isAdmin} />
+        )}
         <RecordsPagination
           page={records.data.page}
           totalPages={records.data.totalPages}
@@ -108,10 +125,9 @@ export function RecordsFeature() {
             {isAdmin ? "Historias de ortodoncia de todos los tratantes." : "Tus historias clínicas de ortodoncia."}
           </p>
         </div>
-        <Link to={PATHS.RECORD_NEW} className={buttonVariants()}>
-          <Plus className="size-4" aria-hidden="true" /> Nueva historia
-        </Link>
+        <NewRecordLink />
       </header>
+      {isAdmin ? null : <RecordQuotaNotice />}
       <div className="max-w-md">
         <IconInput
           type="search"

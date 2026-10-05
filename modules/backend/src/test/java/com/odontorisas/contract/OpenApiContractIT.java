@@ -229,7 +229,7 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         List<String> ids = allOperations().stream().map(op -> op.get("operationId").stringValue()).toList();
         assertThat(ids).doesNotHaveDuplicates()
             .containsExactlyInAnyOrder("register", "login", "refresh", "logout", "listUsers", "changeUserStatus",
-                "listRecords", "createRecord", "getRecord", "updateRecord");
+                "listRecords", "createRecord", "getRecord", "updateRecord", "changeRecordQuota", "getRecordQuota");
     }
 
     // --- Gestión de usuarios (add-user-account-status) ---
@@ -245,7 +245,7 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         assertThat(strings(page.get("required")))
             .containsExactlyInAnyOrder("content", "page", "size", "totalElements", "totalPages", "last");
         assertThat(names(schemaByName("UserSummaryResponse").get("properties")))
-            .isEqualTo(Set.of("id", "email", "fullName", "role", "status"));
+            .isEqualTo(Set.of("id", "email", "fullName", "role", "status", "recordQuota", "recordCount"));
 
         String status = "/api/users/{id}/status";
         assertThat(schemaName(status, "patch", "200", MediaType.APPLICATION_JSON_VALUE)).isEqualTo("UserSummaryResponse");

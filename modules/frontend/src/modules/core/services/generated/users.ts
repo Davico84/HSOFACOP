@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type {
+  ChangeRecordQuotaRequest,
   ChangeUserStatusRequest,
   ListUsersParams,
   PageResponseUserSummaryResponse,
@@ -32,6 +33,20 @@ export const changeUserStatus = (
       );
     }
   /**
+ * @summary Asignar, cambiar o quitar el cupo de historias de una cuenta USER
+ */
+export const changeRecordQuota = (
+    id: number,
+    changeRecordQuotaRequest: ChangeRecordQuotaRequest,
+ ) => {
+      return customInstance<UserSummaryResponse>(
+      {url: `/api/users/${id}/record-quota`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: changeRecordQuotaRequest
+    },
+      );
+    }
+  /**
  * @summary Listar las cuentas (paginado, máximo 100 por página)
  */
 export const listUsers = (
@@ -44,4 +59,5 @@ export const listUsers = (
       );
     }
   export type ChangeUserStatusResult = NonNullable<Awaited<ReturnType<typeof changeUserStatus>>>
+export type ChangeRecordQuotaResult = NonNullable<Awaited<ReturnType<typeof changeRecordQuota>>>
 export type ListUsersResult = NonNullable<Awaited<ReturnType<typeof listUsers>>>
