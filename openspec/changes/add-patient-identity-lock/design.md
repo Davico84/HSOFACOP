@@ -1,70 +1,65 @@
 ## Context
 
-- La vista preliminar (`RecordPrintFeature`) carga la historia **guardada** (`GET /api/orthodontic-records/{id}`) y el botón "Imprimir" llama a `window.print()`. Con cambios sin guardar, "Vista previa" está deshabilitado en el formulario. Imprimir con Ctrl+P sobre la vista también funciona hoy.
-- `OrthodonticRecordService.update` guarda la historia completa con control de versión; el autoguardado y los guardados manuales pasan por ahí.
+- La vista preliminar (`RecordPrintFeature`) carga la historia **guardada** y "Imprimir" llama a `window.print()`; Ctrl+P también imprime hoy. Con cambios sin guardar, "Vista previa" está deshabilitado en el formulario.
+- `OrthodonticRecordService.update` guarda la historia completa con control de versión (`@Version`); el autoguardado y los guardados manuales pasan por ahí. `create` ya bloquea la fila del autor (`findByIdForUpdate`) para el cupo.
 - Con el cupo inicial 1 (`update-default-record-quota`), reescribir la única historia para otro paciente e imprimirla es la forma de saltarse el cupo.
+- Revisión externa (Codex): la vista en el navegador no puede garantizar que nadie imprima por fuera; la autoridad debe ser el servidor y la concurrencia debe estar definida.
 
 ## Goals / Non-Goals
 
-**Goals:** que una historia no sirva para imprimir a varios pacientes, sin estorbar la corrección y reimpresión normales de un mismo paciente.
+**Goals:** que una historia no sirva para imprimir a varios pacientes; avance impreso permitido y distinguible; corrección controlada por el ADMIN con rastro.
 
-**Non-Goals:** bloquear capturas de pantalla, limitar reimpresiones, historial de cambios, fijar datos no identificatorios.
+**Non-Goals:** PDF generado en el servidor, impedir capturas o herramientas de desarrollador, limitar reimpresiones, historial de cambios de la historia, notificaciones.
 
 ## Decisions
 
-### Qué se fija y cuándo
-- **Identidad** = `patientName`, `documentType`, `documentNumber`, `birthDate` (normalizados como al guardar: sin espacios sobrantes). El sexo, domicilio, teléfono, lugar de nacimiento, fecha de inicio y el contenido clínico quedan libres.
-- **Cuándo**: en la primera impresión registrada. Columna `patient_locked_at TIMESTAMPTZ NULL` (V14); nula = desbloqueada (también las historias impresas antes de este cambio).
+### Datos fijos y forma canónica
+- **Fijos**: `patientName`, `documentType`, `documentNumber`, `birthDate`, `patientSex`, `birthPlace` (no cambian en una persona). **Editables**: `address`, `phone`, `treatmentStartDate`, `treatingDentist` y `content`. La UI muestra el alcance en el aviso ("Fijos al imprimir: nombre, documento, fecha y lugar de nacimiento y sexo").
+- `PatientIdentity` (servicio de records): record con la forma canónica de esos campos —texto: `Normalizer.NFKC`, luego `SearchNormalizer.normalize` (sin tildes, minúsculas, espacios colapsados); documento: tipo + solo dígitos; fecha y sexo tal cual—. Se compara `PatientIdentity.of(guardado)` con `PatientIdentity.of(normalizado entrante)`; distinto → `PatientLockedException` (`409 /errors/patient-locked`, solo `detail`). Corregir escritura (mayúsculas, tildes, espacios) pasa.
 
-### Registro de la impresión
-- `POST /api/orthodontic-records/{id}/print` (autor o ADMIN; ajena → `404`, como `get`): si `patient_locked_at` es nulo lo fija con el `Clock`; si ya estaba, no cambia nada (idempotente). Responde `200` con la historia (`RecordResponse`, ahora con `patientLockedAt`). No incrementa `version` si ya estaba fijada; si la fija, es una escritura normal (la vista la recarga).
-- El botón "Imprimir": `await printRecord(id)` → si responde bien, `window.print()`; si falla, toast con el error y "Reintentar", sin diálogo.
+### Concurrencia
+- `print`, `update`, `requestUnlock`, `discardUnlockRequest` y `unlock` cargan la historia con bloqueo de fila (`@Lock(PESSIMISTIC_WRITE)` en un `findWithAuthorByIdForUpdate`), así se serializan.
+- La **primera** impresión fija `patient_locked_at` (cambio de la entidad → `@Version` sube). Un `PUT` con la versión anterior recibe `409 stale-record` y no guarda nada. **Reimpresión**: no modifica la entidad (idempotente, versión igual).
+- Solicitar/descartar/desbloquear son condicionales al estado leído bajo el bloqueo (fijada, pendiente o no), así dos solicitudes simultáneas dejan una sola y la otra recibe `409`.
 
-### Ctrl+P no imprime sin registrar
-- La vista agrega al contenedor de hojas un atributo `data-print-ready` **solo** mientras el botón abre el diálogo (se pone tras el `POST` y se quita en `afterprint`).
-- CSS de impresión (en `PAGE_CSS`): `@media print { [data-print-guard]:not([data-print-ready]) .print-sheets { display: none } [data-print-guard]:not([data-print-ready]) .print-guard-notice { display: block } }`; el aviso "Usa el botón Imprimir de la vista preliminar." está oculto en pantalla y al imprimir con el botón.
-  - *Por qué CSS y no interceptar `beforeprint`*: `beforeprint` no puede cancelar la impresión ni esperar al servidor; el CSS decide qué sale en el papel de forma síncrona.
+### Registro de la impresión (servidor = autoridad)
+- `POST /api/orthodontic-records/{id}/print` (`operationId: printRecord`; autor o ADMIN; ajena → `404`): cuerpo opcional `{ filledSteps }` (mismo formato y validación que al guardar). Si la historia no tiene `filled_steps` (anterior a las métricas), se guarda el enviado (el servidor agrega el paso 1). Fija `patient_locked_at` con el `Clock` si era nulo. Responde `200` `{ record: RecordResponse, printedOn: "2026-10-05", clinicalFilledSteps: 4 }` (`printedOn` = fecha en la zona del `Clock`; `clinicalFilledSteps` = bits 1–7 de `filled_steps`).
+- La vista: `await printRecord(id, { filledSteps })` → guarda `printedOn`/`clinicalFilledSteps` para la marca → pone `data-print-ready` en el contenedor → `window.print()`; quita `data-print-ready` en `afterprint` **y** en un `setTimeout(0)` tras volver `window.print()` (bloqueante en los navegadores de escritorio) y al recuperar el foco, así nunca queda activo.
+- CSS (en `PAGE_CSS`): `@media print { .print-sheets { display: none } [data-print-ready] .print-sheets { display: block } .print-guard-notice { display: block } [data-print-ready] .print-guard-notice { display: none } }`; en pantalla el aviso está oculto. **Por defecto oculto**: si el atributo nunca llegó (hidratación incompleta, Ctrl+P), no salen las hojas.
+- **Riesgo residual documentado**: con herramientas de desarrollador o capturas se pueden obtener las hojas sin registrar; la mitigación de negocio es que la historia oficial lleva firmas sobre el papel.
 
 ### Marca de avance
-- La vista preliminar calcula los pasos clínicos con datos de la historia **guardada** con la misma función del formulario (`filledStepsOf(toFormValues(record))`, pasos 1–7); no depende de `filled_steps` del servidor (puede estar "sin calcular" en historias viejas).
-- Incompleta (< 7) → `PrintPage` muestra en el margen superior, posicionada en absoluto dentro del área sin contenido de la hoja, una línea pequeña: "AVANCE · N de 7 pasos clínicos con datos · impreso el dd/mm/aaaa" (fecha local del momento de la vista). Al ser absoluta, no desplaza renglones ni logos: se verifica con Edge headless + PyMuPDF que una impresión con marca y otra sin marca tienen las mismas hojas y posiciones.
-- Completa → sin marca. La marca también se ve en la vista previa en pantalla (es lo que saldrá).
+- Usa `printedOn` y `clinicalFilledSteps` del registro (servidor), no el reloj ni el cálculo del navegador. `< 7` → `PrintPage` muestra la línea en el margen superior, en posición absoluta dentro del área sin contenido (no desplaza nada); `7` → sin marca. En pantalla, antes de imprimir, la vista muestra la marca con la fecha de hoy como vista previa de lo que saldrá.
+- Verificación con Edge headless + PyMuPDF: misma cantidad de hojas, márgenes y posiciones con y sin marca.
 
-### Rechazo de cambios de identidad
-- En `update`, si `patient_locked_at` no es nulo y alguno de los 4 campos normalizados difiere del guardado → `PatientLockedException` (`BusinessException`, `409`, tipo `patient-locked`, solo `detail`, como el cupo). Se compara **después** de normalizar, así un espacio sobrante no dispara el 409.
-- El ADMIN también está sujeto al bloqueo: corrige desbloqueando explícitamente (deja rastro en `patient_locked_at` = nulo hasta reimprimir).
+### Desbloqueo, eventos y solicitudes
+- Columnas en `orthodontic_records`: `patient_locked_at TIMESTAMPTZ NULL`, `unlock_requested_at TIMESTAMPTZ NULL`, `unlock_request_reason VARCHAR(200) NULL`; índice parcial `ix_orthodontic_records_unlock_pending ON orthodontic_records (unlock_requested_at) WHERE unlock_requested_at IS NOT NULL`.
+- Tabla `record_unlock_events (id, record_id FK, admin_id FK users, action VARCHAR(20) CHECK IN ('UNLOCKED','DISCARDED'), reason VARCHAR(200) NULL, created_at TIMESTAMPTZ)`, solo inserción. Las cuentas no se borran en el sistema (solo se deshabilitan), así que las FK son `RESTRICT`.
+- `DELETE /{id}/patient-lock` (`unlockPatient`, solo ADMIN): sin fijar → `409 patient-not-locked`; si no, `patient_locked_at` nulo, evento `UNLOCKED` con el motivo pendiente (si había) y se cierra la solicitud; `204`.
+- `POST /{id}/unlock-request` (`requestPatientUnlock`, autor o ADMIN con acceso; ajena → `404`): `{ reason }` (`@NotBlank @Size(max=200)`); sin fijar → `409 patient-not-locked`; pendiente → `409 unlock-already-requested`; si no, guarda fecha y motivo; `204`.
+- `DELETE /{id}/unlock-request` (`discardPatientUnlockRequest`, solo ADMIN): sin pendiente → `204` (idempotente, sin evento); si no, evento `DISCARDED` con el motivo y limpia; `204`.
+- `RecordResponse`: `patientLockedAt` (nullable), `lastUnlock { byName, at }` (nullable; último evento `UNLOCKED`), `unlockRequest { requestedAt, reason }` (nullable). `RecordSummaryResponse.patientLocked` (boolean requerido).
+- Cuentas deshabilitadas no inician sesión ni renuevan (`add-user-account-status`), así que no pueden imprimir ni solicitar; no requiere lógica extra.
 
-### Desbloqueo (ADMIN) y su registro
-- `DELETE /api/orthodontic-records/{id}/patient-lock` (`@PreAuthorize("hasRole('ADMIN')")`): pone `patient_locked_at` en nulo, guarda `patient_unlocked_at` (`Clock`) y `patient_unlocked_by` (FK `users`, el actor) y cierra la solicitud pendiente (`unlock_requested_at`/`unlock_request_reason` en nulo); `204`. Historia inexistente → `404`. Sin la identidad fijada → `409` (nada que desbloquear).
-- Solo el **último** desbloqueo (columnas en la historia, sin tabla de historial): suficiente para ver quién y cuándo sin introducir auditoría completa.
-- `RecordResponse`: `patientLockedAt`, `lastUnlock { byName, at }` (nulo si nunca) y `unlockRequest { requestedAt, reason }` (nulo si no hay).
-- UI: en el formulario, junto al aviso de identidad fija: para el ADMIN, "Desbloquear paciente" (con confirmación) y, si hay solicitud, su motivo y "Descartar solicitud"; para todos, "Desbloqueada por X el dd/mm/aaaa" si hubo un desbloqueo.
-
-### Solicitud de desbloqueo
-- Columnas en la historia: `unlock_requested_at TIMESTAMPTZ NULL`, `unlock_request_reason VARCHAR(200) NULL` (una sola solicitud pendiente por historia; no hace falta tabla aparte).
-- `POST /{id}/unlock-request` (autor o ADMIN con acceso; ajena → `404`): cuerpo `{ reason }` (`@NotBlank @Size(max=200)`); identidad no fijada → `409 /errors/patient-not-locked`; solicitud ya pendiente → `409 /errors/unlock-already-requested`; si no, guarda fecha y motivo; `204`.
-- `DELETE /{id}/unlock-request` (solo ADMIN): descarta (pone ambos en nulo); `204`; sin solicitud → `204` igual (idempotente).
-- UI tratante: con la identidad fijada y sin solicitud, "Solicitar desbloqueo" abre un `Dialog` con el motivo; con solicitud, texto "Desbloqueo solicitado el dd/mm/aaaa" sin botón.
-
-### Candado en el listado
-- `RecordSummaryResponse.patientLocked` (boolean, `patient_locked_at IS NOT NULL`), sin consultas extra (es columna de la misma fila).
-- Tabla y tarjetas: ícono `Lock` con `aria-label="Identidad del paciente fija"` junto al número; con `Tooltip` en escritorio.
-
-### Solicitudes en Inicio del ADMIN
-- `GET /api/dashboard/admin` suma `unlockRequests: { total, items: [{ recordId, recordNumber, patientName, authorName, requestedAt, reason }] }`, hasta 10 de la más antigua a la más nueva (`ORDER BY unlock_requested_at ASC, id ASC`), con el mismo patrón que `quotas`.
-- `AdminDashboard` agrega `UnlockRequestsList` (un componente por archivo): cada fila enlaza a `recordPath(id, 1)`; vacío → "No hay solicitudes de desbloqueo". Desbloquear/descartar invalida `dashboardKeys.all` y el detalle de la historia.
-
-### Frontend del formulario
-- Con `record.patientLockedAt`, los campos de identidad del paso 1 se renderizan `disabled` con un `FieldHint` ("Fijado al imprimir la historia el <fecha>. Pide al administrador que lo desbloquee para corregirlo."). Como están deshabilitados, el autoguardado nunca envía cambios en ellos.
-- Si igual llega un `409 patient-locked` (p. ej. otra pestaña desactualizada), se muestra el mensaje y se recarga la historia.
+### Frontend
+- Datos fijos en `Step1Patient`: controles **de solo lectura** (`readOnly` en texto/fecha; selección única deshabilitada visualmente pero con su valor en el formulario vía `Controller`), nunca `disabled` del registro de RHF, para que `getValues` y el autoguardado los sigan enviando. Aviso `FieldHint` con el alcance y "Desbloqueada por X el dd/mm" si aplica.
+- Tratante: "Solicitar desbloqueo" (`Dialog` con motivo) o "Desbloqueo solicitado el …". ADMIN: "Desbloquear datos del paciente" (confirmación) y, si hay solicitud, su motivo y "Descartar solicitud". `409 patient-locked` (otra pestaña) → mensaje y recarga.
+- Candado (`Lock`, `aria-label`) en `RecordsTable`/`RecordsCardList`. `UnlockRequestsList` en `AdminDashboard` (hasta 10 + total). Desbloquear/descartar/solicitar invalida `recordKeys.detail`, `recordKeys.lists` y `dashboardKeys.all`.
 
 ## Risks / Trade-offs
 
-- [Capturas de pantalla de la vista previa] → No se pueden impedir; se documenta. La historia oficial requiere firmas sobre el papel.
-- [Un tratante imprime con un error de tipeo] → El ADMIN desbloquea; es un paso extra deliberado.
-- [Navegadores que ignoran el CSS de impresión] → Todos los navegadores soportados respetan `@media print`; se verifica con Edge headless (imprimir sin `data-print-ready` → solo el aviso).
-- [Reimpresión de la misma historia en otra sesión] → El `POST` es idempotente: reimprimir no cambia nada.
+- [Herramientas de desarrollador o capturas] → No se impide; documentado. La oficial requiere firmas.
+- [Error de tipeo tras imprimir] → Solicitud y desbloqueo del ADMIN, con rastro.
+- [ADMIN cómplice] → No se impide, pero cada desbloqueo queda registrado (quién, cuándo, motivo) para auditarlo.
+- [Bloqueo de fila en cada guardado] → Las historias tienen un solo autor activo; la contención es mínima (como en `create`).
+- [Cambio del alcance de "identidad"] → Sexo y lugar de nacimiento se fijan también (decisión tomada por revisión: no cambian en una persona); domicilio y teléfono quedan editables porque sí cambian.
 
 ## Migration Plan
 
-V14 agrega `patient_locked_at` nullable; las historias existentes quedan desbloqueadas. Contrato y cliente regenerados en el mismo PR. Rollback: la columna se ignora y el botón vuelve a imprimir sin registrar.
+V14 agrega columnas nullable, el índice parcial y la tabla de eventos; las historias existentes quedan desbloqueadas. Contrato y cliente en el mismo PR. Rollback: columnas y tabla se ignoran y el botón vuelve a imprimir sin registrar.
+
+## Orden de implementación
+
+1. Backend completo con sus IT en verde (bloqueo, concurrencia, forma canónica, eventos, solicitudes) **antes** del frontend.
+2. Contrato y cliente.
+3. Frontend (impresión → formulario → listado/Inicio) y verificación de impresión.
