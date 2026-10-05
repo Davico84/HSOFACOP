@@ -57,4 +57,4 @@
   - **Render**: el monitor externo a `/actuator/health/liveness` cada 10 min (UptimeRobot o cron-job.org) es obligatorio. El health check de Render, a la misma ruta, no lo sustituye. Presupuesto de 750 h/mes. `HEALTH_SHOW_DETAILS=never`. Medir RSS y arranque en el primer despliegue y ajustar `JAVA_TOOL_OPTIONS` solo tras medir.
   - **Neon**: cadena directa con `sslmode=require`, no `-pooler`. Misma región. La base duerme y el pool lo permite. Copias de seguridad pendientes en `add-database-backups`.
   - **Condición previa a desplegar**: la cookie de refresh `SameSite=Lax` exige el mismo *site* entre frontend y API. Opciones: proxy/rewrite al mismo origen (preferida), dominio propio con subdominios o `SameSite=None` (descartada). El proxy debe esperar el arranque en frío: Vercel Hobby compatible (120 s), Netlify no compatible (26 s), Render Static Sites a validar con una prueba real. La decisión y la prueba van en el change de despliegue.
-- [ ] 3.3 Al archivar: `docs/vision.md` ✅
+- [x] 3.3 Al archivar: `docs/vision.md` ✅
