@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { Loader2, Search } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
 import { IconInput } from "@/modules/core/ui/icon-input";
@@ -7,6 +7,7 @@ import { useDebouncedValue } from "@/modules/core/hooks/useDebouncedValue";
 import { useMediaQuery } from "@/modules/core/hooks/useMediaQuery";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
 import { useSessionStore } from "@/store/useSessionStore";
+import { useRecordsListStore } from "@/store/useRecordsListStore";
 import { useRecords } from "../hooks/useRecords";
 import { RecordsCardList } from "./RecordsCardList";
 import { RecordsTable } from "./RecordsTable";
@@ -29,6 +30,14 @@ export function RecordsFeature() {
   // Tabla desde 1024 px; debajo, tarjetas (la tabla dejaba las acciones fuera de la pantalla).
   const desktop = useMediaQuery("(min-width: 1024px)", true);
   const isAdmin = useSessionStore((s) => s.user?.role === "ADMIN");
+  const userId = useSessionStore((s) => s.user?.id);
+  const { pathname, search: urlSearch } = useLocation();
+  const setListUrl = useRecordsListStore((s) => s.setListUrl);
+
+  // Recuerda esta URL (búsqueda y página) para "← Historias clínicas" desde una historia.
+  useEffect(() => {
+    if (userId != null) setListUrl(`${pathname}${urlSearch}`, userId);
+  }, [pathname, urlSearch, userId, setListUrl]);
 
   // Lo escrito pasa a la URL al dejar de teclear (y vuelve a la página 1).
   useEffect(() => {

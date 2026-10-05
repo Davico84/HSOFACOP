@@ -25,6 +25,7 @@ import { StaleRecordBanner } from "./StaleRecordBanner";
 import { LeaveConfirmDialog } from "./LeaveConfirmDialog";
 import { RecordPrintLink } from "./RecordPrintLink";
 import { RecordPrintPending } from "./RecordPrintPending";
+import { RecordsBackLink } from "./RecordsBackLink";
 
 interface RecordFormProps {
   /** Historia cargada; `null` = nueva (se crea al guardar el paso 1). */
@@ -145,7 +146,8 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
     <FormProvider {...form}>
       <section aria-labelledby="record-title" className="flex flex-col gap-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+          <div className="flex flex-col gap-1">
+            <RecordsBackLink />
             <h1 id="record-title" className="text-2xl font-bold">
               {record ? `Historia ${record.recordNumber}` : "Nueva historia clínica"}
             </h1>

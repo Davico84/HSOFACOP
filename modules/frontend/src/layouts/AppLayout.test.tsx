@@ -9,6 +9,7 @@ import { appRoutes } from "@/routes";
 import { RouteError } from "@/modules/core/components/RouteError";
 import { TooltipProvider } from "@/modules/core/ui/tooltip";
 import { useSessionStore, type SessionUser } from "@/store/useSessionStore";
+import { useRecordsListStore } from "@/store/useRecordsListStore";
 import { useSidebarStore } from "@/store/useSidebarStore";
 
 const ANA: SessionUser = { id: 1, email: "ana@empresa.test", role: "USER", fullName: "Ana Pérez" };
@@ -126,6 +127,7 @@ describe("app-shell — Identidad en la cabecera y cierre de sesión en la barra
       }),
     );
     signIn();
+    useRecordsListStore.getState().setListUrl("/historias?q=quispe", 1);
     const user = userEvent.setup();
     renderApp("/");
 
@@ -137,6 +139,8 @@ describe("app-shell — Identidad en la cabecera y cierre de sesión en la barra
 
     release();
     await waitFor(() => expect(useSessionStore.getState().status).toBe("unauthenticated"));
+    // La búsqueda del listado (puede tener datos de pacientes) no sobrevive al cierre de sesión.
+    expect(useRecordsListStore.getState().listUrl).toBeNull();
     expect(await screen.findByRole("button", { name: /iniciar sesión/i })).toBeInTheDocument();
   });
 });
