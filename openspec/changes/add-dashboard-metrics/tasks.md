@@ -18,9 +18,9 @@
 
 ## 3. Frontend
 
-- [ ] 3.1 `filledStepsOf(values)` (función pura con el criterio de `useStepStatus`, que pasa a usarla) y envío de `filledSteps` al crear y en cada guardado; invalidar `dashboardKeys.all` al crear/guardar, al cambiar un cupo y al cambiar el estado de una cuenta
-- [ ] 3.2 `modules/dashboard` (un componente por archivo): `DashboardFeature` por rol, `UserDashboard` (tarjetas, completitud con aviso de sin calcular, datos faltantes, pasos vacíos, para retomar, estado sin historias) y `AdminDashboard` (usuarios, historias, barras por mes, tratantes marcando deshabilitados, cupos con total); listas en lugar de tablas (375 px sin scroll horizontal); valores visibles en cada barra; barras con divisor mínimo 1; meses rotulados sin `new Date`; borrar los datos de ejemplo
-- [ ] 3.3 Tests Vitest de los scenarios (USER y ADMIN, vacíos, aviso de sin calcular, promedio "—", enlaces de retomar con y sin último paso y su nombre accesible, barras con todo en cero y valores visibles, rótulos de mes, tratante deshabilitado marcado, total de cupos) y de `filledStepsOf`; revisión visual claro/oscuro a 375 y 1280 px (sin scroll horizontal, foco visible); `pnpm validate` verde
+- [x] 3.1 `filledStepsOf(values)` (función pura con el criterio de `useStepStatus`, que pasa a usarla) y envío de `filledSteps` al crear y en cada guardado; invalidar `dashboardKeys.all` al crear/guardar, al cambiar un cupo y al cambiar el estado de una cuenta
+- [x] 3.2 `modules/dashboard` (un componente por archivo): `DashboardFeature` por rol, `UserDashboard` (tarjetas, completitud con aviso de sin calcular, datos faltantes, pasos vacíos, para retomar, estado sin historias) y `AdminDashboard` (usuarios, historias, barras por mes, tratantes marcando deshabilitados, cupos con total); listas en lugar de tablas (375 px sin scroll horizontal); valores visibles en cada barra; barras con divisor mínimo 1; meses rotulados sin `new Date`; borrar los datos de ejemplo
+- [x] 3.3 Tests Vitest de los scenarios (USER y ADMIN, vacíos, aviso de sin calcular, promedio "—", enlaces de retomar con y sin último paso y su nombre accesible, barras con todo en cero y valores visibles, rótulos de mes, tratante deshabilitado marcado, total de cupos) y de `filledStepsOf`; revisión visual claro/oscuro a 375 y 1280 px (sin scroll horizontal, foco visible); `pnpm validate` verde
 
 ## 4. Docs y cierre
 
