@@ -17,11 +17,11 @@
 
 ## 3. Frontend
 
-- [ ] 3.1 Vista preliminar: "Imprimir" registra (con `filledSteps`) y abre el diálogo; error → toast con reintentar; `data-print-ready` puesto solo tras el registro y quitado en `afterprint`, tras volver `window.print()` y al recuperar el foco; CSS con hojas ocultas por defecto al imprimir y aviso
-- [ ] 3.2 Marca de avance en `PrintPage` con `printedOn`/`clinicalFilledSteps` del servidor (vista previa con la fecha de hoy), en posición absoluta sin mover el contenido; sin marca si está completa
-- [ ] 3.3 Formulario: datos fijos de solo lectura (sin `disabled` de RHF) con aviso de alcance y último desbloqueo; "Solicitar desbloqueo" (Dialog con motivo) y estado pendiente; "Desbloquear datos del paciente" (confirmación) y "Descartar solicitud" para el ADMIN; manejo del `409 patient-locked`
-- [ ] 3.4 Candado en el listado (tabla y tarjetas) y `UnlockRequestsList` en Inicio del ADMIN; invalidar detalle, listado y dashboard al solicitar/desbloquear/descartar
-- [ ] 3.5 Tests Vitest de los scenarios (registro antes del diálogo, error sin diálogo, `data-print-ready` se quita al cancelar/terminar, marca con N y fecha del servidor y sin marca si completa, datos fijos de solo lectura, autoguardado conserva los datos fijos en el cuerpo, solicitar/pendiente, desbloquear/descartar del ADMIN, candado, solicitudes en Inicio, 409); verificación con Edge headless + PyMuPDF: Ctrl+P → solo el aviso; con el botón → 13 hojas con las mismas posiciones con y sin marca; `pnpm validate` verde
+- [x] 3.1 Vista preliminar: "Imprimir" registra (con `filledSteps`) y abre el diálogo; error → toast con reintentar; `data-print-ready` puesto solo tras el registro y quitado en `afterprint`, tras volver `window.print()` y al recuperar el foco; CSS con hojas ocultas por defecto al imprimir y aviso
+- [x] 3.2 Marca de avance en `PrintPage` con `printedOn`/`clinicalFilledSteps` del servidor (vista previa con la fecha de hoy), en posición absoluta sin mover el contenido; sin marca si está completa
+- [x] 3.3 Formulario: datos fijos de solo lectura (sin `disabled` de RHF) con aviso de alcance y último desbloqueo; "Solicitar desbloqueo" (Dialog con motivo) y estado pendiente; "Desbloquear datos del paciente" (confirmación) y "Descartar solicitud" para el ADMIN; manejo del `409 patient-locked`
+- [x] 3.4 Candado en el listado (tabla y tarjetas) y `UnlockRequestsList` en Inicio del ADMIN; invalidar detalle, listado y dashboard al solicitar/desbloquear/descartar
+- [x] 3.5 Tests Vitest de los scenarios (registro antes del diálogo, error sin diálogo, `data-print-ready` se quita al cancelar/terminar, marca con N y fecha del servidor y sin marca si completa, datos fijos de solo lectura, autoguardado conserva los datos fijos en el cuerpo, solicitar/pendiente, desbloquear/descartar del ADMIN, candado, solicitudes en Inicio, 409); verificación con Edge headless + PyMuPDF: Ctrl+P → solo el aviso; con el botón → 13 hojas con las mismas posiciones con y sin marca; `pnpm validate` verde
 
 ## 4. Docs y cierre
 
