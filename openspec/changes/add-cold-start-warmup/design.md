@@ -8,7 +8,7 @@
   - el cómputo se suspende tras ~5 min sin actividad; las conexiones persistentes, los keepalives o las reconexiones frecuentes lo impiden;
   - cupo de 100 CU-hora al mes y 1 GB de almacenamiento por proyecto (pricing vigente al proponer).
 - **Actuator**: expone `health,info`; `/actuator/health/**` y `/actuator/info` son públicos en `PublicPaths`. Hoy `show-details: always` (decisión consciente para local, `docs/backend.md` §11.1).
-- **Pool**: HikariCP gestionado por Spring Boot 4.0.6; `~/.m2` tiene 7.0.2 (a confirmar con `mvn dependency:tree`). Sin configuración: `minimumIdle` = `maximumPoolSize` = 10 y `keepaliveTime` = 120 000 ms.
+- **Pool**: HikariCP 7.0.2 gestionado por Spring Boot 4.0.6 (confirmado con `mvn dependency:tree`; Awaitility 4.3.0 vía `spring-boot-starter-test`). Sin configuración: `minimumIdle` = `maximumPoolSize` = 10 y `keepaliveTime` = 120 000 ms.
 - **Frontend**: `RootLayout` llama a `useSessionBootstrap` (single-flight `/auth/refresh`) y muestra "Cargando…" mientras el `status` es `idle`/`loading`. **Toda carga de la app** pasa por ahí, con o sin sesión: es la primera petición al backend.
 - **Sesión**: refresh token en cookie `HttpOnly; Secure; SameSite=Lax; Path=/auth`. CSRF está deshabilitado porque la cookie se protege con `SameSite=Lax` + `POST` (`SecurityConfig`).
 

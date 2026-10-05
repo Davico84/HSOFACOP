@@ -2,22 +2,22 @@
 
 ## 1. Backend
 
-- [ ] 1.1 `application.yml`: `management.endpoint.health.probes.enabled: true` y `show-details: ${HEALTH_SHOW_DETAILS:always}`
-- [ ] 1.2 `PublicPaths` sin `/actuator/info`; en `PublicPathsTest`, aserción explícita `PublicPaths.matches("/actuator/info")` falsa
-- [ ] 1.3 `application.yml`: `spring.datasource.hikari` con:
+- [x] 1.1 `application.yml`: `management.endpoint.health.probes.enabled: true` y `show-details: ${HEALTH_SHOW_DETAILS:always}`
+- [x] 1.2 `PublicPaths` sin `/actuator/info`; en `PublicPathsTest`, aserción explícita `PublicPaths.matches("/actuator/info")` falsa
+- [x] 1.3 `application.yml`: `spring.datasource.hikari` con:
   - `minimum-idle: ${DB_POOL_MIN_IDLE:0}`;
   - `idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:60000}`;
   - `keepalive-time: 0`;
   - `maximum-pool-size: ${DB_POOL_MAX_SIZE:5}`.
 
   Sumar las tres variables a `secrets.properties.example`.
-- [ ] 1.4 `HealthPingIT`: liveness sin sesión → `200`, `status` `UP`, sin `db`; con un `HealthIndicator` de prueba en `DOWN` (`@TestConfiguration`), `/actuator/health` responde `503` y liveness sigue `200 UP`; `/actuator/info` sin sesión → `401`
-- [ ] 1.5 `HealthDetailsIT` (`@SpringBootTest(properties = "management.endpoint.health.show-details=never")`): `/actuator/health` sin `components`
-- [ ] 1.6 `DataSourcePoolIT`:
+- [x] 1.4 `HealthPingIT`: liveness sin sesión → `200`, `status` `UP`, sin `db`; con un `HealthIndicator` de prueba en `DOWN` (`@TestConfiguration`), `/actuator/health` responde `503` y liveness sigue `200 UP`; `/actuator/info` sin sesión → `401`
+- [x] 1.5 `HealthDetailsIT` (`@SpringBootTest(properties = "management.endpoint.health.show-details=never")`): `/actuator/health` sin `components`
+- [x] 1.6 `DataSourcePoolIT`:
   - propiedades efectivas del `HikariDataSource` (0 / 0 / 60 000 / 5);
   - con `idle-timeout` de 10 s solo en el test (mínimo de Hikari), tras abrir y devolver conexiones, esperar con Awaitility (incluido en `spring-boot-starter-test`; `pollInterval` 100 ms, `atMost` 90 s, por el housekeeper de 30 s) hasta que `getHikariPoolMXBean().getTotalConnections()` sea 0. No se toca la propiedad interna `com.zaxxer.hikari.housekeeping.periodMs`;
   - por separado, tras `softEvictConnections()` una consulta responde.
-- [ ] 1.7 `mvn dependency:tree`: confirmar HikariCP 7.0.2 (y Awaitility 4.3.0) y registrarlo en el design. `mvn verify` verde
+- [x] 1.7 `mvn dependency:tree`: confirmar HikariCP 7.0.2 (y Awaitility 4.3.0) y registrarlo en el design. `mvn verify` verde
 
 ## 2. Frontend
 

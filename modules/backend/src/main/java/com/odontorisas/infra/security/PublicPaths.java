@@ -17,7 +17,7 @@ public final class PublicPaths {
 
     public static final List<String> PATTERNS = List.of(
         "/auth/**",
-        "/actuator/health/**", "/actuator/info",
+        "/actuator/health/**",
         "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html");
 
     private static final List<PathPattern> PARSED = PATTERNS.stream()
