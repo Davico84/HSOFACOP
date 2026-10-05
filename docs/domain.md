@@ -42,7 +42,10 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | Análisis de Bolton | Discrepancia de tamaño dentario entre arcadas (comparte con Nance solo caninos y premolares; incisivos y 1eros molares son propios): relación total (12 piezas, 1er molar a 1er molar; media 91,3 %, rango 87,5–94,8) y relación anterior (6 piezas; media 77,2 %, rango 74,5–80,4) = suma mandibular ÷ suma maxilar × 100. Sobre la media hay exceso mandibular; bajo la media, exceso maxilar (real, ideal y diferencia de esa arcada). |
 | Predisposición de apiñamiento | Tabla 2 de la ficha de Moyers: el odontólogo anota qué arcada/lado resulta positivo (sobra espacio), nulo o negativo (falta espacio). |
 | Apoderado | Quien firma por un paciente menor de 18 años. |
-| Cupo de historias | Máximo de historias clínicas que un tratante (`USER`) puede crear; lo fija el `ADMIN` por cuenta. Sin cupo = sin límite. Al llegar al tope no crea más, pero edita e imprime las suyas. |
+| Cupo de historias | Máximo de historias clínicas que un tratante (`USER`) puede crear; toda cuenta nueva nace con el cupo inicial (1 por defecto) y el `ADMIN` lo ajusta por cuenta. Sin cupo = sin límite. Al llegar al tope no crea más, pero edita e imprime las suyas. |
+| Historia completa | Historia con datos en los 7 pasos clínicos (1–7); Firmas (paso 8) no cuenta. Una historia anterior a las métricas, aún no vuelta a guardar, figura "sin calcular". |
+| Datos fijos del paciente | Nombre, documento, fecha y lugar de nacimiento y sexo: quedan fijos al imprimir la historia por primera vez; solo el ADMIN los desbloquea (a pedido del tratante). |
+| Avance impreso | Impresión de una ficha incompleta: lleva la marca "AVANCE · N de 7". |
 
 ---
 
@@ -74,7 +77,7 @@ Cuenta de acceso al sistema.
 - `email` (único), `passwordHash` (BCrypt), `role` (`ADMIN` | `USER`), `fullName`, `createdAt`/`updatedAt`.
 - Bloqueo temporal por intentos fallidos (`add-login-lockout`): `failedLoginAttempts` (fallos consecutivos, se resetea con un login correcto o al fallar tras expirar el bloqueo) y `lockedUntil` (fin del bloqueo automático; nulo = sin bloqueo). Solo los modifican `UPDATE` atómicos; la entidad los lee pero no los escribe.
 - Estado administrativo (`users`, `add-user-account-status`): `status` (`ACTIVE` | `DISABLED`), **independiente** de `lockedUntil` (si compartieran campo, expirar el bloqueo automático reactivaría una cuenta deshabilitada a mano). Las cuentas nuevas nacen `ACTIVE`; solo un `ADMIN` cambia el estado, y solo de cuentas `USER`; una cuenta `DISABLED` no inicia ni renueva sesión.
-- Cupo de historias (`users` + `orthodontic-records`, `add-record-quota`): `recordQuota` (entero 0–9999 o nulo = sin límite, por defecto nulo). Solo aplica a cuentas `USER` y solo lo cambia un `ADMIN` (a una cuenta `ADMIN` responde 409); el `ADMIN` nunca se limita. El uso es la cantidad de historias con ese `author` (no se guarda). Se controla al crear, bajo el mismo bloqueo de la fila del autor que el correlativo (dos creaciones simultáneas no pasan el tope); cupo lleno → 409 `record-quota-reached`. Un cupo por debajo de lo creado se permite y no toca las existentes; editar no consulta el cupo.
+- Cupo de historias (`users` + `orthodontic-records`, `add-record-quota`): `recordQuota` (entero 0–9999 o nulo = sin límite). Las cuentas nuevas nacen con el cupo inicial del despliegue (`app.records.default-quota` / `RECORDS_DEFAULT_QUOTA`, 1 por defecto; vacío = sin límite; `update-default-record-quota`); las cuentas anteriores conservan el suyo. Solo aplica a cuentas `USER` y solo lo cambia un `ADMIN` (a una cuenta `ADMIN` responde 409); el `ADMIN` nunca se limita. El uso es la cantidad de historias con ese `author` (no se guarda). Se controla al crear, bajo el mismo bloqueo de la fila del autor que el correlativo (dos creaciones simultáneas no pasan el tope); cupo lleno → 409 `record-quota-reached` ("1 historia clínica" en singular). La numeración `AEO-NNN` es independiente por tratante. Un cupo por debajo de lo creado se permite y no toca las existentes; editar no consulta el cupo.
 - Candidatos para cambios posteriores de `users` (perfil, alta por admin, roles): `username`, `phone`.
 
 ### `authentication` → **RefreshToken** *(construida)*
@@ -89,6 +92,10 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 - `content` (JSON, `schemaVersion` 7): anamnesis, análisis facial, funcional, oclusal y extra, análisis de modelos (`models.transversal`, `models.moyers`, `models.nance` y `models.bolton` —guarda sus incisivos y 1eros molares; caninos y premolares son los de Nance—: anchos de pieza en 4,0–13,0 mm y demás medidas en 0–99,9 mm, con un decimal, fechas de análisis no futuras, predisposición de apiñamiento y conclusiones escritas, interpretaciones; las diferencias con promedios y normas, la suma de incisivos, el requerido de Moyers, el ST y la discrepancia de Nance y las relaciones de Bolton se calculan, no se guardan), radiográfico, diagnóstico y planes, firmas. Los campos condicionados se descartan al guardar si su condición no se cumple.
 - `searchText` (paciente + documento + número, sin tildes ni mayúsculas) para la búsqueda; `version` para detectar ediciones concurrentes (409).
 - `lastStep` (1–8 o nulo = paso 1): último paso del formulario en que se guardaron cambios (`update-orthodontic-records-autosave`); la historia se abre ahí desde el listado, en cualquier dispositivo. Recorrer pasos sin cambios no lo modifica. Las historias existentes se autoguardan (no las nuevas, que se crean con "Crear historia").
+- `filledSteps` (máscara de bits, bit n-1 = paso n; nula = "sin calcular", historias guardadas antes de `add-dashboard-metrics`): pasos con algún dato según el último guardado, informados por el formulario (mismo criterio que la navegación de pasos); el servidor marca siempre el paso 1. Una historia está **completa** con los 7 pasos clínicos (1–7) con datos: Firmas no cuenta porque se completa a mano. Alimenta las métricas de Inicio (`dashboard`).
+- Datos del paciente fijos (`add-patient-identity-lock`): `patientLockedAt` = primera impresión registrada (`POST /print`, esté completa o no). Desde entonces nombre, tipo y número de documento, fecha y lugar de nacimiento y sexo no cambian; se comparan en forma canónica (NFKC, sin tildes, mayúsculas ni espacios sobrantes; documento por dígitos), así corregir la escritura se permite. Domicilio, teléfono, fecha de inicio y contenido clínico siguen editables. Imprimir y guardar se serializan con bloqueo de fila; estas columnas no cuentan para `version`. Evita reusar una historia (con el cupo) para otro paciente.
+- Desbloqueo: el autor pide `unlockRequest` (fecha + motivo ≤ 200, una pendiente a la vez); el `ADMIN` desbloquea (vuelve a fijarse en la próxima impresión) o descarta. Cada acción del ADMIN queda en `RecordUnlockEvent` (historia, ADMIN, acción `UNLOCKED`/`DISCARDED`, motivo, fecha), solo inserción.
+- Impresión: las hojas solo salen desde el botón "Imprimir" (registra primero); las fichas incompletas llevan la marca "AVANCE · N de 7 pasos clínicos con datos · impreso el <fecha>" con fecha y conteo del servidor.
 - Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
 - Notas de evolución: no se registran en el sistema; se imprime la hoja en blanco (pág. 14 del PDF) y se llena a mano (decisión del usuario).
 
@@ -102,6 +109,8 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 erDiagram
     User ||--o{ RefreshToken : "tiene"
     User ||--o{ OrthodonticRecord : "es autor de"
+    OrthodonticRecord ||--o{ RecordUnlockEvent : "desbloqueos"
+    User ||--o{ RecordUnlockEvent : "desbloquea (ADMIN)"
 
     User {
         Long id PK
@@ -135,6 +144,9 @@ erDiagram
         String searchText
         Json content
         Integer lastStep
+        Integer filledSteps
+        DateTime patientLockedAt
+        DateTime unlockRequestedAt
         Long version
     }
 ```

@@ -2,6 +2,7 @@ package com.odontorisas.service.auth;
 
 import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
+import com.odontorisas.infra.config.RecordsProperties;
 import com.odontorisas.infra.security.TokenService;
 import com.odontorisas.persistence.entity.RefreshToken;
 import com.odontorisas.persistence.entity.User;
@@ -35,6 +36,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final LoginAttemptService loginAttempts;
     private final TransactionOperations tx;
+    private final RecordsProperties records;
 
     @Autowired
     public AuthService(UserRepository users,
@@ -42,9 +44,10 @@ public class AuthService {
                        PasswordEncoder passwordEncoder,
                        TokenService tokenService,
                        LoginAttemptService loginAttempts,
-                       PlatformTransactionManager transactionManager) {
+                       PlatformTransactionManager transactionManager,
+                       RecordsProperties records) {
         this(users, refreshTokens, passwordEncoder, tokenService, loginAttempts,
-            new TransactionTemplate(transactionManager));
+            new TransactionTemplate(transactionManager), records);
     }
 
     AuthService(UserRepository users,
@@ -52,13 +55,15 @@ public class AuthService {
                 PasswordEncoder passwordEncoder,
                 TokenService tokenService,
                 LoginAttemptService loginAttempts,
-                TransactionOperations tx) {
+                TransactionOperations tx,
+                RecordsProperties records) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.loginAttempts = loginAttempts;
         this.tx = tx;
+        this.records = records;
     }
 
     @Transactional
@@ -71,6 +76,8 @@ public class AuthService {
             .passwordHash(passwordEncoder.encode(cmd.password()))
             .role(Role.USER)
             .fullName(cmd.fullName())
+            // Cupo inicial de historias (configurable; nulo = sin límite).
+            .recordQuota(records.defaultQuota())
             .build());
         return issueTokens(user);
     }

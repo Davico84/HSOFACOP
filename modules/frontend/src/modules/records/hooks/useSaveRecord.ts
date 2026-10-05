@@ -3,6 +3,8 @@ import { createRecord, updateRecord } from "@/modules/core/services/generated/or
 import type { RecordResponse } from "@/modules/core/services/generated/model";
 import type { RecordFormValues } from "../schemas/record";
 import { toCreateRequest, toUpdateRequest } from "../utils/recordForm";
+import { filledStepsOf } from "../utils/filledSteps";
+import { dashboardKeys } from "@/modules/dashboard/hooks/dashboardKeys";
 import { recordKeys } from "./recordKeys";
 
 export interface SaveRecordInput {
@@ -14,21 +16,25 @@ export interface SaveRecordInput {
 }
 
 /**
- * Crea o guarda la historia completa. Al terminar bien actualiza el detalle en caché y marca el
- * listado como desactualizado. Los errores (400 por campo, 409 de versión) los decide quien llama.
+ * Crea o guarda la historia completa, con los pasos que tienen datos (para las métricas de Inicio).
+ * Al terminar bien actualiza el detalle en caché y marca el listado y las métricas como
+ * desactualizados. Los errores (400 por campo, 409 de versión) los decide quien llama.
  */
 export function useSaveRecord() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ values, existing, lastStep }: SaveRecordInput): Promise<RecordResponse> =>
-      existing
-        ? updateRecord(existing.id, toUpdateRequest(values, existing.version, lastStep))
-        : createRecord(toCreateRequest(values)),
+    mutationFn: ({ values, existing, lastStep }: SaveRecordInput): Promise<RecordResponse> => {
+      const filledSteps = filledStepsOf(values);
+      return existing
+        ? updateRecord(existing.id, toUpdateRequest(values, existing.version, lastStep, filledSteps))
+        : createRecord(toCreateRequest(values, filledSteps));
+    },
     onSuccess: (record) => {
       queryClient.setQueryData(recordKeys.detail(record.id), record);
       void queryClient.invalidateQueries({ queryKey: recordKeys.lists() });
       // Crear consume cupo: se vuelve a consultar.
       void queryClient.invalidateQueries({ queryKey: recordKeys.quota() });
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 }

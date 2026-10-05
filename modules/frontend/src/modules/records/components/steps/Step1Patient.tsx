@@ -13,10 +13,15 @@ import { formatAge } from "../../utils/recordDisplay";
 interface Step1PatientProps {
   /** Número asignado (solo lectura); vacío mientras la historia no se crea. */
   recordNumber?: string;
+  /**
+   * Datos del paciente fijos tras imprimir: nombre, documento, sexo, fecha y lugar de nacimiento de
+   * solo lectura (siguen en el formulario y se envían sin cambios al guardar).
+   */
+  patientLocked?: boolean;
 }
 
 /** Paso 1 (pág. 1): datos del paciente y anamnesis. La edad se calcula (no se teclea). */
-export function Step1Patient({ recordNumber }: Step1PatientProps) {
+export function Step1Patient({ recordNumber, patientLocked = false }: Step1PatientProps) {
   const { control } = useFormContext<RecordFormValues>();
   const [birthDate, startDate, sex] = useWatch({ control, name: ["birthDate", "treatmentStartDate", "patientSex"] });
   const age = ageYears(birthDate, startDate);
@@ -29,14 +34,14 @@ export function Step1Patient({ recordNumber }: Step1PatientProps) {
           <Input id="f-recordNumber" value={recordNumber ?? "Se asigna al guardar"} readOnly disabled />
         </FormField>
         <TextField name="treatingDentist" label="Odontólogo tratante" />
-        <TextField name="patientName" label="Paciente" className="md:col-span-2" autoComplete="off" />
-        <ChoiceField name="patientSex" label="Sexo" options={sexOptions} />
+        <TextField name="patientName" label="Paciente" className="md:col-span-2" autoComplete="off" readOnly={patientLocked} />
+        <ChoiceField name="patientSex" label="Sexo" options={sexOptions} readOnly={patientLocked} />
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
-          <ChoiceField name="documentType" label="Documento" options={documentTypeOptions} vertical />
-          <TextField name="documentNumber" label="Número" inputMode="numeric" autoComplete="off" />
+          <ChoiceField name="documentType" label="Documento" options={documentTypeOptions} vertical readOnly={patientLocked} />
+          <TextField name="documentNumber" label="Número" inputMode="numeric" autoComplete="off" readOnly={patientLocked} />
         </div>
-        <TextField name="birthPlace" label="Lugar de nacimiento" />
-        <TextField name="birthDate" label="Fecha de nacimiento" type="date" />
+        <TextField name="birthPlace" label="Lugar de nacimiento" readOnly={patientLocked} />
+        <TextField name="birthDate" label="Fecha de nacimiento" type="date" readOnly={patientLocked} />
         <FormField id="f-age" label="Edad">
           <Input id="f-age" value={formatAge(age) || "—"} readOnly disabled />
         </FormField>

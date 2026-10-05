@@ -1,5 +1,7 @@
 package com.odontorisas.service.auth;
 
+import org.mockito.ArgumentCaptor;
+import com.odontorisas.infra.config.RecordsProperties;
 import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
 import com.odontorisas.infra.security.TokenService;
@@ -46,8 +48,43 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(users, refreshTokens, passwordEncoder, tokenService, loginAttempts,
-            TransactionOperations.withoutTransaction());
+        authService = service(1);
+    }
+
+    private AuthService service(Integer defaultQuota) {
+        return new AuthService(users, refreshTokens, passwordEncoder, tokenService, loginAttempts,
+            TransactionOperations.withoutTransaction(), new RecordsProperties(defaultQuota));
+    }
+
+    /** Registra con el cupo inicial dado y devuelve la cuenta guardada. */
+    private User registerWithDefaultQuota(Integer defaultQuota) {
+        when(users.existsByEmail("ana@clinica.test")).thenReturn(false);
+        when(users.save(any())).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(1L);
+            return u;
+        });
+        when(passwordEncoder.encode("password123")).thenReturn("hashed");
+        stubTokenIssuance();
+        service(defaultQuota).register(cmd("ana@clinica.test"));
+        ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
+        verify(users).save(saved.capture());
+        return saved.getValue();
+    }
+
+    @Test
+    void new_account_gets_default_record_quota_1() {
+        assertThat(registerWithDefaultQuota(1).getRecordQuota()).isEqualTo(1);
+    }
+
+    @Test
+    void new_account_gets_configured_record_quota() {
+        assertThat(registerWithDefaultQuota(3).getRecordQuota()).isEqualTo(3);
+    }
+
+    @Test
+    void empty_default_quota_means_unlimited() {
+        assertThat(registerWithDefaultQuota(null).getRecordQuota()).isNull();
     }
 
     private User userWithId() {

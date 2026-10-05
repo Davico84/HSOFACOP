@@ -1,5 +1,6 @@
 package com.odontorisas.service.records;
 
+import com.odontorisas.persistence.repository.RecordUnlockEventRepository;
 import com.odontorisas.common.DocumentType;
 import com.odontorisas.common.PatientSex;
 import com.odontorisas.common.Role;
@@ -37,6 +38,7 @@ class OrthodonticRecordServiceTest {
 
     @Mock OrthodonticRecordRepository records;
     @Mock UserRepository users;
+    @Mock RecordUnlockEventRepository unlockEvents;
 
     OrthodonticRecordService service;
 
@@ -49,7 +51,8 @@ class OrthodonticRecordServiceTest {
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
-        service = new OrthodonticRecordService(records, users, new RecordAgeCalculator(clock), JsonMapper.builder().build());
+        service = new OrthodonticRecordService(records, users, new RecordAgeCalculator(clock), JsonMapper.builder().build(),
+            unlockEvents, clock);
     }
 
     private static User user(Long id, String name) {
@@ -120,6 +123,7 @@ class OrthodonticRecordServiceTest {
     @Test
     void user_cannot_read_or_save_someone_elses_record() {
         when(records.findWithAuthorById(10L)).thenReturn(Optional.of(stored(torres, 0)));
+        when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(stored(torres, 0)));
 
         assertThatThrownBy(() -> service.get(medinaActor, 10L)).isInstanceOf(RecordNotFoundException.class);
         assertThatThrownBy(() -> service.update(medinaActor, 10L, 0, data("X"))).isInstanceOf(RecordNotFoundException.class);
@@ -135,7 +139,7 @@ class OrthodonticRecordServiceTest {
     @Test
     void admin_saves_any_record_keeping_author_and_number() {
         OrthodonticRecord record = stored(torres, 3);
-        when(records.findWithAuthorById(10L)).thenReturn(Optional.of(record));
+        when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(record));
         saveReturnsArgument();
 
         RecordView view = service.update(admin, 10L, 3, data("Ana Lucía Quispe"));
@@ -150,7 +154,7 @@ class OrthodonticRecordServiceTest {
 
     @Test
     void stale_version_is_rejected_without_saving() {
-        when(records.findWithAuthorById(10L)).thenReturn(Optional.of(stored(torres, 4)));
+        when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(stored(torres, 4)));
 
         assertThatThrownBy(() -> service.update(torresActor, 10L, 3, data("X"))).isInstanceOf(StaleRecordException.class);
         verify(records, never()).saveAndFlush(any());
@@ -158,7 +162,7 @@ class OrthodonticRecordServiceTest {
 
     @Test
     void concurrent_write_detected_at_flush_is_stale() {
-        when(records.findWithAuthorById(10L)).thenReturn(Optional.of(stored(torres, 4)));
+        when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(stored(torres, 4)));
         when(records.saveAndFlush(any())).thenThrow(new ObjectOptimisticLockingFailureException(OrthodonticRecord.class, 10L));
 
         assertThatThrownBy(() -> service.update(torresActor, 10L, 4, data("X"))).isInstanceOf(StaleRecordException.class);
@@ -168,7 +172,7 @@ class OrthodonticRecordServiceTest {
 
     @Test
     void saves_normalized_content_and_returns_calculated_age() {
-        when(records.findWithAuthorById(10L)).thenReturn(Optional.of(stored(medina, 0)));
+        when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(stored(medina, 0)));
         ArgumentCaptor<OrthodonticRecord> saved = ArgumentCaptor.forClass(OrthodonticRecord.class);
         when(records.saveAndFlush(saved.capture())).thenAnswer(inv -> inv.getArgument(0));
         Anamnesis anamnesis = new Anamnesis(" Dientes salidos ", null, null, null, null, YesNo.NO,

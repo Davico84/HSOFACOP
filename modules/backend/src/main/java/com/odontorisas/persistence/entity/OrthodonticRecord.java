@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.OptimisticLock;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
@@ -102,6 +103,28 @@ public class OrthodonticRecord {
     /** Último paso del formulario (1–8) en que se guardaron cambios; nulo = paso 1. */
     @Column(name = "last_step")
     private Integer lastStep;
+
+    /**
+     * Primera impresión registrada: desde entonces los datos del paciente quedan fijos (nulo =
+     * desbloqueada). No cuenta para la versión: imprimir o desbloquear no deja desactualizado el
+     * formulario abierto; la concurrencia con los guardados la resuelve el bloqueo de fila.
+     */
+    @OptimisticLock(excluded = true)
+    @Column(name = "patient_locked_at")
+    private Instant patientLockedAt;
+
+    /** Solicitud de desbloqueo pendiente del tratante (nulo = ninguna). No cuenta para la versión. */
+    @OptimisticLock(excluded = true)
+    @Column(name = "unlock_requested_at")
+    private Instant unlockRequestedAt;
+
+    @OptimisticLock(excluded = true)
+    @Column(name = "unlock_request_reason", length = 200)
+    private String unlockRequestReason;
+
+    /** Pasos con datos como máscara de bits (bit n-1 = paso n); nulo = sin calcular. */
+    @Column(name = "filled_steps")
+    private Integer filledSteps;
 
     @Version
     @Column(nullable = false)

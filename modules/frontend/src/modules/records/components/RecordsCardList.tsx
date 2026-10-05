@@ -3,6 +3,7 @@ import type { RecordSummaryResponse } from "@/modules/core/services/generated/mo
 import { recordPath } from "@/routes/paths";
 import { formatDate, formatDateTime, formatDocument } from "../utils/recordDisplay";
 import { RecordEditLink } from "./RecordEditLink";
+import { RecordLockIcon } from "./RecordLockIcon";
 import { RecordPrintLink } from "./RecordPrintLink";
 
 interface RecordsCardListProps {
@@ -29,7 +30,10 @@ export function RecordsCardList({ records, showAuthor }: RecordsCardListProps) {
         return (
           <li key={record.id} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs font-semibold tracking-wide text-muted-foreground">{record.recordNumber}</span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground">
+                {record.recordNumber}
+                {record.patientLocked ? <RecordLockIcon /> : null}
+              </span>
               <h3 className="text-base font-semibold">
                 <Link to={recordPath(record.id)} className="text-primary underline-offset-4 hover:underline">
                   {record.patientName}

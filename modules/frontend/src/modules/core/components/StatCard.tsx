@@ -15,7 +15,7 @@ export function StatCard({ label, value, icon: Icon, hint }: StatCardProps) {
     <Card className="flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <span className="inline-flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Icon className="size-5" aria-hidden="true" />
         </span>
       </div>

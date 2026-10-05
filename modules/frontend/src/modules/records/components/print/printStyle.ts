@@ -10,7 +10,21 @@ export const PRINT_MARGINS = { top: "20mm", right: "24mm", bottom: "20mm", left:
  * (igual que en la vista previa), así el diálogo de impresión no puede cambiarlos ni añadir su
  * cabecera/pie (fecha, URL), y lo impreso coincide con lo que se ve en pantalla.
  */
-export const PAGE_CSS = "@page { size: A4; margin: 0; }";
+/**
+ * Página A4 sin margen propio y control de impresión: al imprimir, las hojas están ocultas salvo
+ * mientras el botón "Imprimir" de la vista preliminar tiene registrada la impresión
+ * (`data-print-ready`); por cualquier otro medio (Ctrl+P, menú) sale solo el aviso.
+ */
+export const PAGE_CSS = [
+  "@page { size: A4; margin: 0; }",
+  ".print-guard-notice { display: none; }",
+  "@media print {",
+  "  .print-sheets { display: none; }",
+  "  [data-print-ready] .print-sheets { display: block; }",
+  "  .print-guard-notice { display: block; }",
+  "  [data-print-ready] .print-guard-notice { display: none; }",
+  "}",
+].join("\n");
 
 /** Ancho de una hoja A4 en pantalla (210 mm a 96 ppp), para reducirla en pantallas angostas. */
 export const SHEET_WIDTH_PX = 794;

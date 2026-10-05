@@ -93,17 +93,6 @@ El sistema SHALL adaptar la barra lateral al ancho de pantalla: en escritorio, e
 - **WHEN** el usuario enfoca un ítem dentro del cajón móvil (etiquetas visibles)
 - **THEN** no aparece tooltip
 
-### Requirement: Dashboard de inicio con datos de ejemplo
-La ruta raíz privada SHALL mostrar un dashboard con un saludo al usuario, tarjetas KPI y una lista de actividad reciente alimentadas por datos estáticos locales, sin llamadas al backend, e indicar visiblemente que son "Datos de ejemplo".
-
-#### Scenario: Dashboard tras iniciar sesión
-- **WHEN** un usuario autenticado abre la ruta raíz
-- **THEN** el sistema muestra un saludo con su nombre, las tarjetas KPI y la actividad reciente de ejemplo
-
-#### Scenario: Datos marcados como ejemplo
-- **WHEN** se muestra el dashboard
-- **THEN** la página muestra el aviso "Datos de ejemplo" y no realiza peticiones HTTP para obtener esos datos
-
 ### Requirement: Barra lateral contraíble en escritorio
 En pantallas de 1024 px o más, el sistema SHALL permitir contraer la barra lateral a una barra de solo íconos y volver a expandirla con un botón. Contraída, SHALL mostrar solo los íconos de las secciones y del cierre de sesión, conservando su nombre accesible y mostrándolo en un tooltip al pasar el ratón o al enfocarlos con el teclado, y el ícono de la marca en lugar del logo completo. La preferencia SHALL ser del usuario, igual en todas las pantallas, y recordarse en el navegador entre recargas y visitas; el sistema SHALL NOT contraerla ni expandirla por su cuenta según la pantalla. En pantallas de menos de 1024 px el comportamiento existente SHALL NOT cambiar.
 

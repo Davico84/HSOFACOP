@@ -1,8 +1,7 @@
-import { get, useFormContext, useWatch, type FieldErrors } from "react-hook-form";
+import { useFormContext, useWatch, type FieldErrors } from "react-hook-form";
 import type { RecordFormValues } from "../schemas/record";
 import { RECORD_STEPS, stepOfField } from "../config/recordSteps";
-import { hasAnyData } from "../utils/filled";
-import { emptyRecordValues } from "../utils/recordForm";
+import { fieldHasData, STEP_FIELDS } from "../utils/filledSteps";
 
 export type StepStatus = "error" | "filled" | "empty";
 
@@ -15,9 +14,7 @@ export interface StepStatusResult {
   progressText: string;
 }
 
-/** Valores de una historia nueva: lo que trae por defecto no cuenta como dato. */
-const BASELINE = emptyRecordValues();
-const FIELDS = RECORD_STEPS.flatMap((step) => step.fields.map((field) => ({ step: step.number, field })));
+const FIELDS = STEP_FIELDS;
 
 /** Rutas de los campos con error (`content.diagnosis.problemList`, `patientName`…). */
 export function errorPaths(errors: FieldErrors | Record<string, unknown> | undefined, prefix = ""): string[] {
@@ -43,7 +40,7 @@ export function useStepStatus(): StepStatusResult {
 
   const steps: StepStatusResult["steps"] = {};
   for (const step of RECORD_STEPS) {
-    const hasData = FIELDS.some((f, i) => f.step === step.number && hasAnyData(values[i], get(BASELINE, f.field)));
+    const hasData = FIELDS.some((f, i) => f.step === step.number && fieldHasData(f.field, values[i]));
     const hasErrors = failing.has(step.number);
     steps[step.number] = { status: hasErrors ? "error" : hasData ? "filled" : "empty", hasData, hasErrors };
   }

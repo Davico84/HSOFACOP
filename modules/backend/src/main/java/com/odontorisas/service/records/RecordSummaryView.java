@@ -15,5 +15,6 @@ public record RecordSummaryView(
     String treatingDentist,
     LocalDate treatmentStartDate,
     String authorName,
-    Instant updatedAt) {
+    Instant updatedAt,
+    boolean patientLocked) {
 }

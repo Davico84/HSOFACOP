@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
@@ -31,6 +32,11 @@ public record RecordResponse(
     Integer ageYears,
     @Schema(requiredMode = REQUIRED) RecordContent content,
     @Schema(description = "Último paso (1–8) en que se guardaron cambios; vacío = paso 1") Integer lastStep,
+    @Schema(description = "Pasos (1–8) con datos según el último guardado; vacío = sin calcular") List<Integer> filledSteps,
+    @Schema(description = "Primera impresión registrada: desde entonces los datos del paciente están fijos; vacío = desbloqueada", nullable = true)
+    Instant patientLockedAt,
+    @Schema(description = "Último desbloqueo de los datos del paciente; vacío = nunca", nullable = true) LastUnlock lastUnlock,
+    @Schema(description = "Solicitud de desbloqueo pendiente; vacío = ninguna", nullable = true) UnlockRequest unlockRequest,
     @Schema(requiredMode = REQUIRED, description = "Versión actual: se envía al guardar") long version,
     @Schema(requiredMode = REQUIRED) Instant createdAt,
     @Schema(requiredMode = REQUIRED) Instant updatedAt) {
@@ -38,7 +44,22 @@ public record RecordResponse(
     public static RecordResponse from(RecordView v) {
         return new RecordResponse(v.id(), v.recordNumber(), v.authorId(), v.authorName(), v.treatingDentist(),
             v.patientName(), v.documentType(), v.documentNumber(), v.patientSex(), v.birthDate(), v.birthPlace(),
-            v.address(), v.phone(), v.treatmentStartDate(), v.ageYears(), v.content(), v.lastStep(), v.version(),
+            v.address(), v.phone(), v.treatmentStartDate(), v.ageYears(), v.content(), v.lastStep(), v.filledSteps(), v.patientLockedAt(),
+            v.lastUnlockAt() == null ? null : new LastUnlock(v.lastUnlockBy(), v.lastUnlockAt()),
+            v.unlockRequestedAt() == null ? null : new UnlockRequest(v.unlockRequestedAt(), v.unlockRequestReason()),
+            v.version(),
             v.createdAt(), v.updatedAt());
+    }
+
+    @Schema(name = "RecordLastUnlock")
+    public record LastUnlock(
+        @Schema(requiredMode = REQUIRED, description = "Nombre del ADMIN que desbloqueó") String byName,
+        @Schema(requiredMode = REQUIRED) Instant at) {
+    }
+
+    @Schema(name = "RecordUnlockRequest")
+    public record UnlockRequest(
+        @Schema(requiredMode = REQUIRED) Instant requestedAt,
+        @Schema(requiredMode = REQUIRED, description = "Motivo del tratante") String reason) {
     }
 }

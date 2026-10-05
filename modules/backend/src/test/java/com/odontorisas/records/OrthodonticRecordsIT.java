@@ -167,6 +167,52 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
 
     // --- Alcance ---
 
+    private static List<Integer> steps(JsonNode node) {
+        List<Integer> out = new ArrayList<>();
+        node.forEach(n -> out.add(n.asInt()));
+        return out;
+    }
+
+    @Test
+    void create_without_filled_steps_starts_with_step_1() throws Exception {
+        Session torres = register("Dra. Torres");
+        JsonNode created = createOk(torres, "Ana Quispe");
+        assertThat(steps(created.get("filledSteps"))).containsExactly(1);
+    }
+
+    @Test
+    void create_with_empty_filled_steps_starts_with_step_1() throws Exception {
+        Session torres = register("Dra. Torres");
+        MvcResult result = create(torres, "{\"patientName\":\"Ana Quispe\",\"filledSteps\":[]}");
+        assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        assertThat(steps(read(result).get("filledSteps"))).containsExactly(1);
+    }
+
+    @Test
+    void save_stores_and_returns_filled_steps() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana Quispe").get("id").asLong();
+
+        JsonNode saved = read(save(torres, id, "{\"version\":0,\"patientName\":\"Ana Quispe\",\"filledSteps\":[2,5]}"));
+        assertThat(steps(saved.get("filledSteps"))).containsExactly(1, 2, 5);
+
+        // Sin filledSteps, el guardado los conserva.
+        JsonNode again = read(save(torres, id, "{\"version\":" + saved.get("version").asLong()
+            + ",\"patientName\":\"Ana Lucía Quispe\"}"));
+        assertThat(steps(again.get("filledSteps"))).containsExactly(1, 2, 5);
+        assertThat(steps(read(getRecord(torres, id)).get("filledSteps"))).containsExactly(1, 2, 5);
+    }
+
+    @Test
+    void old_record_is_not_computed() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana Quispe").get("id").asLong();
+        jdbc.update("UPDATE orthodontic_records SET filled_steps = NULL WHERE id = ?", id);
+
+        JsonNode record = read(getRecord(torres, id));
+        assertThat(record.get("filledSteps") == null || record.get("filledSteps").isNull()).isTrue();
+    }
+
     @Test
     void last_step_is_saved_returned_and_kept_when_absent() throws Exception {
         Session torres = register("Dra. Torres");
@@ -559,14 +605,19 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         createOk(torres, "Luis");
         createOk(torres, "Rosa");
 
-        JsonNode page = read(mockMvc.perform(get("/api/users").param("size", "100")
-            .header("Authorization", "Bearer " + admin.token())).andReturn());
+        // La BD de los IT es compartida y el listado va por id: la cuenta nueva puede caer en cualquier página.
         JsonNode row = null;
-        for (JsonNode r : page.get("content")) {
-            if (r.get("id").asLong() == torres.id()) {
-                row = r;
+        JsonNode page;
+        int number = 0;
+        do {
+            page = read(mockMvc.perform(get("/api/users").param("size", "100").param("page", String.valueOf(number++))
+                .header("Authorization", "Bearer " + admin.token())).andReturn());
+            for (JsonNode r : page.get("content")) {
+                if (r.get("id").asLong() == torres.id()) {
+                    row = r;
+                }
             }
-        }
+        } while (row == null && !page.get("last").asBoolean());
         assertThat(row).isNotNull();
         assertThat(row.get("recordQuota").asInt()).isEqualTo(5);
         assertThat(row.get("recordCount").asLong()).isEqualTo(3);

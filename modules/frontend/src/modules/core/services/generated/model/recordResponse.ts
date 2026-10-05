@@ -8,6 +8,9 @@
 import type { RecordResponseDocumentType } from './recordResponseDocumentType';
 import type { RecordResponsePatientSex } from './recordResponsePatientSex';
 import type { RecordContent } from './recordContent';
+import type { RecordResponsePatientLockedAt } from './recordResponsePatientLockedAt';
+import type { RecordLastUnlock } from './recordLastUnlock';
+import type { RecordUnlockRequest } from './recordUnlockRequest';
 
 export interface RecordResponse {
   id: number;
@@ -29,6 +32,14 @@ export interface RecordResponse {
   content: RecordContent;
   /** Último paso (1–8) en que se guardaron cambios; vacío = paso 1 */
   lastStep?: number;
+  /** Pasos (1–8) con datos según el último guardado; vacío = sin calcular */
+  filledSteps?: number[];
+  /** Primera impresión registrada: desde entonces los datos del paciente están fijos; vacío = desbloqueada */
+  patientLockedAt?: RecordResponsePatientLockedAt;
+  /** Último desbloqueo de los datos del paciente; vacío = nunca */
+  lastUnlock?: RecordLastUnlock;
+  /** Solicitud de desbloqueo pendiente; vacío = ninguna */
+  unlockRequest?: RecordUnlockRequest;
   /** Versión actual: se envía al guardar */
   version: number;
   createdAt: string;

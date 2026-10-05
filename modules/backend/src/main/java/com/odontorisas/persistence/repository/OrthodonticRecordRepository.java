@@ -4,7 +4,9 @@ import com.odontorisas.persistence.entity.OrthodonticRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -40,6 +42,14 @@ public interface OrthodonticRecordRepository
     @Override
     @EntityGraph(attributePaths = "author")
     Page<OrthodonticRecord> findAll(Specification<OrthodonticRecord> spec, Pageable pageable);
+
+    /**
+     * Historia con su fila bloqueada hasta el commit: imprimir, guardar, solicitar, descartar y
+     * desbloquear se serializan (sin join: FOR UPDATE no admite el lado opcional de un outer join).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from OrthodonticRecord r where r.id = :id")
+    Optional<OrthodonticRecord> findByIdForUpdate(@Param("id") Long id);
 
     /** Historia con su autor cargado (para devolver su nombre). */
     @EntityGraph(attributePaths = "author")

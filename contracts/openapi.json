@@ -17,6 +17,10 @@
       "description": "Autenticación"
     },
     {
+      "name": "dashboard",
+      "description": "Métricas de Inicio"
+    },
+    {
       "name": "users",
       "description": "Gestión de usuarios"
     },
@@ -156,7 +160,7 @@
             }
           },
           "409": {
-            "description": "La historia cambió desde que se cargó (stale-record)",
+            "description": "La historia cambió desde que se cargó (stale-record) o cambia datos del paciente fijos (patient-locked)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -602,6 +606,255 @@
         }
       }
     },
+    "/api/orthodontic-records/{id}/unlock-request": {
+      "post": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Solicitar el desbloqueo de los datos del paciente",
+        "operationId": "requestPatientUnlock",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlockRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Solicitud registrada"
+          },
+          "400": {
+            "description": "Motivo inválido",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe o no está a tu alcance",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Datos no fijos (patient-not-locked) o solicitud ya pendiente (unlock-already-requested)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Descartar la solicitud de desbloqueo (solo ADMIN; queda registrado)",
+        "operationId": "discardPatientUnlockRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Descartada (o no había)"
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orthodontic-records/{id}/print": {
+      "post": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Registrar una impresión: la primera fija los datos del paciente; devuelve la fecha y el avance",
+        "operationId": "printRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrintRecordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Impresión registrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pasos inválidos",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe o no está a tu alcance",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/{id}/status": {
       "patch": {
         "tags": [
@@ -907,6 +1160,183 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecordQuotaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/me": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Métricas del tratante autenticado (sus historias)",
+        "operationId": "getMyDashboard",
+        "responses": {
+          "200": {
+            "description": "Métricas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDashboardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Solo para cuentas USER (el ADMIN ve las globales)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/admin": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Métricas globales (solo ADMIN)",
+        "operationId": "getAdminDashboard",
+        "responses": {
+          "200": {
+            "description": "Métricas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDashboardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Solo para ADMIN",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orthodontic-records/{id}/patient-lock": {
+      "delete": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Desbloquear los datos del paciente (solo ADMIN; queda registrado)",
+        "operationId": "unlockPatient",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Desbloqueada"
+          },
+          "404": {
+            "description": "No existe",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Los datos no estaban fijos (patient-not-locked)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
                 }
               }
             }
@@ -2053,6 +2483,16 @@
             "description": "Paso del formulario (1–8) en que se trabajó; se abre ahí al volver. Ausente = no cambia",
             "maximum": 8,
             "minimum": 1
+          },
+          "filledSteps": {
+            "type": "array",
+            "description": "Pasos del formulario (1–8) con datos; el paso 1 siempre cuenta",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 8,
+              "minimum": 1
+            }
           }
         },
         "required": [
@@ -2145,6 +2585,23 @@
           }
         }
       },
+      "RecordLastUnlock": {
+        "type": "object",
+        "properties": {
+          "byName": {
+            "type": "string",
+            "description": "Nombre del ADMIN que desbloqueó"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "at",
+          "byName"
+        ]
+      },
       "RecordResponse": {
         "type": "object",
         "properties": {
@@ -2217,6 +2674,32 @@
             "format": "int32",
             "description": "Último paso (1–8) en que se guardaron cambios; vacío = paso 1"
           },
+          "filledSteps": {
+            "type": "array",
+            "description": "Pasos (1–8) con datos según el último guardado; vacío = sin calcular",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "patientLockedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Primera impresión registrada: desde entonces los datos del paciente están fijos; vacío = desbloqueada"
+          },
+          "lastUnlock": {
+            "type": "null",
+            "$ref": "#/components/schemas/RecordLastUnlock",
+            "description": "Último desbloqueo de los datos del paciente; vacío = nunca"
+          },
+          "unlockRequest": {
+            "type": "null",
+            "$ref": "#/components/schemas/RecordUnlockRequest",
+            "description": "Solicitud de desbloqueo pendiente; vacío = ninguna"
+          },
           "version": {
             "type": "integer",
             "format": "int64",
@@ -2241,6 +2724,23 @@
           "recordNumber",
           "updatedAt",
           "version"
+        ]
+      },
+      "RecordUnlockRequest": {
+        "type": "object",
+        "properties": {
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Motivo del tratante"
+          }
+        },
+        "required": [
+          "reason",
+          "requestedAt"
         ]
       },
       "FieldProblem": {
@@ -2494,10 +2994,74 @@
           },
           "content": {
             "$ref": "#/components/schemas/RecordContent"
+          },
+          "filledSteps": {
+            "type": "array",
+            "description": "Pasos del formulario (1–8) con datos; el paso 1 siempre cuenta",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 8,
+              "minimum": 1
+            }
           }
         },
         "required": [
           "patientName"
+        ]
+      },
+      "UnlockRequestRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Error en el número de DNI",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "PrintRecordRequest": {
+        "type": "object",
+        "properties": {
+          "filledSteps": {
+            "type": "array",
+            "description": "Pasos (1–8) con datos de la historia guardada; se usan si aún no estaban calculados",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 8,
+              "minimum": 1
+            }
+          }
+        }
+      },
+      "PrintRecordResponse": {
+        "type": "object",
+        "properties": {
+          "record": {
+            "$ref": "#/components/schemas/RecordResponse"
+          },
+          "printedOn": {
+            "type": "string",
+            "format": "date",
+            "description": "Fecha de impresión en la zona de la app"
+          },
+          "clinicalFilledSteps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Pasos clínicos (1–7) con datos; vacío = sin calcular"
+          }
+        },
+        "required": [
+          "printedOn",
+          "record"
         ]
       },
       "ChangeUserStatusRequest": {
@@ -2700,11 +3264,16 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "patientLocked": {
+            "type": "boolean",
+            "description": "Datos del paciente fijos (ya se imprimió)"
           }
         },
         "required": [
           "authorName",
           "id",
+          "patientLocked",
           "patientName",
           "recordNumber",
           "updatedAt"
@@ -2734,6 +3303,437 @@
         "required": [
           "reached",
           "used"
+        ]
+      },
+      "DashboardEmptyStep": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "count",
+          "step"
+        ]
+      },
+      "DashboardResumeItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recordNumber": {
+            "type": "string",
+            "example": "AEO-003"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "lastStep": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Último paso trabajado; vacío = paso 1"
+          },
+          "filledSteps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Pasos clínicos con datos; vacío = sin calcular"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "patientName",
+          "recordNumber",
+          "updatedAt"
+        ]
+      },
+      "UserDashboardCompleteness": {
+        "type": "object",
+        "properties": {
+          "complete": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notComputed": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Guardadas antes de registrar los pasos con datos"
+          },
+          "averageFilledSteps": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Promedio de pasos clínicos con datos (un decimal); vacío si no hay calculadas"
+          }
+        },
+        "required": [
+          "complete",
+          "inProgress",
+          "notComputed"
+        ]
+      },
+      "UserDashboardMissing": {
+        "type": "object",
+        "properties": {
+          "withoutDocument": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withoutBirthDate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withoutTreatmentStart": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "emptySteps": {
+            "type": "array",
+            "description": "Los 7 pasos clínicos, de más a menos historias vacías",
+            "items": {
+              "$ref": "#/components/schemas/DashboardEmptyStep"
+            }
+          }
+        },
+        "required": [
+          "emptySteps",
+          "withoutBirthDate",
+          "withoutDocument",
+          "withoutTreatmentStart"
+        ]
+      },
+      "UserDashboardRecords": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdThisMonth": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Creadas en el mes en curso"
+          }
+        },
+        "required": [
+          "createdThisMonth",
+          "total"
+        ]
+      },
+      "UserDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "$ref": "#/components/schemas/UserDashboardRecords"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/RecordQuotaResponse"
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/UserDashboardCompleteness"
+          },
+          "missing": {
+            "$ref": "#/components/schemas/UserDashboardMissing"
+          },
+          "resume": {
+            "type": "array",
+            "description": "Hasta 5 historias no completas, más recientes primero",
+            "items": {
+              "$ref": "#/components/schemas/DashboardResumeItem"
+            }
+          }
+        },
+        "required": [
+          "completeness",
+          "missing",
+          "quota",
+          "records",
+          "resume"
+        ]
+      },
+      "AdminDashboardQuotas": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Cuentas con cupo lleno o al 80 % o más"
+          },
+          "items": {
+            "type": "array",
+            "description": "Las 10 más cerca del tope, llenas primero",
+            "items": {
+              "$ref": "#/components/schemas/DashboardQuotaAlert"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "AdminDashboardRecords": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdThisMonth": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "complete": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Pasos clínicos 1–7 con datos"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notComputed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "perMonth": {
+            "type": "array",
+            "description": "Últimos 6 meses, del más antiguo al actual",
+            "items": {
+              "$ref": "#/components/schemas/DashboardMonthCount"
+            }
+          }
+        },
+        "required": [
+          "complete",
+          "createdThisMonth",
+          "inProgress",
+          "notComputed",
+          "perMonth",
+          "total"
+        ]
+      },
+      "AdminDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "$ref": "#/components/schemas/AdminDashboardUsers"
+          },
+          "records": {
+            "$ref": "#/components/schemas/AdminDashboardRecords"
+          },
+          "topAuthors": {
+            "type": "array",
+            "description": "Cuentas USER con más historias (hasta 5)",
+            "items": {
+              "$ref": "#/components/schemas/DashboardTopAuthor"
+            }
+          },
+          "quotas": {
+            "$ref": "#/components/schemas/AdminDashboardQuotas"
+          },
+          "unlockRequests": {
+            "$ref": "#/components/schemas/AdminDashboardUnlockRequests"
+          }
+        },
+        "required": [
+          "quotas",
+          "records",
+          "topAuthors",
+          "unlockRequests",
+          "users"
+        ]
+      },
+      "AdminDashboardUnlockRequests": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Solicitudes de desbloqueo pendientes"
+          },
+          "items": {
+            "type": "array",
+            "description": "Las 10 más antiguas",
+            "items": {
+              "$ref": "#/components/schemas/DashboardUnlockRequest"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "AdminDashboardUsers": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "disabled": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newThisMonth": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Creadas en el mes en curso"
+          }
+        },
+        "required": [
+          "active",
+          "disabled",
+          "newThisMonth",
+          "total"
+        ]
+      },
+      "DashboardMonthCount": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-05"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "count",
+          "month"
+        ]
+      },
+      "DashboardQuotaAlert": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "used": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reached": {
+            "type": "boolean",
+            "description": "Cupo lleno (también si lo creado lo supera)"
+          }
+        },
+        "required": [
+          "fullName",
+          "limit",
+          "reached",
+          "used",
+          "userId"
+        ]
+      },
+      "DashboardTopAuthor": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "records": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "averageFilledSteps": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Promedio de pasos clínicos con datos; vacío si ninguna calculada"
+          }
+        },
+        "required": [
+          "fullName",
+          "records",
+          "status",
+          "userId"
+        ]
+      },
+      "DashboardUnlockRequest": {
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recordNumber": {
+            "type": "string",
+            "example": "AEO-001"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string",
+            "description": "Tratante (autor de la historia)"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorName",
+          "patientName",
+          "reason",
+          "recordId",
+          "recordNumber",
+          "requestedAt"
         ]
       }
     }

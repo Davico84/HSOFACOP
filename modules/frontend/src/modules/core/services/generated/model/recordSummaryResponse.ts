@@ -17,4 +17,6 @@ export interface RecordSummaryResponse {
   treatmentStartDate?: string;
   authorName: string;
   updatedAt: string;
+  /** Datos del paciente fijos (ya se imprimió) */
+  patientLocked: boolean;
 }

@@ -35,6 +35,7 @@ export function summary(overrides: Partial<RecordSummaryResponse> = {}): RecordS
     treatingDentist: "Dra. María Torres",
     authorName: "Dra. María Torres",
     updatedAt: "2026-10-01T10:00:00Z",
+    patientLocked: false,
     ...overrides,
   };
 }
