@@ -11,4 +11,4 @@
 
 - [x] 2.1 `docs/vision.md`: estado 🚧 del change
 - [x] 2.2 `docs/frontend.md`: patrón de enlace de vuelta (arriba a la izquierda, destino recordado en un store)
-- [ ] 2.3 Al archivar — `docs/vision.md` ✅ (sin cambios de dominio)
+- [x] 2.3 Al archivar — `docs/vision.md` ✅ (sin cambios de dominio)
