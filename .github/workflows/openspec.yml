@@ -25,4 +25,6 @@ jobs:
         with:
           node-version: 22
       - name: Validate specs & changes (strict)
-        run: npx -y @fission-ai/openspec@latest validate --all --strict
+        # Versión fija (la del CLI local, SETUP-OPENSPEC.md): con @latest una versión nueva puede
+        # sumar avisos que --strict convierte en error sin que cambie ninguna spec.
+        run: npx -y @fission-ai/openspec@1.5.0 validate --all --strict
