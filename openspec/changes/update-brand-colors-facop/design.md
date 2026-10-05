@@ -34,13 +34,13 @@ Neutrales oscuros sin tinte (`background` `hsl(0 0% 9%)`, `card`/`popover` `hsl(
 ### Cómo se aplica
 - `project.config.json` → `brand.colors` con los nuevos `primary`, `ring`, `brand-start`, `brand-end` y `pnpm project:apply` para regenerar el bloque `@template:brand` (no se edita a mano, el script lo sobrescribiría).
 - El resto de tokens, a mano en `globals.css` (con el hex en comentario, como hoy).
-- `--ink` se registra en `@theme inline` (`--color-ink`) para tener `text-ink` / `border-ink`; la hoja impresa los usa en lugar de `text-foreground` / `border-foreground`. Así el Grafite de la interfaz no aclara la impresión.
+- `--ink` se registra en `@theme inline` (`--color-ink`) para tener `text-ink` / `border-ink`; la hoja impresa los usa en lugar de `text-foreground` / `border-foreground`, y los dibujos compartidos con la pantalla (`ArchDiagram`, `BoltonFormula`) usan `ink` en su modo `print`. Así el Grafite de la interfaz no aclara la impresión.
 - Semánticos (`destructive`, `success`, `warning`) sin cambios.
 
 ### Logos (desde el manual)
 - El PDF del manual está en curvas (vectores, sin imágenes). Con PyMuPDF se recorta cada versión (`get_svg_image` con `clip`) y se limpia el SVG: solo los trazos del logo, `viewBox` ajustado y colores reemplazados por los oficiales (el PDF los trae convertidos de CMYK: `#803594` → `#832C87`, `#404041` → `#3C3C3B`).
 - Versiones: `logo-light.svg` = positiva resumida chapada horizontal (pág. 16); `logo-dark.svg` y `logo-white.svg` = negativa resumida horizontal en blanco (págs. 28/36); `favicon.svg` = el escudo chapado en Roxo (sin texto). Mismas rutas → `project.config.json` (`brand.logo`, `brand.favicon`) no cambia; no hace falta `pnpm project:setup` (asistente interactivo de la plantilla para elegir logos), basta copiar los archivos.
-- Se respeta el área de protección del manual (margen de x/3 en el `viewBox`) y no se alteran proporciones, colores ni la posición de los elementos ("o que não fazer").
+- Los SVG de la app van sin margen en el `viewBox` (el espacio alrededor lo dan la barra y el login; con el margen x/3 del manual el logo se vería un 40 % más chico); el favicon lleva un margen mínimo. No se alteran proporciones, colores ni la posición de los elementos ("o que não fazer").
 - Verificación visual: renderizar cada SVG a PNG y compararlo con la página del manual.
 
 ### Test de contraste
