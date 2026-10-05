@@ -19,7 +19,7 @@
 **Non-Goals:**
 - acelerar el arranque de Spring Boot (CDS, lazy init, imagen nativa);
 - avisar de lentitud a mitad de sesión;
-- configurar el despliegue (servicio de Render, hosting del frontend, proxy, cookie): va en otro change;
+- configurar el despliegue (servicio de Render, hosting del frontend, proxy, cookie): va en otro change. Este change solo **documenta** sus prerrequisitos en `docs/deployment.md` (se crea en el apply, tarea 3.2);
 - copias de seguridad (`add-database-backups`).
 
 ## Decisions
@@ -60,10 +60,13 @@
 ### Cookie de sesión entre dominios (condición de despliegue, otro change)
 - Con `SameSite=Lax`, el navegador no envía la cookie de refresh si el frontend y el backend son *sites* distintos. `*.vercel.app` y `*.onrender.com` lo son, porque ambos sufijos están en la Public Suffix List. `withCredentials` y CORS no lo compensan.
 - Opciones, a decidir en el change de despliegue:
-  1. **Recomendada: mismo origen con proxy/rewrite del hosting del frontend** (`/api/*` y `/auth/*` hacia Render). La cookie es de primera parte, `SameSite=Lax` y la protección CSRF actual se mantienen, y no hace falta CORS. Hay que verificar el timeout del proxy frente al arranque en frío.
+  1. **Preferida: mismo origen con proxy/rewrite del hosting del frontend** (`/api/*` y `/auth/*` hacia Render). La cookie es de primera parte, `SameSite=Lax` y la protección CSRF actual se mantienen, y no hace falta CORS. **Depende del hosting**, porque el proxy debe esperar el arranque en frío (~60 s):
+     - **Vercel Hobby**: los rewrites externos esperan hasta 120 s, así que es compatible;
+     - **Netlify**: corta los proxy rewrites a los 26 s, así que **no es compatible**;
+     - **Render Static Sites**: soporta rewrites externos, pero no documenta su timeout; habría que validarlo con una prueba real de 60–90 s antes de elegirlo.
   2. Dominio propio con subdominios (`app.` y `api.` del mismo dominio): mismo *site*, `Lax` funciona; requiere comprar un dominio.
   3. `SameSite=None; Secure` + CORS exacto: debilita la protección CSRF actual (requeriría validar `Origin` en `/auth/refresh` y `/auth/logout`), y Safari bloquea las cookies de terceros por defecto. Descartada salvo necesidad.
-- Este change solo lo documenta en `docs/deployment.md` como condición previa a desplegar.
+- Este change solo lo documenta en `docs/deployment.md` como condición previa a desplegar. **Se puede aplicar sin resolver la cookie** (el ping, el pool y el aviso sirven igual), pero el sistema **no es desplegable de extremo a extremo** hasta que el change de despliegue configure el mismo origen (u otra alternativa equivalente) y lo pruebe contra el dominio real.
 
 ## Risks / Trade-offs
 

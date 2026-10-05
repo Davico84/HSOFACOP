@@ -9,6 +9,10 @@ El backend SHALL exponer `GET /actuator/health/liveness` sin autenticación. La 
 - **AND** el JSON contiene `status` `UP`
 - **AND** la respuesta no contiene el indicador `db`
 
+#### Scenario: Liveness independiente de otros indicadores
+- **WHEN** un indicador de salud ajeno a liveness (como el de la base) está `DOWN`
+- **THEN** `GET /actuator/health/liveness` sigue respondiendo `200` con `status` `UP`
+
 ### Requirement: Superficie pública de Actuator mínima
 El detalle del health SHALL configurarse con la variable `HEALTH_SHOW_DETAILS` (por defecto `always`). Las únicas rutas de Actuator sin autenticación SHALL ser las de health; `/actuator/info` SHALL requerir autenticación.
 

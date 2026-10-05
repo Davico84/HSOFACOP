@@ -30,7 +30,7 @@ Se atacan los dos lados, gratis:
   - medir la memoria y el arranque en Render Free;
   - la condición de la cookie de sesión entre dominios (ver abajo).
 
-**Fuera de este change, pero condición para desplegar**: la cookie de refresh es `SameSite=Lax`, y esa es la protección CSRF del backend. Si el frontend y el backend quedan en *sites* distintos (p. ej. `*.vercel.app` y `*.onrender.com`), el navegador no la envía y la sesión no se restaura. La guía lo documenta. La solución va en el change de despliegue: preferentemente servir la API bajo el mismo origen del frontend mediante un proxy/rewrite del hosting, porque `SameSite=None` debilitaría la protección CSRF y Safari bloquea igual las cookies de terceros.
+**Fuera de este change, pero condición para desplegar**: la cookie de refresh es `SameSite=Lax`, y esa es la protección CSRF del backend. Si el frontend y el backend quedan en *sites* distintos (p. ej. `*.vercel.app` y `*.onrender.com`), el navegador no la envía y la sesión no se restaura. La guía lo documenta. La solución va en el change de despliegue, que es **dependencia obligatoria para producción**: preferentemente servir la API bajo el mismo origen del frontend mediante un proxy/rewrite del hosting, porque `SameSite=None` debilitaría la protección CSRF y Safari bloquea igual las cookies de terceros. El proxy debe esperar el arranque en frío: Vercel Hobby lo hace (hasta 120 s); Netlify no (26 s); Render Static Sites hay que probarlo.
 
 ## Capabilities
 
