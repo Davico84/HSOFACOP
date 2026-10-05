@@ -53,10 +53,11 @@ test("con el cupo lleno el tratante no puede crear más historias", async ({ bro
   const fullName = `Dra. Cupo ${Date.now()}`;
   const tratante = await registerTratante(browser, fullName);
 
-  // ADMIN: la cuenta nueva no tiene límite; se le asigna un cupo de 1
+  // ADMIN: la cuenta nueva nace con el cupo inicial; se confirma en 1 desde el diálogo
   const admin = await loginAdmin(browser);
   let row = await userRow(admin, fullName);
-  await expect(row).toContainText("0 · sin límite");
+  // Cupo inicial de las cuentas nuevas (RECORDS_DEFAULT_QUOTA, 1 por defecto).
+  await expect(row).toContainText("0 de 1");
   await row.getByRole("button", { name: `Cambiar el cupo de historias de ${fullName}` }).click();
   const dialog = admin.getByRole("dialog");
   await dialog.getByRole("checkbox", { name: "Sin límite" }).uncheck();
