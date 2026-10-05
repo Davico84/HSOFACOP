@@ -14,8 +14,9 @@
 ## 3. Frontend
 
 - [ ] 3.1 Vista preliminar: "Imprimir" registra la impresión y luego abre el diálogo; error → toast con reintentar; `data-print-ready` + CSS que oculta las hojas al imprimir sin el botón y muestra el aviso
-- [ ] 3.2 Formulario: campos de identidad bloqueados con aviso cuando están fijados; "Desbloquear paciente" para el ADMIN (con confirmación); manejo del `409 patient-locked`
-- [ ] 3.3 Tests Vitest de los scenarios (botón registra antes de imprimir, error sin diálogo, campos bloqueados, desbloqueo ADMIN, 409) y verificación con Edge headless de que imprimir sin el botón saca solo el aviso y con el botón las 13 hojas iguales; `pnpm validate` verde
+- [ ] 3.2 Marca de avance en `PrintPage` (pasos clínicos con datos de la historia guardada; sin marca si está completa), posicionada sin mover el contenido
+- [ ] 3.3 Formulario: campos de identidad bloqueados con aviso cuando están fijados; "Desbloquear paciente" para el ADMIN (con confirmación); manejo del `409 patient-locked`
+- [ ] 3.4 Tests Vitest de los scenarios (botón registra antes de imprimir, error sin diálogo, marca de avance con N correcto y sin marca si completa, Firmas no cuenta, campos bloqueados, desbloqueo ADMIN, 409) y verificación con Edge headless + PyMuPDF: sin el botón sale solo el aviso; con el botón, 13 hojas con las mismas posiciones con y sin marca; `pnpm validate` verde
 
 ## 4. Docs y cierre
 

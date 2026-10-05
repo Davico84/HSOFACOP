@@ -25,6 +25,11 @@
 - CSS de impresión (en `PAGE_CSS`): `@media print { [data-print-guard]:not([data-print-ready]) .print-sheets { display: none } [data-print-guard]:not([data-print-ready]) .print-guard-notice { display: block } }`; el aviso "Usa el botón Imprimir de la vista preliminar." está oculto en pantalla y al imprimir con el botón.
   - *Por qué CSS y no interceptar `beforeprint`*: `beforeprint` no puede cancelar la impresión ni esperar al servidor; el CSS decide qué sale en el papel de forma síncrona.
 
+### Marca de avance
+- La vista preliminar calcula los pasos clínicos con datos de la historia **guardada** con la misma función del formulario (`filledStepsOf(toFormValues(record))`, pasos 1–7); no depende de `filled_steps` del servidor (puede estar "sin calcular" en historias viejas).
+- Incompleta (< 7) → `PrintPage` muestra en el margen superior, posicionada en absoluto dentro del área sin contenido de la hoja, una línea pequeña: "AVANCE · N de 7 pasos clínicos con datos · impreso el dd/mm/aaaa" (fecha local del momento de la vista). Al ser absoluta, no desplaza renglones ni logos: se verifica con Edge headless + PyMuPDF que una impresión con marca y otra sin marca tienen las mismas hojas y posiciones.
+- Completa → sin marca. La marca también se ve en la vista previa en pantalla (es lo que saldrá).
+
 ### Rechazo de cambios de identidad
 - En `update`, si `patient_locked_at` no es nulo y alguno de los 4 campos normalizados difiere del guardado → `PatientLockedException` (`BusinessException`, `409`, tipo `patient-locked`, solo `detail`, como el cupo). Se compara **después** de normalizar, así un espacio sobrante no dispara el 409.
 - El ADMIN también está sujeto al bloqueo: corrige desbloqueando explícitamente (deja rastro en `patient_locked_at` = nulo hasta reimprimir).

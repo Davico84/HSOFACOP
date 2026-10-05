@@ -6,10 +6,11 @@ Hoy la vista previa solo imprime lo **guardado** en el servidor (con cambios sin
 
 ## What Changes
 
-- **La identidad del paciente queda fija tras la primera impresión**: nombre, tipo y número de documento y fecha de nacimiento no se pueden cambiar después de imprimir la historia por primera vez. El contenido clínico, los demás datos del paciente (domicilio, teléfono, etc.) y la impresión siguen libres: la historia se completa y corrige en varias sesiones y se puede reimprimir.
+- **La identidad del paciente queda fija tras la primera impresión**, esté la ficha completa o no (a veces se pide el avance impreso): nombre, tipo y número de documento y fecha de nacimiento no se pueden cambiar después de imprimir la historia por primera vez. El contenido clínico, los demás datos del paciente (domicilio, teléfono, etc.) y la impresión siguen libres: la historia se completa y corrige en varias sesiones y se puede reimprimir.
 - **Antes de imprimir**, el tratante corrige esos datos libremente.
 - **El servidor registra la impresión** (`patient_locked_at`, migración **V14**) y rechaza con `409` cualquier guardado que cambie la identidad fijada. En el formulario, esos campos aparecen bloqueados con un aviso.
 - **Imprimir solo con el botón "Imprimir"**: el botón avisa al servidor antes de abrir el diálogo de impresión. Imprimir la vista previa por el menú del navegador (Ctrl+P) no sale hasta usar el botón; así ninguna impresión escapa al registro.
+- **Marca de avance**: si la ficha no está completa (los 7 pasos clínicos con datos), cada hoja impresa lleva "AVANCE · N de 7 pasos clínicos con datos · impreso el <fecha>"; la ficha completa se imprime limpia. Un avance no puede pasar por historia terminada.
 - **El ADMIN puede desbloquear** la identidad de una historia (p. ej. un error de tipeo detectado después de imprimir); se vuelve a fijar en la siguiente impresión.
 - Las historias impresas antes de este cambio quedan desbloqueadas hasta su próxima impresión.
 
@@ -19,7 +20,7 @@ Hoy la vista previa solo imprime lo **guardado** en el servidor (con cambios sin
 <!-- ninguna -->
 
 ### Modified Capabilities
-- `orthodontic-records`: nuevos requisitos "Identidad del paciente fija tras imprimir" e "Imprimir solo con el botón Imprimir".
+- `orthodontic-records`: nuevos requisitos "Identidad del paciente fija tras imprimir", "Imprimir solo con el botón Imprimir" y "Marca de avance en impresiones incompletas".
 
 ## Impact
 
@@ -31,6 +32,7 @@ Hoy la vista previa solo imprime lo **guardado** en el servidor (con cambios sin
 ## Non-goals
 
 - Impedir capturas de pantalla de la vista previa: no se puede bloquear técnicamente; la historia oficial lleva firma sobre el papel.
+- Exigir la ficha completa para imprimir (el avance impreso es un uso legítimo).
 - Limitar la cantidad de reimpresiones o numerarlas en la hoja.
 - Fijar otros datos (domicilio, teléfono, contenido clínico).
 - Historial de cambios (descartado: la oficial es la impresa y firmada).
