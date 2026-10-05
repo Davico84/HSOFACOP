@@ -10,6 +10,7 @@ Monorepo modular: `modules/backend/` (Java/Spring) + `modules/frontend/` (React/
   - **Negocio (sustituible):** `docs/vision.md` — objetivos de producto + roadmap + gobernanza del ciclo + granularidad de capacidades · `docs/domain.md` — modelo de dominio (vivo): actores, glosario y ER. Fuente de verdad local-first; Jira solo backlog (futuro).
   - **Tecnología (reutilizable):** `docs/architecture.md` — stack cerrado + arquitectura back/front · `docs/backend.md` — estándares Java/Spring · `docs/frontend.md` — estándares frontend (arquitectura, React Query, Zustand, patrones UI) · `docs/coding-style.md` — estilo general de código (TypeScript, nombres) · `docs/testing.md` — estrategia de pruebas + puente Scenario→test.
   - `docs/tooling-setup.md` — tooling reproducible (scripts, Vitest/MSW, husky/commitlint, CI).
+  - `docs/deployment.md` — despliegue en planes gratuitos (Render + Neon): monitor a liveness, pool que deja dormir a la base, cookie de sesión entre frontend y API.
   - `docs/commits.md` — estándar de commits (Conventional Commits en español) + convención `Refs:` para enlazar tareas.
 
 ## Reglas OpenSpec (no negociables)

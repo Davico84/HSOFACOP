@@ -36,6 +36,7 @@ class PublicPathsTest {
     void public_and_private_examples() {
         assertThat(PublicPaths.matches("/auth/login")).isTrue();
         assertThat(PublicPaths.matches("/actuator/health/liveness")).isTrue();
+        assertThat(PublicPaths.matches("/actuator/info")).isFalse();
         assertThat(PublicPaths.matches("/v3/api-docs/swagger-config")).isTrue();
         assertThat(PublicPaths.matches("/api/x")).isFalse();
         assertThat(PublicPaths.matches("/actuator/env")).isFalse();

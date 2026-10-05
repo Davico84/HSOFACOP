@@ -392,18 +392,45 @@ Reglas que no se tocan sin revisar el change `add-login-lockout`:
 framework (que además solo trae `health`; aquí se sumó `info` a propósito). No amplíes esa lista sin
 decidir a la vez si el endpoint nuevo queda público o autenticado (siguiente punto).
 
-- **Solo `/actuator/health/**` y `/actuator/info` son públicos** (`PublicPaths` — fuente única
-  compartida por `SecurityConfig` y el customizer de OpenAPI; `PublicPathsTest` fija que su
-  `matches` decide igual que Spring Security). Cualquier otro endpoint de actuator cae bajo
-  `anyRequest().authenticated()`: no hay excepción salvo esas dos rutas.
-- ⚠️ **`management.endpoint.health.show-details: always`** combinado con que `/actuator/health/**`
-  es **público** significa que el detalle de salud (estado de cada *health indicator*: BD, disco...)
-  lo ve cualquiera sin autenticar. Es una decisión consciente, no un descuido — pero si algún día un
-  *health indicator* propio expone algo sensible (nombre de host interno, versión de dependencia),
-  hay que revisar si sigue mereciendo `always` en una ruta pública o si baja a `when-authorized`.
+- **Solo `/actuator/health/**` es público** (`PublicPaths` — fuente única compartida por
+  `SecurityConfig` y el customizer de OpenAPI; `PublicPathsTest` fija que su `matches` decide igual
+  que Spring Security). `/actuator/info` sigue expuesto pero **autenticado** (nada lo consume; así no
+  queda una ruta pública cuyo contenido pueda crecer sin revisión). Cualquier otro endpoint de
+  actuator cae bajo `anyRequest().authenticated()`.
+- **Ping del monitor externo: `/actuator/health/liveness`** (probes activos con
+  `management.endpoint.health.probes.enabled: true`, que fuera de Kubernetes no se activan solos).
+  Responde `200` con `status: UP` y **no consulta la BD**: el grupo liveness no incluye el indicador
+  `db` (no configures `management.endpoint.health.group.liveness.include`). Un monitor que pegue a
+  `/actuator/health` cada 10 min mantendría despierta una base que se suspende sola (Neon). Lo fija
+  `HealthPingIT` (con un indicador en `DOWN`, el health general cae y el liveness sigue `UP`).
+  Despliegue: `docs/deployment.md`.
+- ⚠️ **`management.endpoint.health.show-details: ${HEALTH_SHOW_DETAILS:always}`**: `always` en local;
+  en despliegue **`never`**, porque `/actuator/health/**` es público y con `always` cualquiera ve el
+  estado de cada *health indicator* (BD, disco...). Con `never` solo responde `status`
+  (`HealthDetailsIT`).
 - Antes de exponer un endpoint nuevo de actuator (`/env`, `/beans`, `/httptrace`...): añádelo a
   `exposure.include` **y** decide explícitamente si entra en `PublicPaths` — nunca por omisión. Si
   se expone `/env`, revisa que no filtre `app.security.jwt.secret` ni credenciales de BD.
+
+### 11.1.1 Pool de conexiones (HikariCP) — dejar dormir a la base
+
+La base de despliegue (Neon, capa gratuita) suspende su cómputo tras ~5 min sin actividad y su cupo
+de horas no alcanza para tenerla despierta 24/7. Lo que la mantendría despierta es el propio pool:
+por defecto Hikari retiene `minimumIdle` = `maximumPoolSize` (10) conexiones y hace keepalive cada
+2 min. Configuración (`spring.datasource.hikari`, por variables):
+
+| Propiedad | Valor | Por qué |
+|---|---|---|
+| `minimum-idle` | `${DB_POOL_MIN_IDLE:0}` | sin mínimo: el pool puede quedar vacío |
+| `idle-timeout` | `${DB_POOL_IDLE_TIMEOUT_MS:60000}` | las ociosas se retiran al minuto (más la tolerancia del housekeeper, que corre cada 30 s) |
+| `keepalive-time` | `0` (fijo) | sin pings a la BD |
+| `maximum-pool-size` | `${DB_POOL_MAX_SIZE:5}` | suficiente para el uso real; menos memoria |
+
+La siguiente petición abre una conexión nueva (y Neon despierta en < 1 s). Mismos valores en local.
+Lo fijan `DataSourcePoolIT` (valores y recuperación tras vaciar el pool) y
+`DataSourceIdleRetirementIT` (el pool llega a 0). Conexión a Neon: cadena **directa** con
+`sslmode=require`, no la `-pooler` (PgBouncer en modo transacción no conserva estado de sesión y
+Flyway lo necesita para sus locks).
 
 ### 11.2 CORS
 
