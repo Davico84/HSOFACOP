@@ -13,7 +13,7 @@
 ## 3. Frontend
 
 - [ ] 3.1 Extraer de `goTo` el guardado común `persist({ lastStep, silent })` con `reset(..., { keepDirtyValues: true })`; cambio de paso envía el destino y "Guardar" el paso actual
-- [ ] 3.2 Hook `useAutosave` (debounce 2 s, `visibilitychange`/`pagehide`, un guardado a la vez, reintento en `online`, pausa tras 409) e indicador de estado con `aria-live` en la cabecera; sin toasts
+- [ ] 3.2 Hook `useAutosave` (debounce 3 s, mínimo 10 s entre autoguardados salvo al ocultar la pestaña, `visibilitychange`/`pagehide`, un guardado a la vez, reintento en `online`, pausa tras 409) e indicador de estado con `aria-live` en la cabecera; sin toasts
 - [ ] 3.3 Abrir en `lastStep` si la URL no trae `paso` (`replace`); enlaces del listado sin `paso=1`
 - [ ] 3.4 Tests Vitest de los scenarios (guarda tras el debounce con timers falsos, al ocultar la pestaña, paso inválido, escribir durante el guardado, fallo y reintento, 409, sin cambios, historia nueva, retomar paso, `?paso` explícito, sin paso guardado) y ajuste de los tests existentes; E2E: retomar en el paso tras recargar; `pnpm validate` verde
 

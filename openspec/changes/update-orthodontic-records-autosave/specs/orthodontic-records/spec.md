@@ -1,12 +1,16 @@
 ## ADDED Requirements
 
 ### Requirement: Autoguardado del paso en curso
-En una historia ya creada, el sistema SHALL guardar automáticamente los cambios pendientes unos segundos después de que el usuario deja de editar y, de inmediato, cuando la pestaña deja de estar visible (cambio de app, pantalla bloqueada). Antes de autoguardar SHALL validar el paso actual; si tiene errores NO SHALL guardar y SHALL indicarlo. Un indicador junto al título SHALL mostrar el estado ("Guardando…", "Guardado", "Sin guardar: corrige los campos marcados", "No se pudo guardar" con opción de reintentar). Lo que el usuario escribe mientras un guardado está en curso NO SHALL perderse ni reemplazarse por la respuesta del servidor. El autoguardado NO SHALL mostrar notificaciones emergentes. Una historia nueva NO SHALL autoguardarse antes de crearse con "Crear historia".
+En una historia ya creada, el sistema SHALL guardar automáticamente los cambios pendientes unos segundos después de que el usuario deja de editar (como máximo un autoguardado cada 10 segundos) y, de inmediato, cuando la pestaña deja de estar visible (cambio de app, pantalla bloqueada). Antes de autoguardar SHALL validar el paso actual; si tiene errores NO SHALL guardar y SHALL indicarlo. Un indicador junto al título SHALL mostrar el estado ("Guardando…", "Guardado", "Sin guardar: corrige los campos marcados", "No se pudo guardar" con opción de reintentar). Lo que el usuario escribe mientras un guardado está en curso NO SHALL perderse ni reemplazarse por la respuesta del servidor. El autoguardado NO SHALL mostrar notificaciones emergentes. Una historia nueva NO SHALL autoguardarse antes de crearse con "Crear historia".
 
 #### Scenario: Guarda al dejar de escribir
 - **WHEN** el usuario escribe en un campo de una historia ya creada y deja de editar unos segundos
 - **THEN** el sistema guarda la historia sin que pulse nada y el indicador muestra "Guardado"
 - **AND** al reabrir la historia en otro dispositivo el valor está ahí
+
+#### Scenario: Pausas cortas seguidas
+- **WHEN** el usuario edita con pausas de pocos segundos durante un minuto
+- **THEN** el sistema autoguarda como máximo una vez cada 10 segundos y no pierde ningún cambio
 
 #### Scenario: Guarda al ocultar la pestaña
 - **WHEN** el usuario tiene cambios pendientes y cambia de app o bloquea la pantalla
