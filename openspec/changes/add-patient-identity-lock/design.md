@@ -34,9 +34,25 @@
 - En `update`, si `patient_locked_at` no es nulo y alguno de los 4 campos normalizados difiere del guardado → `PatientLockedException` (`BusinessException`, `409`, tipo `patient-locked`, solo `detail`, como el cupo). Se compara **después** de normalizar, así un espacio sobrante no dispara el 409.
 - El ADMIN también está sujeto al bloqueo: corrige desbloqueando explícitamente (deja rastro en `patient_locked_at` = nulo hasta reimprimir).
 
-### Desbloqueo (ADMIN)
-- `DELETE /api/orthodontic-records/{id}/patient-lock` (`@PreAuthorize("hasRole('ADMIN')")`): pone `patient_locked_at` en nulo; `204`. Historia inexistente → `404`.
-- UI: en el formulario, para el ADMIN y con la identidad fijada, botón "Desbloquear paciente" junto al aviso (con confirmación).
+### Desbloqueo (ADMIN) y su registro
+- `DELETE /api/orthodontic-records/{id}/patient-lock` (`@PreAuthorize("hasRole('ADMIN')")`): pone `patient_locked_at` en nulo, guarda `patient_unlocked_at` (`Clock`) y `patient_unlocked_by` (FK `users`, el actor) y cierra la solicitud pendiente (`unlock_requested_at`/`unlock_request_reason` en nulo); `204`. Historia inexistente → `404`. Sin la identidad fijada → `409` (nada que desbloquear).
+- Solo el **último** desbloqueo (columnas en la historia, sin tabla de historial): suficiente para ver quién y cuándo sin introducir auditoría completa.
+- `RecordResponse`: `patientLockedAt`, `lastUnlock { byName, at }` (nulo si nunca) y `unlockRequest { requestedAt, reason }` (nulo si no hay).
+- UI: en el formulario, junto al aviso de identidad fija: para el ADMIN, "Desbloquear paciente" (con confirmación) y, si hay solicitud, su motivo y "Descartar solicitud"; para todos, "Desbloqueada por X el dd/mm/aaaa" si hubo un desbloqueo.
+
+### Solicitud de desbloqueo
+- Columnas en la historia: `unlock_requested_at TIMESTAMPTZ NULL`, `unlock_request_reason VARCHAR(200) NULL` (una sola solicitud pendiente por historia; no hace falta tabla aparte).
+- `POST /{id}/unlock-request` (autor o ADMIN con acceso; ajena → `404`): cuerpo `{ reason }` (`@NotBlank @Size(max=200)`); identidad no fijada → `409 /errors/patient-not-locked`; solicitud ya pendiente → `409 /errors/unlock-already-requested`; si no, guarda fecha y motivo; `204`.
+- `DELETE /{id}/unlock-request` (solo ADMIN): descarta (pone ambos en nulo); `204`; sin solicitud → `204` igual (idempotente).
+- UI tratante: con la identidad fijada y sin solicitud, "Solicitar desbloqueo" abre un `Dialog` con el motivo; con solicitud, texto "Desbloqueo solicitado el dd/mm/aaaa" sin botón.
+
+### Candado en el listado
+- `RecordSummaryResponse.patientLocked` (boolean, `patient_locked_at IS NOT NULL`), sin consultas extra (es columna de la misma fila).
+- Tabla y tarjetas: ícono `Lock` con `aria-label="Identidad del paciente fija"` junto al número; con `Tooltip` en escritorio.
+
+### Solicitudes en Inicio del ADMIN
+- `GET /api/dashboard/admin` suma `unlockRequests: { total, items: [{ recordId, recordNumber, patientName, authorName, requestedAt, reason }] }`, hasta 10 de la más antigua a la más nueva (`ORDER BY unlock_requested_at ASC, id ASC`), con el mismo patrón que `quotas`.
+- `AdminDashboard` agrega `UnlockRequestsList` (un componente por archivo): cada fila enlaza a `recordPath(id, 1)`; vacío → "No hay solicitudes de desbloqueo". Desbloquear/descartar invalida `dashboardKeys.all` y el detalle de la historia.
 
 ### Frontend del formulario
 - Con `record.patientLockedAt`, los campos de identidad del paso 1 se renderizan `disabled` con un `FieldHint` ("Fijado al imprimir la historia el <fecha>. Pide al administrador que lo desbloquee para corregirlo."). Como están deshabilitados, el autoguardado nunca envía cambios en ellos.
