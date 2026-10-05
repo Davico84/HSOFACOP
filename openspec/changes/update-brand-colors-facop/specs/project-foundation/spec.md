@@ -23,6 +23,14 @@ El tema SHALL usar la paleta oficial de FACOP: Roxo `#832C87` como color princip
 - **WHEN** el usuario activa el modo oscuro
 - **THEN** el color principal es un Roxo aclarado legible sobre el fondo oscuro y las superficies son grises neutros oscuros
 
+#### Scenario: Logos oficiales
+- **WHEN** se abre la app en modo claro, en modo oscuro o en el login
+- **THEN** se ve el logo oficial de FACOP según el fondo: positivo (escudo Roxo y "FACOP" en Grafite) sobre fondo claro, en blanco sobre fondo oscuro o Roxo, y el escudo Roxo como favicon y en la barra contraída
+
+#### Scenario: Panel del login
+- **WHEN** se abre el inicio de sesión en escritorio
+- **THEN** el panel de marca es Roxo liso con el logo en blanco, sin degradado ni turquesa
+
 #### Scenario: Hoja impresa en negro
 - **WHEN** se imprime una historia
 - **THEN** el texto y las líneas salen en `#000000` y la hoja conserva su diseño
