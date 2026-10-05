@@ -583,6 +583,10 @@ Al crear una historia clínica, si el autor es un `USER` con cupo y ya creó tan
 - **WHEN** un `USER` con cupo 5 y 5 historias intenta crear otra
 - **THEN** la API responde `409` (`/errors/record-quota-reached`) con "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más." y no crea la historia
 
+#### Scenario: Tratante nuevo con el cupo inicial
+- **WHEN** un tratante recién registrado (cupo inicial 1) crea su primera historia e intenta crear otra
+- **THEN** la primera se crea, el listado muestra "1 de 1 historias" y la segunda recibe `409` con "Alcanzaste el máximo de 1 historia clínica. Comunícate con el administrador para solicitar más."
+
 #### Scenario: Botón deshabilitado al llegar al tope
 - **WHEN** un `USER` con el cupo lleno abre el listado de historias
 - **THEN** "Nueva historia" está deshabilitado y se ve el aviso "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más."
@@ -600,8 +604,8 @@ Al crear una historia clínica, si el autor es un `USER` con cupo y ya creó tan
 - **WHEN** un `USER` con el cupo lleno edita, guarda o imprime una de sus historias
 - **THEN** todo funciona como siempre
 
-#### Scenario: Sin límite por defecto
-- **WHEN** un `USER` sin cupo asignado crea historias
+#### Scenario: Cuenta sin cupo
+- **WHEN** un `USER` sin cupo (cuenta anterior a este cambio, cupo quitado por el ADMIN o cupo inicial vacío) crea historias
 - **THEN** puede crear todas las que quiera y el listado no muestra "N de M"
 
 #### Scenario: Creaciones simultáneas

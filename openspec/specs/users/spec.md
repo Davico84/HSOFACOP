@@ -112,7 +112,23 @@ El sistema SHALL ofrecer a los `ADMIN` una sección "Usuarios" dentro del shell 
 - **THEN** la sección no aparece en su navegación y la ruta muestra el acceso denegado del shell
 
 ### Requirement: Cupo de historias clínicas por usuario
-Un `ADMIN` SHALL poder asignar, cambiar o quitar el cupo de historias clínicas de una cuenta `USER`: un número entero entre 0 y 9999, o sin límite. Por defecto ninguna cuenta tiene límite. El cupo SHALL poder quedar por debajo de las historias ya creadas, sin afectarlas. El sistema SHALL denegar el cambio a cualquier otro rol y SHALL rechazarlo para cuentas `ADMIN`. En la pantalla "Usuarios", cada cuenta `USER` SHALL mostrar sus historias creadas y su cupo, con una acción para cambiarlo.
+Un `ADMIN` SHALL poder asignar, cambiar o quitar el cupo de historias clínicas de una cuenta `USER`: un número entero entre 0 y 9999, o sin límite. Toda cuenta nueva SHALL nacer con el cupo inicial configurado en el despliegue (`app.records.default-quota`), que por defecto es 1; si se configura vacío, las cuentas nuevas nacen sin límite. Las cuentas que ya existían SHALL conservar su cupo. El cupo SHALL poder quedar por debajo de las historias ya creadas, sin afectarlas. El sistema SHALL denegar el cambio a cualquier otro rol y SHALL rechazarlo para cuentas `ADMIN`. En la pantalla "Usuarios", cada cuenta `USER` SHALL mostrar sus historias creadas y su cupo, con una acción para cambiarlo.
+
+#### Scenario: Cuenta nueva con el cupo inicial
+- **WHEN** un tratante se registra y el cupo inicial es el de por defecto
+- **THEN** su cuenta nace con cupo 1 y la pantalla "Usuarios" muestra "0 de 1"
+
+#### Scenario: Cupo inicial configurado
+- **WHEN** el despliegue configura el cupo inicial en 3 y un tratante se registra
+- **THEN** su cuenta nace con cupo 3
+
+#### Scenario: Cupo inicial vacío
+- **WHEN** el despliegue configura el cupo inicial vacío y un tratante se registra
+- **THEN** su cuenta nace sin límite
+
+#### Scenario: Cuentas existentes
+- **WHEN** se despliega este cambio y había cuentas sin límite
+- **THEN** siguen sin límite hasta que un `ADMIN` les asigne un cupo
 
 #### Scenario: Asignar un cupo
 - **WHEN** un `ADMIN` asigna un cupo de 5 a una cuenta `USER` con 3 historias creadas

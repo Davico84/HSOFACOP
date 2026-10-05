@@ -9,4 +9,4 @@
 ## 2. Docs y cierre
 
 - [x] 2.1 `docs/vision.md`: estado 🚧 del change
-- [ ] 2.2 Al archivar — `docs/domain.md` (cupo inicial de cuentas nuevas) y `docs/vision.md` ✅
+- [x] 2.2 Al archivar — `docs/domain.md` (cupo inicial de cuentas nuevas) y `docs/vision.md` ✅
