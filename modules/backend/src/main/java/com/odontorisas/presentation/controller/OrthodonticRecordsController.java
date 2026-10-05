@@ -85,7 +85,7 @@ public class OrthodonticRecordsController {
     public ResponseEntity<RecordResponse> createRecord(
             @Valid @RequestBody CreateRecordRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(RecordResponse.from(service.create(currentActor(), request.toData())));
+            .body(RecordResponse.from(service.create(currentActor(), request.toData(), request.filledSteps())));
     }
 
     @Operation(operationId = "getRecordQuota", summary = "Cupo de historias del usuario autenticado y cuántas creó")
@@ -119,7 +119,8 @@ public class OrthodonticRecordsController {
     public ResponseEntity<RecordResponse> updateRecord(
             @PathVariable Long id, @Valid @RequestBody UpdateRecordRequest request) {
         return ResponseEntity.ok(RecordResponse.from(
-            service.update(currentActor(), id, request.version(), request.toData(), request.lastStep())));
+            service.update(currentActor(), id, request.version(), request.toData(), request.lastStep(),
+                request.filledSteps())));
     }
 
     /** El filtro JWT deja el id del usuario en los {@code details} y el rol como autoridad. */

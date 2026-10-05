@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
@@ -31,6 +32,7 @@ public record RecordResponse(
     Integer ageYears,
     @Schema(requiredMode = REQUIRED) RecordContent content,
     @Schema(description = "Último paso (1–8) en que se guardaron cambios; vacío = paso 1") Integer lastStep,
+    @Schema(description = "Pasos (1–8) con datos según el último guardado; vacío = sin calcular") List<Integer> filledSteps,
     @Schema(requiredMode = REQUIRED, description = "Versión actual: se envía al guardar") long version,
     @Schema(requiredMode = REQUIRED) Instant createdAt,
     @Schema(requiredMode = REQUIRED) Instant updatedAt) {
@@ -38,7 +40,7 @@ public record RecordResponse(
     public static RecordResponse from(RecordView v) {
         return new RecordResponse(v.id(), v.recordNumber(), v.authorId(), v.authorName(), v.treatingDentist(),
             v.patientName(), v.documentType(), v.documentNumber(), v.patientSex(), v.birthDate(), v.birthPlace(),
-            v.address(), v.phone(), v.treatmentStartDate(), v.ageYears(), v.content(), v.lastStep(), v.version(),
+            v.address(), v.phone(), v.treatmentStartDate(), v.ageYears(), v.content(), v.lastStep(), v.filledSteps(), v.version(),
             v.createdAt(), v.updatedAt());
     }
 }

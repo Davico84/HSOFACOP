@@ -69,7 +69,7 @@ class OrthodonticRecordsControllerTest {
 
     private static final RecordView ANA = new RecordView(10L, "AEO-001", 1L, "Dra. María Torres", "Dra. María Torres",
         "Ana Quispe", null, null, null, LocalDate.of(2012, 5, 20), null, null, null, LocalDate.of(2026, 5, 19), 13,
-        RecordContent.empty(), null, 2L, Instant.parse("2026-10-01T10:00:00Z"), Instant.parse("2026-10-01T10:00:00Z"));
+        RecordContent.empty(), null, null, 2L, Instant.parse("2026-10-01T10:00:00Z"), Instant.parse("2026-10-01T10:00:00Z"));
 
     private static RequestPostProcessor as(long userId, String role) {
         var auth = new UsernamePasswordAuthenticationToken("u" + userId, null,
@@ -104,14 +104,14 @@ class OrthodonticRecordsControllerTest {
         mockMvc.perform(post("/api/orthodontic-records").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"patientName\":\"Ana\"}"))
             .andExpect(status().isUnauthorized());
-        verify(service, never()).create(any(), any());
+        verify(service, never()).create(any(), any(), any());
     }
 
     // --- Creación ---
 
     @Test
     void creates_with_only_the_patient_name_as_the_authenticated_user() throws Exception {
-        when(service.create(any(), any())).thenReturn(ANA);
+        when(service.create(any(), any(), any())).thenReturn(ANA);
 
         create("{\"patientName\":\"Ana Quispe\"}")
             .andExpect(status().isCreated())
@@ -119,7 +119,7 @@ class OrthodonticRecordsControllerTest {
             .andExpect(jsonPath("$.recordNumber").value("AEO-001"))
             .andExpect(jsonPath("$.ageYears").value(13))
             .andExpect(jsonPath("$.content.anamnesis").exists());
-        verify(service).create(eq(new RecordActor(1L, false)), any(RecordData.class));
+        verify(service).create(eq(new RecordActor(1L, false)), any(RecordData.class), isNull());
     }
 
     @Test
@@ -129,12 +129,12 @@ class OrthodonticRecordsControllerTest {
             .andExpect(jsonPath("$.type").value("/errors/validation-error"))
             .andExpect(jsonPath("$.errors[0].field").value("patientName"))
             .andExpect(jsonPath("$.errors[0].message").value("Indica el nombre del paciente."));
-        verify(service, never()).create(any(), any());
+        verify(service, never()).create(any(), any(), any());
     }
 
     @Test
     void valid_documents_by_type_are_accepted() throws Exception {
-        when(service.create(any(), any())).thenReturn(ANA);
+        when(service.create(any(), any(), any())).thenReturn(ANA);
         create("{\"patientName\":\"A\",\"documentType\":\"DNI\",\"documentNumber\":\"74125896\"}").andExpect(status().isCreated());
         create("{\"patientName\":\"A\",\"documentType\":\"FOREIGNER_CARD\",\"documentNumber\":\"001234567\"}").andExpect(status().isCreated());
         create("{\"patientName\":\"A\",\"documentType\":\"PASSPORT\",\"documentNumber\":\"12345678\"}").andExpect(status().isCreated());
@@ -314,18 +314,46 @@ class OrthodonticRecordsControllerTest {
 
     @Test
     void update_passes_version_and_actor_admin_flag() throws Exception {
-        when(service.update(any(), anyLong(), anyLong(), any(), any())).thenReturn(ANA);
+        when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenReturn(ANA);
         mockMvc.perform(put("/api/orthodontic-records/10").with(as(9, "ADMIN"))
                 .contentType(MediaType.APPLICATION_JSON).content("{\"version\":2,\"patientName\":\"Ana\",\"recordNumber\":\"AEO-999\"}"))
             .andExpect(status().isOk());
-        verify(service).update(eq(new RecordActor(9L, true)), eq(10L), eq(2L), any(RecordData.class), isNull());
+        verify(service).update(eq(new RecordActor(9L, true)), eq(10L), eq(2L), any(RecordData.class), isNull(), isNull());
     }
 
     @Test
     void update_passes_last_step() throws Exception {
-        when(service.update(any(), anyLong(), anyLong(), any(), any())).thenReturn(ANA);
+        when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenReturn(ANA);
         update("{\"version\":2,\"patientName\":\"Ana\",\"lastStep\":6}").andExpect(status().isOk());
-        verify(service).update(eq(new RecordActor(1L, false)), eq(10L), eq(2L), any(RecordData.class), eq(6));
+        verify(service).update(eq(new RecordActor(1L, false)), eq(10L), eq(2L), any(RecordData.class), eq(6), isNull());
+    }
+
+    @Test
+    void filled_steps_out_of_range_is_400() throws Exception {
+        update("{\"version\":2,\"patientName\":\"Ana\",\"filledSteps\":[1,9]}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value(org.hamcrest.Matchers.startsWith("filledSteps")));
+        create("{\"patientName\":\"Ana\",\"filledSteps\":[0]}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value(org.hamcrest.Matchers.startsWith("filledSteps")));
+        verify(service, never()).update(any(), anyLong(), anyLong(), any(), any(), any());
+        verify(service, never()).create(any(), any(), any());
+    }
+
+    @Test
+    void repeated_filled_steps_is_400() throws Exception {
+        update("{\"version\":2,\"patientName\":\"Ana\",\"filledSteps\":[1,1,2]}")
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[0].field").value("filledSteps"));
+        verify(service, never()).update(any(), anyLong(), anyLong(), any(), any(), any());
+    }
+
+    @Test
+    void update_passes_filled_steps() throws Exception {
+        when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenReturn(ANA);
+        update("{\"version\":2,\"patientName\":\"Ana\",\"filledSteps\":[1,2,5]}").andExpect(status().isOk());
+        verify(service).update(eq(new RecordActor(1L, false)), eq(10L), eq(2L), any(RecordData.class), isNull(),
+            eq(List.of(1, 2, 5)));
     }
 
     @ParameterizedTest
@@ -346,7 +374,7 @@ class OrthodonticRecordsControllerTest {
 
     @Test
     void stale_version_is_409_with_its_type() throws Exception {
-        when(service.update(any(), anyLong(), anyLong(), any(), any())).thenThrow(new StaleRecordException());
+        when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenThrow(new StaleRecordException());
         update("{\"version\":1,\"patientName\":\"Ana\"}")
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.type").value("/errors/stale-record"));

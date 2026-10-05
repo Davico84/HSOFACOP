@@ -229,7 +229,8 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         List<String> ids = allOperations().stream().map(op -> op.get("operationId").stringValue()).toList();
         assertThat(ids).doesNotHaveDuplicates()
             .containsExactlyInAnyOrder("register", "login", "refresh", "logout", "listUsers", "changeUserStatus",
-                "listRecords", "createRecord", "getRecord", "updateRecord", "changeRecordQuota", "getRecordQuota");
+                "listRecords", "createRecord", "getRecord", "updateRecord", "changeRecordQuota", "getRecordQuota",
+                "getMyDashboard", "getAdminDashboard");
     }
 
     // --- Gestión de usuarios (add-user-account-status) ---

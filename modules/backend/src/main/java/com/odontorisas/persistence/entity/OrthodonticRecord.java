@@ -103,6 +103,10 @@ public class OrthodonticRecord {
     @Column(name = "last_step")
     private Integer lastStep;
 
+    /** Pasos con datos como máscara de bits (bit n-1 = paso n); nulo = sin calcular. */
+    @Column(name = "filled_steps")
+    private Integer filledSteps;
+
     @Version
     @Column(nullable = false)
     private long version;

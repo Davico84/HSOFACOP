@@ -6,6 +6,7 @@ import com.odontorisas.service.records.content.RecordContent;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 /** Historia completa tal como la ve quien puede abrirla. */
 public record RecordView(
@@ -26,6 +27,7 @@ public record RecordView(
     Integer ageYears,
     RecordContent content,
     Integer lastStep,
+    List<Integer> filledSteps,
     long version,
     Instant createdAt,
     Instant updatedAt) {

@@ -15,6 +15,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
+import java.util.List;
 
 /**
  * Historias clínicas de ortodoncia (capacidad orthodontic-records). Aplica el alcance (D6): un
@@ -48,6 +49,12 @@ public class OrthodonticRecordService {
      */
     @Transactional
     public RecordView create(RecordActor actor, RecordData data) {
+        return create(actor, data, null);
+    }
+
+    /** Crea la historia; {@code filledSteps} son los pasos con datos (el paso 1 siempre cuenta). */
+    @Transactional
+    public RecordView create(RecordActor actor, RecordData data, List<Integer> filledSteps) {
         User author = users.findByIdForUpdate(actor.userId())
             .orElseThrow(() -> new IllegalStateException("El usuario autenticado no existe"));
         Integer quota = quotaOf(author);
@@ -62,6 +69,7 @@ public class OrthodonticRecordService {
             .recordNumber(NUMBER_FORMAT.formatted(seq))
             .build();
         apply(record, normalized);
+        record.setFilledSteps(FilledSteps.toMask(filledSteps));
         if (record.getTreatingDentist() == null) {
             record.setTreatingDentist(author.getFullName());
         }
@@ -94,12 +102,21 @@ public class OrthodonticRecordService {
      */
     @Transactional
     public RecordView update(RecordActor actor, Long id, long expectedVersion, RecordData data) {
-        return update(actor, id, expectedVersion, data, null);
+        return update(actor, id, expectedVersion, data, null, null);
     }
 
-    /** Guarda la historia; {@code lastStep} (1–8) es el paso en que se trabajó, nulo = no cambia. */
     @Transactional
     public RecordView update(RecordActor actor, Long id, long expectedVersion, RecordData data, Integer lastStep) {
+        return update(actor, id, expectedVersion, data, lastStep, null);
+    }
+
+    /**
+     * Guarda la historia; {@code lastStep} (1–8) es el paso en que se trabajó y {@code filledSteps}
+     * los pasos con datos (el paso 1 siempre cuenta); nulos = no cambian.
+     */
+    @Transactional
+    public RecordView update(RecordActor actor, Long id, long expectedVersion, RecordData data, Integer lastStep,
+                             List<Integer> filledSteps) {
         OrthodonticRecord record = load(actor, id);
         if (record.getVersion() != expectedVersion) {
             throw new StaleRecordException();
@@ -107,6 +124,9 @@ public class OrthodonticRecordService {
         apply(record, normalize(data));
         if (lastStep != null) {
             record.setLastStep(lastStep);
+        }
+        if (filledSteps != null) {
+            record.setFilledSteps(FilledSteps.toMask(filledSteps));
         }
         try {
             return toView(records.saveAndFlush(record));
@@ -169,7 +189,8 @@ public class OrthodonticRecordService {
         return new RecordView(r.getId(), r.getRecordNumber(), r.getAuthor().getId(), r.getAuthor().getFullName(),
             r.getTreatingDentist(), r.getPatientName(), r.getDocumentType(), r.getDocumentNumber(), r.getPatientSex(),
             r.getBirthDate(), r.getBirthPlace(), r.getAddress(), r.getPhone(), r.getTreatmentStartDate(), age,
-            content, r.getLastStep(), r.getVersion(), r.getCreatedAt(), r.getUpdatedAt());
+            content, r.getLastStep(), FilledSteps.toList(r.getFilledSteps()), r.getVersion(), r.getCreatedAt(),
+            r.getUpdatedAt());
     }
 
     private static RecordSummaryView toSummary(OrthodonticRecord r) {
