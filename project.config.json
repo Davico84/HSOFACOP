@@ -2,7 +2,7 @@
   "$schema": "./scripts/project/project.config.schema.json",
   "name": "HS FACOP",
   "tagline": "De puertas abiertas para el mundo",
-  "description": "HISTORIA CLINICA ORTODONCIA",
+  "description": "Tu portal al conocimiento y al éxito profesional.",
   "database": {
     "name": "hsfacopdb",
     "user": "facop",

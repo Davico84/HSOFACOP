@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "HS FACOP API",
-    "description": "HISTORIA CLINICA ORTODONCIA",
+    "description": "Tu portal al conocimiento y al éxito profesional.",
     "version": "v1"
   },
   "servers": [

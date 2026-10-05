@@ -37,7 +37,7 @@ spring:
 app:
   # Identidad visible (OpenAPI). La escribe `pnpm project:apply` desde project.config.json.
   name: "HS FACOP"
-  description: "HISTORIA CLINICA ORTODONCIA"
+  description: "Tu portal al conocimiento y al éxito profesional."
   records:
     # Cupo de historias con el que nace toda cuenta nueva (0–9999). Vacío = sin límite.
     # Las cuentas existentes no cambian; el ADMIN lo ajusta en "Usuarios".
