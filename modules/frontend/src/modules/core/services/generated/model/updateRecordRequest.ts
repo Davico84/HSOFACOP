@@ -53,4 +53,6 @@ export interface UpdateRecordRequest {
    * @maximum 8
    */
   lastStep?: number;
+  /** Pasos del formulario (1–8) con datos; el paso 1 siempre cuenta */
+  filledSteps?: number[];
 }

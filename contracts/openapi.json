@@ -17,6 +17,10 @@
       "description": "Autenticación"
     },
     {
+      "name": "dashboard",
+      "description": "Métricas de Inicio"
+    },
+    {
       "name": "users",
       "description": "Gestión de usuarios"
     },
@@ -923,6 +927,108 @@
           },
           "403": {
             "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/me": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Métricas del tratante autenticado (sus historias)",
+        "operationId": "getMyDashboard",
+        "responses": {
+          "200": {
+            "description": "Métricas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDashboardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Solo para cuentas USER (el ADMIN ve las globales)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/admin": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Métricas globales (solo ADMIN)",
+        "operationId": "getAdminDashboard",
+        "responses": {
+          "200": {
+            "description": "Métricas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDashboardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Solo para ADMIN",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2053,6 +2159,16 @@
             "description": "Paso del formulario (1–8) en que se trabajó; se abre ahí al volver. Ausente = no cambia",
             "maximum": 8,
             "minimum": 1
+          },
+          "filledSteps": {
+            "type": "array",
+            "description": "Pasos del formulario (1–8) con datos; el paso 1 siempre cuenta",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 8,
+              "minimum": 1
+            }
           }
         },
         "required": [
@@ -2216,6 +2332,14 @@
             "type": "integer",
             "format": "int32",
             "description": "Último paso (1–8) en que se guardaron cambios; vacío = paso 1"
+          },
+          "filledSteps": {
+            "type": "array",
+            "description": "Pasos (1–8) con datos según el último guardado; vacío = sin calcular",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           },
           "version": {
             "type": "integer",
@@ -2494,6 +2618,16 @@
           },
           "content": {
             "$ref": "#/components/schemas/RecordContent"
+          },
+          "filledSteps": {
+            "type": "array",
+            "description": "Pasos del formulario (1–8) con datos; el paso 1 siempre cuenta",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 8,
+              "minimum": 1
+            }
           }
         },
         "required": [
@@ -2734,6 +2868,377 @@
         "required": [
           "reached",
           "used"
+        ]
+      },
+      "DashboardEmptyStep": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "count",
+          "step"
+        ]
+      },
+      "DashboardResumeItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recordNumber": {
+            "type": "string",
+            "example": "AEO-003"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "lastStep": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Último paso trabajado; vacío = paso 1"
+          },
+          "filledSteps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Pasos clínicos con datos; vacío = sin calcular"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "patientName",
+          "recordNumber",
+          "updatedAt"
+        ]
+      },
+      "UserDashboardCompleteness": {
+        "type": "object",
+        "properties": {
+          "complete": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notComputed": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Guardadas antes de registrar los pasos con datos"
+          },
+          "averageFilledSteps": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Promedio de pasos clínicos con datos (un decimal); vacío si no hay calculadas"
+          }
+        },
+        "required": [
+          "complete",
+          "inProgress",
+          "notComputed"
+        ]
+      },
+      "UserDashboardMissing": {
+        "type": "object",
+        "properties": {
+          "withoutDocument": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withoutBirthDate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withoutTreatmentStart": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "emptySteps": {
+            "type": "array",
+            "description": "Los 7 pasos clínicos, de más a menos historias vacías",
+            "items": {
+              "$ref": "#/components/schemas/DashboardEmptyStep"
+            }
+          }
+        },
+        "required": [
+          "emptySteps",
+          "withoutBirthDate",
+          "withoutDocument",
+          "withoutTreatmentStart"
+        ]
+      },
+      "UserDashboardRecords": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdThisMonth": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Creadas en el mes en curso"
+          }
+        },
+        "required": [
+          "createdThisMonth",
+          "total"
+        ]
+      },
+      "UserDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "$ref": "#/components/schemas/UserDashboardRecords"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/RecordQuotaResponse"
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/UserDashboardCompleteness"
+          },
+          "missing": {
+            "$ref": "#/components/schemas/UserDashboardMissing"
+          },
+          "resume": {
+            "type": "array",
+            "description": "Hasta 5 historias no completas, más recientes primero",
+            "items": {
+              "$ref": "#/components/schemas/DashboardResumeItem"
+            }
+          }
+        },
+        "required": [
+          "completeness",
+          "missing",
+          "quota",
+          "records",
+          "resume"
+        ]
+      },
+      "AdminDashboardQuotas": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Cuentas con cupo lleno o al 80 % o más"
+          },
+          "items": {
+            "type": "array",
+            "description": "Las 10 más cerca del tope, llenas primero",
+            "items": {
+              "$ref": "#/components/schemas/DashboardQuotaAlert"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "AdminDashboardRecords": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdThisMonth": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "complete": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Pasos clínicos 1–7 con datos"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notComputed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "perMonth": {
+            "type": "array",
+            "description": "Últimos 6 meses, del más antiguo al actual",
+            "items": {
+              "$ref": "#/components/schemas/DashboardMonthCount"
+            }
+          }
+        },
+        "required": [
+          "complete",
+          "createdThisMonth",
+          "inProgress",
+          "notComputed",
+          "perMonth",
+          "total"
+        ]
+      },
+      "AdminDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "$ref": "#/components/schemas/AdminDashboardUsers"
+          },
+          "records": {
+            "$ref": "#/components/schemas/AdminDashboardRecords"
+          },
+          "topAuthors": {
+            "type": "array",
+            "description": "Cuentas USER con más historias (hasta 5)",
+            "items": {
+              "$ref": "#/components/schemas/DashboardTopAuthor"
+            }
+          },
+          "quotas": {
+            "$ref": "#/components/schemas/AdminDashboardQuotas"
+          }
+        },
+        "required": [
+          "quotas",
+          "records",
+          "topAuthors",
+          "users"
+        ]
+      },
+      "AdminDashboardUsers": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "disabled": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "newThisMonth": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Creadas en el mes en curso"
+          }
+        },
+        "required": [
+          "active",
+          "disabled",
+          "newThisMonth",
+          "total"
+        ]
+      },
+      "DashboardMonthCount": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-05"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "count",
+          "month"
+        ]
+      },
+      "DashboardQuotaAlert": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "used": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reached": {
+            "type": "boolean",
+            "description": "Cupo lleno (también si lo creado lo supera)"
+          }
+        },
+        "required": [
+          "fullName",
+          "limit",
+          "reached",
+          "used",
+          "userId"
+        ]
+      },
+      "DashboardTopAuthor": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
+          },
+          "records": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "averageFilledSteps": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Promedio de pasos clínicos con datos; vacío si ninguna calculada"
+          }
+        },
+        "required": [
+          "fullName",
+          "records",
+          "status",
+          "userId"
         ]
       }
     }

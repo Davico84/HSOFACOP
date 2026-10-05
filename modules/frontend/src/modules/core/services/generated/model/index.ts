@@ -6,6 +6,10 @@
  * OpenAPI spec version: v1
  */
 
+export * from './adminDashboardQuotas';
+export * from './adminDashboardRecords';
+export * from './adminDashboardResponse';
+export * from './adminDashboardUsers';
 export * from './anamnesis';
 export * from './anamnesisCooperation';
 export * from './anamnesisMenarche';
@@ -25,6 +29,15 @@ export * from './changeUserStatusRequestStatus';
 export * from './createRecordRequest';
 export * from './createRecordRequestDocumentType';
 export * from './createRecordRequestPatientSex';
+export * from './dashboardEmptyStep';
+export * from './dashboardMonthCount';
+export * from './dashboardQuotaAlert';
+export * from './dashboardResumeItem';
+export * from './dashboardResumeItemFilledSteps';
+export * from './dashboardResumeItemLastStep';
+export * from './dashboardTopAuthor';
+export * from './dashboardTopAuthorAverageFilledSteps';
+export * from './dashboardTopAuthorStatus';
 export * from './diagnosis';
 export * from './facialAnalysis';
 export * from './facialAnalysisChinNeckAngle';
@@ -97,6 +110,11 @@ export * from './updateRecordRequest';
 export * from './updateRecordRequestDocumentType';
 export * from './updateRecordRequestPatientSex';
 export * from './upperArchWidths';
+export * from './userDashboardCompleteness';
+export * from './userDashboardCompletenessAverageFilledSteps';
+export * from './userDashboardMissing';
+export * from './userDashboardRecords';
+export * from './userDashboardResponse';
 export * from './userResponse';
 export * from './userResponseRole';
 export * from './userSummaryResponse';

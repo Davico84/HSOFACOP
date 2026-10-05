@@ -29,6 +29,8 @@ export interface RecordResponse {
   content: RecordContent;
   /** Último paso (1–8) en que se guardaron cambios; vacío = paso 1 */
   lastStep?: number;
+  /** Pasos (1–8) con datos según el último guardado; vacío = sin calcular */
+  filledSteps?: number[];
   /** Versión actual: se envía al guardar */
   version: number;
   createdAt: string;

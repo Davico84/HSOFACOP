@@ -45,4 +45,6 @@ export interface CreateRecordRequest {
   phone?: string;
   treatmentStartDate?: string;
   content?: RecordContent;
+  /** Pasos del formulario (1–8) con datos; el paso 1 siempre cuenta */
+  filledSteps?: number[];
 }
