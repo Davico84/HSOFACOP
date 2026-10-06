@@ -13,8 +13,9 @@ duerme vienen de `add-cold-start-warmup`. Pasos: §5; verificación: §6. Produc
 - El servicio **se suspende tras 15 min sin tráfico entrante**; la siguiente petición lo despierta y
   espera el arranque de Spring Boot (**~1 min**). Mientras tanto el frontend muestra la pantalla de
   arranque en frío ("Preparando tu consultorio digital").
-- **750 h de instancia al mes por workspace**: alcanzan para **un** servicio despierto 24/7 (~730 h).
-  Un segundo servicio gratuito despierto todo el mes no cabe.
+- **750 h de instancia al mes por workspace**: alcanzan para **un** servicio despierto 24/7 (hasta 744 h
+  en un mes de 31 días, que es lo que gasta el monitor). Un segundo servicio gratuito en el mismo
+  workspace no cabe: al pasar las 750 h, Render suspende los servicios hasta el mes siguiente.
 - **512 MB de RAM y 0,1 CPU.** En el primer despliegue mide la memoria (RSS) y el tiempo de
   arranque; ajusta la JVM (`JAVA_TOOL_OPTIONS`, p. ej. `-Xmx`) **solo tras medir**.
 
@@ -151,11 +152,11 @@ Producción = rama **`main`** (Render y Vercel). `dev` llega por PR con el CI en
 | Rutas | recargar `/ingresar`, `/registro`, `/historias` | la app (no el backend) | ✅ 2026-10-06 (curl y navegador) |
 | Rewrites | login y refresh desde la app | `200` vía Vercel → Render | ✅ login y refresh vía Vercel |
 | Cookie | tras login: `Set-Cookie` del dominio de Vercel, `Path=/auth`, `Secure`, `HttpOnly`, `SameSite=Lax` | presente | ✅ `hsofacop-frontend.vercel.app`, `/auth`, HttpOnly, Secure, Lax, 7 días |
-| Sesión | recargar con sesión (Chrome y Safari/iOS) | sigue con sesión | ✅ Chrome · Safari/iOS pendiente |
+| Sesión | recargar con sesión (Chrome y Safari/iOS) | sigue con sesión | ✅ Chrome y WebKit (motor de Safari, Playwright; sin dispositivo iOS a mano) |
 | CORS | refresh vía proxy | `200`, no `403` | ✅ (sin cookie: `401` de sesión, nunca `403`) |
 | Actuator | liveness / health / info en Render | `200 UP` / solo `status` / `401` | ✅ (y `/actuator/*` vía Vercel devuelve la app, no se reenvía) |
-| Arranque en frío | 20 min sin monitor: abrir la app, login, recargar | pantalla de espera → entra; tiempo total | pendiente |
+| Arranque en frío | 20 min sin monitor: abrir la app, login, recargar | pantalla de espera → entra; tiempo total | ✅ ~1 min hasta el login (2026-10-06) |
 | Contacto | enlaces de WhatsApp y correo | abren lo esperado | ✅ |
 | Smoke E2E | `E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts` | verde | ✅ 3/3 |
-| Memoria en Render | métricas del servicio tras el arranque | < 512 MB | pendiente |
+| Memoria en Render | métricas del servicio tras el arranque | < 512 MB | ✅ sin reinicios por memoria (Live desde el deploy, `ExitOnOutOfMemoryError` no saltó). Render Free solo muestra métricas de red; medido en local con 512 MB: ~293 MiB |
 | Monitor y ADMIN | UptimeRobot a liveness; primer ADMIN | Up; ve Usuarios | ✅ |

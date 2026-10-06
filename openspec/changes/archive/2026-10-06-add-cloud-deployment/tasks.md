@@ -41,12 +41,12 @@
 
 ## 4. Verificación del despliegue
 
-- [ ] 4.1 Matriz de verificación del design (rutas, rewrites, cookie, sesión en Chrome y Safari/iOS, CORS, actuator, arranque en frío con login y refresh y tiempo total, contacto); registrar resultados en `docs/deployment.md`
+- [x] 4.1 Matriz de verificación del design (rutas, rewrites, cookie, sesión en Chrome y Safari/iOS, CORS, actuator, arranque en frío con login y refresh y tiempo total, contacto); registrar resultados en `docs/deployment.md`
 - [x] 4.2 Smoke E2E contra la URL pública (`E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts`)
 
 ## 5. Docs
 
-- [ ] 5.1 `docs/deployment.md`:
+- [x] 5.1 `docs/deployment.md`:
   - pasos concretos (Neon → Render blueprint → Vercel → monitor → ADMIN);
   - rama de producción;
   - CORS y previews;
@@ -54,4 +54,4 @@
   - mediciones, matriz con resultados y riesgo de las etiquetas de imagen.
 
   `docs/frontend.md` o `docs/architecture.md` si mencionan `/auth/login` como página o `BACKEND_URL`.
-- [ ] 5.2 Al archivar: `docs/vision.md` ✅
+- [x] 5.2 Al archivar: `docs/vision.md` ✅
