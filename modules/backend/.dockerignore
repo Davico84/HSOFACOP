@@ -1,0 +1,11 @@
+# Fuera del contexto de build: secretos locales, artefactos y archivos que no van en la imagen.
+secrets.properties
+.env
+.env.*
+target/
+compose.yaml
+Dockerfile
+.dockerignore
+*.iml
+.idea/
+.vscode/

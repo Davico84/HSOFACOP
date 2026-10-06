@@ -2,16 +2,16 @@
 
 ## 1. Backend en contenedor
 
-- [ ] 1.1 `application.yml`: `server.port: ${PORT:8080}`
-- [ ] 1.2 `modules/backend/Dockerfile` multi-etapa y `.dockerignore`:
+- [x] 1.1 `application.yml`: `server.port: ${PORT:8080}`
+- [x] 1.2 `modules/backend/Dockerfile` multi-etapa y `.dockerignore`:
   - JDK 25 → JRE 25, solo el jar ejecutable;
   - usuario sin privilegios;
   - `JAVA_TOOL_OPTIONS` iniciales.
-- [ ] 1.3 Verificación local. Registra arranque, RSS y resultado en `docs/deployment.md`; ajusta la JVM si hace falta:
+- [x] 1.3 Verificación local. Registra arranque, RSS y resultado en `docs/deployment.md`; ajusta la JVM si hace falta:
   - `docker build`;
   - inspección: sin `secrets.properties`, `.env`, `src/` ni `mvnw`; usuario no root;
   - `docker run -m 512m --cpus 0.1 -e PORT=10000` contra el Postgres de compose: migra y liveness `200`.
-- [ ] 1.4 `render.yaml` en la raíz: Docker free, `branch: main`, autodeploy con checks en verde (confirmar campo), `rootDir`, health check a liveness, `envVars` fijas y `sync: false`
+- [x] 1.4 `render.yaml` en la raíz: Docker free, `branch: main`, autodeploy con checks en verde (confirmar campo), `rootDir`, health check a liveness, `envVars` fijas y `sync: false`
 
 ## 2. Frontend
 

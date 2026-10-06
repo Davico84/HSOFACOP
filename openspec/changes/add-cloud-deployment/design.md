@@ -38,6 +38,11 @@
 - Etiquetas `25-jdk`/`25-jre`: son móviles (reciben parches de seguridad, que se quieren). Riesgo documentado; fijar por digest queda como mejora si un parche rompe algo.
 - JVM para 512 MB: `JAVA_TOOL_OPTIONS` por defecto en la imagen `-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Xss512k -XX:+ExitOnOutOfMemoryError`. Valores **iniciales** que se ajustan con la medición local (`docker run -m 512m --cpus 0.1`); Render puede sobreescribirlos.
 - `server.port: ${PORT:8080}`.
+- **Arranque con 0,1 CPU (medido al aplicar)**: la primera imagen arrancaba en **~294 s** con 512 MB y 0,1 CPU (14 s con 1 CPU): superaba los 120 s del proxy de Vercel. Medidas:
+  - solo C1 (`-XX:TieredStopAtLevel=1`): ~120 s;
+  - **AOT cache de Java 25** (JEP 483/514/515) + C1 + **G1 explícito**: **~54 s** (~66 s con las 14 migraciones desde cero; liveness a los ~77 s del contenedor), 290–295 MiB.
+
+  El cache se crea en el build con una corrida de entrenamiento que arranca el contexto y sale tras el refresh (`spring.context.exit=onRefresh`), sin base (Flyway apagado, Hibernate sin metadatos JDBC), en la **misma imagen JRE** de ejecución (el cache exige el mismo build de la JVM) y con las mismas opciones de GC y heap. G1 explícito porque con < 2 CPU la JVM elige SerialGC y no puede cargar el heap archivado. Costo: C1 da menos rendimiento sostenido que C2, irrelevante con este tráfico. La imagen usa el jar extraído (`app.jar` + `lib/`), como recomienda Spring Boot.
 - **Prueba local**: sobre HTTP la cookie `Secure` no vuelve al servidor, así que la verificación local cubre arranque, memoria, migración y liveness. Si se prueba login/refresh en local por HTTP, con `COOKIE_SECURE=false`. La sesión real se verifica en el despliegue (HTTPS).
 
 ### Blueprint de Render (`render.yaml`, raíz)
@@ -99,7 +104,8 @@
 
 ## Risks / Trade-offs
 
-- **512 MB con Java 25 + Hibernate + Flyway**: puede no alcanzar. Mitigación: medir antes de subir y ajustar la JVM; si no entra, evaluar CDS/AOT cache de Java 25 en otro change.
+- **512 MB con Java 25 + Hibernate + Flyway**: medido ~295 MiB con 512 MB de límite; holgura suficiente.
+- **AOT cache y etiquetas móviles**: si la imagen base cambia, el cache se regenera en el mismo build (no se versiona), así que no queda desfasado.
 - **Arranque con 0,1 CPU**: puede superar el minuto. La pantalla de espera lo cubre y el proxy de Vercel espera hasta 120 s; si se pasa, "Está tardando" con Reintentar.
 - **Health check de Render (~5 s)**: liveness responde al instante una vez arrancado; durante el arranque Render espera a que el puerto abra.
 - **Etiquetas móviles de las imágenes base**: un parche podría romper el build; se fija por digest si pasa.
