@@ -9,6 +9,10 @@
     "container": "hs-facob-db"
   },
   "jwtIssuer": "mi-proyecto",
+  "contact": {
+    "whatsapp": "51959396384",
+    "email": "davicova84@gmail.com"
+  },
   "brand": {
     "logo": {
       "light": "/brand/logo-light.svg",

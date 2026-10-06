@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Clock, LoaderCircle, Sunrise, WifiOff } from "lucide-react";
 import { BrandPanel } from "@/modules/core/components/BrandPanel";
+import { ContactLinks } from "@/modules/core/components/ContactLinks";
+import { project } from "@/config/project";
 import { Button } from "@/modules/core/ui/button";
 import { Logo } from "@/modules/core/ui/logo";
 import { Progress } from "@/modules/core/ui/progress";
@@ -39,6 +41,7 @@ const COPY = {
  */
 export function ServerWarmupScreen({ elapsedSeconds, online, onRetry }: ServerWarmupScreenProps) {
   const stage = warmupStage(elapsedSeconds, online);
+  const hasContact = Boolean(project.contact?.whatsapp || project.contact?.email);
   const retryArea = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -115,7 +118,14 @@ export function ServerWarmupScreen({ elapsedSeconds, online, onRetry }: ServerWa
           ) : null}
 
           {stage === "stuck" ? (
-            <p className="mt-4 text-sm text-muted-foreground">Si el problema continúa, avisa al administrador.</p>
+            hasContact ? (
+              <div className="mt-6 flex flex-col items-center gap-2">
+                <p className="text-sm text-muted-foreground">Si el problema continúa, escríbenos:</p>
+                <ContactLinks title={null} />
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-muted-foreground">Si el problema continúa, avisa al administrador.</p>
+            )
           ) : null}
         </div>
       </main>

@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parseColor } from "./lib/color.mjs";
 import { applyProject } from "./apply.mjs";
+import { validateConfig } from "./lib/config.mjs";
 import { REPO_ROOT, editConfig, hashFiles, makeRepoCopy, trackedFiles, write } from "./support/repo-copy.mjs";
 
 // Config original para restaurar entre casos.
@@ -31,6 +32,11 @@ const INVALID_CASES = [
   ["brand.colors.dark.secondary", (c) => (c.brand.colors.dark.secondary = "#fff")],
   ["tagline", (c) => delete c.tagline],
   ["jwtIssuer", (c) => (c.jwtIssuer = "con espacios")],
+  ["contact.whatsapp", (c) => (c.contact = { whatsapp: "+51 959 396 384" })],
+  ["contact.whatsapp", (c) => (c.contact = { whatsapp: "1234" })],
+  ["contact.email", (c) => (c.contact = { email: "no-es-correo" })],
+  ["contact", (c) => (c.contact = {})],
+  ["contact.telefono", (c) => (c.contact = { telefono: "959396384" })],
   // Cambia el nombre pero la descripción sigue nombrando al anterior.
   ["description", (c) => { c.name = "Nuevo"; c.description = `Producto de ${original.name}.`; }],
 ];
@@ -57,4 +63,11 @@ test("Configuración inválida", () => {
   } finally {
     cleanup();
   }
+});
+
+test("Contacto de soporte opcional: ausente o completo es válido", () => {
+  const { contact: _omit, ...withoutContact } = structuredClone(original);
+  assert.deepEqual(validateConfig(withoutContact), []);
+  assert.deepEqual(validateConfig({ ...withoutContact, contact: { whatsapp: "51959396384", email: "soporte@clinica.pe" } }), []);
+  assert.deepEqual(validateConfig({ ...withoutContact, contact: { email: "soporte@clinica.pe" } }), []);
 });

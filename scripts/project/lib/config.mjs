@@ -12,6 +12,8 @@ const DB_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const CONTAINER = /^[a-z0-9][a-z0-9_-]*$/;
 const ISSUER = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$/;
 const PUBLIC_PATH = /^\/[A-Za-z0-9_./-]+$/;
+const WHATSAPP = /^[0-9]{8,15}$/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const readJson = (file) => JSON.parse(readFileSync(file, "utf8"));
 
@@ -53,6 +55,8 @@ export const validators = {
   jwtIssuer: (v) => (typeof v === "string" && ISSUER.test(v) ? null : "solo letras, números y . _ : / -"),
   publicPath: (v) => (typeof v === "string" && PUBLIC_PATH.test(v) ? null : "debe ser una ruta pública como /brand/logo.svg"),
   color: (v) => (parseColor(v) ? null : "usa #rgb, #rrggbb o hsl(H S% L%) sin alpha"),
+  whatsapp: (v) => (typeof v === "string" && WHATSAPP.test(v) ? null : "solo dígitos con código de país (8 a 15), sin + ni espacios"),
+  email: (v) => (typeof v === "string" && EMAIL.test(v) ? null : "debe ser un correo como soporte@clinica.pe"),
 };
 
 /**
@@ -80,6 +84,21 @@ export function validateConfig(config, { brandTokens = BRAND_TOKENS } = {}) {
     check("database.container", db.container, validators.container);
   }
   check("jwtIssuer", config.jwtIssuer, validators.jwtIssuer);
+
+  // Contacto de soporte: opcional; si está, al menos un dato y cada uno válido.
+  if (config.contact !== undefined) {
+    const contact = config.contact;
+    if (typeof contact !== "object" || contact === null || Array.isArray(contact)) {
+      errors.push("contact: debe ser un objeto con whatsapp y/o email");
+    } else {
+      const keys = Object.keys(contact);
+      if (keys.length === 0) errors.push("contact: indica whatsapp y/o email, o quita la sección");
+      for (const key of keys) {
+        if (key !== "whatsapp" && key !== "email") errors.push(`contact.${key}: no es un dato de contacto (whatsapp, email)`);
+        else check(`contact.${key}`, contact[key], validators[key]);
+      }
+    }
+  }
 
   const brand = config.brand;
   if (!brand) errors.push("brand: es obligatorio");

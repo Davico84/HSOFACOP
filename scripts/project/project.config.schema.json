@@ -22,6 +22,16 @@
       }
     },
     "jwtIssuer": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$", "description": "Emisor (iss) de los tokens JWT." },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "Contacto de soporte opcional: se muestra en el login, el registro y la espera larga del arranque. Queda público en la web.",
+      "properties": {
+        "whatsapp": { "type": "string", "pattern": "^[0-9]{8,15}$", "description": "Número de WhatsApp: solo dígitos con código de país, sin + ni espacios (p. ej. 51959396384)." },
+        "email": { "type": "string", "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$", "description": "Correo de soporte." }
+      }
+    },
     "brand": {
       "type": "object",
       "additionalProperties": false,
