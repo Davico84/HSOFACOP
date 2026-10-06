@@ -8,24 +8,27 @@ El sistema ya está preparado para planes gratuitos: ping de liveness, pool que 
 
 ## What Changes
 
+- **Producción = rama `main`.** Render (autodeploy, preferentemente solo con los checks del CI en verde) y Vercel (producción) despliegan `main`. `dev` no se despliega: se integra por PR a `main` con el CI en verde, igual que hoy.
 - **Backend en contenedor**:
-  - `Dockerfile` multi-etapa: build con Maven sobre JDK 25 y ejecución sobre JRE 25, como usuario sin privilegios, sin secretos en la imagen;
+  - `Dockerfile` multi-etapa: build con Maven sobre JDK 25 y ejecución sobre JRE 25;
+  - la imagen final contiene solo el jar, corre como usuario sin privilegios y no lleva fuentes, `mvnw` ni configuración local;
   - `.dockerignore`;
   - JVM acotada para 512 MB;
   - `server.port: ${PORT:8080}`.
 
-  Se verifica localmente con `docker run -m 512m`: arranque, memoria (RSS) y liveness.
-- **Blueprint de Render** (`render.yaml`): servicio web Docker en plan gratuito, health check a `/actuator/health/liveness` y variables declaradas. Las fijas van en el archivo (`HEALTH_SHOW_DETAILS=never`, `SWAGGER_ENABLED=false`, `COOKIE_SECURE=true`); los secretos (`DB_*`, `JWT_SECRET`) se marcan para cargarlos en el panel, nunca en el repo.
-- **Frontend en Vercel con la API en el mismo origen** (`modules/frontend/vercel.json`):
-  - rewrites `/api/*` y `/auth/*` hacia el backend en Render (Vercel Hobby espera hasta 120 s, suficiente para el arranque en frío);
-  - fallback de la SPA a `index.html`;
-  - en producción el cliente usa rutas **relativas** (mismo origen), así la cookie de refresh es de primera parte y `SameSite=Lax` (la protección CSRF actual) se mantiene.
-- **Una sola variable para la URL de la API** (`VITE_API_URL`): en desarrollo, por defecto `http://localhost:8080`; en producción, por defecto el mismo origen. Se quitan el `BACKEND_URL` de `vite.config.ts` (nadie lo lee) y el de `.env.example`.
-- **CORS en despliegue**: Vercel reenvía el `Origin` del navegador al backend, así que `CORS_ALLOWED_ORIGINS` debe ser el dominio del frontend. Si no, el refresh responde `403` aunque todo salga del mismo origen.
+  Se verifica localmente con `docker run -m 512m --cpus 0.1`: arranque, memoria (RSS) y liveness.
+- **Blueprint de Render** (`render.yaml`): servicio web Docker en plan gratuito, rama `main`, health check a `/actuator/health/liveness` y variables declaradas. Las fijas van en el archivo; los secretos se marcan para cargarlos en el panel, nunca en el repo.
+- **Frontend en Vercel con la API en el mismo origen**:
+  - `vercel.json` en la **raíz** del repo (instalación y build del monorepo con pnpm; salida en `modules/frontend/dist`), para que el build lea `project.config.json` sin depender de opciones del panel;
+  - rewrites `/api/*` y `/auth/*` hacia Render y fallback de la SPA;
+  - en producción el cliente usa rutas relativas, así la cookie de refresh es de primera parte.
+- **Páginas de acceso en `/ingresar` y `/registro`** (antes `/auth/login` y `/auth/register`). Así `/auth/*` queda solo para la API, sin heurísticas en el proxy. Como nunca se publicó, no hay enlaces viejos que redirigir.
+- **Una sola variable para la URL de la API** (`VITE_API_URL`): en desarrollo, por defecto `http://localhost:8080`; en producción, por defecto el mismo origen. Se quita el `BACKEND_URL` que nadie lee.
+- **CORS en despliegue**: `CORS_ALLOWED_ORIGINS` = origen exacto del frontend de producción (sin `/` final ni comodines), porque Vercel reenvía el `Origin` del navegador. Las *preview deployments* no tienen sesión (limitación deliberada).
 - **Puesta en marcha guiada** (pasos manuales del usuario, documentados):
-  - crear Neon, Render (desde el blueprint), Vercel y el monitor externo;
-  - promover el primer ADMIN por SQL;
-  - recorrer el checklist: sesión que sobrevive a recargar (también en Safari/iOS), arranque en frío real y smoke E2E contra la URL pública.
+  - crear Neon, Render (blueprint), Vercel y el monitor externo;
+  - promover el primer ADMIN por SQL, comprobando 1 fila;
+  - recorrer una **matriz de verificación**: rutas y rewrites, cookie y sesión, CORS, arranque en frío real (con login y refresh, no solo liveness) y Safari/iOS.
 
 ## Capabilities
 
@@ -33,7 +36,7 @@ El sistema ya está preparado para planes gratuitos: ping de liveness, pool que 
 - `cloud-deployment`: cómo se empaqueta y publica el sistema en planes gratuitos (imagen del backend, blueprint de Render, frontend con la API en el mismo origen y verificación del despliegue).
 
 ### Modified Capabilities
-<!-- ninguna: el comportamiento de la app no cambia; la URL de la API por entorno es parte del despliegue -->
+<!-- ninguna: las specs vigentes no fijan las rutas de las páginas de acceso (solo los endpoints de la API, que no cambian) -->
 
 ## Impact
 
@@ -42,10 +45,10 @@ El sistema ya está preparado para planes gratuitos: ping de liveness, pool que 
   - `application.yml` (`server.port`).
 
   Sin cambios de API, contrato ni dominio.
-- Raíz: `render.yaml`.
+- Raíz: `render.yaml`, `vercel.json`.
 - Frontend:
-  - `vercel.json`;
-  - `core/config/httpClient.ts` (URL base por entorno, en una función probada);
-  - `vite.config.ts`, `vite-env.d.ts` y `.env.example` (`VITE_API_URL`).
-- Docs: `docs/deployment.md` (pasos concretos y checklist con resultados); `docs/architecture.md` si menciona `BACKEND_URL`.
+  - `routes/paths.ts` (`/ingresar`, `/registro`) y los tests y specs E2E que usan esas rutas;
+  - `core/config/apiBaseUrl.ts` + `httpClient.ts`;
+  - `vite.config.ts`, `vitest.config.ts`, `vite-env.d.ts` y `.env.example`.
+- Docs: `docs/deployment.md` (pasos concretos, matriz y resultados).
 - Cuentas externas (las crea el usuario): Neon, Render, Vercel, UptimeRobot. Sin costo.
