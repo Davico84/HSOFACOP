@@ -90,6 +90,13 @@ Opciones (decide y prueba el change de despliegue):
 
 **Hasta resolver esto, el sistema no es desplegable de extremo a extremo.**
 
+## 3.1 Contacto de soporte público
+
+`project.config.json` → `contact` (WhatsApp y correo) se muestra en el login, el registro y la espera
+larga del arranque, **a cualquiera en internet**: los bots recogen esos datos para spam. Usa un número
+y un correo de soporte o institucionales; cambiarlos es editar `project.config.json` y redesplegar
+el frontend.
+
 ## 4. Checklist del primer despliegue
 
 - [ ] Neon: proyecto en la región de Render; cadena directa con `sslmode=require` en `DB_URL`.
@@ -97,5 +104,6 @@ Opciones (decide y prueba el change de despliegue):
 - [ ] `GET /actuator/health/liveness` → `200 UP`; `GET /actuator/health` sin detalle; `GET /actuator/info` → `401`.
 - [ ] Monitor externo cada 10 min a liveness.
 - [ ] Frontend en el mismo origen que la API (§3); recargar con sesión iniciada **no** lleva al login (probar también en Safari/iOS).
+- [ ] Contacto de soporte: los enlaces de WhatsApp y correo del login abren lo esperado.
 - [ ] Arranque en frío real: tras 20 min sin monitor, abrir la app → pantalla "Preparando…" y luego entra.
 - [ ] Memoria (RSS) y tiempo de arranque medidos en Render.

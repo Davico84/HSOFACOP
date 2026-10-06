@@ -16,5 +16,5 @@
 
 ## 3. Docs
 
-- [ ] 3.1 `docs/frontend.md` §4.1: `ContactLinks`; nota de privacidad en `docs/deployment.md` (contacto público)
+- [x] 3.1 `docs/frontend.md` §4.1: `ContactLinks`; nota de privacidad en `docs/deployment.md` (contacto público)
 - [ ] 3.2 Al archivar: `docs/vision.md` ✅
