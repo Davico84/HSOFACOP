@@ -1,8 +1,9 @@
 // Constantes de rutas de la aplicación.
 export const PATHS = {
   ROOT: "/",
-  LOGIN: "/auth/login",
-  REGISTER: "/auth/register",
+  // Páginas de acceso fuera de /auth/*, que en despliegue es solo de la API (proxy de Vercel).
+  LOGIN: "/ingresar",
+  REGISTER: "/registro",
   // Secciones de ejemplo del shell: cada proyecto derivado las reemplaza.
   MODULE_A: "/modulo-a",
   MODULE_B: "/modulo-b",

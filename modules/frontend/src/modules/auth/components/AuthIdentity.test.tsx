@@ -22,13 +22,13 @@ function expectBrand(subtitle: string) {
 
 describe("template-bootstrap — Configuración única de la identidad visible", () => {
   it("La UI muestra la identidad configurada: login", () => {
-    renderWithProviders(<LoginView />, { initialEntries: ["/auth/login"] });
+    renderWithProviders(<LoginView />, { initialEntries: ["/ingresar"] });
     expect(within(screen.getByRole("main")).getByRole("heading", { level: 1 })).toHaveTextContent("Iniciar sesión");
     expectBrand(`Accede a tu panel de ${project.name}`);
   });
 
   it("La UI muestra la identidad configurada: registro", () => {
-    renderWithProviders(<RegisterView />, { initialEntries: ["/auth/register"] });
+    renderWithProviders(<RegisterView />, { initialEntries: ["/registro"] });
     expect(within(screen.getByRole("main")).getByRole("heading", { level: 1 })).toHaveTextContent("Crear cuenta");
     expectBrand(`Regístrate para empezar a usar ${project.name}`);
   });

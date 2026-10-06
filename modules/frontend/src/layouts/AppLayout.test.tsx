@@ -58,14 +58,14 @@ describe("app-shell — Layout privado común", () => {
   });
 
   it("Rutas de invitado sin shell: login y registro no muestran sidebar ni cabecera", async () => {
-    renderApp("/auth/login");
+    renderApp("/ingresar");
     expect(await screen.findByRole("button", { name: /iniciar sesión/i })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Navegación principal" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cerrar sesión" })).not.toBeInTheDocument();
   });
 
   it("Rutas de invitado sin shell: registro", async () => {
-    renderApp("/auth/register");
+    renderApp("/registro");
     expect(await screen.findByRole("button", { name: /crear cuenta/i })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Navegación principal" })).not.toBeInTheDocument();
   });

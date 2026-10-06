@@ -1,6 +1,6 @@
 import { http, HttpResponse, type RequestHandler } from "msw";
 
-// Debe coincidir con el `BACKEND_URL` definido en vitest.config.ts.
+// Host de la API en los tests (los handlers usan `*/…`, así que no depende de la URL base).
 export const API = "https://api.test";
 
 // Handlers globales por defecto. Cada test añade o reemplaza los suyos con `server.use(...)`.

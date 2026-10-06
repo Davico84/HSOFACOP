@@ -15,17 +15,17 @@
 
 ## 2. Frontend
 
-- [ ] 2.1 `core/config/apiBaseUrl.ts` (`resolveApiBaseUrl`) + test (dev/prod con y sin `VITE_API_URL`); `httpClient.ts` lo usa
-- [ ] 2.2 Quitar `BACKEND_URL` (`vite.config.ts`, `vitest.config.ts`, `vite-env.d.ts`, comentario de `handlers.ts`); `.env.example` con `VITE_API_URL`; tipar `VITE_API_URL`
-- [ ] 2.3 `PATHS.LOGIN = "/ingresar"`, `PATHS.REGISTER = "/registro"`. Actualizar las rutas literales en los tests unitarios y E2E (smoke: la ruta privada lleva a `/ingresar`; navegación ida y vuelta a `/registro`). `isAuthPath` (rutas de la API) sin cambios
-- [ ] 2.4 `vercel.json` en la raíz:
+- [x] 2.1 `core/config/apiBaseUrl.ts` (`resolveApiBaseUrl`) + test (dev/prod con y sin `VITE_API_URL`); `httpClient.ts` lo usa
+- [x] 2.2 Quitar `BACKEND_URL` (`vite.config.ts`, `vitest.config.ts`, `vite-env.d.ts`, comentario de `handlers.ts`); `.env.example` con `VITE_API_URL`; tipar `VITE_API_URL`
+- [x] 2.3 `PATHS.LOGIN = "/ingresar"`, `PATHS.REGISTER = "/registro"`. Actualizar las rutas literales en los tests unitarios y E2E (smoke: la ruta privada lleva a `/ingresar`; navegación ida y vuelta a `/registro`). `isAuthPath` (rutas de la API) sin cambios
+- [x] 2.4 `vercel.json` en la raíz:
   - install con `--frozen-lockfile`;
   - build `pnpm --filter odontorisas-frontend build`;
   - salida `modules/frontend/dist`;
   - rewrites `/api` y `/auth` → Render y fallback de la SPA.
 
   Test (en el frontend) que lee el JSON y fija orden, destinos, salida y que `/actuator` no se reenvía.
-- [ ] 2.5 Build local idéntico al de Vercel desde la raíz (`pnpm install --frozen-lockfile && pnpm --filter odontorisas-frontend build`) y `pnpm validate` verde
+- [x] 2.5 Build local idéntico al de Vercel desde la raíz (`pnpm install --frozen-lockfile && pnpm --filter odontorisas-frontend build`) y `pnpm validate` verde
 
 ## 3. Puesta en marcha (usuario, guiada)
 
