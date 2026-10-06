@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ThemeToggle } from "@/modules/core/ui/theme-toggle";
 import { Logo } from "@/modules/core/ui/logo";
 import { BrandPanel } from "@/modules/core/components/BrandPanel";
+import { ContactLinks } from "@/modules/core/components/ContactLinks";
 
 interface AuthLayoutProps {
   title: string;
@@ -37,6 +38,8 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
           </div>
           {children}
           {footer ? <div className="mt-6 text-center">{footer}</div> : null}
+          {/* En escritorio el contacto está en el panel de marca; aquí solo en móvil, sin repetirse. */}
+          <ContactLinks className="mt-10 flex flex-col items-center border-t border-border pt-6 text-center lg:hidden" />
         </div>
       </main>
     </div>

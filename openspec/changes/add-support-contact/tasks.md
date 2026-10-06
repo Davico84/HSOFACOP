@@ -8,11 +8,11 @@
 
 ## 2. Frontend
 
-- [ ] 2.1 `config/project.ts`: `contact?: { whatsapp?: string; email?: string }`
-- [ ] 2.2 `core/components/ContactLinks` (tonos `onBrand`/`default`, título opcional, enlace de WhatsApp con mensaje y `sr-only` de nueva pestaña, `mailto:`), con su test: enlaces y atributos, solo correo, solo WhatsApp, sin contacto no renderiza
-- [ ] 2.3 `BrandPanel` con el contacto; `AuthLayout` con el contacto bajo el formulario solo en móvil (`lg:hidden`); `ServerWarmupScreen` en `stuck` con el contacto o el texto actual
-- [ ] 2.4 Tests (uno por scenario): panel de marca, móvil sin repetir (clases `lg:hidden` / panel `hidden lg:flex`), espera larga con contacto, sin contacto (config simulada). `pnpm validate` verde
-- [ ] 2.5 Capturas con Playwright (login escritorio y móvil, espera larga; claro y oscuro)
+- [x] 2.1 `config/project.ts`: `contact?: { whatsapp?: string; email?: string }`
+- [x] 2.2 `core/components/ContactLinks` (tonos `onBrand`/`default`, título opcional, enlace de WhatsApp con mensaje y `sr-only` de nueva pestaña, `mailto:`), con su test: enlaces y atributos, solo correo, solo WhatsApp, sin contacto no renderiza
+- [x] 2.3 `BrandPanel` con el contacto; `AuthLayout` con el contacto bajo el formulario solo en móvil (`lg:hidden`); `ServerWarmupScreen` en `stuck` con el contacto o el texto actual
+- [x] 2.4 Tests (uno por scenario): panel de marca, móvil sin repetir (clases `lg:hidden` / panel `hidden lg:flex`), espera larga con contacto, sin contacto (config simulada). `pnpm validate` verde
+- [x] 2.5 Capturas con Playwright (login escritorio y móvil, espera larga; claro y oscuro)
 
 ## 3. Docs
 
