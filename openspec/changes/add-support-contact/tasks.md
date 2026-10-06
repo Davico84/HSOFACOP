@@ -2,9 +2,9 @@
 
 ## 1. Configuración
 
-- [ ] 1.1 `project.config.schema.json`: `contact` opcional (`whatsapp` 8–15 dígitos, `email`, `minProperties: 1`, `additionalProperties: false`)
-- [ ] 1.2 `lib/config.mjs`: validadores `whatsapp` y `email`, aplicados solo si `contact` existe; `config.test.mjs` con válido, ausente, número con `+`/espacios, correo inválido y `contact` vacío
-- [ ] 1.3 `project.config.json` con `51959396384` y `davicova84@gmail.com`; `pnpm project:apply` (solo `.template/applied.json`)
+- [x] 1.1 `project.config.schema.json`: `contact` opcional (`whatsapp` 8–15 dígitos, `email`, `minProperties: 1`, `additionalProperties: false`)
+- [x] 1.2 `lib/config.mjs`: validadores `whatsapp` y `email`, aplicados solo si `contact` existe; `config.test.mjs` con válido, ausente, número con `+`/espacios, correo inválido y `contact` vacío
+- [x] 1.3 `project.config.json` con `51959396384` y `davicova84@gmail.com`; `pnpm project:apply` (solo `.template/applied.json`)
 
 ## 2. Frontend
 
