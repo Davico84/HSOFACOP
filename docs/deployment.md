@@ -106,9 +106,11 @@ Medido en local con los límites de Render Free (`docker run -m 512m --cpus 0.1`
 |---|---|---|
 | Sin AOT cache, JIT completo | ~264 s (liveness a los ~294 s) | ~312 MiB |
 | Solo C1 | ~120 s | ~225 MiB |
-| **AOT cache + G1 + C1 (la que se usa)** | **~54 s** (~66 s con las 14 migraciones desde cero; liveness a los ~77 s) | **~295 MiB** |
+| AOT cache con código nativo + G1 + C1 | ~54 s (~66 s con migraciones) | ~295 MiB — **falla en Render** (SIGILL: ver abajo) |
+| **AOT cache solo de clases + G1 + C1 (la que se usa)** | **~40 s** con las 14 migraciones desde cero (liveness a los ~49 s) | **~293 MiB** |
 | Referencia: 1 CPU, sin límite de CPU | ~14 s | ~276 MiB |
 
+- **Sin código nativo en el AOT cache** (`-XX:-AOTAdapterCaching -XX:-AOTStubCaching`): Render construye la imagen en una máquina y la ejecuta en otra con otro CPU; el código nativo guardado en el cache usaba instrucciones que la de ejecución no tiene (`SIGILL` en `AdapterBlob`, primer deploy). Las clases cargadas y enlazadas sí son portables y son las que aportan la mejora.
 - Las etiquetas `eclipse-temurin:25-jdk`/`25-jre` reciben parches; el AOT cache se regenera en cada
   build, así que no queda desfasado. Si un parche rompiera el build, fijar la imagen por digest.
 - **Prueba local**: `docker build -t hsfacop-backend:local modules/backend` y `docker run` con
