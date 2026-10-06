@@ -3,7 +3,7 @@
 Guía para correr HS FACOP en la nube **sin costo**: frontend en **Vercel** (Hobby), backend en
 **Render** (Free, Docker) y base de datos en **Neon** (Free). Lo versionado: `vercel.json` y
 `render.yaml` (raíz) y `modules/backend/Dockerfile` (`add-cloud-deployment`); el ping y la base que
-duerme vienen de `add-cold-start-warmup`. Pasos: §5; verificación: §6.
+duerme vienen de `add-cold-start-warmup`. Pasos: §5; verificación: §6. Producción: frontend `https://hsofacop-frontend.vercel.app`, API `https://hs-facop-api.onrender.com`.
 
 > Cifras de los planes verificadas al proponer `add-cold-start-warmup` (2026-10). Los planes
 > gratuitos cambian: revísalas antes de desplegar.
@@ -148,13 +148,14 @@ Producción = rama **`main`** (Render y Vercel). `dev` llega por PR con el CI en
 
 | Área | Prueba | Esperado | Resultado |
 |---|---|---|---|
-| Rutas | recargar `/ingresar`, `/registro`, `/historias` | la app (no el backend) | pendiente |
-| Rewrites | login y refresh desde la app | `200` vía Vercel → Render | pendiente |
-| Cookie | tras login: `Set-Cookie` del dominio de Vercel, `Path=/auth`, `Secure`, `HttpOnly`, `SameSite=Lax` | presente | pendiente |
-| Sesión | recargar con sesión (Chrome y Safari/iOS) | sigue con sesión | pendiente |
-| CORS | refresh vía proxy | `200`, no `403` | pendiente |
-| Actuator | liveness / health / info en Render | `200 UP` / solo `status` / `401` | pendiente |
+| Rutas | recargar `/ingresar`, `/registro`, `/historias` | la app (no el backend) | ✅ 2026-10-06 (curl y navegador) |
+| Rewrites | login y refresh desde la app | `200` vía Vercel → Render | ✅ login y refresh vía Vercel |
+| Cookie | tras login: `Set-Cookie` del dominio de Vercel, `Path=/auth`, `Secure`, `HttpOnly`, `SameSite=Lax` | presente | ✅ `hsofacop-frontend.vercel.app`, `/auth`, HttpOnly, Secure, Lax, 7 días |
+| Sesión | recargar con sesión (Chrome y Safari/iOS) | sigue con sesión | ✅ Chrome · Safari/iOS pendiente |
+| CORS | refresh vía proxy | `200`, no `403` | ✅ (sin cookie: `401` de sesión, nunca `403`) |
+| Actuator | liveness / health / info en Render | `200 UP` / solo `status` / `401` | ✅ (y `/actuator/*` vía Vercel devuelve la app, no se reenvía) |
 | Arranque en frío | 20 min sin monitor: abrir la app, login, recargar | pantalla de espera → entra; tiempo total | pendiente |
-| Contacto | enlaces de WhatsApp y correo | abren lo esperado | pendiente |
-| Smoke E2E | `E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts` | verde | pendiente |
+| Contacto | enlaces de WhatsApp y correo | abren lo esperado | ✅ |
+| Smoke E2E | `E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts` | verde | ✅ 3/3 |
 | Memoria en Render | métricas del servicio tras el arranque | < 512 MB | pendiente |
+| Monitor y ADMIN | UptimeRobot a liveness; primer ADMIN | Up; ve Usuarios | ✅ |
