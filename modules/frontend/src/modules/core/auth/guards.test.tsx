@@ -8,7 +8,7 @@ import { useSessionStore } from "@/store/useSessionStore";
 function renderAt(initialPath: string) {
   const router = createMemoryRouter(
     [
-      { element: <RequireGuest />, children: [{ path: "/auth/login", element: <div>Página de login</div> }] },
+      { element: <RequireGuest />, children: [{ path: "/ingresar", element: <div>Página de login</div> }] },
       { element: <RequireAuth />, children: [{ path: "/", element: <div>Panel privado</div> }] },
       { element: <RequireAuth roles={["ADMIN"]} />, children: [{ path: "/admin", element: <div>Solo admin</div> }] },
     ],
@@ -33,7 +33,7 @@ describe("RouteGuards", () => {
       user: { id: 1, email: "a@b.c", role: "USER" },
       status: "authenticated",
     });
-    renderAt("/auth/login");
+    renderAt("/ingresar");
     expect(await screen.findByText("Panel privado")).toBeInTheDocument();
   });
 

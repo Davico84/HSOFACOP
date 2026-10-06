@@ -11,13 +11,13 @@ test.skip(!process.env.E2E_BACKEND, "Necesita backend y PostgreSQL: E2E_BACKEND=
 const PASSWORD = "password123";
 
 async function registerAndEnter(page: Page, width: number) {
-  await page.goto("/auth/register");
+  await page.goto("/registro");
   await page.getByLabel("Nombre completo").fill("Dra. María Torres");
   await page.getByLabel("Correo electrónico").fill(`resp-${width}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@empresa.test`);
   await page.getByRole("textbox", { name: "Contraseña", exact: true }).fill(PASSWORD);
   await page.getByRole("textbox", { name: "Confirmar contraseña" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await expect(page).not.toHaveURL(/\/auth\//);
+  await expect(page).not.toHaveURL(/\/(ingresar|registro)/);
 }
 
 /** La página no se desplaza de lado. */

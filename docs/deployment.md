@@ -1,8 +1,9 @@
 # Despliegue en planes gratuitos
 
-Guía para correr HS FACOP en la nube **sin costo**: backend en **Render** (Free Web Service), base de
-datos en **Neon** (Free) y frontend en un hosting estático. Cubre lo que el código ya resuelve
-(`add-cold-start-warmup`) y las **condiciones previas** que aún decide el change de despliegue.
+Guía para correr HS FACOP en la nube **sin costo**: frontend en **Vercel** (Hobby), backend en
+**Render** (Free, Docker) y base de datos en **Neon** (Free). Lo versionado: `vercel.json` y
+`render.yaml` (raíz) y `modules/backend/Dockerfile` (`add-cloud-deployment`); el ping y la base que
+duerme vienen de `add-cold-start-warmup`. Pasos: §5; verificación: §6.
 
 > Cifras de los planes verificadas al proponer `add-cold-start-warmup` (2026-10). Los planes
 > gratuitos cambian: revísalas antes de desplegar.
@@ -73,22 +74,17 @@ quedan en *sites* distintos, el navegador **no envía la cookie** y cada recarga
 `*.vercel.app`, `*.netlify.app` y `*.onrender.com` son *sites* distintos entre sí (están en la Public
 Suffix List); `withCredentials` y CORS no lo compensan.
 
-Opciones (decide y prueba el change de despliegue):
+**Decisión (`add-cloud-deployment`): mismo origen con el proxy de Vercel.** `vercel.json` (raíz)
+reenvía `/api/*` y `/auth/*` a Render; la cookie es de primera parte, `SameSite=Lax` y la protección
+CSRF se mantienen. Vercel Hobby espera hasta 120 s en los rewrites externos (Netlify corta a 26 s:
+no sirve). Para que `/auth/*` sea solo de la API, las páginas de acceso son `/ingresar` y
+`/registro`. Descartadas: dominio propio (costo) y `SameSite=None` (debilita CSRF; Safari bloquea
+cookies de terceros).
 
-1. **Preferida — mismo origen con proxy/rewrite del hosting del frontend** (`/api/*` y `/auth/*`
-   hacia Render): la cookie es de primera parte, se mantiene `SameSite=Lax` y no hace falta CORS.
-   El proxy debe **esperar el arranque en frío (~60 s)**:
-   - **Vercel Hobby**: rewrites externos hasta 120 s → **compatible**.
-   - **Netlify**: corta los proxy a los 26 s → **no compatible**.
-   - **Render Static Sites**: soporta rewrites externos pero no documenta su timeout → validar con
-     una prueba real de 60–90 s antes de elegirlo.
-2. **Dominio propio con subdominios** (`app.` y `api.` del mismo dominio): mismo *site*, `Lax`
-   funciona; requiere comprar el dominio.
-3. **`SameSite=None; Secure` + CORS exacto**: descartada salvo necesidad. Debilita la protección CSRF
-   actual (habría que validar `Origin` en `/auth/refresh` y `/auth/logout`) y Safari bloquea por
-   defecto las cookies de terceros (iPhone/iPad perderían la sesión al recargar).
-
-**Hasta resolver esto, el sistema no es desplegable de extremo a extremo.**
+- **CORS**: Vercel reenvía el `Origin` del navegador, así que `CORS_ALLOWED_ORIGINS` en Render =
+  **origen exacto** de producción del frontend, sin `/` final ni comodines
+  (`https://<app>.vercel.app`). Si no coincide, el refresh responde `403`.
+- **Previews** de Vercel (otras ramas): sin sesión, por diseño (su origen no está permitido).
 
 ## 3.1 Contacto de soporte público
 
@@ -97,13 +93,66 @@ larga del arranque, **a cualquiera en internet**: los bots recogen esos datos pa
 y un correo de soporte o institucionales; cambiarlos es editar `project.config.json` y redesplegar
 el frontend.
 
-## 4. Checklist del primer despliegue
+## 4. Imagen del backend (Docker) y arranque medido
 
-- [ ] Neon: proyecto en la región de Render; cadena directa con `sslmode=require` en `DB_URL`.
-- [ ] Render: variables de §1; Flyway migra al arrancar.
-- [ ] `GET /actuator/health/liveness` → `200 UP`; `GET /actuator/health` sin detalle; `GET /actuator/info` → `401`.
-- [ ] Monitor externo cada 10 min a liveness.
-- [ ] Frontend en el mismo origen que la API (§3); recargar con sesión iniciada **no** lleva al login (probar también en Safari/iOS).
-- [ ] Contacto de soporte: los enlaces de WhatsApp y correo del login abren lo esperado.
-- [ ] Arranque en frío real: tras 20 min sin monitor, abrir la app → pantalla "Preparando…" y luego entra.
-- [ ] Memoria (RSS) y tiempo de arranque medidos en Render.
+`modules/backend/Dockerfile` (contexto `modules/backend`): build con JDK 25, runtime JRE 25 con el jar
+extraído, usuario `app` sin privilegios, sin fuentes ni secretos. Incluye un **AOT cache de Java 25**
+creado en el build con una corrida de entrenamiento sin base (`spring.context.exit=onRefresh`), y la
+JVM con G1 explícito, solo C1 y `MaxRAMPercentage=70`.
+
+Medido en local con los límites de Render Free (`docker run -m 512m --cpus 0.1`, 2026-10-06):
+
+| Imagen | Arranque (Spring) | Memoria |
+|---|---|---|
+| Sin AOT cache, JIT completo | ~264 s (liveness a los ~294 s) | ~312 MiB |
+| Solo C1 | ~120 s | ~225 MiB |
+| **AOT cache + G1 + C1 (la que se usa)** | **~54 s** (~66 s con las 14 migraciones desde cero; liveness a los ~77 s) | **~295 MiB** |
+| Referencia: 1 CPU, sin límite de CPU | ~14 s | ~276 MiB |
+
+- Las etiquetas `eclipse-temurin:25-jdk`/`25-jre` reciben parches; el AOT cache se regenera en cada
+  build, así que no queda desfasado. Si un parche rompiera el build, fijar la imagen por digest.
+- **Prueba local**: `docker build -t hsfacop-backend:local modules/backend` y `docker run` con
+  `PORT`, `DB_*` y `JWT_SECRET`. Por HTTP la cookie `Secure` no vuelve al servidor: para probar
+  login/refresh en local, `COOKIE_SECURE=false`. La sesión real se prueba en el despliegue (HTTPS).
+
+## 5. Puesta en marcha (paso a paso)
+
+Producción = rama **`main`** (Render y Vercel). `dev` llega por PR con el CI en verde.
+
+1. **Neon** — crea un proyecto en `AWS us-east-2` (Ohio). En *Connection details* elige la
+   conexión **directa** (sin `-pooler`) y arma
+   `DB_URL=jdbc:postgresql://<host>/<base>?sslmode=require`, más `DB_USERNAME` y `DB_PASSWORD`.
+2. **Render** — *New → Blueprint*, elige el repo (lee `render.yaml`, servicio `hs-facop-api`, rama
+   `main`). Carga:
+   - `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` (de Neon);
+   - `JWT_SECRET`: `openssl rand -base64 48`;
+   - `CORS_ALLOWED_ORIGINS=https://pendiente.invalid` (provisional, paso 4).
+
+   Primer deploy: el log muestra las 14 migraciones y `GET https://<servicio>.onrender.com/actuator/health/liveness` → `200`.
+3. **URL de Render en `vercel.json`** — si la URL asignada no es `https://hs-facop-api.onrender.com`,
+   corrígela en las dos reglas de `vercel.json` (PR a `main`).
+4. **Vercel** — *Add New → Project*, importa el repo. Root Directory = **raíz** (el build lo define
+   `vercel.json`), rama de producción `main`, **sin** `VITE_API_URL`. Tras el primer deploy, en
+   Render: `CORS_ALLOWED_ORIGINS=https://<app>.vercel.app` (exacto, sin `/` final).
+5. **Monitor** — UptimeRobot o cron-job.org a liveness cada 10 min (§1).
+6. **Primer ADMIN** — regístrate en `https://<app>.vercel.app/registro` y, enseguida, en el SQL
+   Editor de Neon:
+   ```sql
+   UPDATE users SET role = 'ADMIN' WHERE email = '<tu correo>' AND status = 'ACTIVE';
+   ```
+   Debe decir **1 fila**. El registro es público por diseño (cupo inicial 1).
+
+## 6. Verificación del despliegue (matriz)
+
+| Área | Prueba | Esperado | Resultado |
+|---|---|---|---|
+| Rutas | recargar `/ingresar`, `/registro`, `/historias` | la app (no el backend) | pendiente |
+| Rewrites | login y refresh desde la app | `200` vía Vercel → Render | pendiente |
+| Cookie | tras login: `Set-Cookie` del dominio de Vercel, `Path=/auth`, `Secure`, `HttpOnly`, `SameSite=Lax` | presente | pendiente |
+| Sesión | recargar con sesión (Chrome y Safari/iOS) | sigue con sesión | pendiente |
+| CORS | refresh vía proxy | `200`, no `403` | pendiente |
+| Actuator | liveness / health / info en Render | `200 UP` / solo `status` / `401` | pendiente |
+| Arranque en frío | 20 min sin monitor: abrir la app, login, recargar | pantalla de espera → entra; tiempo total | pendiente |
+| Contacto | enlaces de WhatsApp y correo | abren lo esperado | pendiente |
+| Smoke E2E | `E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts` | verde | pendiente |
+| Memoria en Render | métricas del servicio tras el arranque | < 512 MB | pendiente |

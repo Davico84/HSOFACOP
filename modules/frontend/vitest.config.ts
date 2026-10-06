@@ -6,7 +6,6 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   define: {
-    BACKEND_URL: JSON.stringify("https://api.test"),
     global: "globalThis",
   },
   resolve: {

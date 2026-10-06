@@ -11,13 +11,13 @@ const PASSWORD = "password123";
 
 async function registerAndEnter(page: Page) {
   const email = `e2e-${Date.now()}-${Math.floor(Math.random() * 1e6)}@empresa.test`;
-  await page.goto("/auth/register");
+  await page.goto("/registro");
   await page.getByLabel("Nombre completo").fill("Dra. María Torres");
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByRole("textbox", { name: "Contraseña", exact: true }).fill(PASSWORD);
   await page.getByRole("textbox", { name: "Confirmar contraseña" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await expect(page).not.toHaveURL(/\/auth\//);
+  await expect(page).not.toHaveURL(/\/(ingresar|registro)/);
 }
 
 const stepHeading = (page: Page, title: RegExp) => page.getByRole("heading", { level: 2, name: title });

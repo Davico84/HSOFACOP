@@ -3,6 +3,10 @@
 #  - en local se cargan de ./secrets.properties (ignorado por git)
 #  - en despliegue se inyectan como variables de entorno
 # Solo se versiona secrets.properties.example. No poner valores sensibles aquí.
+# Render inyecta PORT; en local, 8080.
+server:
+  port: ${PORT:8080}
+
 spring:
   application:
     name: odontorisas

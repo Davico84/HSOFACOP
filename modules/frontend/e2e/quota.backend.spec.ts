@@ -16,23 +16,23 @@ const QUOTA_FULL = "Alcanzaste el máximo de 1 historia clínica. Comunícate co
 async function registerTratante(browser: Browser, fullName: string): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
   const email = `e2e-cupo-${Date.now()}-${Math.floor(Math.random() * 1e6)}@empresa.test`;
-  await page.goto("/auth/register");
+  await page.goto("/registro");
   await page.getByLabel("Nombre completo").fill(fullName);
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByRole("textbox", { name: "Contraseña", exact: true }).fill(PASSWORD);
   await page.getByRole("textbox", { name: "Confirmar contraseña" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await expect(page).not.toHaveURL(/\/auth\//);
+  await expect(page).not.toHaveURL(/\/(ingresar|registro)/);
   return page;
 }
 
 async function loginAdmin(browser: Browser): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
-  await page.goto("/auth/login");
+  await page.goto("/ingresar");
   await page.getByLabel(/correo/i).fill(ADMIN_EMAIL!);
   await page.getByLabel(/^contraseña$/i).fill(ADMIN_PASSWORD!);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await expect(page).not.toHaveURL(/\/auth\//);
+  await expect(page).not.toHaveURL(/\/(ingresar|registro)/);
   return page;
 }
 

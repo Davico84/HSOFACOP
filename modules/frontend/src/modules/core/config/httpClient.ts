@@ -6,8 +6,9 @@ import axios, {
 import { toast } from "sonner";
 import { useSessionStore, type SessionUser } from "@/store/useSessionStore";
 import { accountDisabledMessage } from "@/modules/core/utils/apiError";
+import { resolveApiBaseUrl } from "./apiBaseUrl";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const BASE_URL = resolveApiBaseUrl({ VITE_API_URL: import.meta.env.VITE_API_URL, DEV: import.meta.env.DEV });
 
 /** Instancia axios compartida. `withCredentials` para enviar la cookie de refresh. */
 export const axiosInstance = axios.create({

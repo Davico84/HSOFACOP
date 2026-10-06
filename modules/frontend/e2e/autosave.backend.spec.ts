@@ -10,13 +10,13 @@ const PASSWORD = "password123";
 
 test("lo escrito se autoguarda y la historia se retoma en el último paso trabajado", async ({ page }) => {
   const email = `e2e-auto-${Date.now()}-${Math.floor(Math.random() * 1e6)}@empresa.test`;
-  await page.goto("/auth/register");
+  await page.goto("/registro");
   await page.getByLabel("Nombre completo").fill("Dra. María Torres");
   await page.getByLabel("Correo electrónico").fill(email);
   await page.getByRole("textbox", { name: "Contraseña", exact: true }).fill(PASSWORD);
   await page.getByRole("textbox", { name: "Confirmar contraseña" }).fill(PASSWORD);
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await expect(page).not.toHaveURL(/\/auth\//);
+  await expect(page).not.toHaveURL(/\/(ingresar|registro)/);
 
   // Crear y pasar al paso 3 (Análisis funcional) con un cambio: queda como último paso.
   await page.goto("/historias/nueva");

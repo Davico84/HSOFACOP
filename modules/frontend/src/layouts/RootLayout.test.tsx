@@ -149,7 +149,7 @@ describe("project-foundation — Pantalla de arranque en frío al cargar la app"
 
   it("Restauración fallida tras la espera: sesión limpia y login sin la pantalla", async () => {
     const { release } = holdRefresh("fail");
-    renderRoot({ path: "/auth/login" });
+    renderRoot({ path: "/ingresar" });
     await advance(10_000);
     expect(screen.getByText(WARMING_TITLE)).toBeInTheDocument();
 
