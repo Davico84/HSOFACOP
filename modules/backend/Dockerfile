@@ -25,7 +25,10 @@ WORKDIR /app
 # - G1 explícito: con < 2 CPU la JVM elegiría SerialGC y no podría cargar el heap archivado.
 # - Solo C1 (TieredStopAtLevel=1): con 0,1 CPU el compilador C2 retrasa el arranque.
 # Medido con 512 MB y 0,1 CPU: ~294 s sin esto, ~54 s con esto (docs/deployment.md).
-ENV JVM_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=70 -Xss512k -XX:TieredStopAtLevel=1"
+# - Sin código nativo en el cache (adapters/stubs): depende del CPU donde se construye la imagen, y
+#   Render construye y ejecuta en máquinas distintas (SIGILL al arrancar). Se guardan solo las clases
+#   cargadas y enlazadas, que son portables.
+ENV JVM_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=70 -Xss512k -XX:TieredStopAtLevel=1 -XX:+UnlockDiagnosticVMOptions -XX:-AOTAdapterCaching -XX:-AOTStubCaching"
 
 # AOT cache de Java 25 (JEP 483/514/515): una corrida de entrenamiento que arranca el contexto y sale
 # tras el refresh, sin base de datos (Flyway apagado, Hibernate sin leer metadatos de la BD).
