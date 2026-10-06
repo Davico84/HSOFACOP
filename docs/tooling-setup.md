@@ -65,7 +65,7 @@ Fuente única: `project.config.json` (nombre, tagline, descripción, BD, JWT iss
 Instalado en devDependencies: `vitest`, `@vitest/coverage-v8`, `jsdom`, `@testing-library/{react,jest-dom,user-event}`, `msw`.
 
 Archivos (ya presentes):
-- `vitest.config.ts` — plugin react, alias `@`, `environment: "jsdom"`, `setupFiles: ["./src/test/setup.ts"]`, `globals: false`, `define` de globals de Vite (`BACKEND_URL`), y **`pool: "threads"`**.
+- `vitest.config.ts` — plugin react, alias `@`, `environment: "jsdom"`, `setupFiles: ["./src/test/setup.ts"]`, `globals: false`, `define` de `global` (sockjs; la URL de la API sale de `VITE_API_URL`, ver `core/config/apiBaseUrl.ts`), y **`pool: "threads"`**.
 - `src/test/setup.ts` — `@testing-library/jest-dom/vitest` + `afterEach(cleanup)` + ciclo de vida de MSW (`listen/resetHandlers/close`) + shims de jsdom.
 - `src/test/mocks/{handlers,server}.ts` — handlers por defecto y `setupServer`.
 - `src/test/utils.tsx` — `renderWithProviders` (React Query + Router; se ampliará con sesión/i18n al existir).
