@@ -83,4 +83,4 @@
   - higiene oral por categorías;
   - fecha de la primera menstruación.
 - [x] 4.2 `openspec validate update-orthodontic-records-anamnesis-fields --strict`
-- [ ] 4.3 Al archivar: `docs/vision.md` ✅
+- [x] 4.3 Al archivar: `docs/vision.md` ✅
