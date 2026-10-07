@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { uniqueRecordNumber } from "./support/recordNumber";
 
 /**
  * Autoguardado y retomar en el último paso contra el backend real (tarea 3.4 de
@@ -20,6 +21,7 @@ test("lo escrito se autoguarda y la historia se retoma en el último paso trabaj
 
   // Crear y pasar al paso 3 (Análisis funcional) con un cambio: queda como último paso.
   await page.goto("/historias/nueva");
+  await page.getByRole("textbox", { name: "Nro. de historia" }).fill(uniqueRecordNumber());
   await page.getByRole("textbox", { name: "Paciente" }).fill("Paciente de autoguardado");
   await page.getByRole("button", { name: /Crear historia/ }).click();
   await expect(page).toHaveURL(/\/historias\/\d+\?paso=2$/);

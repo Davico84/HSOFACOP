@@ -31,6 +31,7 @@ import {
   OcclusalAnalysisSpeeCurve,
   OcclusalAnalysisTransverse,
   OcclusalAnalysisVertical,
+  AnamnesisMenarche,
   AnamnesisOralHygiene,
   RadiographicAnalysisCephalometricAnalysesItem,
 } from "@/modules/core/services/generated/model";
@@ -85,7 +86,7 @@ export const sexOptions = choices(CreateRecordRequestPatientSex, { FEMALE: "Feme
 
 // --- Comunes ---
 
-export const yesNoOptions = choices(AnamnesisOralHygiene, { YES: "Sí", NO: "No" });
+export const yesNoOptions = choices(AnamnesisMenarche, { YES: "Sí", NO: "No" });
 export const presenceOptions = choices(FacialAnalysisLipSeal, { PRESENT: "Presenta", ABSENT: "No presenta" });
 export const sideOptions = choices(FunctionalAnalysisTongueLateralSidesItem, { RIGHT: "Derecho", LEFT: "Izquierdo" });
 export const muscleOptions = choices(FunctionalAnalysisUpperLip, {
@@ -104,6 +105,9 @@ export const angleClassOptions = choices(AngleRelationAngleClass, {
 export const NOT_REPORTED = "No refiere";
 
 export const cooperationOptions = choices(AnamnesisCooperation, { HIGH: "Alto", MEDIUM: "Medio", LOW: "Bajo" });
+export const oralHygieneOptions = choices(AnamnesisOralHygiene, {
+  EXCELLENT: "Excelente", GOOD: "Buena", REGULAR: "Regular", DEFICIENT: "Deficiente",
+});
 
 // --- Paso 2: análisis facial (Guía de análisis facial) ---
 
@@ -188,9 +192,9 @@ export const midlineOptions = choices(MidlinePosition, {
 // --- Paso 5: radiográfico ---
 
 export const cephalometricOptions = choices(RadiographicAnalysisCephalometricAnalysesItem, {
-  STEINER: "Steiner", RICKETTS: "Ricketts", MCNAMARA: "McNamara", WITS: "Wits",
+  STEINER: "Steiner", RICKETTS: "Ricketts", MCNAMARA: "McNamara", WITS: "Wits", TWEED: "Tweed", JARABAK: "Jarabak",
 });
-/** El PDF pide realizar 3 análisis cefalométricos. */
+/** El PDF pide realizar al menos 3 análisis cefalométricos (se pueden marcar más). */
 export const CEPHALOMETRIC_REQUIRED = 3;
 
 /** Etiqueta de un valor (para imprimir); vacío si no está en las opciones. */

@@ -186,14 +186,14 @@ describe("orthodontic-records — Autoguardado con datos fijos", () => {
 describe("orthodontic-records — Candado en el listado", () => {
   it("las historias con los datos fijos muestran el candado; las demás no", async () => {
     const rows: RecordSummaryResponse[] = [
-      summary({ id: 10, recordNumber: "AEO-001", patientLocked: true }),
-      summary({ id: 11, recordNumber: "AEO-002", patientName: "Rosa Díaz" }),
+      summary({ id: 10, recordNumber: "AOC-0001", patientLocked: true }),
+      summary({ id: 11, recordNumber: "AOC-0002", patientName: "Rosa Díaz" }),
     ];
     server.use(http.get("*/api/orthodontic-records", () => HttpResponse.json(page(rows))));
     renderRecordRoutes("/historias");
 
-    const locked = await screen.findByRole("row", { name: /AEO-001/ });
+    const locked = await screen.findByRole("row", { name: /AOC-0001/ });
     expect(within(locked).getByRole("img", { name: "Datos del paciente fijos" })).toBeInTheDocument();
-    expect(within(screen.getByRole("row", { name: /AEO-002/ })).queryByRole("img", { name: "Datos del paciente fijos" })).toBeNull();
+    expect(within(screen.getByRole("row", { name: /AOC-0002/ })).queryByRole("img", { name: "Datos del paciente fijos" })).toBeNull();
   });
 });

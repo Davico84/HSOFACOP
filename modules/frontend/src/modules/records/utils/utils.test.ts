@@ -60,6 +60,6 @@ describe("orthodontic-records — conversión del formulario", () => {
     expect(request.version).toBe(3);
     expect(request.address).toBe("Av. Ejército 512");
     expect("phone" in request).toBe(false);
-    expect("recordNumber" in request).toBe(false);
+    expect(request.recordNumber).toBe(values.recordNumber);
   });
 });

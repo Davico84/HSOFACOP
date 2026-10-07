@@ -43,31 +43,31 @@
 
 ## 2. Contrato y cliente
 
-- [ ] 2.1 `contracts/openapi.json` regenerado (`-Dcontract.update=true`) y `pnpm generate:api`
+- [x] 2.1 `contracts/openapi.json` regenerado (`-Dcontract.update=true`) y `pnpm generate:api`
 
 ## 3. Frontend
 
-- [ ] 3.0 `recordNumber` en el schema Zod (`^AOC-[0-9]{4}$`), `emptyRecordValues`, `toFormValues`, `toCreateRequest`, `toUpdateRequest` y los campos del paso 1 en `RECORD_STEPS`; `RECORD_NUMBER_TAKEN_TYPE` en `recordKeys.ts`
-- [ ] 3.1 "Nueva historia":
+- [x] 3.0 `recordNumber` en el schema Zod (`^AOC-[0-9]{4}$`), `emptyRecordValues`, `toFormValues`, `toCreateRequest`, `toUpdateRequest` y los campos del paso 1 en `RECORD_STEPS`; `RECORD_NUMBER_TAKEN_TYPE` en `recordKeys.ts`
+- [x] 3.1 "Nueva historia" (es el mismo formulario: el número va en el paso 1 y se exige antes del primer guardado, que crea la historia):
   - pide nombre del paciente y número (`AOC-0001`) con validación Zod;
   - el `409` `/errors/record-number-taken` va junto al campo del número.
-- [ ] 3.2 Paso 1:
+- [x] 3.2 Paso 1:
   - número editable para el autor y el `ADMIN`, también tras imprimir;
   - el `409` de número tomado se muestra en el campo con `setError("recordNumber", detail)` (guardado manual y autoguardado), conserva lo escrito y no pausa el autoguardado (la pausa queda solo para `/errors/stale-record`). `getFieldErrors()` solo procesa `400`, así que este caso se maneja aparte.
-- [ ] 3.3 Higiene oral con las cuatro categorías (selección única, deseleccionable)
-- [ ] 3.4 Menstruación:
+- [x] 3.3 Higiene oral con las cuatro categorías (selección única, deseleccionable)
+- [x] 3.4 Menstruación:
   - pregunta solo con sexo femenino;
   - fecha solo con "Sí", con límites en Zod (no futura, no anterior al nacimiento);
   - limpiar valores cuando la condición deja de cumplirse.
-- [ ] 3.5 Paso 6: seis opciones cefalométricas, contador `n de 3` que permite más de tres
-- [ ] 3.6 Vista previa e impresión:
+- [x] 3.5 Paso 6: seis opciones cefalométricas, contador `n de 3` que permite más de tres
+- [x] 3.6 Vista previa e impresión:
   - número `AOC-`;
   - higiene oral con cuatro casillas;
   - respuesta y fecha de menstruación cuando aplican;
   - seis opciones cefalométricas.
 
   Verificación con Edge headless + PyMuPDF de que las hojas 1 y 10 no cambian de cantidad de páginas.
-- [ ] 3.7 Tests Vitest/MSW (uno por scenario de interfaz):
+- [x] 3.7 Tests Vitest/MSW (uno por scenario de interfaz):
   - número obligatorio, formato y duplicado en el campo sin pausar el autoguardado;
   - higiene oral;
   - menstruación (sexo, No, fecha inválida);

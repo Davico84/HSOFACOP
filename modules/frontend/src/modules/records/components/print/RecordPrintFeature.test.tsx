@@ -55,7 +55,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     const sheets = await screen.findAllByRole("article");
     expect(sheets.length).toBeGreaterThanOrEqual(7);
     for (const sheet of sheets) {
-      expect(within(sheet).getByText(/HISTORIA CLÍNICA ORTODONCIA Nro\./)).toHaveTextContent("AEO-001");
+      expect(within(sheet).getByText(/HISTORIA CLÍNICA ORTODONCIA Nro\./)).toHaveTextContent("AOC-0001");
       expect(within(sheet).getByRole("img", { name: /AEO/ })).toBeInTheDocument();
       expect(within(sheet).getByRole("img", { name: /FACOP/ })).toBeInTheDocument();
     }

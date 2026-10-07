@@ -23,17 +23,18 @@ export function emptyContent(): RecordContent {
 
 /** Valores iniciales de una historia nueva; el tratante se propone con el nombre del usuario. */
 export function emptyRecordValues(treatingDentist?: string): RecordFormValues {
-  return completeValues({ treatingDentist: treatingDentist ?? "", patientName: "", content: emptyContent() });
+  return completeValues({ recordNumber: "", treatingDentist: treatingDentist ?? "", patientName: "", content: emptyContent() });
 }
 
 /**
  * Respuesta del servidor → valores del formulario, con TODOS los campos presentes (los `null`
- * del JSON pasan a su valor vacío) y sin los campos que no se editan. Valores iniciales
+ * del JSON pasan a su valor vacío) y sin los campos que no se editan (el número sí se edita). Valores iniciales
  * completos: montar un paso no cuenta como cambio.
  */
 export function toFormValues(record: RecordResponse): RecordFormValues {
   const clean = withoutNulls(record) as RecordResponse;
   const values = {
+    recordNumber: clean.recordNumber,
     treatingDentist: clean.treatingDentist,
     patientName: clean.patientName,
     documentType: clean.documentType,
