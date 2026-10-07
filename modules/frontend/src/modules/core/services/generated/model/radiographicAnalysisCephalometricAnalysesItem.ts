@@ -15,4 +15,6 @@ export const RadiographicAnalysisCephalometricAnalysesItem = {
   RICKETTS: 'RICKETTS',
   MCNAMARA: 'MCNAMARA',
   WITS: 'WITS',
+  TWEED: 'TWEED',
+  JARABAK: 'JARABAK',
 } as const;
