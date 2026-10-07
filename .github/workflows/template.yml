@@ -3,7 +3,7 @@ name: Template
 # Tooling de reutilización de la plantilla (project:setup / project:apply).
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "scripts/project/**"
       - "project.config.json"
@@ -11,7 +11,7 @@ on:
       - "package.json"
       - ".github/workflows/template.yml"
   push:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "scripts/project/**"
       - "project.config.json"

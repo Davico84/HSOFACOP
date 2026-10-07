@@ -109,7 +109,7 @@ Hook `pre-commit` en la raíz que ejecuta `lint-staged` **acotado a `modules/fro
 
 ## 5. CI
 
-Un workflow **por área** en `.github/workflows/`, cada uno con **path filter** (corre solo si cambia su área) y `concurrency` (cancela runs superados). Disparan en push/PR a `main` y `dev`.
+Un workflow **por área** en `.github/workflows/`, cada uno con **path filter** (corre solo si cambia su área) y `concurrency` (cancela runs superados). Disparan en **PR hacia `main`** (cada push al PR) y en **push a `main`** (el merge): no en el push a ramas de trabajo, que ya validan los hooks locales (§4) y luego el PR. El run de `main` valida el código combinado y es el que espera Render para desplegar (`autoDeployTrigger: checksPass`, `docs/deployment.md`). Flujo de ramas: `docs/commits.md` §5b.
 
 | Workflow | Filtro de rutas | Jobs |
 |---|---|---|
@@ -119,4 +119,4 @@ Un workflow **por área** en `.github/workflows/`, cada uno con **path filter** 
 | `template.yml` | `scripts/project/**`, `project.config.json`, `.template/**`, `package.json` | `unit` (`node --test` sobre `scripts/project/*.test.mjs`) · `rehearsal` (apply "Acme CRM" → cliente regenerado sin diferencias → `pnpm validate` + `build` + `<title>` → `mvnw test` + guardián `ContractDriftIT`: el apply deja backend y contrato alineados) |
 
 > [!NOTE]
-> **Path filters + branch protection**: si más adelante marcas estos checks como *required*, un workflow que no dispara (porque su área no cambió) aparece como *pending/skipped* y puede bloquear el merge. Cuando llegue ese momento, usar "required workflows" a nivel de organización o un job agregador. Por ahora no hay branch protection.
+> **Path filters + branch protection**: si más adelante marcas estos checks como *required*, un workflow que no dispara (porque su área no cambió) aparece como *pending/skipped* y puede bloquear el merge. Cuando llegue ese momento, usar "required workflows" a nivel de organización o un job agregador. Por ahora `main` solo exige PR (sin checks obligatorios), justamente por esto.

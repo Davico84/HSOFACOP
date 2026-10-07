@@ -2,12 +2,12 @@ name: OpenSpec
 
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "openspec/**"
       - ".github/workflows/openspec.yml"
   push:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "openspec/**"
       - ".github/workflows/openspec.yml"

@@ -94,6 +94,29 @@ Reglas:
 - **Nada destructivo** sin permiso explícito (`git push --force`, `reset --hard`). Ante push rechazado: reportar y sugerir pull/rebase.
 - Branches de feature pequeñas y descriptivas: `feat/...`, `fix/...`.
 
+## 5b. Flujo de ramas: una rama por change, PR a `main`
+
+No hay rama de integración (`dev` se retiró): `main` es producción (Render y Vercel despliegan cada merge) y cada trabajo vive en su rama hasta su PR.
+
+| Trabajo | Rama | Ejemplo |
+|---|---|---|
+| Change de OpenSpec | `change/<change-id>` | `change/add-database-backups` |
+| Ajuste sin change (CI, docs, dependencias) | `chore/<tema>` | `chore/ci-flujo-ramas` |
+| Arreglo urgente en producción | `fix/<tema>` | `fix/sigill-aot-cache` |
+
+```
+git switch -c change/<id> origin/main   # siempre desde main actualizado
+/opsx:propose → revisión → /opsx:apply → /opsx:archive   # commits por scope (§5)
+git push -u origin change/<id>          # → PR a main (gh pr create --base main)
+# CI en el PR → merge → despliegue automático → borrar la rama
+```
+
+- **Un PR = un change** (o un ajuste): se revisa, se prueba y se revierte por separado. No mezclar dos changes en una rama.
+- **CI**: corre en cada push del PR y una vez en `main` tras el merge (no en el push a una rama sin PR: para eso están los hooks locales).
+- **Vista previa**: Vercel publica una *preview* por rama (sin sesión: su origen no está en CORS). Sirve para revisar la interfaz antes de mergear.
+- **Sincronizar**: si `main` avanzó, `git fetch && git rebase origin/main` en la rama (o merge, si ya hay revisión en curso); nada destructivo sobre `main`.
+- **Tras el merge**: `git switch main && git pull` y borrar la rama local y remota (`git branch -d change/<id>`, `git push origin --delete change/<id>`); GitHub puede borrarla sola al mergear.
+
 ## 6. Automatización (pendiente de andamiaje)
 
 - **commitlint** + config Conventional Commits para validar en `commit-msg` (hook) y en CI.

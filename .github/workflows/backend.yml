@@ -2,13 +2,13 @@ name: Backend
 
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "modules/backend/**"
       - "contracts/**"
       - ".github/workflows/backend.yml"
   push:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "modules/backend/**"
       - "contracts/**"

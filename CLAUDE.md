@@ -22,7 +22,7 @@ Monorepo modular: `modules/backend/` (Java/Spring) + `modules/frontend/` (React/
 
 ## Flujo de trabajo
 `/opsx:explore` (pensar) → `/opsx:propose` (change + artefactos) → revisión humana → `/opsx:apply` (implementar) → tests → `/opsx:sync`/`/opsx:archive`.
-Ruta rápida por defecto: **propose → apply → archive**.
+Ruta rápida por defecto: **propose → apply → archive**. Cada change en su rama `change/<id>` desde `main` y PR a `main` (sin rama `dev`; ver `docs/commits.md` §5b).
 
 ### Gobernanza del ciclo (mantiene el contexto de la IA preciso)
 `docs/vision.md` es el **puente**: planeada (roadmap) → en progreso (change activo) → construida (`specs/`).

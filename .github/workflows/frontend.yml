@@ -2,7 +2,7 @@ name: Frontend
 
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "modules/frontend/**"
       - "contracts/**"
@@ -10,7 +10,7 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/frontend.yml"
   push:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - "modules/frontend/**"
       - "contracts/**"
