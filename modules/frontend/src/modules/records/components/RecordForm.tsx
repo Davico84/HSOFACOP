@@ -13,7 +13,7 @@ import { recordFormSchema, type RecordFormValues } from "../schemas/record";
 import { parseStep, RECORD_STEPS, stepOfField } from "../config/recordSteps";
 import { emptyRecordValues, toFormValues } from "../utils/recordForm";
 import { diffPaths, relatedPaths, valueAt } from "../utils/formDiff";
-import { PATIENT_LOCKED_TYPE, RECORD_QUOTA_REACHED_TYPE, STALE_RECORD_TYPE } from "../hooks/recordKeys";
+import { PATIENT_LOCKED_TYPE, RECORD_NUMBER_TAKEN_TYPE, RECORD_QUOTA_REACHED_TYPE, STALE_RECORD_TYPE } from "../hooks/recordKeys";
 import { errorPaths } from "../hooks/useStepStatus";
 import { useSaveRecord } from "../hooks/useSaveRecord";
 import { useRecordQuota } from "../hooks/useRecordQuota";
@@ -118,6 +118,8 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
         setStalePaused(true);
         return "stale";
       }
+      // Número tomado: error junto al campo; el autoguardado sigue (se reintenta al corregirlo).
+      if (markNumberTaken(error, mode === "manual")) return "invalid";
       if (mode === "manual") {
         onSaveError(error, () => void goTo(lastStep));
         return "failed";
@@ -147,11 +149,20 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
     },
   });
 
+  /** 409 de número tomado → error en el campo del número (no es un error de "reintentar"). */
+  const markNumberTaken = (error: unknown, focus: boolean): boolean => {
+    if (problemType(error) !== RECORD_NUMBER_TAKEN_TYPE) return false;
+    form.setError("recordNumber", { type: "server", message: getUserFriendlyError(error) }, { shouldFocus: focus });
+    if (focus && step !== 1) toast.error(getUserFriendlyError(error));
+    return true;
+  };
+
   const onSaveError = (error: unknown, retry: () => void) => {
     if (problemType(error) === STALE_RECORD_TYPE) {
       setStale(true);
       return;
     }
+    if (markNumberTaken(error, true)) return;
     // Datos del paciente fijos (p. ej. otra pestaña desactualizada): reintentar no sirve.
     if (problemType(error) === PATIENT_LOCKED_TYPE) {
       toast.error(getUserFriendlyError(error));
@@ -188,7 +199,7 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
       setManualSaving(false);
       if (result === "invalid") return "invalid";
       if (result === "failed" || result === "stale") return "failed";
-      if (result === "ok" && target === step) toast.success(`Historia ${record.recordNumber} guardada`);
+      if (result === "ok" && target === step) toast.success(`Historia ${form.getValues("recordNumber")} guardada`);
       if (target !== step) showStep(target);
       return "ok";
     }
@@ -279,7 +290,7 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
             <h2 className="text-xl font-semibold">
               {current.number}. {current.title} <span className="text-sm font-normal text-muted-foreground">({current.pages})</span>
             </h2>
-            <RecordStepContent step={step} recordNumber={record?.recordNumber} patientLocked={Boolean(record?.patientLockedAt)} />
+            <RecordStepContent step={step} patientLocked={Boolean(record?.patientLockedAt)} />
 
             {/* En celular cabe en una fila: "Anterior" y "Siguiente" muestran solo el icono (el texto queda
                 para el lector de pantalla). */}

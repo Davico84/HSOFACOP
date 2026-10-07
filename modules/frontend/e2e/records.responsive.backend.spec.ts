@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { uniqueRecordNumber } from "./support/recordNumber";
 
 /**
  * Regresión responsive del módulo de historia clínica (update-orthodontic-records-responsive): a
@@ -39,6 +40,8 @@ for (const width of [375, 768, 1280]) {
     await registerAndEnter(page, width);
 
     await page.goto("/historias/nueva");
+    const number = uniqueRecordNumber();
+    await page.getByRole("textbox", { name: "Nro. de historia" }).fill(number);
     await page.getByRole("textbox", { name: "Paciente" }).fill("Ana Lucía Quispe Mamani");
     await expectNoHorizontalScroll(page, "nueva historia");
     await page.getByRole("button", { name: /Crear historia/ }).click();
@@ -66,8 +69,8 @@ for (const width of [375, 768, 1280]) {
     }
 
     await page.goto("/historias");
-    await expect(page.getByRole("link", { name: "Editar historia AEO-001" })).toBeInViewport();
-    await expect(page.getByRole("link", { name: "Vista previa de impresión de la historia AEO-001" })).toBeInViewport();
+    await expect(page.getByRole("link", { name: `Editar historia ${number}` })).toBeInViewport();
+    await expect(page.getByRole("link", { name: `Vista previa de impresión de la historia ${number}` })).toBeInViewport();
     await expectNoHorizontalScroll(page, "listado");
 
     await page.goto(`/historias/${id}/imprimir`);

@@ -19,9 +19,9 @@ import java.util.Optional;
 public interface OrthodonticRecordRepository
         extends JpaRepository<OrthodonticRecord, Long>, JpaSpecificationExecutor<OrthodonticRecord> {
 
-    /** Último correlativo del autor (0 si no tiene historias). Llamar con la fila del autor bloqueada. */
-    @Query("select coalesce(max(r.recordSeq), 0) from OrthodonticRecord r where r.author.id = :authorId")
-    int findMaxRecordSeq(@Param("authorId") Long authorId);
+    /** ¿Otra historia (distinta de {@code id}; nulo al crear) ya tiene este número? */
+    @Query("select count(r) > 0 from OrthodonticRecord r where r.recordNumber = :number and (:id is null or r.id <> :id)")
+    boolean existsNumberInOtherRecord(@Param("number") String number, @Param("id") Long id);
 
     /** Historias creadas por un autor (uso de su cupo). */
     long countByAuthorId(Long authorId);

@@ -1,6 +1,7 @@
 package com.odontorisas.persistence;
 
 import com.odontorisas.AbstractIntegrationTest;
+import com.odontorisas.TestRecordNumbers;
 import com.odontorisas.common.Role;
 import com.odontorisas.common.text.SearchNormalizer;
 import com.odontorisas.persistence.entity.OrthodonticRecord;
@@ -45,8 +46,8 @@ class OrthodonticRecordRepositoryIT extends AbstractIntegrationTest {
     }
 
     private OrthodonticRecord record(User author, int seq, String patient) {
-        String number = "AEO-%03d".formatted(seq);
-        return records.saveAndFlush(OrthodonticRecord.builder().author(author).recordSeq(seq).recordNumber(number)
+        String number = seq >= 9000 ? "AOC-%04d".formatted(seq) : TestRecordNumbers.next();
+        return records.saveAndFlush(OrthodonticRecord.builder().author(author).recordNumber(number)
             .patientName(patient).searchText(SearchNormalizer.normalize(patient + " " + number))
             .content("{\"schemaVersion\":1,\"anamnesis\":{\"chiefComplaint\":\"Dientes \\\"salidos\\\"\"}}")
             .build());
@@ -65,24 +66,28 @@ class OrthodonticRecordRepositoryIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void same_seq_is_rejected_for_the_same_author_but_allowed_for_another() {
+    void the_same_number_is_rejected_even_for_another_author() {
         User ana = user();
         User beto = user();
-        record(ana, 1, "Paciente 1");
-        record(beto, 1, "Paciente 2");
+        OrthodonticRecord first = record(ana, 1, "Paciente 1");
 
-        assertThatThrownBy(() -> record(ana, 1, "Paciente 3")).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> records.saveAndFlush(OrthodonticRecord.builder().author(beto)
+            .recordNumber(first.getRecordNumber()).patientName("Paciente 2").searchText("paciente 2").content("{}").build()))
+            .isInstanceOf(DataIntegrityViolationException.class)
+            .hasMessageContaining("ux_orthodontic_records_record_number");
     }
 
     @Test
-    void max_seq_is_per_author() {
+    void number_in_another_record_is_global_and_excludes_the_record_itself() {
         User ana = user();
         User beto = user();
-        record(ana, 1, "P1");
-        record(ana, 2, "P2");
+        OrthodonticRecord own = record(ana, 9001, "P1");
+        record(beto, 9002, "P2");
 
-        assertThat(records.findMaxRecordSeq(ana.getId())).isEqualTo(2);
-        assertThat(records.findMaxRecordSeq(beto.getId())).isZero();
+        assertThat(records.existsNumberInOtherRecord("AOC-9002", null)).isTrue();
+        assertThat(records.existsNumberInOtherRecord("AOC-9002", own.getId())).isTrue();
+        assertThat(records.existsNumberInOtherRecord("AOC-9001", own.getId())).isFalse();
+        assertThat(records.existsNumberInOtherRecord("AOC-9003", null)).isFalse();
     }
 
     @Test

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   AnamnesisCooperation,
+  AnamnesisMenarche,
   AnamnesisOralHygiene,
   AngleRelationAngleClass,
   CreateRecordRequestDocumentType,
@@ -40,10 +41,14 @@ import { today } from "../utils/age";
 /**
  * Schema del formulario de la historia, en paridad con el backend (docs/coding-style.md §7):
  * `CreateRecordRequest`/`UpdateRecordRequest`, `PatientFields.Consistent`, `ContentLimits`,
- * `Midline.Consistent` y `@FdiTooth`. Salvo el nombre del paciente, nada es obligatorio
- * (borrador). Las reglas condicionales se aplican al guardar en el servidor; aquí solo se valida
+ * `Midline.Consistent` y `@FdiTooth`. Salvo el número de historia y el nombre del paciente, nada
+ * es obligatorio (borrador). Las reglas condicionales se aplican al guardar en el servidor; aquí solo se valida
  * el formato de lo escrito.
  */
+
+/** Número de historia que asignan los docentes (paridad con `@Pattern` de los requests). */
+export const RECORD_NUMBER_PATTERN = /^AOC-[0-9]{4}$/;
+export const RECORD_NUMBER_FORMAT_MESSAGE = "Usa el formato AOC-0001.";
 
 export const SHORT_TEXT = 200;
 export const LONG_TEXT = 4000;
@@ -95,8 +100,9 @@ const anamnesis = z.object({
   personalPreferences: text(LONG_TEXT),
   cooperation: one(AnamnesisCooperation),
   oralHygiene: one(AnamnesisOralHygiene),
-  suckingHabits: one(AnamnesisOralHygiene),
-  menarche: one(AnamnesisOralHygiene),
+  suckingHabits: one(AnamnesisMenarche),
+  menarche: one(AnamnesisMenarche),
+  menarcheDate: z.string().nullish(),
   medicalHistory: text(LONG_TEXT),
   accidentsHistory: text(LONG_TEXT),
   familyStructure: text(LONG_TEXT),
@@ -139,7 +145,7 @@ const functional = z.object({
   mentalis: one(FunctionalAnalysisUpperLip),
   suckingHabitTypes: many(FunctionalAnalysisSuckingHabitTypesItem),
   lingualFrenulum: one(FunctionalAnalysisLingualFrenulum),
-  snoring: one(AnamnesisOralHygiene),
+  snoring: one(AnamnesisMenarche),
   bruxism: one(FunctionalAnalysisBruxism),
   bruxismTeeth: teeth(false),
 });
@@ -166,7 +172,7 @@ const occlusal = z.object({
   canineRelationMih: sideRelations,
   dentalAnomalies: text(LONG_TEXT),
   tmjCondition: text(LONG_TEXT),
-  familyMalocclusion: one(AnamnesisOralHygiene),
+  familyMalocclusion: one(AnamnesisMenarche),
   familyMalocclusionWho: text(SHORT_TEXT),
 });
 
@@ -318,6 +324,11 @@ const DOCUMENT_PATTERNS: Record<CreateRecordRequestDocumentType, { regex: RegExp
 
 export const recordFormSchema = z
   .object({
+    recordNumber: z
+      .string()
+      .trim()
+      .min(1, { message: "Indica el número de historia.", abort: true })
+      .regex(RECORD_NUMBER_PATTERN, RECORD_NUMBER_FORMAT_MESSAGE),
     treatingDentist: text(120),
     patientName: z.string().trim().min(1, "Indica el nombre del paciente.").max(120, tooLong(120)),
     documentType: one(CreateRecordRequestDocumentType),
@@ -358,6 +369,17 @@ export const recordFormSchema = z
         path: ["treatmentStartDate"],
         message: "La fecha de inicio de tratamiento no puede ser anterior a la de nacimiento.",
       });
+    }
+    // Primera menstruación: solo se valida si aplica (sexo femenino y respuesta Sí); si no, el
+    // servidor la descarta al guardar.
+    const menarcheDate = r.content.anamnesis.menarcheDate;
+    if (r.patientSex === "FEMALE" && r.content.anamnesis.menarche === "YES" && menarcheDate) {
+      const path = ["content", "anamnesis", "menarcheDate"];
+      if (menarcheDate > today()) {
+        ctx.addIssue({ code: "custom", path, message: "La fecha de la primera menstruación no puede ser futura." });
+      } else if (r.birthDate && menarcheDate < r.birthDate) {
+        ctx.addIssue({ code: "custom", path, message: "La fecha de la primera menstruación no puede ser anterior a la de nacimiento." });
+      }
     }
   });
 

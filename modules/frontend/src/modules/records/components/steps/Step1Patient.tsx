@@ -6,13 +6,11 @@ import { FormField } from "@/modules/core/components/form/FormField";
 import { Input } from "@/modules/core/ui/input";
 import type { RecordFormValues } from "../../schemas/record";
 import { LONG_TEXT } from "../../schemas/record";
-import { cooperationOptions, documentTypeOptions, NOT_REPORTED, sexOptions, yesNoOptions } from "../../config/options";
+import { cooperationOptions, documentTypeOptions, NOT_REPORTED, oralHygieneOptions, sexOptions, yesNoOptions } from "../../config/options";
 import { ageYears } from "../../utils/age";
 import { formatAge } from "../../utils/recordDisplay";
 
 interface Step1PatientProps {
-  /** Número asignado (solo lectura); vacío mientras la historia no se crea. */
-  recordNumber?: string;
   /**
    * Datos del paciente fijos tras imprimir: nombre, documento, sexo, fecha y lugar de nacimiento de
    * solo lectura (siguen en el formulario y se envían sin cambios al guardar).
@@ -21,18 +19,20 @@ interface Step1PatientProps {
 }
 
 /** Paso 1 (pág. 1): datos del paciente y anamnesis. La edad se calcula (no se teclea). */
-export function Step1Patient({ recordNumber, patientLocked = false }: Step1PatientProps) {
+export function Step1Patient({ patientLocked = false }: Step1PatientProps) {
   const { control } = useFormContext<RecordFormValues>();
-  const [birthDate, startDate, sex] = useWatch({ control, name: ["birthDate", "treatmentStartDate", "patientSex"] });
+  const [birthDate, startDate, sex, menarche] = useWatch({
+    control,
+    name: ["birthDate", "treatmentStartDate", "patientSex", "content.anamnesis.menarche"],
+  });
   const age = ageYears(birthDate, startDate);
 
   return (
     <div className="flex flex-col gap-8">
       <section aria-labelledby="s1-patient" className="grid gap-4 md:grid-cols-2">
         <h3 id="s1-patient" className="text-lg font-semibold md:col-span-2">Paciente</h3>
-        <FormField id="f-recordNumber" label="Nro. de historia">
-          <Input id="f-recordNumber" value={recordNumber ?? "Se asigna al guardar"} readOnly disabled />
-        </FormField>
+        <TextField name="recordNumber" label="Nro. de historia" placeholder="AOC-0001" autoComplete="off"
+          hint="Lo asignan los docentes. Se puede corregir aunque la historia ya esté impresa." />
         <TextField name="treatingDentist" label="Odontólogo tratante" />
         <TextField name="patientName" label="Paciente" className="md:col-span-2" autoComplete="off" readOnly={patientLocked} />
         <ChoiceField name="patientSex" label="Sexo" options={sexOptions} readOnly={patientLocked} />
@@ -57,12 +57,17 @@ export function Step1Patient({ recordNumber, patientLocked = false }: Step1Patie
         <TextAreaField name="content.anamnesis.personalPreferences" label="Gustos personales (color, canal preferido en YouTube, juguetes)" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
         <ChoiceField name="content.anamnesis.cooperation" label="Índice de colaboración / cooperación" options={cooperationOptions} />
         <div className="grid gap-4 md:grid-cols-2">
-          <ChoiceField name="content.anamnesis.oralHygiene" label="Higiene oral" options={yesNoOptions} />
+          <ChoiceField name="content.anamnesis.oralHygiene" label="Higiene oral" options={oralHygieneOptions} />
           <ChoiceField name="content.anamnesis.suckingHabits" label="Hábitos de succión" options={yesNoOptions}
             hint="El detalle (dedos, lengua…) se marca en el análisis funcional." />
         </div>
         {sex === "FEMALE" ? (
-          <ChoiceField name="content.anamnesis.menarche" label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <ChoiceField name="content.anamnesis.menarche" label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} />
+            {menarche === "YES" ? (
+              <TextField name="content.anamnesis.menarcheDate" label="Fecha de la 1ª menstruación" type="date" />
+            ) : null}
+          </div>
         ) : null}
         <TextAreaField name="content.anamnesis.medicalHistory" label="Historia médica / medicación de uso continuo" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />
         <TextAreaField name="content.anamnesis.accidentsHistory" label="Histórico de accidentes o traumas" maxLength={LONG_TEXT} placeholder={NOT_REPORTED} />

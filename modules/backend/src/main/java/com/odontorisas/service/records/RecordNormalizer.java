@@ -54,6 +54,7 @@ public final class RecordNormalizer {
     public static RecordData normalize(RecordData data, Integer ageYears) {
         String documentNumber = text(data.documentNumber());
         return new RecordData(
+            text(data.recordNumber()),
             text(data.treatingDentist()),
             text(data.patientName()),
             documentNumber == null ? null : data.documentType(),
@@ -83,11 +84,14 @@ public final class RecordNormalizer {
             signatures(c.signatures() != null ? c.signatures() : Signatures.empty(), ageYears));
     }
 
+    /** La primera menstruación solo aplica a pacientes de sexo femenino; su fecha, solo con respuesta Sí. */
     static Anamnesis anamnesis(Anamnesis a, PatientSex sex) {
+        YesNo menarche = sex == PatientSex.FEMALE ? a.menarche() : null;
         return new Anamnesis(
             text(a.chiefComplaint()), text(a.personalPreferences()), a.cooperation(), a.oralHygiene(),
             a.suckingHabits(),
-            sex == PatientSex.FEMALE ? a.menarche() : null,
+            menarche,
+            menarche == YesNo.YES ? a.menarcheDate() : null,
             text(a.medicalHistory()), text(a.accidentsHistory()), text(a.familyStructure()),
             text(a.generalTreatmentNeeds()), text(a.heredity()));
     }

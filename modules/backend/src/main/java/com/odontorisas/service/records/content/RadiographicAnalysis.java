@@ -6,7 +6,7 @@ import java.util.List;
 
 import static com.odontorisas.service.records.content.ContentLimits.LONG_TEXT;
 
-/** Paso 5 (pág. 10): análisis radiográfico. El PDF pide 3 análisis cefalométricos (no se exige: borrador). */
+/** Paso 5 (pág. 10): análisis radiográfico. El PDF pide al menos 3 análisis cefalométricos (no se exige: borrador). */
 public record RadiographicAnalysis(
     @Size(max = LONG_TEXT) String panoramicDiagnosis,
     List<CephalometricAnalysis> cephalometricAnalyses,
@@ -16,7 +16,7 @@ public record RadiographicAnalysis(
     @Size(max = LONG_TEXT) String others) {
 
     /** Solo se añaden valores. */
-    public enum CephalometricAnalysis { STEINER, RICKETTS, MCNAMARA, WITS }
+    public enum CephalometricAnalysis { STEINER, RICKETTS, MCNAMARA, WITS, TWEED, JARABAK }
 
     public static RadiographicAnalysis empty() {
         return new RadiographicAnalysis(null, List.of(), null, null, null, null);

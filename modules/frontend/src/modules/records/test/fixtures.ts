@@ -5,7 +5,7 @@ import { emptyContent } from "../utils/recordForm";
 export function recordResponse(overrides: Partial<RecordResponse> = {}): RecordResponse {
   const base = {
     id: 10,
-    recordNumber: "AEO-001",
+    recordNumber: "AOC-0001",
     authorId: 1,
     authorName: "Dra. María Torres",
     treatingDentist: "Dra. María Torres",
@@ -30,7 +30,7 @@ export function recordResponse(overrides: Partial<RecordResponse> = {}): RecordR
 export function summary(overrides: Partial<RecordSummaryResponse> = {}): RecordSummaryResponse {
   return {
     id: 10,
-    recordNumber: "AEO-001",
+    recordNumber: "AOC-0001",
     patientName: "Ana Quispe",
     treatingDentist: "Dra. María Torres",
     authorName: "Dra. María Torres",

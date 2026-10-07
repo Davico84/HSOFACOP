@@ -15,7 +15,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 /** Historia clínica completa. {@code ageYears} la calcula el servidor (no se envía). */
 public record RecordResponse(
     @Schema(requiredMode = REQUIRED) Long id,
-    @Schema(requiredMode = REQUIRED, example = "AEO-001") String recordNumber,
+    @Schema(requiredMode = REQUIRED, example = "AOC-0015") String recordNumber,
     @Schema(requiredMode = REQUIRED) Long authorId,
     @Schema(requiredMode = REQUIRED) String authorName,
     String treatingDentist,

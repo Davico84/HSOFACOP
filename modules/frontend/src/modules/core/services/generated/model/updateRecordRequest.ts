@@ -13,6 +13,12 @@ export interface UpdateRecordRequest {
   /** Versión cargada (control de edición concurrente) */
   version: number;
   /**
+   * Número de historia que asignan los docentes
+   * @minLength 1
+   * @pattern AOC-[0-9]{4}
+   */
+  recordNumber: string;
+  /**
    * @minLength 0
    * @maxLength 120
    */

@@ -9,13 +9,12 @@ import { Step8Signatures } from "./steps/Step8Signatures";
 
 interface RecordStepContentProps {
   step: number;
-  recordNumber?: string;
   /** Datos del paciente fijos (ya se imprimió): de solo lectura en el paso 1. */
   patientLocked?: boolean;
 }
 
 /** Contenido del paso actual. */
-export function RecordStepContent({ step, recordNumber, patientLocked = false }: RecordStepContentProps) {
+export function RecordStepContent({ step, patientLocked = false }: RecordStepContentProps) {
   switch (step) {
     case 2:
       return <Step2Facial />;
@@ -32,6 +31,6 @@ export function RecordStepContent({ step, recordNumber, patientLocked = false }:
     case 8:
       return <Step8Signatures />;
     default:
-      return <Step1Patient recordNumber={recordNumber} patientLocked={patientLocked} />;
+      return <Step1Patient patientLocked={patientLocked} />;
   }
 }

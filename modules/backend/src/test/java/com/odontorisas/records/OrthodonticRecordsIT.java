@@ -24,6 +24,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.odontorisas.TestRecordNumbers.next;
+import static com.odontorisas.TestRecordNumbers.withNumber;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -67,9 +69,10 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         return new Session(user.id(), user.fullName(), read(login).get("accessToken").stringValue());
     }
 
+    /** Crea; si el cuerpo no trae número, toma el siguiente libre de la suite. */
     private MvcResult create(Session as, String body) throws Exception {
         return mockMvc.perform(post(BASE).header("Authorization", "Bearer " + as.token())
-            .contentType(MediaType.APPLICATION_JSON).content(body)).andReturn();
+            .contentType(MediaType.APPLICATION_JSON).content(withNumber(body, next()))).andReturn();
     }
 
     private JsonNode createOk(Session as, String patient) throws Exception {
@@ -82,9 +85,33 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         return mockMvc.perform(get(BASE + "/" + id).header("Authorization", "Bearer " + as.token())).andReturn();
     }
 
+    /** Guarda; si el cuerpo no trae número, reenvía el que la historia tiene. */
     private MvcResult save(Session as, long id, String body) throws Exception {
         return mockMvc.perform(put(BASE + "/" + id).header("Authorization", "Bearer " + as.token())
-            .contentType(MediaType.APPLICATION_JSON).content(body)).andReturn();
+            .contentType(MediaType.APPLICATION_JSON).content(withNumber(body, currentNumber(id)))).andReturn();
+    }
+
+    private String currentNumber(long id) {
+        List<String> found = jdbc.queryForList("SELECT record_number FROM orthodontic_records WHERE id = ?", String.class, id);
+        return found.isEmpty() ? "AOC-0000" : found.get(0);
+    }
+
+    /** Campo ausente o nulo en la respuesta. */
+    private static boolean isEmpty(JsonNode node) {
+        return node == null || node.isNull();
+    }
+
+    private static String type(JsonNode problem) {
+        return problem.get("type").stringValue();
+    }
+
+    private static String fieldError(JsonNode problem, String field) {
+        for (JsonNode error : problem.get("errors")) {
+            if (error.get("field").stringValue().equals(field)) {
+                return error.get("message").stringValue();
+            }
+        }
+        return null;
     }
 
     private JsonNode list(Session as, String q) throws Exception {
@@ -101,68 +128,196 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         return out;
     }
 
-    // --- Creación y correlativo ---
+    // --- Creación y número de historia ---
 
     @Test
-    void user_creates_records_with_consecutive_numbers_and_is_the_author() throws Exception {
+    void user_creates_a_record_with_the_given_number_and_is_the_author() throws Exception {
         Session torres = register("Dra. María Torres");
+        String number = next();
 
-        JsonNode first = createOk(torres, "Ana Quispe");
-        JsonNode second = createOk(torres, "Luis Mamani");
+        MvcResult result = create(torres, "{\"recordNumber\":\"" + number + "\",\"patientName\":\"Ana Quispe\"}");
 
-        assertThat(first.get("recordNumber").stringValue()).isEqualTo("AEO-001");
-        assertThat(second.get("recordNumber").stringValue()).isEqualTo("AEO-002");
-        assertThat(first.get("authorId").asLong()).isEqualTo(torres.id());
-        assertThat(first.get("treatingDentist").stringValue()).isEqualTo("Dra. María Torres");
+        assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        JsonNode created = read(result);
+        assertThat(created.get("recordNumber").stringValue()).isEqualTo(number);
+        assertThat(created.get("authorId").asLong()).isEqualTo(torres.id());
+        assertThat(created.get("treatingDentist").stringValue()).isEqualTo("Dra. María Torres");
     }
 
     @Test
-    void numbers_are_independent_per_user() throws Exception {
+    void a_number_of_another_author_is_409_and_nothing_is_created() throws Exception {
         Session a = register("Dra. Ana");
         Session b = register("Dr. Beto");
-        createOk(a, "P1");
-        createOk(a, "P2");
+        String number = next();
+        create(a, "{\"recordNumber\":\"" + number + "\",\"patientName\":\"P1\"}");
+        long before = jdbc.queryForObject("SELECT count(*) FROM orthodontic_records", Long.class);
 
-        assertThat(createOk(a, "P3").get("recordNumber").stringValue()).isEqualTo("AEO-003");
-        assertThat(createOk(b, "P1").get("recordNumber").stringValue()).isEqualTo("AEO-001");
+        MvcResult rejected = create(b, "{\"recordNumber\":\"" + number + "\",\"patientName\":\"P2\"}");
+
+        assertThat(rejected.getResponse().getStatus()).isEqualTo(409);
+        assertThat(type(read(rejected))).isEqualTo("/errors/record-number-taken");
+        assertThat(read(rejected).get("detail").stringValue()).isEqualTo(
+            "El número " + number + " ya está registrado en otra historia. Verifica el número con la coordinación.");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM orthodontic_records", Long.class)).isEqualTo(before);
     }
 
     @Test
-    void simultaneous_creations_of_the_same_user_get_distinct_consecutive_numbers() throws Exception {
+    void saving_with_a_number_of_another_record_is_409_and_keeps_the_record() throws Exception {
         Session torres = register("Dra. Torres");
+        String taken = createOk(register("Dr. Otro"), "Otro").get("recordNumber").stringValue();
+        JsonNode created = createOk(torres, "Ana");
+
+        MvcResult rejected = save(torres, created.get("id").asLong(), "{\"version\":" + created.get("version").asLong()
+            + ",\"recordNumber\":\"" + taken + "\",\"patientName\":\"Ana María\"}");
+
+        assertThat(rejected.getResponse().getStatus()).isEqualTo(409);
+        assertThat(type(read(rejected))).isEqualTo("/errors/record-number-taken");
+        JsonNode after = read(getRecord(torres, created.get("id").asLong()));
+        assertThat(after.get("recordNumber").stringValue()).isEqualTo(created.get("recordNumber").stringValue());
+        assertThat(after.get("patientName").stringValue()).isEqualTo("Ana");
+    }
+
+    @Test
+    void simultaneous_creations_with_the_same_number_keep_only_one() throws Exception {
+        String number = next();
         int n = 4;
+        List<Session> users = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            users.add(register("Dra. " + i));
+        }
         ExecutorService pool = Executors.newFixedThreadPool(n);
         CountDownLatch start = new CountDownLatch(1);
         List<Future<MvcResult>> futures = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
+        for (Session user : users) {
             Callable<MvcResult> task = () -> {
                 start.await();
-                return create(torres, "{\"patientName\":\"Paciente\"}");
+                return create(user, "{\"recordNumber\":\"" + number + "\",\"patientName\":\"Paciente\"}");
             };
             futures.add(pool.submit(task));
         }
         start.countDown();
-        List<String> created = new ArrayList<>();
+        List<Integer> statuses = new ArrayList<>();
         for (Future<MvcResult> f : futures) {
             MvcResult r = f.get();
-            assertThat(r.getResponse().getStatus()).isEqualTo(201);
-            created.add(read(r).get("recordNumber").stringValue());
+            statuses.add(r.getResponse().getStatus());
+            if (r.getResponse().getStatus() == 409) {
+                assertThat(type(read(r))).isEqualTo("/errors/record-number-taken");
+            }
         }
         pool.shutdown();
 
-        assertThat(created).containsExactlyInAnyOrder("AEO-001", "AEO-002", "AEO-003", "AEO-004");
+        assertThat(statuses).filteredOn(s -> s == 201).hasSize(1);
+        assertThat(statuses).filteredOn(s -> s == 409).hasSize(n - 1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM orthodontic_records WHERE record_number = ?", Long.class, number))
+            .isEqualTo(1);
     }
 
     @Test
-    void sent_record_number_is_ignored() throws Exception {
+    void number_is_required_and_must_have_the_aoc_format() throws Exception {
+        Session torres = register("Dra. Torres");
+
+        JsonNode missing = read(create(torres, "{\"recordNumber\":\"  \",\"patientName\":\"Ana\"}"));
+        assertThat(missing.get("status").asInt()).isEqualTo(400);
+        assertThat(fieldError(missing, "recordNumber")).isNotNull();
+        for (String invalid : List.of("AOC-15", "AOC-00001", "AEO-0015")) {
+            MvcResult result = create(torres, "{\"recordNumber\":\"" + invalid + "\",\"patientName\":\"Ana\"}");
+            assertThat(result.getResponse().getStatus()).as(invalid).isEqualTo(400);
+            assertThat(fieldError(read(result), "recordNumber")).as(invalid).isEqualTo("Usa el formato AOC-0001.");
+        }
+
+        JsonNode created = createOk(torres, "Ana");
+        MvcResult save = save(torres, created.get("id").asLong(), "{\"version\":" + created.get("version").asLong()
+            + ",\"recordNumber\":\"AOC-15\",\"patientName\":\"Ana\"}");
+        assertThat(save.getResponse().getStatus()).isEqualTo(400);
+        assertThat(fieldError(read(save), "recordNumber")).isEqualTo("Usa el formato AOC-0001.");
+    }
+
+    @Test
+    void admin_corrects_the_number_of_another_author() throws Exception {
+        Session torres = register("Dra. Torres");
+        Session supervisor = admin();
+        JsonNode created = createOk(torres, "Ana");
+        String corrected = next();
+
+        MvcResult saved = save(supervisor, created.get("id").asLong(), "{\"version\":" + created.get("version").asLong()
+            + ",\"recordNumber\":\"" + corrected + "\",\"patientName\":\"Ana\"}");
+
+        assertThat(saved.getResponse().getStatus()).isEqualTo(200);
+        assertThat(read(saved).get("recordNumber").stringValue()).isEqualTo(corrected);
+        assertThat(read(saved).get("authorId").asLong()).isEqualTo(torres.id());
+    }
+
+    // --- Anamnesis y cefalometría ---
+
+    @Test
+    void oral_hygiene_is_one_of_four_categories_and_optional() throws Exception {
         Session torres = register("Dra. Torres");
         JsonNode created = createOk(torres, "Ana");
         long id = created.get("id").asLong();
 
-        MvcResult saved = save(torres, id, "{\"version\":" + created.get("version").asLong()
-            + ",\"patientName\":\"Ana\",\"recordNumber\":\"AEO-999\"}");
+        JsonNode saved = read(save(torres, id, "{\"version\":0,\"patientName\":\"Ana\","
+            + "\"content\":{\"anamnesis\":{\"oralHygiene\":\"REGULAR\"}}}"));
+        assertThat(saved.get("content").get("anamnesis").get("oralHygiene").stringValue()).isEqualTo("REGULAR");
 
-        assertThat(read(saved).get("recordNumber").stringValue()).isEqualTo("AEO-001");
+        MvcResult yesNo = save(torres, id, "{\"version\":" + saved.get("version").asLong() + ",\"patientName\":\"Ana\","
+            + "\"content\":{\"anamnesis\":{\"oralHygiene\":\"YES\"}}}");
+        assertThat(yesNo.getResponse().getStatus()).isEqualTo(400);
+        assertThat(isEmpty(created.get("content").get("anamnesis").get("oralHygiene"))).isTrue();
+    }
+
+    @Test
+    void menarche_date_is_saved_only_with_yes_for_female_patients() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana").get("id").asLong();
+        String female = "\"patientName\":\"Ana\",\"patientSex\":\"FEMALE\",\"birthDate\":\"2012-05-20\"";
+
+        JsonNode yes = read(save(torres, id, "{\"version\":0," + female
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2023-03-15\"}}}"));
+        assertThat(yes.get("content").get("anamnesis").get("menarcheDate").stringValue()).isEqualTo("2023-03-15");
+
+        JsonNode no = read(save(torres, id, "{\"version\":" + yes.get("version").asLong() + "," + female
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"NO\",\"menarcheDate\":\"2023-03-15\"}}}"));
+        assertThat(no.get("content").get("anamnesis").get("menarche").stringValue()).isEqualTo("NO");
+        assertThat(isEmpty(no.get("content").get("anamnesis").get("menarcheDate"))).isTrue();
+
+        JsonNode male = read(save(torres, id, "{\"version\":" + no.get("version").asLong()
+            + ",\"patientName\":\"Ana\",\"patientSex\":\"MALE\",\"birthDate\":\"2012-05-20\""
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2023-03-15\"}}}"));
+        assertThat(isEmpty(male.get("content").get("anamnesis").get("menarche"))).isTrue();
+        assertThat(isEmpty(male.get("content").get("anamnesis").get("menarcheDate"))).isTrue();
+    }
+
+    @Test
+    void menarche_date_cannot_be_future_or_before_birth() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana").get("id").asLong();
+        String female = "\"patientName\":\"Ana\",\"patientSex\":\"FEMALE\",\"birthDate\":\"2012-05-20\"";
+
+        MvcResult future = save(torres, id, "{\"version\":0," + female
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2099-01-01\"}}}");
+        assertThat(future.getResponse().getStatus()).isEqualTo(400);
+        assertThat(fieldError(read(future), "content.anamnesis.menarcheDate"))
+            .isEqualTo("La fecha de la primera menstruación no puede ser futura.");
+
+        MvcResult beforeBirth = save(torres, id, "{\"version\":0," + female
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2010-01-01\"}}}");
+        assertThat(beforeBirth.getResponse().getStatus()).isEqualTo(400);
+        assertThat(fieldError(read(beforeBirth), "content.anamnesis.menarcheDate"))
+            .isEqualTo("La fecha de la primera menstruación no puede ser anterior a la de nacimiento.");
+        assertThat(read(getRecord(torres, id)).get("version").asLong()).isZero();
+    }
+
+    @Test
+    void cephalometric_analyses_accept_the_six_options_and_more_than_three() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana").get("id").asLong();
+
+        JsonNode saved = read(save(torres, id, "{\"version\":0,\"patientName\":\"Ana\",\"content\":{\"radiographic\":"
+            + "{\"cephalometricAnalyses\":[\"STEINER\",\"RICKETTS\",\"WITS\",\"TWEED\",\"JARABAK\"]}}}"));
+
+        List<String> analyses = new ArrayList<>();
+        saved.get("content").get("radiographic").get("cephalometricAnalyses").forEach(n -> analyses.add(n.stringValue()));
+        assertThat(analyses).containsExactlyInAnyOrder("STEINER", "RICKETTS", "WITS", "TWEED", "JARABAK");
     }
 
     // --- Alcance ---
@@ -290,9 +445,11 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         createOk(torres, "Ana QUÍSPE");
         create(torres, "{\"patientName\":\"Luis\",\"documentType\":\"DNI\",\"documentNumber\":\"74125896\"}");
 
-        assertThat(numbers(list(torres, "quispe"))).containsExactly("AEO-001");
-        assertThat(numbers(list(torres, "74125896"))).containsExactly("AEO-002");
-        assertThat(numbers(list(torres, "aeo-002"))).containsExactly("AEO-002");
+        String ana = numbers(list(torres, "quispe")).get(0);
+        String luis = numbers(list(torres, "74125896")).get(0);
+        assertThat(numbers(list(torres, "quispe"))).containsExactly(ana);
+        assertThat(numbers(list(torres, luis.toLowerCase()))).containsExactly(luis);
+        assertThat(ana).isNotEqualTo(luis);
         assertThat(list(torres, "zzz").get("content")).isEmpty();
     }
 
@@ -375,7 +532,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
     }
 
     @Test
@@ -409,7 +566,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
         assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
             String.class, id)).isEqualTo("2026-09-01");
     }
@@ -439,7 +596,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(n.get("upperWidths").get("tooth25").decimalValue()).isEqualByComparingTo("6.9");
         assertThat(n.get("lowerWidths").get("tooth31").decimalValue()).isEqualByComparingTo("5.4");
         assertThat(n.get("conclusionUpper").stringValue()).isEqualTo("Falta de espacio leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
     }
 
     @Test
@@ -472,7 +629,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(b.get("incisors").get("tooth11").decimalValue()).isEqualByComparingTo("8.7");
         assertThat(saved.get("content").get("models").get("nance").get("upperWidths").get("tooth11").decimalValue())
             .isEqualByComparingTo("8.6");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(7);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
     }
 
     @Test

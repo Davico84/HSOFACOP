@@ -17,23 +17,25 @@ import com.odontorisas.service.records.content.RecordContent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
  * Historias clínicas de ortodoncia (capacidad orthodontic-records). Aplica el alcance (D6): un
  * ADMIN alcanza todas; un USER solo las suyas, y una ajena se comporta como inexistente (404).
- * Normaliza antes de guardar (D4), asigna el correlativo por autor (D11) y detecta ediciones
- * concurrentes por versión (409).
+ * Normaliza antes de guardar (D4), exige un número de historia libre (409 si otra historia lo tiene)
+ * y detecta ediciones concurrentes por versión (409).
  */
 @Service
 public class OrthodonticRecordService {
 
-    /** {@code AEO-001}; desde 1000 sigue con las cifras que hagan falta. */
-    static final String NUMBER_FORMAT = "AEO-%03d";
+    /** Índice único del número: su violación (carrera entre dos guardados) es un número tomado. */
+    static final String NUMBER_CONSTRAINT = "ux_orthodontic_records_record_number";
 
     private final OrthodonticRecordRepository records;
     private final UserRepository users;
@@ -54,9 +56,9 @@ public class OrthodonticRecordService {
     }
 
     /**
-     * Crea la historia con el siguiente correlativo del autor. La fila del autor queda bloqueada
-     * hasta el commit: dos creaciones simultáneas del mismo usuario se serializan, así que tampoco
-     * pueden superar juntas su cupo (un USER con cupo lleno recibe 409; un ADMIN no tiene cupo).
+     * Crea la historia con el número indicado. La fila del autor queda bloqueada hasta el commit: dos
+     * creaciones simultáneas del mismo usuario se serializan, así que tampoco pueden superar juntas
+     * su cupo (un USER con cupo lleno recibe 409; un ADMIN no tiene cupo).
      */
     @Transactional
     public RecordView create(RecordActor actor, RecordData data) {
@@ -72,19 +74,17 @@ public class OrthodonticRecordService {
         if (quota != null && records.countByAuthorId(author.getId()) >= quota) {
             throw new RecordQuotaReachedException(quota);
         }
-        int seq = records.findMaxRecordSeq(author.getId()) + 1;
         RecordData normalized = normalize(data);
+        requireFreeNumber(normalized.recordNumber(), null);
         OrthodonticRecord record = OrthodonticRecord.builder()
             .author(author)
-            .recordSeq(seq)
-            .recordNumber(NUMBER_FORMAT.formatted(seq))
             .build();
         apply(record, normalized);
         record.setFilledSteps(FilledSteps.toMask(filledSteps));
         if (record.getTreatingDentist() == null) {
             record.setTreatingDentist(author.getFullName());
         }
-        return toView(records.saveAndFlush(record));
+        return toView(saveAndFlush(record));
     }
 
     /** Cupo y uso del usuario autenticado (para avisar antes de crear). */
@@ -108,8 +108,8 @@ public class OrthodonticRecordService {
     }
 
     /**
-     * Guarda la historia completa si sigue en la versión que el usuario cargó. El número y el
-     * autor no cambian nunca (tampoco cuando guarda un ADMIN).
+     * Guarda la historia completa si sigue en la versión que el usuario cargó. El número puede
+     * corregirse (el autor o un ADMIN); el autor no cambia nunca.
      */
     @Transactional
     public RecordView update(RecordActor actor, Long id, long expectedVersion, RecordData data) {
@@ -137,6 +137,7 @@ public class OrthodonticRecordService {
         if (record.getPatientLockedAt() != null && !identityOf(record).equals(identityOf(normalized))) {
             throw new PatientLockedException();
         }
+        requireFreeNumber(normalized.recordNumber(), record.getId());
         apply(record, normalized);
         if (lastStep != null) {
             record.setLastStep(lastStep);
@@ -145,10 +146,43 @@ public class OrthodonticRecordService {
             record.setFilledSteps(FilledSteps.toMask(filledSteps));
         }
         try {
-            return toView(records.saveAndFlush(record));
+            return toView(saveAndFlush(record));
         } catch (ObjectOptimisticLockingFailureException ex) {
             throw new StaleRecordException();
         }
+    }
+
+    /** 409 si otra historia ya tiene el número (el caso común; la carrera la resuelve el índice). */
+    private void requireFreeNumber(String number, Long recordId) {
+        if (records.existsNumberInOtherRecord(number, recordId)) {
+            throw new RecordNumberTakenException(number);
+        }
+    }
+
+    /**
+     * Guarda y sincroniza con la base. Solo la violación del índice único del número (carrera
+     * entre dos guardados de historias distintas) se traduce a 409; cualquier otra sigue su curso.
+     */
+    private OrthodonticRecord saveAndFlush(OrthodonticRecord record) {
+        try {
+            return records.saveAndFlush(record);
+        } catch (DataIntegrityViolationException ex) {
+            if (violates(ex, NUMBER_CONSTRAINT)) {
+                throw new RecordNumberTakenException(record.getRecordNumber());
+            }
+            throw ex;
+        }
+    }
+
+    /** ¿La causa es una violación de unicidad (SQLSTATE 23505) de esa restricción? */
+    static boolean violates(Throwable ex, String constraint) {
+        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+            if (cause instanceof SQLException sql && "23505".equals(sql.getSQLState())
+                    && sql.getMessage() != null && sql.getMessage().contains(constraint)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -271,6 +305,8 @@ public class OrthodonticRecordService {
     }
 
     private void apply(OrthodonticRecord record, RecordData data) {
+        // El número va antes del texto de búsqueda, que lo incluye.
+        record.setRecordNumber(data.recordNumber());
         record.setTreatingDentist(data.treatingDentist());
         record.setPatientName(data.patientName());
         record.setDocumentType(data.documentType());

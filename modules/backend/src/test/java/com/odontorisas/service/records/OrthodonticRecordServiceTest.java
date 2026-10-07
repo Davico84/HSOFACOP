@@ -23,6 +23,8 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import org.springframework.dao.DataIntegrityViolationException;
+import java.sql.SQLException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,12 +62,16 @@ class OrthodonticRecordServiceTest {
     }
 
     private static RecordData data(String patient) {
-        return new RecordData(null, patient, null, null, null, null, null, null, null, null, null);
+        return data("AOC-0015", patient);
+    }
+
+    private static RecordData data(String number, String patient) {
+        return new RecordData(number, null, patient, null, null, null, null, null, null, null, null, null);
     }
 
     private OrthodonticRecord stored(User author, long version) {
-        return OrthodonticRecord.builder().id(10L).author(author).recordSeq(1).recordNumber("AEO-001")
-            .patientName("Ana Quispe").treatingDentist(author.getFullName()).searchText("ana quispe aeo-001")
+        return OrthodonticRecord.builder().id(10L).author(author).recordNumber("AOC-0015")
+            .patientName("Ana Quispe").treatingDentist(author.getFullName()).searchText("ana quispe aoc-0015")
             .content("{}").version(version).build();
     }
 
@@ -73,17 +79,16 @@ class OrthodonticRecordServiceTest {
         when(records.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
-    // --- Creación y correlativo ---
+    // --- Creación y número de historia ---
 
     @Test
-    void first_record_of_a_user_is_aeo_001_with_author_as_treating_dentist() {
+    void creates_with_the_given_number_and_author_as_treating_dentist() {
         when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(torres));
-        when(records.findMaxRecordSeq(1L)).thenReturn(0);
         saveReturnsArgument();
 
-        RecordView view = service.create(torresActor, data("  Ana Quispe "));
+        RecordView view = service.create(torresActor, data("AOC-0015", "  Ana Quispe "));
 
-        assertThat(view.recordNumber()).isEqualTo("AEO-001");
+        assertThat(view.recordNumber()).isEqualTo("AOC-0015");
         assertThat(view.authorId()).isEqualTo(1L);
         assertThat(view.treatingDentist()).isEqualTo("Dra. María Torres");
         assertThat(view.patientName()).isEqualTo("Ana Quispe");
@@ -91,31 +96,57 @@ class OrthodonticRecordServiceTest {
     }
 
     @Test
-    void sequence_continues_per_author_and_grows_past_999() {
+    void creation_locks_the_author_row_and_rejects_a_number_of_another_record() {
         when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(torres));
-        when(records.findMaxRecordSeq(1L)).thenReturn(2, 999);
-        saveReturnsArgument();
+        when(records.existsNumberInOtherRecord("AOC-0015", null)).thenReturn(true);
 
-        assertThat(service.create(torresActor, data("P")).recordNumber()).isEqualTo("AEO-003");
-        assertThat(service.create(torresActor, data("P")).recordNumber()).isEqualTo("AEO-1000");
+        assertThatThrownBy(() -> service.create(torresActor, data("AOC-0015", "P")))
+            .isInstanceOf(RecordNumberTakenException.class)
+            .hasMessage("El número AOC-0015 ya está registrado en otra historia. Verifica el número con la coordinación.");
+        verify(users).findByIdForUpdate(1L);
+        verify(records, never()).saveAndFlush(any());
     }
 
     @Test
-    void creation_locks_the_author_row_before_reading_the_sequence() {
+    void a_race_on_the_number_index_is_a_number_taken_conflict() {
         when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(torres));
+        SQLException unique = new SQLException(
+            "duplicate key value violates unique constraint \"ux_orthodontic_records_record_number\"", "23505");
+        when(records.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("dup", unique));
+
+        assertThatThrownBy(() -> service.create(torresActor, data("AOC-0015", "P")))
+            .isInstanceOf(RecordNumberTakenException.class);
+    }
+
+    @Test
+    void other_integrity_violations_are_not_a_number_conflict() {
+        when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(torres));
+        SQLException other = new SQLException("violates check constraint \"ck_orthodontic_records_record_number\"", "23514");
+        when(records.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("check", other));
+
+        assertThatThrownBy(() -> service.create(torresActor, data("AOC-0015", "P")))
+            .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void correcting_the_number_updates_the_search_text_and_checks_other_records() {
+        when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(stored(torres, 0)));
         saveReturnsArgument();
+        ArgumentCaptor<OrthodonticRecord> saved = ArgumentCaptor.forClass(OrthodonticRecord.class);
 
-        service.create(torresActor, data("P"));
+        RecordView view = service.update(torresActor, 10L, 0, data("AOC-0051", "Ana Quispe"));
 
-        verify(users).findByIdForUpdate(1L);
-        verify(records).findMaxRecordSeq(1L);
+        assertThat(view.recordNumber()).isEqualTo("AOC-0051");
+        verify(records).existsNumberInOtherRecord("AOC-0051", 10L);
+        verify(records).saveAndFlush(saved.capture());
+        assertThat(saved.getValue().getSearchText()).isEqualTo("ana quispe aoc-0051");
     }
 
     @Test
     void search_text_contains_normalized_patient_document_and_number() {
-        assertThat(OrthodonticRecordService.searchText("Ana QUÍSPE", "74125896", "AEO-001"))
-            .isEqualTo("ana quispe 74125896 aeo-001");
-        assertThat(OrthodonticRecordService.searchText("Ana", null, "AEO-002")).isEqualTo("ana aeo-002");
+        assertThat(OrthodonticRecordService.searchText("Ana QUÍSPE", "74125896", "AOC-0015"))
+            .isEqualTo("ana quispe 74125896 aoc-0015");
+        assertThat(OrthodonticRecordService.searchText("Ana", null, "AOC-0002")).isEqualTo("ana aoc-0002");
     }
 
     // --- Alcance ---
@@ -142,12 +173,12 @@ class OrthodonticRecordServiceTest {
         when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(record));
         saveReturnsArgument();
 
-        RecordView view = service.update(admin, 10L, 3, data("Ana Lucía Quispe"));
+        RecordView view = service.update(admin, 10L, 3, data("AOC-0015", "Ana Lucía Quispe"));
 
         assertThat(view.authorId()).isEqualTo(1L);
-        assertThat(view.recordNumber()).isEqualTo("AEO-001");
+        assertThat(view.recordNumber()).isEqualTo("AOC-0015");
         assertThat(view.patientName()).isEqualTo("Ana Lucía Quispe");
-        assertThat(record.getSearchText()).isEqualTo("ana lucia quispe aeo-001");
+        assertThat(record.getSearchText()).isEqualTo("ana lucia quispe aoc-0015");
     }
 
     // --- Versión ---
@@ -176,9 +207,9 @@ class OrthodonticRecordServiceTest {
         ArgumentCaptor<OrthodonticRecord> saved = ArgumentCaptor.forClass(OrthodonticRecord.class);
         when(records.saveAndFlush(saved.capture())).thenAnswer(inv -> inv.getArgument(0));
         Anamnesis anamnesis = new Anamnesis(" Dientes salidos ", null, null, null, null, YesNo.NO,
-            null, null, null, null, null);
+            null, null, null, null, null, null);
         RecordContent e = RecordContent.empty();
-        RecordData data = new RecordData(null, "Juan", DocumentType.DNI, "74125896", PatientSex.MALE,
+        RecordData data = new RecordData("AOC-0015", null, "Juan", DocumentType.DNI, "74125896", PatientSex.MALE,
             LocalDate.of(2012, 5, 20), null, null, null, LocalDate.of(2026, 5, 19),
             new RecordContent(null, anamnesis, e.facial(), e.functional(), e.occlusal(), e.models(), e.radiographic(),
                 e.diagnosis(), e.signatures()));

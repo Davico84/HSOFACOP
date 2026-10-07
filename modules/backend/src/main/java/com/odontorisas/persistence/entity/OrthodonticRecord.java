@@ -51,12 +51,11 @@ public class OrthodonticRecord {
     @JoinColumn(name = "author_id", nullable = false, updatable = false)
     private User author;
 
-    /** Correlativo del autor (1, 2, …): único por autor. */
-    @Column(name = "record_seq", nullable = false, updatable = false)
-    private int recordSeq;
-
-    /** {@code AEO-001}: derivado de {@code recordSeq}, guardado para listar y buscar. */
-    @Column(name = "record_number", nullable = false, updatable = false, length = 20)
+    /**
+     * Número que asignan los docentes ({@code AOC-0001}): único entre todas las historias
+     * (índice {@code ux_orthodontic_records_record_number}); lo corrigen el autor o un ADMIN.
+     */
+    @Column(name = "record_number", nullable = false, length = 20)
     private String recordNumber;
 
     @Column(name = "treating_dentist", length = 120)

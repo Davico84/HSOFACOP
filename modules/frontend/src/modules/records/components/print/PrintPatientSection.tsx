@@ -1,5 +1,5 @@
 import type { RecordResponse } from "@/modules/core/services/generated/model";
-import { cooperationOptions, NOT_REPORTED, yesNoOptions } from "../../config/options";
+import { cooperationOptions, NOT_REPORTED, oralHygieneOptions, yesNoOptions } from "../../config/options";
 import { formatAge, formatDate, formatDocument } from "../../utils/recordDisplay";
 import { PrintChoice } from "./PrintChoice";
 import { PrintField } from "./PrintField";
@@ -37,11 +37,16 @@ export function PrintPatientSection({ record }: PrintPatientSectionProps) {
       <PrintLines label="Gustos personales (color, canal preferido en YouTube, juguetes)." value={a.personalPreferences} emptyText={NOT_REPORTED} lines={1} />
       <PrintChoice label="Índice de colaboración/cooperación:" options={cooperationOptions} value={a.cooperation} />
       <div className="flex flex-wrap gap-x-8">
-        <PrintChoice label="Higiene oral:" options={yesNoOptions} value={a.oralHygiene} />
+        <PrintChoice label="Higiene oral:" options={oralHygieneOptions} value={a.oralHygiene} />
         <PrintChoice label="Hábitos de succión:" options={yesNoOptions} value={a.suckingHabits} />
       </div>
       {record.patientSex === "FEMALE" ? (
-        <PrintChoice label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} value={a.menarche} />
+        <div className="flex flex-wrap items-baseline gap-x-8">
+          <PrintChoice label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} value={a.menarche} />
+          {a.menarche === "YES" && a.menarcheDate ? (
+            <PrintField label="Fecha:" value={formatDate(a.menarcheDate)} lined center />
+          ) : null}
+        </div>
       ) : null}
       <PrintLines label="Historia médica/medicación de uso continuo." value={a.medicalHistory} emptyText={NOT_REPORTED} lines={2} />
       <PrintLines label="Histórico de accidentes o traumas." value={a.accidentsHistory} emptyText={NOT_REPORTED} lines={2} />

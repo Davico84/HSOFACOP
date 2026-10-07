@@ -29,24 +29,24 @@
 
 ## 3. Puesta en marcha (usuario, guiada)
 
-- [ ] 3.1 **(usuario)** Neon: proyecto en `us-east-2`, cadena directa con `sslmode=require`
-- [ ] 3.2 **(usuario)** Render: "New Blueprint" desde el repo (rama `main`).
+- [x] 3.1 **(usuario)** Neon: proyecto en `us-east-2`, cadena directa con `sslmode=require`
+- [x] 3.2 **(usuario)** Render: "New Blueprint" desde el repo (rama `main`).
   - Carga `DB_*`, `JWT_SECRET` (aleatorio de 48 bytes) y `CORS_ALLOWED_ORIGINS=https://pendiente.invalid`.
   - Primer deploy: Flyway migra y liveness `200`.
-- [ ] 3.3 Completar la URL de Render en `vercel.json` (commit en `dev`, PR a `main`)
-- [ ] 3.4 **(usuario)** Vercel: importar el repo, Root Directory = raíz, rama de producción `main`, sin `VITE_API_URL`.
+- [x] 3.3 Completar la URL de Render en `vercel.json` (commit en `dev`, PR a `main`)
+- [x] 3.4 **(usuario)** Vercel: importar el repo, Root Directory = raíz, rama de producción `main`, sin `VITE_API_URL`.
   - Poner `CORS_ALLOWED_ORIGINS` en Render = origen exacto de producción de Vercel (sin `/` final).
-- [ ] 3.5 **(usuario)** Monitor externo a liveness cada 10 min
-- [ ] 3.6 **(usuario)** Registrar la cuenta y, enseguida, `UPDATE users SET role = 'ADMIN' WHERE email = '<correo>' AND status = 'ACTIVE';` en Neon (1 fila)
+- [x] 3.5 **(usuario)** Monitor externo a liveness cada 10 min
+- [x] 3.6 **(usuario)** Registrar la cuenta y, enseguida, `UPDATE users SET role = 'ADMIN' WHERE email = '<correo>' AND status = 'ACTIVE';` en Neon (1 fila)
 
 ## 4. Verificación del despliegue
 
-- [ ] 4.1 Matriz de verificación del design (rutas, rewrites, cookie, sesión en Chrome y Safari/iOS, CORS, actuator, arranque en frío con login y refresh y tiempo total, contacto); registrar resultados en `docs/deployment.md`
-- [ ] 4.2 Smoke E2E contra la URL pública (`E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts`)
+- [x] 4.1 Matriz de verificación del design (rutas, rewrites, cookie, sesión en Chrome y Safari/iOS, CORS, actuator, arranque en frío con login y refresh y tiempo total, contacto); registrar resultados en `docs/deployment.md`
+- [x] 4.2 Smoke E2E contra la URL pública (`E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts`)
 
 ## 5. Docs
 
-- [ ] 5.1 `docs/deployment.md`:
+- [x] 5.1 `docs/deployment.md`:
   - pasos concretos (Neon → Render blueprint → Vercel → monitor → ADMIN);
   - rama de producción;
   - CORS y previews;
@@ -54,4 +54,4 @@
   - mediciones, matriz con resultados y riesgo de las etiquetas de imagen.
 
   `docs/frontend.md` o `docs/architecture.md` si mencionan `/auth/login` como página o `BACKEND_URL`.
-- [ ] 5.2 Al archivar: `docs/vision.md` ✅
+- [x] 5.2 Al archivar: `docs/vision.md` ✅

@@ -5,7 +5,10 @@ import type { RecordFormValues } from "../../schemas/record";
 import { LONG_TEXT } from "../../schemas/record";
 import { CEPHALOMETRIC_REQUIRED, cephalometricOptions } from "../../config/options";
 
-/** Paso 6 (pág. 10): análisis radiográfico. El PDF pide 3 análisis cefalométricos (aviso, no bloqueo). */
+/**
+ * Paso 6 (pág. 10): análisis radiográfico. El PDF pide al menos 3 análisis cefalométricos (aviso,
+ * no bloqueo); se pueden marcar más y el contador se queda en "3 de 3".
+ */
 export function Step6Radiographic() {
   const { control } = useFormContext<RecordFormValues>();
   const analyses = useWatch({ control, name: "content.radiographic.cephalometricAnalyses" });
@@ -16,9 +19,9 @@ export function Step6Radiographic() {
       <TextAreaField name="content.radiographic.panoramicDiagnosis" label="Diagnóstico de la radiografía panorámica" rows={4} maxLength={LONG_TEXT} />
       <MultiChoiceField
         name="content.radiographic.cephalometricAnalyses"
-        label="Diagnóstico cefalométrico (realizar 3 análisis cefalométricos)"
+        label="Diagnóstico cefalométrico (realizar al menos 3 análisis cefalométricos)"
         options={cephalometricOptions}
-        footer={`${count} de ${CEPHALOMETRIC_REQUIRED}`}
+        footer={`${Math.min(count, CEPHALOMETRIC_REQUIRED)} de ${CEPHALOMETRIC_REQUIRED}`}
       />
       <TextAreaField name="content.radiographic.apicalBases" label="Alteraciones cefalométricas de las bases apicales" rows={5} maxLength={LONG_TEXT} />
       <TextAreaField name="content.radiographic.growthTendency" label="Alteraciones cefalométricas en relación a la tendencia de crecimiento" rows={5} maxLength={LONG_TEXT} />

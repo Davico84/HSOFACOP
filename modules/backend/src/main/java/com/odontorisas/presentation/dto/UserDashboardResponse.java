@@ -55,7 +55,7 @@ public record UserDashboardResponse(
     @Schema(name = "DashboardResumeItem")
     public record ResumeItem(
         @Schema(requiredMode = REQUIRED) long id,
-        @Schema(requiredMode = REQUIRED, example = "AEO-003") String recordNumber,
+        @Schema(requiredMode = REQUIRED, example = "AOC-0015") String recordNumber,
         @Schema(requiredMode = REQUIRED) String patientName,
         @Schema(description = "Último paso trabajado; vacío = paso 1", nullable = true) Integer lastStep,
         @Schema(description = "Pasos clínicos con datos; vacío = sin calcular", nullable = true) Integer filledSteps,

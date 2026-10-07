@@ -4,32 +4,43 @@
 Historia clínica de ortodoncia de la clínica AEO/FACOP en formato digital: el tratante la llena en un formulario de 8 pasos que sigue el PDF de la clínica (anamnesis, análisis facial, funcional, oclusal, análisis de modelos —transversal, Moyers, Nance y Bolton—, radiográfico, diagnóstico y planes, firmas), la guarda como borrador, la encuentra en un listado con búsqueda y la imprime en hojas A4 con la presentación del PDF. Un `USER` (tratante) alcanza solo sus historias; un `ADMIN` (supervisor), todas. Las notas de evolución no se registran en el sistema: se imprime su hoja en blanco para llenarla a mano.
 ## Requirements
 ### Requirement: Crear una historia clínica de ortodoncia
-El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) crear una historia clínica de ortodoncia indicando como mínimo el nombre del paciente. La historia SHALL quedar asociada a su autor, y el odontólogo tratante SHALL proponerse con el nombre completo del autor (editable). Al crearla, el sistema SHALL asignarle un número correlativo **por autor** con formato `AEO-` seguido del correlativo con al menos 3 cifras (`AEO-001`, `AEO-002`, …, `AEO-1000`); el número NO SHALL poder editarse ni repetirse para el mismo autor.
+El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) crear una historia clínica de ortodoncia indicando como mínimo el nombre del paciente y el número de historia que asignan los docentes, con formato `AOC-` seguido de exactamente cuatro dígitos (`AOC-0001` a `AOC-9999`). La historia SHALL quedar asociada a su autor, y el odontólogo tratante SHALL proponerse con el nombre completo del autor (editable). El número SHALL ser único entre todas las historias del sistema, de cualquier autor y cohorte (los docentes no reinician la numeración); al corregirse, el número anterior SHALL quedar libre, porque pudo ingresarse por error y pertenecer a otra historia. Quien puede editar la historia (su autor o un `ADMIN`) SHALL poder corregir el número desde el primer paso, también después de imprimirla. El número NO SHALL confundirse con el identificador técnico interno, que no cambia.
 
 #### Scenario: Creación con el mínimo de datos
-- **WHEN** un usuario autenticado crea una historia con el nombre del paciente "Ana Quispe"
+- **WHEN** un usuario autenticado crea una historia con el nombre del paciente "Ana Quispe" y el número "AOC-0015"
 - **THEN** el sistema guarda la historia, responde `201` con su identificador y número, y la abre en el primer paso del formulario
 - **AND** el autor de la historia es ese usuario y el odontólogo tratante propuesto es su nombre completo
 
-#### Scenario: Primer número de un usuario
-- **WHEN** un usuario sin historias crea su primera historia
-- **THEN** su número es `AEO-001`
+#### Scenario: Número obligatorio
+- **WHEN** un usuario intenta crear o guardar una historia sin número (vacío o solo espacios)
+- **THEN** el sistema responde `400` con el error en el campo del número y no guarda nada
+- **AND** el formulario muestra el mensaje junto al campo
 
-#### Scenario: Correlativo independiente por usuario
-- **WHEN** el usuario A ya tiene `AEO-001` y `AEO-002`, y el usuario B no tiene ninguna
-- **THEN** la siguiente historia de A es `AEO-003` y la primera de B es `AEO-001`
+#### Scenario: Formato del número
+- **WHEN** un usuario intenta crear o guardar una historia con "AOC-15", "AOC-00001" o "AEO-0015"
+- **THEN** el sistema responde `400` con el error en el campo del número ("Usa el formato AOC-0001") y no guarda nada
 
-#### Scenario: Creaciones simultáneas del mismo usuario
-- **WHEN** el mismo usuario crea dos historias a la vez (dos pestañas)
-- **THEN** ambas se crean con números distintos y consecutivos, sin error
+#### Scenario: Número ya usado
+- **WHEN** un usuario intenta crear o guardar una historia con un número que ya tiene otra historia, de cualquier autor
+- **THEN** el sistema responde `409` (`/errors/record-number-taken`) con "El número AOC-0015 ya está registrado en otra historia. Verifica el número con la coordinación." y no guarda nada
+- **AND** el formulario muestra el mensaje junto al número, conserva lo escrito y el autoguardado no se pausa
 
-#### Scenario: Más de 999 historias
-- **WHEN** un usuario con `AEO-999` crea otra historia
-- **THEN** su número es `AEO-1000`
+#### Scenario: Mismo número a la vez
+- **WHEN** dos usuarios crean o guardan a la vez historias con el mismo número
+- **THEN** solo una lo conserva y la otra recibe `409` (`/errors/record-number-taken`)
 
-#### Scenario: El número no se edita
-- **WHEN** una petición de guardado incluye un número distinto al asignado
-- **THEN** el sistema conserva el número asignado e ignora el enviado
+#### Scenario: El autor corrige el número después de imprimir
+- **WHEN** el autor cambia el número de una historia ya impresa a otro número válido y libre
+- **THEN** el sistema guarda el nuevo número sin cambiar el identificador técnico ni el autor
+- **AND** los datos del paciente fijados al imprimir siguen fijos
+
+#### Scenario: Un número corregido queda libre
+- **WHEN** una historia tenía por error "AOC-0015", se corrige a "AOC-0051" y luego otro alumno guarda su historia con "AOC-0015"
+- **THEN** el sistema guarda "AOC-0015" en la historia del otro alumno
+
+#### Scenario: El ADMIN corrige el número
+- **WHEN** un `ADMIN` cambia el número de una historia de otro autor a un número válido y libre
+- **THEN** el sistema guarda el nuevo número
 
 #### Scenario: Falta el nombre del paciente
 - **WHEN** un usuario intenta crear una historia sin nombre de paciente (vacío o solo espacios)
@@ -156,14 +167,29 @@ El formulario SHALL cubrir los campos de las páginas 1–4 y 10–13 del PDF. D
 - **WHEN** se imprime una historia con el análisis facial completo
 - **THEN** la sección ocupa una sola hoja A4, en blanco y negro, con casillas y sin las imágenes de la guía
 
-#### Scenario: Preguntas Sí/No de la anamnesis
-- **WHEN** el usuario responde "Sí" en Higiene oral y "No" en Hábitos de succión de la anamnesis
-- **THEN** se guardan como selección única y se imprimen "☒ Sí ☐ No" y "☐ Sí ☒ No"
+#### Scenario: Higiene oral por categorías
+- **WHEN** el usuario selecciona "Regular" en Higiene oral
+- **THEN** queda seleccionada solo una de "Excelente", "Buena", "Regular" y "Deficiente", se guarda y se imprimen las cuatro opciones con "Regular" marcada
+- **AND** sin selección la historia se guarda igual (es un borrador) sin asignar una categoría por defecto
+
+#### Scenario: Hábitos de succión Sí/No en la anamnesis
+- **WHEN** el usuario responde "No" en Hábitos de succión de la anamnesis
+- **THEN** se guarda como selección única y se imprime "☐ Sí ☒ No"
 
 #### Scenario: Pregunta solo para niñas
 - **WHEN** el sexo del paciente es masculino o no está indicado
-- **THEN** la pregunta "¿La 1ª menstruación ya ocurrió?" no se muestra ni se imprime
-- **AND** si tenía respuesta y el sexo cambia a masculino, la respuesta se descarta al guardar
+- **THEN** la pregunta "¿La 1ª menstruación ya ocurrió?" y su fecha no se muestran ni se imprimen
+- **AND** si tenían valor y el sexo cambia a masculino o se quita, ambos se descartan al guardar
+
+#### Scenario: Fecha de la primera menstruación
+- **WHEN** el sexo es femenino, el usuario responde "Sí" y registra la fecha 15/03/2023
+- **THEN** se guardan la respuesta y la fecha (sin hora) y se imprimen
+- **AND** si la respuesta cambia a "No", la fecha se oculta y se descarta al guardar
+
+#### Scenario: Fecha de la primera menstruación inválida
+- **WHEN** la fecha de la primera menstruación es posterior al día de hoy (zona horaria de la clínica) o anterior a la fecha de nacimiento
+- **THEN** el sistema responde `400` con el error en ese campo y no guarda la historia
+- **AND** el formulario muestra el mensaje junto al campo; sin fecha de nacimiento solo se exige que no sea futura
 
 #### Scenario: Campos condicionados por la opción elegida
 - **WHEN** el usuario elige "Mordida cruzada posterior unilateral" o "Sí, con presencia de desgastes" (bruxismo)
@@ -197,9 +223,13 @@ El formulario SHALL cubrir los campos de las páginas 1–4 y 10–13 del PDF. D
 - **THEN** se pide e imprime solo la relación de caninos en RC correspondiente a MI; la de MIH no aparece y su dato se descarta al guardar
 
 #### Scenario: Análisis cefalométricos realizados
-- **WHEN** el usuario marca Steiner, McNamara y Wits en el análisis radiográfico
-- **THEN** se guardan los tres, el formulario indica "3 de 3" y la impresión lista las cuatro opciones con las elegidas marcadas
+- **WHEN** el usuario marca Steiner, Ricketts y Jarabak en Diagnóstico cefalométrico del análisis radiográfico
+- **THEN** se guardan los tres, el formulario indica "3 de 3" y la impresión lista las seis opciones (Steiner, Ricketts, McNamara, Wits, Tweed y Jarabak) con las elegidas marcadas
 - **AND** con menos de 3 marcados la historia se guarda igual (es un borrador) y el formulario muestra "n de 3"
+
+#### Scenario: Más de tres análisis cefalométricos
+- **WHEN** el usuario marca cinco de los seis análisis
+- **THEN** se guardan los cinco, el formulario indica que alcanzó el mínimo ("3 de 3") y la impresión los marca a todos
 
 #### Scenario: Lista de problemas y metas ítem por ítem
 - **WHEN** el usuario agrega los problemas "Overjet aumentado" y "Mordida profunda" y luego sube el segundo al primer lugar
@@ -259,8 +289,12 @@ El sistema SHALL ofrecer la sección "Historias clínicas" con un listado pagina
 - **THEN** la historia aparece en el resultado
 
 #### Scenario: Búsqueda por documento o número
-- **WHEN** el usuario busca un número de documento o un número de historia existentes (p. ej. "aeo-001")
+- **WHEN** el usuario busca un número de documento o un número de historia existentes (p. ej. "aoc-0015")
 - **THEN** el resultado incluye la historia correspondiente
+
+#### Scenario: Búsqueda por el número corregido
+- **WHEN** el número de una historia se corrige de "AOC-0015" a "AOC-0051"
+- **THEN** buscar "aoc-0051" la encuentra y buscar "aoc-0015" ya no
 
 #### Scenario: Búsqueda y página en la dirección
 - **WHEN** el usuario busca "quispe" y pasa a la página 2 del listado

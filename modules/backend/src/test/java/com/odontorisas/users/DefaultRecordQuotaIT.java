@@ -1,6 +1,7 @@
 package com.odontorisas.users;
 
 import com.odontorisas.AbstractIntegrationTest;
+import com.odontorisas.TestRecordNumbers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,7 +53,8 @@ class DefaultRecordQuotaIT extends AbstractIntegrationTest {
 
     private MvcResult create(Session as) throws Exception {
         return mockMvc.perform(post("/api/orthodontic-records").header("Authorization", "Bearer " + as.token())
-            .contentType(MediaType.APPLICATION_JSON).content("{\"patientName\":\"Paciente\"}")).andReturn();
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"recordNumber\":\"" + TestRecordNumbers.next() + "\",\"patientName\":\"Paciente\"}")).andReturn();
     }
 
     @Test
@@ -68,20 +70,11 @@ class DefaultRecordQuotaIT extends AbstractIntegrationTest {
 
         MvcResult first = create(jaime);
         assertThat(first.getResponse().getStatus()).isEqualTo(201);
-        assertThat(read(first).get("recordNumber").stringValue()).isEqualTo("AEO-001");
 
         MvcResult second = create(jaime);
         assertThat(second.getResponse().getStatus()).isEqualTo(409);
         assertThat(read(second).get("detail").stringValue())
             .isEqualTo("Alcanzaste el máximo de 1 historia clínica. Comunícate con el administrador para solicitar más.");
-    }
-
-    @Test
-    void numbering_is_independent_per_new_account() throws Exception {
-        Session jaime = register("Dr. Jaime");
-        Session karen = register("Dra. Karen");
-        assertThat(read(create(jaime)).get("recordNumber").stringValue()).isEqualTo("AEO-001");
-        assertThat(read(create(karen)).get("recordNumber").stringValue()).isEqualTo("AEO-001");
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.odontorisas.persistence;
 
 import com.odontorisas.AbstractIntegrationTest;
+import com.odontorisas.TestRecordNumbers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,9 +36,9 @@ class FacialContentMigrationIT extends AbstractIntegrationTest {
             "INSERT INTO users (email, password_hash, role, full_name) VALUES (?, 'h', 'USER', 'Dra. Torres') RETURNING id",
             Long.class, "mig-" + UUID.randomUUID() + "@empresa.test");
         return jdbc.queryForObject("""
-            INSERT INTO orthodontic_records (author_id, record_seq, record_number, patient_name, search_text, content)
-            VALUES (?, 1, 'AEO-001', 'Ana', 'ana aeo-001', CAST(? AS jsonb)) RETURNING id
-            """, Long.class, author, "{\"schemaVersion\":1,\"facial\":" + facialJson + "}");
+            INSERT INTO orthodontic_records (author_id, record_number, patient_name, search_text, content)
+            VALUES (?, ?, 'Ana', 'ana', CAST(? AS jsonb)) RETURNING id
+            """, Long.class, author, TestRecordNumbers.next(), "{\"schemaVersion\":1,\"facial\":" + facialJson + "}");
     }
 
     private String facial(long id, String key) {
@@ -75,11 +76,11 @@ class FacialContentMigrationIT extends AbstractIntegrationTest {
     void present_thirds_stay_present_and_version_2_rows_are_untouched() {
         long old = insertV1("{\"facialThirds\":\"PRESENT\"}");
         long current = jdbc.queryForObject("""
-            INSERT INTO orthodontic_records (author_id, record_seq, record_number, patient_name, search_text, content)
-            SELECT author_id, 2, 'AEO-002', 'Luis', 'luis aeo-002',
+            INSERT INTO orthodontic_records (author_id, record_number, patient_name, search_text, content)
+            SELECT author_id, ?, 'Luis', 'luis',
                    CAST('{"schemaVersion":2,"facial":{"facialThirds":"ABSENT","facialThirdsNotes":"Escrita por el usuario"}}' AS jsonb)
             FROM orthodontic_records WHERE id = ? RETURNING id
-            """, Long.class, old);
+            """, Long.class, TestRecordNumbers.next(), old);
 
         runV9();
 

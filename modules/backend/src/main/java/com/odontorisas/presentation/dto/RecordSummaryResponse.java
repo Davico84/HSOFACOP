@@ -12,7 +12,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 /** Fila del listado de historias: sin contenido clínico. */
 public record RecordSummaryResponse(
     @Schema(requiredMode = REQUIRED) Long id,
-    @Schema(requiredMode = REQUIRED, example = "AEO-001") String recordNumber,
+    @Schema(requiredMode = REQUIRED, example = "AOC-0015") String recordNumber,
     @Schema(requiredMode = REQUIRED) String patientName,
     DocumentType documentType,
     String documentNumber,

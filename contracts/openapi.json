@@ -160,7 +160,7 @@
             }
           },
           "409": {
-            "description": "La historia cambió desde que se cargó (stale-record) o cambia datos del paciente fijos (patient-locked)",
+            "description": "La historia cambió desde que se cargó (stale-record), cambia datos del paciente fijos (patient-locked) o el número ya lo tiene otra historia (record-number-taken)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -530,7 +530,7 @@
         "tags": [
           "orthodontic-records"
         ],
-        "summary": "Crear una historia (borrador) con el siguiente número del autor",
+        "summary": "Crear una historia (borrador) con el número que asignan los docentes",
         "operationId": "createRecord",
         "requestBody": {
           "content": {
@@ -564,7 +564,7 @@
             }
           },
           "409": {
-            "description": "El tratante llegó a su cupo de historias (record-quota-reached)",
+            "description": "El tratante llegó a su cupo de historias (record-quota-reached) o el número ya lo tiene otra historia (record-number-taken)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1401,8 +1401,10 @@
           "oralHygiene": {
             "type": "string",
             "enum": [
-              "YES",
-              "NO"
+              "EXCELLENT",
+              "GOOD",
+              "REGULAR",
+              "DEFICIENT"
             ]
           },
           "suckingHabits": {
@@ -1418,6 +1420,10 @@
               "YES",
               "NO"
             ]
+          },
+          "menarcheDate": {
+            "type": "string",
+            "format": "date"
           },
           "medicalHistory": {
             "type": "string",
@@ -2244,7 +2250,9 @@
                 "STEINER",
                 "RICKETTS",
                 "MCNAMARA",
-                "WITS"
+                "WITS",
+                "TWEED",
+                "JARABAK"
               ]
             }
           },
@@ -2421,6 +2429,13 @@
             "format": "int64",
             "description": "Versión cargada (control de edición concurrente)"
           },
+          "recordNumber": {
+            "type": "string",
+            "description": "Número de historia que asignan los docentes",
+            "example": "AOC-0015",
+            "minLength": 1,
+            "pattern": "AOC-[0-9]{4}"
+          },
           "treatingDentist": {
             "type": "string",
             "maxLength": 120,
@@ -2497,6 +2512,7 @@
         },
         "required": [
           "patientName",
+          "recordNumber",
           "version"
         ]
       },
@@ -2611,7 +2627,7 @@
           },
           "recordNumber": {
             "type": "string",
-            "example": "AEO-001"
+            "example": "AOC-0015"
           },
           "authorId": {
             "type": "integer",
@@ -2939,6 +2955,13 @@
       "CreateRecordRequest": {
         "type": "object",
         "properties": {
+          "recordNumber": {
+            "type": "string",
+            "description": "Número de historia que asignan los docentes",
+            "example": "AOC-0015",
+            "minLength": 1,
+            "pattern": "AOC-[0-9]{4}"
+          },
           "treatingDentist": {
             "type": "string",
             "maxLength": 120,
@@ -3007,7 +3030,8 @@
           }
         },
         "required": [
-          "patientName"
+          "patientName",
+          "recordNumber"
         ]
       },
       "UnlockRequestRequest": {
@@ -3235,7 +3259,7 @@
           },
           "recordNumber": {
             "type": "string",
-            "example": "AEO-001"
+            "example": "AOC-0015"
           },
           "patientName": {
             "type": "string"
@@ -3331,7 +3355,7 @@
           },
           "recordNumber": {
             "type": "string",
-            "example": "AEO-003"
+            "example": "AOC-0015"
           },
           "patientName": {
             "type": "string"
@@ -3710,7 +3734,7 @@
           },
           "recordNumber": {
             "type": "string",
-            "example": "AEO-001"
+            "example": "AOC-0015"
           },
           "patientName": {
             "type": "string"

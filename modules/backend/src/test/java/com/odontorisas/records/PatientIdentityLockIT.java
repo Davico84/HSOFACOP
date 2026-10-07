@@ -1,6 +1,7 @@
 package com.odontorisas.records;
 
 import com.odontorisas.AbstractIntegrationTest;
+import com.odontorisas.TestRecordNumbers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -104,9 +105,15 @@ class PatientIdentityLockIT extends AbstractIntegrationTest {
     }
 
     private long create(Session as) throws Exception {
+        var fields = new java.util.HashMap<String, Object>(ANA);
+        fields.put("recordNumber", TestRecordNumbers.next());
         MvcResult result = mockMvc.perform(post(BASE).header("Authorization", "Bearer " + as.token())
-            .contentType(MediaType.APPLICATION_JSON).content(body(ANA))).andExpect(status().isCreated()).andReturn();
+            .contentType(MediaType.APPLICATION_JSON).content(body(fields))).andExpect(status().isCreated()).andReturn();
         return read(result).get("id").asLong();
+    }
+
+    private String number(long id) {
+        return jdbc.queryForObject("SELECT record_number FROM orthodontic_records WHERE id = ?", String.class, id);
     }
 
     private JsonNode record(Session as, long id) throws Exception {
@@ -121,6 +128,7 @@ class PatientIdentityLockIT extends AbstractIntegrationTest {
 
     private MvcResult save(Session as, long id, long version, Map<String, Object> changes) throws Exception {
         var fields = new java.util.HashMap<String, Object>(ANA);
+        fields.put("recordNumber", number(id));
         fields.putAll(changes);
         fields.put("version", version);
         return mockMvc.perform(put(BASE + "/" + id).header("Authorization", "Bearer " + as.token())
@@ -156,6 +164,38 @@ class PatientIdentityLockIT extends AbstractIntegrationTest {
 
     private String type(MvcResult result) throws Exception {
         return read(result).get("type").stringValue();
+    }
+
+    // --- Número de historia tras imprimir ---
+
+    private JsonNode search(Session as, String q) throws Exception {
+        return read(mockMvc.perform(get(BASE).param("q", q).header("Authorization", "Bearer " + as.token())).andReturn());
+    }
+
+    @Test
+    void author_corrects_the_number_after_printing_and_the_old_one_is_freed() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = create(torres);
+        String old = number(id);
+        assertThat(print(torres, id, null).getResponse().getStatus()).isEqualTo(200);
+        String corrected = TestRecordNumbers.next();
+
+        MvcResult saved = save(torres, id, Map.of("recordNumber", corrected));
+
+        assertThat(saved.getResponse().getStatus()).isEqualTo(200);
+        assertThat(read(saved).get("recordNumber").stringValue()).isEqualTo(corrected);
+        assertThat(read(saved).get("patientLockedAt")).isNotNull();
+        // Los datos del paciente siguen fijos.
+        assertThat(save(torres, id, Map.of("patientName", "Rosa Díaz")).getResponse().getStatus()).isEqualTo(409);
+        // La búsqueda encuentra el número nuevo y ya no el anterior.
+        assertThat(search(torres, corrected.toLowerCase()).get("content")).hasSize(1);
+        assertThat(search(torres, old.toLowerCase()).get("content")).isEmpty();
+        // El número anterior queda libre para otra historia.
+        Session other = register("Dr. Medina");
+        var fields = new java.util.HashMap<String, Object>(ANA);
+        fields.put("recordNumber", old);
+        assertThat(mockMvc.perform(post(BASE).header("Authorization", "Bearer " + other.token())
+            .contentType(MediaType.APPLICATION_JSON).content(body(fields))).andReturn().getResponse().getStatus()).isEqualTo(201);
     }
 
     // --- Datos fijos ---

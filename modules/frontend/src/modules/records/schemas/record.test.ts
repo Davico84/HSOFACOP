@@ -6,6 +6,7 @@ function values(overrides: Partial<RecordFormValues> = {}, content: Record<strin
   const base = emptyRecordValues("Dra. Torres");
   return {
     ...base,
+    recordNumber: "AOC-0015",
     patientName: "Ana Quispe",
     ...overrides,
     content: { ...base.content, ...content } as RecordFormValues["content"],
@@ -19,8 +20,33 @@ function errorsOf(input: RecordFormValues): Record<string, string> {
 }
 
 describe("orthodontic-records — schema del formulario (paridad con el backend)", () => {
-  it("basta el nombre del paciente (borrador)", () => {
+  it("bastan el número y el nombre del paciente (borrador)", () => {
     expect(errorsOf(values())).toEqual({});
+  });
+
+  it("número de historia obligatorio y con el formato AOC-0001", () => {
+    expect(errorsOf(values({ recordNumber: "  " }))).toEqual({ recordNumber: "Indica el número de historia." });
+    for (const invalid of ["AOC-15", "AOC-00001", "AEO-0015", "aoc-0015"]) {
+      expect(errorsOf(values({ recordNumber: invalid }))).toEqual({ recordNumber: "Usa el formato AOC-0001." });
+    }
+  });
+
+  it("fecha de la primera menstruación: no futura ni anterior al nacimiento, solo si aplica", () => {
+    const female = { patientSex: "FEMALE" as const, birthDate: "2012-05-20" };
+    const anamnesis = (menarche: "YES" | "NO", menarcheDate: string) => ({
+      anamnesis: { ...emptyRecordValues().content.anamnesis, menarche, menarcheDate },
+    });
+    const path = "content.anamnesis.menarcheDate";
+    expect(errorsOf(values(female, anamnesis("YES", "2023-03-15")))).toEqual({});
+    expect(errorsOf(values(female, anamnesis("YES", "2099-01-01")))).toEqual({
+      [path]: "La fecha de la primera menstruación no puede ser futura.",
+    });
+    expect(errorsOf(values(female, anamnesis("YES", "2010-01-01")))).toEqual({
+      [path]: "La fecha de la primera menstruación no puede ser anterior a la de nacimiento.",
+    });
+    // Con "No" o sin sexo femenino la fecha no aplica (el servidor la descarta al guardar).
+    expect(errorsOf(values(female, anamnesis("NO", "2099-01-01")))).toEqual({});
+    expect(errorsOf(values({ patientSex: "MALE", birthDate: "2012-05-20" }, anamnesis("YES", "2099-01-01")))).toEqual({});
   });
 
   it("nombre vacío o solo espacios: error en el campo", () => {

@@ -64,7 +64,7 @@ class RecordNormalizerTest {
     }
 
     private static RecordData data(PatientSex sex, RecordContent content) {
-        return new RecordData("  Dra. Torres ", " Ana Quispe ", DocumentType.DNI, " 74125896 ", sex,
+        return new RecordData(" AOC-0015 ", "  Dra. Torres ", " Ana Quispe ", DocumentType.DNI, " 74125896 ", sex,
             null, "", "   ", null, null, content);
     }
 
@@ -92,8 +92,32 @@ class RecordNormalizerTest {
     // --- Anamnesis ---
 
     @Test
+    void record_number_is_trimmed() {
+        assertThat(RecordNormalizer.normalize(data(PatientSex.FEMALE, null), null).recordNumber()).isEqualTo("AOC-0015");
+    }
+
+    @Test
+    void menarche_date_is_kept_only_with_a_yes_answer_for_female_patients() {
+        LocalDate date = LocalDate.of(2023, 3, 15);
+        Anamnesis yes = new Anamnesis(null, null, null, null, null, YesNo.YES, date, null, null, null, null, null);
+        Anamnesis no = new Anamnesis(null, null, null, null, null, YesNo.NO, date, null, null, null, null, null);
+
+        Anamnesis female = RecordNormalizer.content(with(yes, null, null, null, null, null, null), PatientSex.FEMALE, null).anamnesis();
+        assertThat(female.menarche()).isEqualTo(YesNo.YES);
+        assertThat(female.menarcheDate()).isEqualTo(date);
+        // "No" descarta la fecha; sin sexo femenino se descartan respuesta y fecha.
+        assertThat(RecordNormalizer.content(with(no, null, null, null, null, null, null), PatientSex.FEMALE, null)
+            .anamnesis().menarcheDate()).isNull();
+        Anamnesis male = RecordNormalizer.content(with(yes, null, null, null, null, null, null), PatientSex.MALE, null).anamnesis();
+        assertThat(male.menarche()).isNull();
+        assertThat(male.menarcheDate()).isNull();
+        assertThat(RecordNormalizer.content(with(yes, null, null, null, null, null, null), null, null)
+            .anamnesis().menarcheDate()).isNull();
+    }
+
+    @Test
     void menarche_is_kept_only_for_female_patients() {
-        Anamnesis a = new Anamnesis(null, null, null, null, null, YesNo.NO, null, null, null, null, null);
+        Anamnesis a = new Anamnesis(null, null, null, null, null, YesNo.NO, null, null, null, null, null, null);
         assertThat(RecordNormalizer.content(with(a, null, null, null, null, null, null), PatientSex.FEMALE, null)
             .anamnesis().menarche()).isEqualTo(YesNo.NO);
         assertThat(RecordNormalizer.content(with(a, null, null, null, null, null, null), PatientSex.MALE, null)
@@ -258,7 +282,7 @@ class RecordNormalizerTest {
         assertThat(out.models().moyers()).isEqualTo(MoyersAnalysis.empty());
         assertThat(out.models().nance()).isEqualTo(NanceAnalysis.empty());
         assertThat(out.models().bolton()).isEqualTo(BoltonAnalysis.empty());
-        assertThat(out.schemaVersion()).isEqualTo(7);
+        assertThat(out.schemaVersion()).isEqualTo(RecordContent.CURRENT_SCHEMA_VERSION);
 
         TransversalAnalysis t = new TransversalAnalysis(new BigDecimal("34.5"), null, new BigDecimal("50.1"), null,
             null, null, null, new BigDecimal("50.0"), null, "  Compresión maxilar leve ");

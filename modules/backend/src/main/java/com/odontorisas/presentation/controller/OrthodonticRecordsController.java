@@ -78,12 +78,12 @@ public class OrthodonticRecordsController {
             service.list(currentActor(), q, pageable).map(RecordSummaryResponse::from)));
     }
 
-    @Operation(operationId = "createRecord", summary = "Crear una historia (borrador) con el siguiente número del autor")
+    @Operation(operationId = "createRecord", summary = "Crear una historia (borrador) con el número que asignan los docentes")
     @ApiResponse(responseCode = "201", description = "Historia creada",
         content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = RecordResponse.class)))
     @ApiResponse(responseCode = "400", description = "Datos inválidos",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
-    @ApiResponse(responseCode = "409", description = "El tratante llegó a su cupo de historias (record-quota-reached)",
+    @ApiResponse(responseCode = "409", description = "El tratante llegó a su cupo de historias (record-quota-reached) o el número ya lo tiene otra historia (record-number-taken)",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @PostMapping
     public ResponseEntity<RecordResponse> createRecord(
@@ -117,7 +117,7 @@ public class OrthodonticRecordsController {
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
     @ApiResponse(responseCode = "404", description = "No existe o no está a tu alcance",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
-    @ApiResponse(responseCode = "409", description = "La historia cambió desde que se cargó (stale-record) o cambia datos del paciente fijos (patient-locked)",
+    @ApiResponse(responseCode = "409", description = "La historia cambió desde que se cargó (stale-record), cambia datos del paciente fijos (patient-locked) o el número ya lo tiene otra historia (record-number-taken)",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @PutMapping("/{id}")
     public ResponseEntity<RecordResponse> updateRecord(

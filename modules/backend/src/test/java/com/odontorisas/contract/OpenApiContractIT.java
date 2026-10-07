@@ -284,8 +284,10 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         // El contenido clínico viaja tipado: una sección por paso del formulario.
         assertThat(names(schemaByName("RecordContent").get("properties"))).containsExactlyInAnyOrder(
             "schemaVersion", "anamnesis", "facial", "functional", "occlusal", "models", "radiographic", "diagnosis", "signatures");
-        assertThat(strings(schemaByName("UpdateRecordRequest").get("required"))).contains("version", "patientName");
-        assertThat(names(schemaByName("UpdateRecordRequest").get("properties"))).doesNotContain("recordNumber", "authorId");
+        // El número de historia lo asignan los docentes: obligatorio al crear y al guardar.
+        assertThat(strings(schemaByName("UpdateRecordRequest").get("required"))).contains("version", "recordNumber", "patientName");
+        assertThat(strings(schemaByName("CreateRecordRequest").get("required"))).contains("recordNumber", "patientName");
+        assertThat(names(schemaByName("UpdateRecordRequest").get("properties"))).doesNotContain("authorId");
         assertThat(names(schemaByName("RecordSummaryResponse").get("properties"))).doesNotContain("content");
     }
 

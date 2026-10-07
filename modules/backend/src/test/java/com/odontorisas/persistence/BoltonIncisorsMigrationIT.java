@@ -1,6 +1,7 @@
 package com.odontorisas.persistence;
 
 import com.odontorisas.AbstractIntegrationTest;
+import com.odontorisas.TestRecordNumbers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,9 +34,9 @@ class BoltonIncisorsMigrationIT extends AbstractIntegrationTest {
             "INSERT INTO users (email, password_hash, role, full_name) VALUES (?, 'h', 'USER', 'Dra. Torres') RETURNING id",
             Long.class, "mig-" + UUID.randomUUID() + "@empresa.test");
         return jdbc.queryForObject("""
-            INSERT INTO orthodontic_records (author_id, record_seq, record_number, patient_name, search_text, content)
-            VALUES (?, 1, 'AEO-001', 'Ana', 'ana aeo-001', CAST(? AS jsonb)) RETURNING id
-            """, Long.class, author, contentJson);
+            INSERT INTO orthodontic_records (author_id, record_number, patient_name, search_text, content)
+            VALUES (?, ?, 'Ana', 'ana', CAST(? AS jsonb)) RETURNING id
+            """, Long.class, author, TestRecordNumbers.next(), contentJson);
     }
 
     private String at(long id, String path) {

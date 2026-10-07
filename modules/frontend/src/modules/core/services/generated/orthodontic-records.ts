@@ -60,7 +60,7 @@ export const listRecords = (
       );
     }
   /**
- * @summary Crear una historia (borrador) con el siguiente número del autor
+ * @summary Crear una historia (borrador) con el número que asignan los docentes
  */
 export const createRecord = (
     createRecordRequest: CreateRecordRequest,

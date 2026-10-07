@@ -255,7 +255,7 @@ describe("orthodontic-records — Retomar en el último paso trabajado", () => {
     await user.click(screen.getByRole("button", { name: /Guardar/ }));
     await waitFor(() => expect(calls.put).toHaveLength(2));
     expect(calls.put[1]).toMatchObject({ lastStep: 2 });
-    expect(toast.success).toHaveBeenCalledWith("Historia AEO-001 guardada");
+    expect(toast.success).toHaveBeenCalledWith("Historia AOC-0001 guardada");
   });
 
   it("recorrer pasos sin cambios no cambia el último paso", async () => {

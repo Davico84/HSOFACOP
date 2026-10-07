@@ -11,6 +11,8 @@ export type AnamnesisOralHygiene = typeof AnamnesisOralHygiene[keyof typeof Anam
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AnamnesisOralHygiene = {
-  YES: 'YES',
-  NO: 'NO',
+  EXCELLENT: 'EXCELLENT',
+  GOOD: 'GOOD',
+  REGULAR: 'REGULAR',
+  DEFICIENT: 'DEFICIENT',
 } as const;

@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { uniqueRecordNumber } from "./support/recordNumber";
 
 /**
  * Cupo de historias contra el backend real (tarea 2.4 de add-record-quota): un ADMIN asigna un
@@ -69,6 +70,7 @@ test("con el cupo lleno el tratante no puede crear más historias", async ({ bro
   await tratante.goto("/historias");
   await expect(tratante.getByText("0 de 1 historias")).toBeVisible();
   await tratante.getByRole("link", { name: /Nueva historia/ }).first().click();
+  await tratante.getByRole("textbox", { name: "Nro. de historia" }).fill(uniqueRecordNumber());
   await tratante.getByRole("textbox", { name: "Paciente" }).fill("Paciente de cupo");
   await tratante.getByRole("button", { name: /Crear historia/ }).click();
   await expect(tratante).toHaveURL(/\/historias\/\d+\?paso=2$/);

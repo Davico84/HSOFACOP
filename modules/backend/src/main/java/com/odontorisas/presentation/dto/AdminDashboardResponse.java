@@ -76,7 +76,7 @@ public record AdminDashboardResponse(
     @Schema(name = "DashboardUnlockRequest")
     public record UnlockRequestItem(
         @Schema(requiredMode = REQUIRED) long recordId,
-        @Schema(requiredMode = REQUIRED, example = "AEO-001") String recordNumber,
+        @Schema(requiredMode = REQUIRED, example = "AOC-0015") String recordNumber,
         @Schema(requiredMode = REQUIRED) String patientName,
         @Schema(requiredMode = REQUIRED, description = "Tratante (autor de la historia)") String authorName,
         @Schema(requiredMode = REQUIRED) Instant requestedAt,
