@@ -1,6 +1,7 @@
 package com.odontorisas.dashboard;
 
 import com.odontorisas.AbstractIntegrationTest;
+import com.odontorisas.TestRecordNumbers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,8 @@ class DashboardIT extends AbstractIntegrationTest {
     /** Crea una historia y devuelve su id. */
     private long record(Session as, String body) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/orthodontic-records").header("Authorization", "Bearer " + as.token())
-            .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated()).andReturn();
+            .contentType(MediaType.APPLICATION_JSON).content(TestRecordNumbers.withNumber(body, TestRecordNumbers.next())))
+            .andExpect(status().isCreated()).andReturn();
         return read(result).get("id").asLong();
     }
 

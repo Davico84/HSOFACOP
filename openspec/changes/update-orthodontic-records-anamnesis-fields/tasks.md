@@ -2,27 +2,27 @@
 
 ## 1. Backend
 
-- [ ] 1.1 `V15__record_number_manual.sql`, en el orden del design:
+- [x] 1.1 `V15__record_number_manual.sql`, en el orden del design:
   - verificación previa de `id` mayor que 9999 con `RAISE EXCEPTION`;
   - números provisionales `AOC-` + `lpad(id, 4)` y `search_text` reemplazado en el mismo `UPDATE`;
   - `DROP CONSTRAINT ux_orthodontic_records_author_seq` y `DROP COLUMN record_seq`;
   - `ck_orthodontic_records_record_number` y el índice único `ux_orthodontic_records_record_number`;
   - quitar `anamnesis.oralHygiene` con `WHERE … IN ('YES', 'NO')`;
   - `schemaVersion` a 8.
-- [ ] 1.2 Entidad y repositorio sin `recordSeq` (ni la consulta del máximo); `recordNumber` editable; `existsByRecordNumberAndIdNot`. `RecordContent.CURRENT_SCHEMA_VERSION = 8`
-- [ ] 1.2b `ClockConfig` con `app.time-zone` (por defecto `America/Lima`, `APP_TIME_ZONE`); documentar la variable en `secrets.properties.example`
-- [ ] 1.3 DTOs:
+- [x] 1.2 Entidad y repositorio sin `recordSeq` (ni la consulta del máximo); `recordNumber` editable; `existsByRecordNumberAndIdNot`. `RecordContent.CURRENT_SCHEMA_VERSION = 8`
+- [x] 1.2b `ClockConfig` con `app.time-zone` (por defecto `America/Lima`, `APP_TIME_ZONE`); documentar la variable en `secrets.properties.example`
+- [x] 1.3 DTOs:
   - `CreateRecordRequest` y `UpdateRecordRequest` con `recordNumber` obligatorio (`@NotBlank`, `@Pattern ^AOC-[0-9]{4}$`, mensaje "Usa el formato AOC-0001");
   - servicio: crear y guardar con ese número;
   - `recordNumber` en `RecordData`, asignado a la entidad antes de recalcular `search_text`;
   - verificación previa con `existsByRecordNumberAndIdNot` y, para la carrera, `saveAndFlush` capturando solo la violación `23505` de `ux_orthodontic_records_record_number` → `RecordNumberTakenException` → `409` `/errors/record-number-taken` en `GlobalExceptionHandler`;
   - ejemplos de OpenAPI con `AOC-0015` (`RecordResponse`, `RecordSummaryResponse`, `AdminDashboardResponse`, `UserDashboardResponse`).
-- [ ] 1.4 `Anamnesis`:
+- [x] 1.4 `Anamnesis`:
   - `oralHygiene` como `OralHygiene {EXCELLENT, GOOD, REGULAR, DEFICIENT}` y nuevo `menarcheDate` (`LocalDate`);
   - `RecordNormalizer` descarta `menarche` y `menarcheDate` sin sexo femenino, y `menarcheDate` sin `menarche = YES`;
   - validación de `menarcheDate` (no futura con el `Clock`, no anterior a `birthDate`) → `400` en `content.anamnesis.menarcheDate`.
-- [ ] 1.5 `CephalometricAnalysis` + `TWEED`, `JARABAK`
-- [ ] 1.6 Tests (uno por scenario, `Clock.fixed` en `America/Lima`):
+- [x] 1.5 `CephalometricAnalysis` + `TWEED`, `JARABAK`
+- [x] 1.6 Tests (uno por scenario, `Clock.fixed` en `America/Lima`):
   - creación con número;
   - número vacío y formatos inválidos (`AOC-15`, `AOC-00001`, `AEO-0015`);
   - duplicado entre autores en crear y guardar;

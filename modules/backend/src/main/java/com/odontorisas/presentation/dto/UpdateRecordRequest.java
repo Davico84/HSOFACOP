@@ -11,6 +11,7 @@ import org.hibernate.validator.constraints.UniqueElements;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
@@ -21,12 +22,16 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 /**
  * Historia completa a guardar, con la {@code version} que el usuario cargó: si cambió desde
- * entonces, 409. Un número o autor enviados se ignoran.
+ * entonces, 409. El número puede corregirse (409 si otra historia lo tiene); un autor enviado se ignora.
  */
 @PatientFields.Consistent
 public record UpdateRecordRequest(
     @Schema(requiredMode = REQUIRED, description = "Versión cargada (control de edición concurrente)")
     @NotNull Long version,
+    @Schema(requiredMode = REQUIRED, description = "Número de historia que asignan los docentes", example = "AOC-0015")
+    @NotBlank(message = "Indica el número de historia.")
+    @Pattern(regexp = "AOC-[0-9]{4}", message = "Usa el formato AOC-0001.")
+    String recordNumber,
     @Size(max = 120) String treatingDentist,
     @Schema(requiredMode = REQUIRED) @NotBlank(message = "Indica el nombre del paciente.") @Size(max = 120) String patientName,
     DocumentType documentType,
@@ -46,7 +51,7 @@ public record UpdateRecordRequest(
     List<@Min(value = 1, message = "El paso debe estar entre 1 y 8.") @Max(value = 8, message = "El paso debe estar entre 1 y 8.") Integer> filledSteps) implements PatientFields {
 
     public RecordData toData() {
-        return new RecordData(treatingDentist, patientName, documentType, documentNumber, patientSex, birthDate,
+        return new RecordData(recordNumber, treatingDentist, patientName, documentType, documentNumber, patientSex, birthDate,
             birthPlace, address, phone, treatmentStartDate, content);
     }
 }

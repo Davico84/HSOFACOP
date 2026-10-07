@@ -1,6 +1,7 @@
 package com.odontorisas.presentation.dto;
 
 import com.odontorisas.common.DocumentType;
+import com.odontorisas.service.records.content.RecordContent;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -16,7 +17,9 @@ import java.time.LocalDate;
 /**
  * Datos del paciente comunes a crear y guardar una historia, con sus reglas entre campos
  * (scenarios de "Datos del paciente con edad calculada"): documento con tipo y número del formato
- * de ese tipo, e inicio de tratamiento no anterior al nacimiento. Cada error va a su campo.
+ * de ese tipo, inicio de tratamiento no anterior al nacimiento, y fecha de la primera menstruación
+ * no futura ni anterior al nacimiento. Cada error va a su campo. "Hoy" sale del {@code ClockProvider}
+ * de la validación, que usa el reloj de la app (zona de la clínica).
  */
 public interface PatientFields {
 
@@ -27,6 +30,8 @@ public interface PatientFields {
     LocalDate birthDate();
 
     LocalDate treatmentStartDate();
+
+    RecordContent content();
 
     @Documented
     @Constraint(validatedBy = Validator.class)
@@ -63,7 +68,25 @@ public interface PatientFields {
                 valid = violation(context, "treatmentStartDate",
                     "La fecha de inicio de tratamiento no puede ser anterior a la de nacimiento.");
             }
+            LocalDate menarcheDate = value.content() == null || value.content().anamnesis() == null
+                ? null : value.content().anamnesis().menarcheDate();
+            if (menarcheDate != null) {
+                LocalDate today = LocalDate.now(context.getClockProvider().getClock());
+                if (menarcheDate.isAfter(today)) {
+                    valid = menarcheViolation(context, "La fecha de la primera menstruación no puede ser futura.");
+                } else if (value.birthDate() != null && menarcheDate.isBefore(value.birthDate())) {
+                    valid = menarcheViolation(context,
+                        "La fecha de la primera menstruación no puede ser anterior a la de nacimiento.");
+                }
+            }
             return valid;
+        }
+
+        private static boolean menarcheViolation(ConstraintValidatorContext context, String message) {
+            context.buildConstraintViolationWithTemplate(message)
+                .addPropertyNode("content").addPropertyNode("anamnesis").addPropertyNode("menarcheDate")
+                .addConstraintViolation();
+            return false;
         }
 
         private static String formatMessage(DocumentType type) {

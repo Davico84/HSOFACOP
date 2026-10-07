@@ -7,10 +7,11 @@ import com.odontorisas.service.records.content.RecordContent;
 import java.time.LocalDate;
 
 /**
- * Datos editables de una historia (lo que envía el formulario). El número, el autor y la versión
- * no están aquí: los asigna o controla el servidor.
+ * Datos editables de una historia (lo que envía el formulario), incluido el número que asignan los
+ * docentes. El autor y la versión no están aquí: los controla el servidor.
  */
 public record RecordData(
+    String recordNumber,
     String treatingDentist,
     String patientName,
     DocumentType documentType,
