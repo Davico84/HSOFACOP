@@ -6,7 +6,7 @@ La historia clínica necesita reflejar el flujo real de la clínica: el número 
 
 - Reemplazar el número `AEO-` autogenerado por un número de historia ingresado por el odontólogo en el paso 1 (anamnesis), con formato `AOC-0001`: prefijo `AOC-` más exactamente cuatro dígitos, incluyendo ceros a la izquierda.
 - Permitir que el autor o un `ADMIN` corrijan el número de historia desde el paso 1, incluso después de imprimirla.
-- Validar que el número de historia sea obligatorio y único entre todas las historias, sin reutilizarse nunca (los docentes no reinician la numeración entre cohortes). Un número ya usado responde `409` (`/errors/record-number-taken`) junto al campo, sin pausar el autoguardado.
+- Validar que el número de historia sea obligatorio y único entre todas las historias vigentes, de cualquier autor y cohorte (los docentes no reinician la numeración). Al corregirse, el número anterior queda libre. Un número ya usado responde `409` (`/errors/record-number-taken`) junto al campo, sin pausar el autoguardado.
 - Cambiar "Higiene oral" de una respuesta Sí/No a una selección única: `Excelente`, `Buena`, `Regular` o `Deficiente`.
 - Para pacientes de sexo femenino, mostrar "¿La 1ª menstruación ya ocurrió?" con respuesta Sí/No.
 - Si la respuesta menstrual es Sí, habilitar el registro de la fecha de la primera menstruación; la fecha no podrá ser futura ni anterior a la fecha de nacimiento. Si es No, ocultar y limpiar la fecha.
@@ -31,6 +31,7 @@ La historia clínica necesita reflejar el flujo real de la clínica: el número 
 - Frontend: paso 6 con las seis opciones cefalométricas, contador `n de 3` y actualización de vista previa/impresión.
 - Impresión/vista previa: mostrar el número manual, la categoría de higiene oral y la respuesta/fecha menstrual cuando corresponda.
 - Datos existentes (de prueba): la migración asigna números provisionales `AOC-` + `id` con cuatro dígitos (únicos) y quita la Higiene oral Sí/No, que no se puede convertir a una categoría. Las historias de Neon también se pueden vaciar antes de desplegar.
+- Zona horaria: el reloj de la app pasa a `America/Lima` (configurable). Hoy usa la del sistema, que en Render es UTC, y eso desplaza "hoy" desde las 19:00.
 - Documentación: delta de `orthodontic-records` y actualización del estado en `docs/vision.md`.
 
 ## Non-goals
@@ -43,6 +44,6 @@ La historia clínica necesita reflejar el flujo real de la clínica: el número 
 ## Resolved Decisions
 
 - El número asignado por docentes se tratará como texto con el patrón exacto `AOC-` seguido de cuatro dígitos (`AOC-0001`–`AOC-9999`).
-- El número es único y permanente: no se reinicia entre cohortes ni se reutiliza.
+- El número es único entre las historias vigentes y no se reinicia entre cohortes; al corregirse, el anterior queda libre (pudo ser un error que pertenece a otra historia).
 - Pueden corregirlo el autor y el `ADMIN`.
 - Los datos actuales son de prueba: se pueden descartar.

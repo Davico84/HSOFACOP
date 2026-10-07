@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Crear una historia clínica de ortodoncia
-El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) crear una historia clínica de ortodoncia indicando como mínimo el nombre del paciente y el número de historia que asignan los docentes, con formato `AOC-` seguido de exactamente cuatro dígitos (`AOC-0001` a `AOC-9999`). La historia SHALL quedar asociada a su autor, y el odontólogo tratante SHALL proponerse con el nombre completo del autor (editable). El número SHALL ser único entre todas las historias del sistema y no SHALL reutilizarse nunca, ni entre autores ni entre cohortes. Quien puede editar la historia (su autor o un `ADMIN`) SHALL poder corregir el número desde el primer paso, también después de imprimirla. El número NO SHALL confundirse con el identificador técnico interno, que no cambia.
+El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) crear una historia clínica de ortodoncia indicando como mínimo el nombre del paciente y el número de historia que asignan los docentes, con formato `AOC-` seguido de exactamente cuatro dígitos (`AOC-0001` a `AOC-9999`). La historia SHALL quedar asociada a su autor, y el odontólogo tratante SHALL proponerse con el nombre completo del autor (editable). El número SHALL ser único entre todas las historias del sistema, de cualquier autor y cohorte (los docentes no reinician la numeración); al corregirse, el número anterior SHALL quedar libre, porque pudo ingresarse por error y pertenecer a otra historia. Quien puede editar la historia (su autor o un `ADMIN`) SHALL poder corregir el número desde el primer paso, también después de imprimirla. El número NO SHALL confundirse con el identificador técnico interno, que no cambia.
 
 #### Scenario: Creación con el mínimo de datos
 - **WHEN** un usuario autenticado crea una historia con el nombre del paciente "Ana Quispe" y el número "AOC-0015"
@@ -30,6 +30,10 @@ El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) cre
 - **WHEN** el autor cambia el número de una historia ya impresa a otro número válido y libre
 - **THEN** el sistema guarda el nuevo número sin cambiar el identificador técnico ni el autor
 - **AND** los datos del paciente fijados al imprimir siguen fijos
+
+#### Scenario: Un número corregido queda libre
+- **WHEN** una historia tenía por error "AOC-0015", se corrige a "AOC-0051" y luego otro alumno guarda su historia con "AOC-0015"
+- **THEN** el sistema guarda "AOC-0015" en la historia del otro alumno
 
 #### Scenario: El ADMIN corrige el número
 - **WHEN** un `ADMIN` cambia el número de una historia de otro autor a un número válido y libre
@@ -178,3 +182,38 @@ El formulario SHALL cubrir los campos de las páginas 1–4 y 10–13 del PDF. D
 #### Scenario: Deseleccionar una opción
 - **WHEN** el usuario quita la selección de un campo de selección única
 - **THEN** el campo queda vacío y se imprime con todas sus opciones sin marcar
+
+### Requirement: Listado y búsqueda de historias
+El sistema SHALL ofrecer la sección "Historias clínicas" con un listado paginado, ordenado por última modificación (más reciente primero), con número, paciente, documento, odontólogo tratante, fecha de inicio y última modificación. SHALL permitir buscar por nombre del paciente, número de documento o número de historia, sin distinguir mayúsculas ni tildes. Un `USER` SHALL ver solo sus historias; un `ADMIN`, todas, con una columna de autor.
+
+#### Scenario: USER ve solo las suyas
+- **WHEN** un `USER` abre "Historias clínicas" y existen historias suyas y de otros
+- **THEN** el listado muestra solo las suyas
+
+#### Scenario: ADMIN ve todas con su autor
+- **WHEN** un `ADMIN` abre "Historias clínicas"
+- **THEN** el listado muestra las historias de todos los usuarios con la columna "Autor"
+
+#### Scenario: Búsqueda sin tildes ni mayúsculas
+- **WHEN** el usuario busca "quispe" y existe la paciente "Ana QUÍSPE"
+- **THEN** la historia aparece en el resultado
+
+#### Scenario: Búsqueda por documento o número
+- **WHEN** el usuario busca un número de documento o un número de historia existentes (p. ej. "aoc-0015")
+- **THEN** el resultado incluye la historia correspondiente
+
+#### Scenario: Búsqueda por el número corregido
+- **WHEN** el número de una historia se corrige de "AOC-0015" a "AOC-0051"
+- **THEN** buscar "aoc-0051" la encuentra y buscar "aoc-0015" ya no
+
+#### Scenario: Búsqueda y página en la dirección
+- **WHEN** el usuario busca "quispe" y pasa a la página 2 del listado
+- **THEN** la dirección queda `/historias?q=quispe&pagina=2` y recargar o volver de otra pantalla conserva la búsqueda y la página
+
+#### Scenario: Sin resultados
+- **WHEN** la búsqueda no coincide con ninguna historia
+- **THEN** el listado muestra un estado vacío "No hay historias que coincidan" con opción de limpiar la búsqueda
+
+#### Scenario: Sin historias todavía
+- **WHEN** el usuario no tiene ninguna historia
+- **THEN** el listado muestra un estado vacío con el botón "Nueva historia"
