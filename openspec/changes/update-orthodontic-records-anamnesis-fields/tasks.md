@@ -77,10 +77,10 @@
 
 ## 4. Docs y cierre
 
-- [ ] 4.1 `docs/domain.md`:
+- [x] 4.1 `docs/domain.md`:
   - número visible manual, único entre las historias vigentes (el corregido queda libre), editable por el autor o el ADMIN;
   - sin `record_seq`;
   - higiene oral por categorías;
   - fecha de la primera menstruación.
-- [ ] 4.2 `openspec validate update-orthodontic-records-anamnesis-fields --strict`
+- [x] 4.2 `openspec validate update-orthodontic-records-anamnesis-fields --strict`
 - [ ] 4.3 Al archivar: `docs/vision.md` ✅
