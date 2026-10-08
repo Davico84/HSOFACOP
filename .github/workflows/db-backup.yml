@@ -73,9 +73,24 @@ jobs:
           mkdir -p "$RUNNER_TEMP/backup"
           chmod 700 "$RUNNER_TEMP/backup"
           # La URL entra por variable de entorno; `--user` deja el archivo legible para el runner.
-          docker run --rm --network host --user "$(id -u):$(id -g)" -e DATABASE_URL \
+          # Los errores de pg_dump nombran el host y el usuario: no van al log (es público); solo
+          # se informa el tipo de falla.
+          if ! docker run --rm --network host --user "$(id -u):$(id -g)" -e DATABASE_URL \
             -v "$RUNNER_TEMP/backup:/backup" "$PG_IMAGE" \
-            sh -c 'pg_dump --format=custom --no-owner --no-acl --dbname="$DATABASE_URL" --file=/backup/db.dump'
+            sh -c 'pg_dump --format=custom --no-owner --no-acl --dbname="$DATABASE_URL" --file=/backup/db.dump' \
+            2> "$RUNNER_TEMP/backup/pg_dump.err"; then
+            err=$(cat "$RUNNER_TEMP/backup/pg_dump.err")
+            case "$err" in
+              *"translate host name"*) why="host desconocido" ;;
+              *"password authentication failed"*) why="usuario o contraseña incorrectos" ;;
+              *"does not exist"*) why="la base o el rol no existe" ;;
+              *"permission denied"*) why="permisos insuficientes del rol" ;;
+              *"timeout"* | *"timed out"* | *"Connection refused"*) why="la base no respondió" ;;
+              *) why="error de pg_dump" ;;
+            esac
+            echo "::error::Volcado fallido: $why (detalle oculto: el log es público)."
+            exit 1
+          fi
           test -s "$RUNNER_TEMP/backup/db.dump"
           echo "Volcado ok."
 
