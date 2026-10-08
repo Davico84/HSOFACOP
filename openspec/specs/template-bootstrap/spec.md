@@ -4,7 +4,7 @@
 Reutilizar la plantilla en un proyecto nuevo sin buscar y reemplazar a mano: la identidad visible (nombre, textos, logos, colores, títulos de OpenAPI y de la pestaña) y los datos de la base de datos se declaran en `project.config.json` y se aplican con un asistente en consola (`pnpm project:setup`) o sin preguntas (`pnpm project:apply`), de forma segura, repetible y sin tocar identificadores técnicos. Capacidad técnica/plataforma.
 ## Requirements
 ### Requirement: Configuración única de la identidad visible
-El repositorio SHALL declarar en `project.config.json` (raíz, validable con un JSON Schema versionado) el nombre visible, tagline, descripción, datos de base de datos (nombre, usuario, puerto, contenedor), JWT issuer, rutas de logos y favicon, y colores de los tokens de marca (claro y oscuro). El archivo MUST NOT contener secretos. El frontend SHALL leer de él el nombre, tagline, descripción, logos, favicon y título de la pestaña; el backend SHALL exponer el nombre y la descripción en OpenAPI desde su configuración. Los identificadores técnicos (paquete Java, nombres de artefactos Maven/npm) MUST NOT depender de esta configuración.
+El repositorio SHALL declarar en `project.config.json` (raíz, validado por un JSON Schema versionado) nombre visible, tagline, descripción, base de datos (nombre, usuario, puerto, contenedor), JWT issuer, logos, favicon y colores de marca (claro y oscuro), y MUST NOT contener secretos. El frontend SHALL tomar de él esa identidad y el título de la pestaña; el backend SHALL exponer nombre y descripción en OpenAPI. Paquete Java y artefactos Maven/npm MUST NOT depender de él.
 
 #### Scenario: La UI muestra la identidad configurada
 - **WHEN** se renderizan las pantallas completas de login y de registro

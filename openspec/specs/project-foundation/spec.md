@@ -70,7 +70,7 @@ El repositorio SHALL validar que los mensajes de commit cumplen Conventional Com
 - **THEN** el hook permite completar el commit
 
 ### Requirement: Tema definido por tokens CSS
-El frontend SHALL definir su paleta (colores y radio) como variables CSS en un único archivo, `src/styles/globals.css`: valores claros en `:root` y oscuros en `.dark`. Tailwind SHALL generar las utilidades de color (`bg-*`, `text-*`, `border-*`, incluidos los modificadores de opacidad como `bg-primary/10`) a partir de esas variables. El modo oscuro SHALL activarse con la clase `dark` en el elemento raíz. Los componentes y hooks MUST NOT contener colores literales (hex, `rgb()`, `hsl()`); cambiar la marca SHALL requerir editar solo `globals.css`.
+El frontend SHALL definir su paleta (colores y radio) como variables CSS en un único archivo, `src/styles/globals.css`: claros en `:root` y oscuros en `.dark`. Tailwind SHALL generar las utilidades de color (incluida la opacidad, p. ej. `bg-primary/10`) desde esas variables. El modo oscuro SHALL activarse con la clase `dark` en la raíz. Los componentes y hooks MUST NOT contener colores literales (hex, `rgb()`, `hsl()`); cambiar la marca SHALL requerir editar solo `globals.css`.
 
 #### Scenario: Utilidades generadas desde los tokens
 - **WHEN** se compila `globals.css` con Tailwind pidiendo utilidades de tokens (`bg-primary`, `text-muted-foreground`, `bg-primary/10`, `from-brand-start`)
@@ -108,7 +108,7 @@ Cuando el backend termina de arrancar y ya acepta peticiones, SHALL escribir en 
 - **THEN** no contiene el secreto JWT, la contraseña de la base de datos ni ningún otro valor de configuración sensible
 
 ### Requirement: Paleta de la marca FACOP
-El tema SHALL usar la paleta oficial de FACOP: Roxo `#832C87` como color principal en modo claro (botones, enlaces, foco y elementos activos), Grafite `#3C3C3B` como color de texto, y solo grises neutros (sin tinte) para fondos, superficies y bordes. Ningún token SHALL usar tonos fuera de la paleta salvo los colores semánticos de error, éxito y aviso. En modo oscuro el color principal SHALL ser un Roxo aclarado. Todo par de texto sobre su fondo del tema (texto, texto secundario, texto sobre el color principal, sobre secundario y sobre acento) SHALL cumplir contraste WCAG AA (4,5:1) en claro y en oscuro. La hoja impresa SHALL imprimir texto y líneas en Preto `#000000`.
+El tema SHALL usar la paleta oficial de FACOP: Roxo `#832C87` como color principal en modo claro (botones, enlaces, foco y elementos activos), Grafite `#3C3C3B` para el texto y solo grises neutros (sin tinte) para fondos, superficies y bordes. Ningún token SHALL usar tonos fuera de la paleta salvo los semánticos de error, éxito y aviso. En modo oscuro el principal SHALL ser un Roxo aclarado. La hoja impresa SHALL imprimir texto y líneas en Preto `#000000`.
 
 #### Scenario: Color principal en modo claro
 - **WHEN** se compila el tema en modo claro
@@ -117,10 +117,6 @@ El tema SHALL usar la paleta oficial de FACOP: Roxo `#832C87` como color princip
 #### Scenario: Sin turquesa
 - **WHEN** se revisan los tokens de color claros y oscuros
 - **THEN** ninguno, salvo `destructive`, `success` y `warning`, tiene un tono fuera del Roxo o de los grises neutros (tampoco el degradado del login)
-
-#### Scenario: Contraste de lectura
-- **WHEN** se calcula el contraste de cada par texto/fondo del tema (`foreground`/`background`, `muted-foreground`/`background`, `muted-foreground`/`muted`, `primary-foreground`/`primary`, `secondary-foreground`/`secondary`, `accent-foreground`/`accent`) en claro y en oscuro
-- **THEN** todos alcanzan al menos 4,5:1
 
 #### Scenario: Gris oficial no usado para texto
 - **WHEN** se elige el color de texto secundario
@@ -141,6 +137,13 @@ El tema SHALL usar la paleta oficial de FACOP: Roxo `#832C87` como color princip
 #### Scenario: Hoja impresa en negro
 - **WHEN** se imprime una historia
 - **THEN** el texto y las líneas salen en `#000000` y la hoja conserva su diseño
+
+### Requirement: Contraste de la paleta
+Todo par de texto sobre su fondo del tema (texto, texto secundario y texto sobre el color principal, el secundario y el acento) SHALL cumplir contraste WCAG AA (4,5:1) en modo claro y en oscuro.
+
+#### Scenario: Contraste de lectura
+- **WHEN** se calcula el contraste de cada par texto/fondo del tema (`foreground`/`background`, `muted-foreground`/`background`, `muted-foreground`/`muted`, `primary-foreground`/`primary`, `secondary-foreground`/`secondary`, `accent-foreground`/`accent`) en claro y en oscuro
+- **THEN** todos alcanzan al menos 4,5:1
 
 ### Requirement: Endpoint de ping para mantener el backend despierto
 El backend SHALL exponer `GET /actuator/health/liveness` sin autenticación. La respuesta SHALL ser `200` con `status` `UP` mientras la aplicación esté viva, y SHALL NOT incluir el indicador de la base de datos, de modo que el ping no consulte la base.
@@ -182,13 +185,34 @@ El pool de conexiones del backend SHALL permitir retirar todas las conexiones oc
 - **THEN** el pool abre una conexión nueva y la petición responde con normalidad
 
 ### Requirement: Pantalla de arranque en frío al cargar la app
-Mientras la app espera el intento de restaurar la sesión al cargar (la primera petición al backend), SHALL mostrar una pantalla de espera con la marca del proyecto, cuyo estado depende del tiempo transcurrido y de la conexión, hasta que el intento termine, con éxito o con error:
+Mientras la app espera el intento de restaurar la sesión al cargar (la primera petición al backend), SHALL mostrar una pantalla de espera con la marca del proyecto hasta que el intento termine, con éxito o con error. Su estado depende del tiempo y de la conexión ("Estados de la espera del arranque"). Cada cambio de estado SHALL anunciarse a lectores de pantalla una sola vez.
+
+#### Scenario: Restauración exitosa tras la espera
+- **WHEN** la sesión se restaura después de mostrarse la pantalla de arranque
+- **THEN** la pantalla desaparece y la app continúa con la sesión
+
+#### Scenario: Restauración fallida tras la espera
+- **WHEN** el intento de restaurar la sesión sigue pendiente más de 4 segundos y termina con error
+- **THEN** la pantalla desaparece
+- **AND** la sesión queda limpia
+- **AND** se muestra el login sin la pantalla de arranque
+
+#### Scenario: Llega la respuesta durante la espera larga
+- **WHEN** el intento termina después de los 90 segundos, sin que el usuario pulse "Reintentar"
+- **THEN** la pantalla desaparece y la app continúa
+
+#### Scenario: Montaje doble en StrictMode
+- **WHEN** el layout se monta, se desmonta y se vuelve a montar bajo React StrictMode
+- **THEN** no se dispara una petición adicional de restauración
+- **AND** la pantalla de arranque aparece una sola vez a los 4 segundos
+- **AND** al terminar no quedan timers pendientes
+
+### Requirement: Estados de la espera del arranque
+La pantalla de espera del arranque SHALL mostrar:
 - 0–4 s: "Cargando…";
 - 4–90 s: el título "Preparando tu consultorio digital", el mensaje "Estamos preparando tu consultorio digital para iniciar el día, esto puede tomar un minuto…" y una barra de progreso estimada que no llega al 100 %;
 - más de 90 s: "Está tardando más de lo normal" con un botón "Reintentar";
 - sin conexión a internet: "Sin conexión a internet", en cualquier momento.
-
-Cada cambio de estado SHALL anunciarse a lectores de pantalla una sola vez.
 
 #### Scenario: Respuesta rápida
 - **WHEN** el intento de restaurar la sesión termina antes de 4 segundos
@@ -204,33 +228,13 @@ Cada cambio de estado SHALL anunciarse a lectores de pantalla una sola vez.
 - **THEN** se muestra "Está tardando más de lo normal" con el botón "Reintentar", que recibe el foco
 - **AND** al pulsarlo la app se recarga
 
-#### Scenario: Llega la respuesta durante la espera larga
-- **WHEN** el intento termina después de los 90 segundos, sin que el usuario pulse "Reintentar"
-- **THEN** la pantalla desaparece y la app continúa
-
 #### Scenario: Sin conexión a internet
 - **WHEN** el navegador no tiene conexión mientras el intento está pendiente
 - **THEN** se muestra "Sin conexión a internet" en lugar de los estados de arranque
 - **AND** al volver la conexión la app se recarga
 
-#### Scenario: Restauración exitosa tras la espera
-- **WHEN** la sesión se restaura después de mostrarse la pantalla de arranque
-- **THEN** la pantalla desaparece y la app continúa con la sesión
-
-#### Scenario: Restauración fallida tras la espera
-- **WHEN** el intento de restaurar la sesión sigue pendiente más de 4 segundos y termina con error
-- **THEN** la pantalla desaparece
-- **AND** la sesión queda limpia
-- **AND** se muestra el login sin la pantalla de arranque
-
-#### Scenario: Montaje doble en StrictMode
-- **WHEN** el layout se monta, se desmonta y se vuelve a montar bajo React StrictMode
-- **THEN** no se dispara una petición adicional de restauración
-- **AND** la pantalla de arranque aparece una sola vez a los 4 segundos
-- **AND** al terminar no quedan timers pendientes
-
 ### Requirement: Contacto de soporte en las pantallas de acceso
-El proyecto SHALL poder configurar un contacto de soporte opcional en `project.config.json` (`contact.whatsapp` con solo dígitos y código de país, `contact.email`). Con contacto configurado, las pantallas sin sesión SHALL mostrar "¿Necesitas ayuda?" con un enlace a WhatsApp (en otra pestaña, con un mensaje inicial que nombra el proyecto) y un enlace al correo, visibles en escritorio y en móvil sin repetirse. La espera larga del arranque en frío SHALL ofrecer ese contacto. Sin contacto configurado, no se muestra el bloque.
+El proyecto SHALL poder configurar un contacto de soporte opcional en `project.config.json` (`contact.whatsapp`, solo dígitos con código de país, y `contact.email`). Con contacto, las pantallas sin sesión SHALL mostrar "¿Necesitas ayuda?" con un enlace a WhatsApp (en otra pestaña, con un mensaje inicial que nombra el proyecto) y otro al correo, visibles en escritorio y en móvil sin repetirse, y la espera larga del arranque en frío SHALL ofrecerlo. Sin contacto, no se muestra.
 
 #### Scenario: Contacto en el panel de marca
 - **WHEN** se abre el login en escritorio con contacto configurado
