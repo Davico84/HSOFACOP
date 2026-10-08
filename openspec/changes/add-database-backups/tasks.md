@@ -2,14 +2,15 @@
 
 ## 1. Workflow
 
-- [ ] 1.1 `.github/workflows/db-backup.yml`: `schedule` diario 08:00 UTC + `workflow_dispatch` (sin `pull_request`), `permissions: contents: read`, `concurrency` sin cancelar en curso; solo `actions/checkout` y `actions/upload-artifact` fijadas por SHA
+- [ ] 1.1 `.github/workflows/db-backup.yml`: `runs-on: ubuntu-24.04`, `schedule` diario 08:00 UTC + `workflow_dispatch` (sin `pull_request`), `permissions: contents: read`, `concurrency` sin cancelar en curso; solo `actions/checkout` y `actions/upload-artifact` fijadas por SHA; `PG_IMAGE` = `postgres:16@sha256:<digest>` (mismo digest en el servicio, comentario con el comando para actualizarlo)
 - [ ] 1.2 Paso de configuración: sin `BACKUP_DATABASE_URL` o `BACKUP_AGE_RECIPIENT` → "Copia omitida: falta configuración" en el resumen y el resto se salta, en verde
-- [ ] 1.3 Volcado con `postgres:16` (`pg_dump --format=custom --no-owner --no-acl`) a `$RUNNER_TEMP/backup`, la URL solo por `env` y `-e DATABASE_URL`
+- [ ] 1.3 Volcado con `$PG_IMAGE` y `--user "$(id -u):$(id -g)"` (`pg_dump --format=custom --no-owner --no-acl`) a `$RUNNER_TEMP/backup` (`mkdir -p`, permisos `700`), la URL solo por `env` y `-e DATABASE_URL`; `test -s` del volcado
 - [ ] 1.4 Servicio `restore` (`postgres:16`, `POSTGRES_DB/USER/PASSWORD` efímeros, healthcheck `pg_isready`, puerto 5432) + espera con `pg_isready`; `pg_restore --no-owner --no-acl --exit-on-error`; comprobaciones sin imprimir datos:
   - versión: `n` de `V<n>__*.sql` de `MIGRATIONS_DIR` por regex y `sort -n` contra `max(version::numeric)` con `success`;
-  - tablas: todas las de `CREATE TABLE` de las migraciones presentes en `public`;
+  - tablas: cada `TABLE` del índice del volcado (`pg_restore --list`) existe en la base restaurada, con el nombre exacto;
+  - fail-closed: falla sin `MIGRATIONS_DIR`, sin `V<n>__*.sql`, sin `flyway_schema_history` con versiones o sin tablas en el índice;
   - probar el script de versión con nombres `V9`, `V10`, `V15` (que gane `V15`).
-- [ ] 1.5 Cifrado con `age -r "$BACKUP_AGE_RECIPIENT"`, borrado del volcado sin cifrar, subida `db-backup-<AAAA-MM-DD>` (`retention-days: 90`) solo si todo lo anterior pasó; paso final `if: always()` que borra `$RUNNER_TEMP/backup`
+- [ ] 1.5 `age` de apt (Ubuntu 24.04, `age --version` en el log); cifrado con `age -r "$BACKUP_AGE_RECIPIENT"`, borrado del volcado sin cifrar, subida `db-backup-<AAAA-MM-DD>` (`retention-days: 90`) solo si todo lo anterior pasó; paso final `if: always()` que borra `$RUNNER_TEMP/backup`
 - [ ] 1.6 Nombres genéricos (sirve igual en un proyecto derivado de la plantilla); revisar que `pnpm project:apply` no necesita tocarlo
 
 ## 2. Configuración (responsable, guiado)

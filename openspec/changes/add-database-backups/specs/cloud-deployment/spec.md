@@ -35,16 +35,20 @@ El repositorio SHALL incluir un workflow programado que una vez al día, mientra
 - **AND** la guía indica cómo detectarlo (correo de GitHub y fecha del último artifact) y reactivarlo desde la pestaña Actions o con `gh workflow enable`
 
 ### Requirement: Restauración de la copia verificada
-Cada copia SHALL restaurarse, antes de subirse, en una PostgreSQL de la misma versión mayor vacía, y el workflow SHALL fallar si la restauración no termina, si la mayor versión aplicada con éxito en la tabla de migraciones (comparada como número) no es la de la última migración versionada del repositorio, o si falta alguna de las tablas que crean las migraciones del repositorio. El repositorio SHALL documentar cómo descifrar una copia y restaurarla en una base nueva.
+Cada copia SHALL restaurarse, antes de subirse, en una PostgreSQL de la misma versión mayor vacía, y el workflow SHALL fallar si la restauración no termina, si la mayor versión aplicada con éxito en la tabla de migraciones (comparada como número) no es la de la última migración versionada del repositorio, o si alguna tabla incluida en la copia no quedó en la base restaurada. Si no puede determinar lo esperado (sin migraciones en el repositorio, sin tabla de migraciones o sin tablas en la copia), el workflow SHALL fallar en lugar de dar la copia por buena. El repositorio SHALL documentar cómo descifrar una copia y restaurarla en una base nueva.
 
 #### Scenario: Copia que se restaura
 - **WHEN** el volcado se restaura en la base vacía del job
 - **THEN** la mayor versión aplicada con éxito en la tabla de migraciones es la de la última migración del repositorio en orden numérico (p. ej. `V15` y no `V9`)
-- **AND** existen todas las tablas que crean las migraciones del repositorio
+- **AND** cada tabla incluida en la copia existe en la base restaurada
 - **AND** recién entonces se sube el artifact
 
 #### Scenario: Copia que no se restaura
 - **WHEN** la restauración falla, la base de la copia está atrasada respecto de las migraciones del repositorio o falta alguna de esas tablas
+- **THEN** el workflow falla y no sube el artifact
+
+#### Scenario: Sin referencia para verificar
+- **WHEN** el directorio de migraciones no existe o no tiene migraciones versionadas, la copia no tiene tabla de migraciones o no incluye ninguna tabla
 - **THEN** el workflow falla y no sube el artifact
 
 #### Scenario: Restauración documentada
