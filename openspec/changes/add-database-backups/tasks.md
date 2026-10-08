@@ -16,8 +16,8 @@
 ## 2. Configuración (responsable, guiado)
 
 - [x] 2.1 Instalar `age` y generar el par (`age-keygen -o hsfacop-backup.key`); guardar la clave privada en dos lugares fuera del repo
-- [ ] 2.2 Neon: crear `backup_reader` con `pg_read_all_data` (o la alternativa de `GRANT SELECT`); comprobar que un `INSERT` con ese rol falla
-- [ ] 2.3 GitHub: secreto `BACKUP_DATABASE_URL` (URL directa, `sslmode=require`) y variable `BACKUP_AGE_RECIPIENT` (clave pública)
+- [x] 2.2 Neon: crear `backup_reader` con `pg_read_all_data` (o la alternativa de `GRANT SELECT`); comprobar que un `INSERT` con ese rol falla
+- [x] 2.3 GitHub: secreto `BACKUP_DATABASE_URL` (URL directa, `sslmode=require`) y variable `BACKUP_AGE_RECIPIENT` (clave pública)
 
 ## 3. Verificación
 
@@ -25,8 +25,8 @@
 
 - [x] 3.1 Sin configuración: ejecutarlo a mano → omitido en verde
 - [x] 3.2 Con la variable y un secreto **inválido** (URL a un host inexistente) → rojo, sin artifact y con el paso de limpieza ejecutado
-- [ ] 3.3 Con el secreto correcto → artifact `.age`; logs sin URL ni datos
-- [ ] 3.4 Restaurar ese artifact en una PostgreSQL local siguiendo la guía y comprobar que están las historias
+- [x] 3.3 Con el secreto correcto → artifact `.age`; logs sin URL ni datos
+- [x] 3.4 Restaurar ese artifact en una PostgreSQL local siguiendo la guía y comprobar que están las historias
 
 ## 4. Docs
 
