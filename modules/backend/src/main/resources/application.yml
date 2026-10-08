@@ -39,11 +39,12 @@ spring:
     locations: classpath:db/migration
 
 app:
-  # Zona de la clínica: "hoy", fechas de impresión y meses del panel (el servidor puede estar en UTC).
-  time-zone: ${APP_TIME_ZONE:America/Lima}
   # Identidad visible (OpenAPI). La escribe `pnpm project:apply` desde project.config.json.
+  # (Debe ir justo debajo de `app:`: el script la busca ahí.)
   name: "HS FACOP"
   description: "Tu portal al conocimiento y al éxito profesional."
+  # Zona de la clínica: "hoy", fechas de impresión y meses del panel (el servidor puede estar en UTC).
+  time-zone: ${APP_TIME_ZONE:America/Lima}
   records:
     # Cupo de historias con el que nace toda cuenta nueva (0–9999). Vacío = sin límite.
     # Las cuentas existentes no cambian; el ADMIN lo ajusta en "Usuarios".
