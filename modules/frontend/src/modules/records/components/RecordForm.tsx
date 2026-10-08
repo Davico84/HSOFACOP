@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Path } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/modules/core/ui/button";
 import type { RecordResponse } from "@/modules/core/services/generated/model";
+import { getRecord } from "@/modules/core/services/generated/orthodontic-records";
+import { useWindowReturn } from "@/modules/core/hooks/useWindowReturn";
 import { applyServerFieldErrors, getFieldErrors, getUserFriendlyError, problemType } from "@/modules/core/utils/apiError";
 import { useSessionStore } from "@/store/useSessionStore";
 import { recordPath } from "@/routes/paths";
@@ -13,7 +17,7 @@ import { recordFormSchema, type RecordFormValues } from "../schemas/record";
 import { parseStep, RECORD_STEPS, stepOfField } from "../config/recordSteps";
 import { emptyRecordValues, toFormValues } from "../utils/recordForm";
 import { diffPaths, relatedPaths, valueAt } from "../utils/formDiff";
-import { PATIENT_LOCKED_TYPE, RECORD_NUMBER_TAKEN_TYPE, RECORD_QUOTA_REACHED_TYPE, STALE_RECORD_TYPE } from "../hooks/recordKeys";
+import { PATIENT_LOCKED_TYPE, RECORD_NUMBER_TAKEN_TYPE, RECORD_QUOTA_REACHED_TYPE, recordKeys, STALE_RECORD_TYPE } from "../hooks/recordKeys";
 import { errorPaths } from "../hooks/useStepStatus";
 import { useSaveRecord } from "../hooks/useSaveRecord";
 import { useRecordQuota } from "../hooks/useRecordQuota";
@@ -23,7 +27,7 @@ import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useAutosave, type AutosaveResult } from "../hooks/useAutosave";
 import { RecordStepNav, type StepChange } from "./RecordStepNav";
 import { RecordStepContent } from "./RecordStepContent";
-import { StaleRecordBanner } from "./StaleRecordBanner";
+import { StaleRecordBanner, type StaleReason } from "./StaleRecordBanner";
 import { LeaveConfirmDialog } from "./LeaveConfirmDialog";
 import { RecordPrintLink } from "./RecordPrintLink";
 import { RecordPrintPending } from "./RecordPrintPending";
@@ -36,6 +40,24 @@ interface RecordFormProps {
   record: RecordResponse | null;
   /** Recarga la historia del servidor y vuelve a montar el formulario con ella (tras un 409). */
   onReload?: () => Promise<void>;
+  /**
+   * Al volver a la pestaña llegó otra versión (ya en la caché) y no hay cambios propios: vuelve a
+   * montar el formulario con ella y muestra el aviso.
+   */
+  onRemoteUpdate?: () => void;
+  /** La historia dejó de estar al alcance al revisarla (404). */
+  onNotFound?: () => void;
+  /** Mostrar "Actualizada con cambios hechos en otro dispositivo" (hasta el primer cambio). */
+  remoteNotice?: boolean;
+  onRemoteNoticeSeen?: () => void;
+}
+
+/** Al volver a la pestaña, como mucho una revisión cada 5 s (foco y visibilidad llegan juntos). */
+export const RETURN_CHECK_INTERVAL_MS = 5_000;
+
+/** Lo que cambia en la historia sin pasar por el formulario: versión, datos fijos y desbloqueos. */
+function signatureOf(r: RecordResponse): string {
+  return [r.version, r.patientLockedAt ?? "", r.unlockRequest?.requestedAt ?? "", r.lastUnlock?.at ?? ""].join("|");
 }
 
 /** Resultado de guardar una historia existente; "unchanged" = no había cambios (no se envía nada). */
@@ -47,7 +69,7 @@ type PersistResult = AutosaveResult | "unchanged";
  * salir del paso 1 y pasa a su URL. Una existente además se autoguarda y se abre en su último paso
  * trabajado. Detecta ediciones concurrentes (409) y avisa al salir con cambios sin guardar.
  */
-export function RecordForm({ record, onReload }: RecordFormProps) {
+export function RecordForm({ record, onReload, onRemoteUpdate, onNotFound, remoteNotice = false, onRemoteNoticeSeen }: RecordFormProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const fullName = useSessionStore((s) => s.user?.fullName);
@@ -61,7 +83,8 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
     defaultValues: record ? toFormValues(record) : emptyRecordValues(fullName),
   });
   const save = useSaveRecord();
-  const [stale, setStale] = useState(false);
+  const queryClient = useQueryClient();
+  const [stale, setStale] = useState<StaleReason | null>(null);
   const [reloading, setReloading] = useState(false);
   const dirty = form.formState.isDirty;
   // Historia nueva con el cupo lleno: aviso desde el inicio y "Crear historia" deshabilitado.
@@ -83,6 +106,10 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
   const [savedOnce, setSavedOnce] = useState(false);
   // Tras un 409 no se autoguarda más hasta recargar (cerrar el aviso no lo reanuda).
   const [stalePaused, setStalePaused] = useState(false);
+  // Barrera para los autoguardados que ya estaban en la cola cuando se detectó el conflicto.
+  const staleRef = useRef(false);
+  // Firma de la última respuesta conocida; `version.current` solo cambia desde la cola.
+  const signature = useRef(record ? signatureOf(record) : "");
 
   /**
    * Toma la respuesta del servidor como lo guardado sin pisar lo escrito durante el guardado: los
@@ -103,18 +130,22 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
   /** Guarda una historia existente si hay cambios y el paso actual es válido. */
   const persistNow = async (lastStep: number, mode: "auto" | "manual"): Promise<PersistResult> => {
     if (!record || !form.formState.isDirty) return "unchanged";
+    // Un autoguardado encolado antes de detectar el conflicto no se envía (el manual sí: el 409 avisa).
+    if (mode === "auto" && staleRef.current) return "stale";
     const valid = await form.trigger(RECORD_STEPS[step - 1].fields, { shouldFocus: mode === "manual" });
     if (!valid) return "invalid";
     const sent = structuredClone(form.getValues());
     try {
       const saved = await save.mutateAsync({ values: sent, existing: { id: record.id, version: version.current }, lastStep });
       version.current = saved.version;
+      signature.current = signatureOf(saved);
       applySaved(saved, sent);
       setSavedOnce(true);
       return "ok";
     } catch (error) {
       if (problemType(error) === STALE_RECORD_TYPE) {
-        setStale(true);
+        staleRef.current = true;
+        setStale("save");
         setStalePaused(true);
         return "stale";
       }
@@ -157,9 +188,59 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
     return true;
   };
 
+  /**
+   * Acepta la historia leída al volver (único punto que la toma): solo bloqueo/desbloqueo → el paso 1
+   * lo refleja sin tocar lo escrito; versión nueva igual a lo que hay → al día sin aviso; distinta y
+   * sin cambios propios → se monta de nuevo con ella; con cambios propios → conflicto, sin pisarlos.
+   */
+  const acceptFresh = (fresh: RecordResponse) => {
+    const next = signatureOf(fresh);
+    if (next === signature.current) return;
+    signature.current = next;
+    queryClient.setQueryData(recordKeys.detail(fresh.id), fresh);
+    if (fresh.version === version.current) return;
+    const server = toFormValues(fresh);
+    // Sin `await` desde aquí: la comparación y la decisión ven lo último que se escribió.
+    if (diffPaths(server, form.getValues()).length === 0) {
+      version.current = fresh.version;
+      form.reset(server, { keepDirtyValues: true });
+      return;
+    }
+    if (!form.formState.isDirty && onRemoteUpdate) {
+      onRemoteUpdate();
+      return;
+    }
+    staleRef.current = true;
+    setStale("remote");
+    setStalePaused(true);
+  };
+
+  /** Al volver a la pestaña: una consulta, encolada con los guardados. */
+  const checkRemote = () => {
+    if (!record || stale || staleRef.current) return;
+    autosave.cancel();
+    const next = queue.current.then(async () => {
+      try {
+        acceptFresh(await getRecord(record.id));
+      } catch (error) {
+        // 404: dejó de estar al alcance. Red o servidor: se ignora (la próxima vuelta reintenta;
+        // un guardado sigue protegido por el 409). El 401 lo resuelve el interceptor de sesión.
+        if (error instanceof AxiosError && error.response?.status === 404) onNotFound?.();
+      }
+    });
+    queue.current = next.catch(() => undefined);
+  };
+  useWindowReturn(checkRemote, { minIntervalMs: RETURN_CHECK_INTERVAL_MS, enabled: record !== null });
+
+  // El aviso de actualización se quita con el primer cambio.
+  useEffect(() => {
+    if (!remoteNotice || !onRemoteNoticeSeen) return undefined;
+    return form.subscribe({ formState: { values: true }, callback: () => onRemoteNoticeSeen() });
+  }, [remoteNotice, onRemoteNoticeSeen, form]);
+
   const onSaveError = (error: unknown, retry: () => void) => {
     if (problemType(error) === STALE_RECORD_TYPE) {
-      setStale(true);
+      setStale("save");
       return;
     }
     if (markNumberTaken(error, true)) return;
@@ -263,6 +344,9 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
             {record ? (
               <RecordSaveStatus status={autosave.status} dirty={dirty} savedOnce={savedOnce} onRetry={autosave.retry} />
             ) : null}
+            <p role="status" aria-live="polite" className="text-sm text-muted-foreground empty:hidden">
+              {remoteNotice ? "Actualizada con cambios hechos en otro dispositivo" : ""}
+            </p>
           </div>
           {record && !dirty ? <RecordPrintLink id={record.id} recordNumber={record.recordNumber} /> : null}
           {record && dirty ? <RecordPrintPending /> : null}
@@ -272,7 +356,7 @@ export function RecordForm({ record, onReload }: RecordFormProps) {
         {record ? <PatientLockNotice record={record} /> : null}
 
         {stale ? (
-          <StaleRecordBanner reloading={reloading} onReload={() => void reload()} onDismiss={() => setStale(false)} />
+          <StaleRecordBanner reason={stale} reloading={reloading} onReload={() => void reload()} onDismiss={() => setStale(null)} />
         ) : null}
 
         {/* Desde 1024 px: columna lateral de pasos + el paso; más angosto, una columna. */}
