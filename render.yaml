@@ -1,4 +1,4 @@
-# Blueprint de Render: backend de HS FACOP en el plan gratuito (Docker). Ver docs/deployment.md.
+# Blueprint de Render: backend del proyecto en el plan gratuito (Docker). Ver docs/deployment.md.
 # Las credenciales (sync: false) se cargan en el panel de Render al crear el Blueprint; nunca aquí.
 services:
   - type: web
