@@ -1,0 +1,99 @@
+## Context
+
+- Producción: Neon Free (PostgreSQL 16, `us-east-2`, conexión directa con `sslmode=require`), el cómputo se suspende tras ~5 min sin uso. Backend en Render, frontend en Vercel.
+- Los datos son historias clínicas (datos de salud): una copia expuesta es más grave que una copia perdida.
+- **El repositorio es público.** Los artifacts de Actions de un repo público los puede descargar cualquier usuario autenticado de GitHub, y los logs son públicos.
+- El repositorio también es una **plantilla** (`.template/`, `pnpm project:apply`): lo que se agregue debe ser genérico y no fallar en un proyecto derivado sin configurar.
+- No hay presupuesto: todo debe caber en planes gratuitos.
+
+## Goals / Non-Goals
+
+**Goals:** una copia diaria fuera de Neon, ilegible sin una clave que solo tiene el responsable, verificada por restauración, con una guía para recuperar.
+
+**Non-Goals:**
+- restauración automática sobre producción (siempre manual y a una base nueva);
+- copias cada pocos minutos o replicación (para eso está la restauración a un punto anterior de Neon, de ventana corta);
+- copias de Render o Vercel (no guardan estado: se reconstruyen desde el repo).
+
+## Decisions
+
+### Dónde: artifacts de GitHub Actions
+- Workflow `.github/workflows/db-backup.yml`, `schedule` diario a las **08:00 UTC** (03:00 en Lima, sin uso) y `workflow_dispatch`.
+- Artifact `db-backup-<AAAA-MM-DD>` con `retention-days: 90` (el máximo para repos públicos).
+- Alternativas descartadas:
+  - Cloudflare R2 / Backblaze B2: otra cuenta, otras claves y otro panel para una base de pocos MB;
+  - Google Drive con `rclone`: token OAuth que caduca y se guarda como secreto;
+  - commitear la copia al repo: queda para siempre en la historia de un repo público, aunque esté cifrada.
+- **Más allá de 90 días**: la guía pide bajar una copia al mes a un disco propio (el archivo cifrado; se puede guardar en cualquier lado).
+
+### Cifrado: `age` con clave pública
+- El runner cifra con `age -r "$BACKUP_AGE_RECIPIENT"`. `BACKUP_AGE_RECIPIENT` es la **clave pública** y va como **variable** del repo (no es secreta).
+- La **clave privada** se genera en la PC del responsable (`age-keygen`) y **nunca** entra a GitHub. Copia de la clave en un segundo lugar seguro (p. ej. gestor de contraseñas): sin ella las copias son inútiles.
+- Alternativa descartada: `gpg --symmetric` con la frase como secreto de GitHub. Funciona, pero quien controle el repo (o un workflow comprometido) podría descifrar; con `age` el runner solo puede cifrar.
+- `age` sale de los paquetes de Ubuntu (`apt-get install age`), con el runner fijado a `ubuntu-24.04` (no `ubuntu-latest`): apt verifica la firma del repositorio de Ubuntu y la versión del paquete queda fija para esa versión del sistema. El paso imprime `age --version` (sin datos).
+
+### Volcado: `pg_dump` con credencial de solo lectura
+- Rol de Neon `backup_reader` con `pg_read_all_data` (predefinido desde PG 14), sin permisos de escritura. Se crea una vez desde el SQL Editor de Neon (la guía trae el SQL). Si Neon no permitiera otorgar ese rol, alternativa documentada: `GRANT USAGE` en el esquema y `GRANT SELECT` en todas las tablas y secuencias, con `ALTER DEFAULT PRIVILEGES` para las futuras.
+- Secreto `BACKUP_DATABASE_URL`: URL libpq **directa** (`postgresql://backup_reader:…@<host-directo>/<base>?sslmode=require`), no el `-pooler`.
+- `pg_dump --format=custom --no-owner --no-acl`, con el cliente de la misma versión mayor (contenedor `postgres:16`), así no depende del cliente que traiga Ubuntu:
+  `docker run --rm --network host --user "$(id -u):$(id -g)" -e DATABASE_URL -v "$RUNNER_TEMP/backup:/backup" "$PG_IMAGE" sh -c 'pg_dump --format=custom --no-owner --no-acl --dbname="$DATABASE_URL" --file=/backup/db.dump'`
+  - `--user` con el usuario del runner: el contenedor escribe en la carpeta montada (creada por el runner con `mkdir -p` y permisos `700`) y el archivo queda legible para `pg_restore` y `age` sin `chmod`. `pg_dump` es solo cliente y no necesita el usuario `postgres`.
+  - Tras el volcado se comprueba que `db.dump` existe y no está vacío (`test -s`); si no, el paso falla.
+  - `PG_IMAGE`: `postgres:16@sha256:<digest>` (ver "Imagen fijada por digest").
+  (la URL entra por variable de entorno, nunca escrita en la línea de comando del log).
+- Despertar la base una vez al día consume unos minutos de cómputo; el cupo gratuito lo cubre de sobra.
+
+### Verificación: restaurar antes de subir
+- **Servicio** del job (aislado, solo vive en el job):
+  ```yaml
+  services:
+    restore:
+      image: postgres:16@sha256:<digest>   # el mismo digest que PG_IMAGE
+      env:
+        POSTGRES_DB: restore
+        POSTGRES_USER: restore
+        POSTGRES_PASSWORD: restore   # efímera; el servicio no tiene datos hasta la restauración y muere con el job
+      ports: ["5432:5432"]
+      options: >-
+        --health-cmd "pg_isready -U restore -d restore"
+        --health-interval 2s --health-timeout 2s --health-retries 30
+  ```
+  Actions no arranca los pasos hasta que el healthcheck pasa; además el paso de restauración espera con `pg_isready` (hasta 60 s) antes de empezar. Conexión desde el contenedor `postgres:16` con `--network host` a `localhost:5432`.
+- Orden de pasos:
+  1. volcado a un archivo en `$RUNNER_TEMP`;
+  2. `pg_restore --no-owner --no-acl --exit-on-error` en el servicio;
+  3. comprobaciones con `psql`:
+     - **migraciones en orden numérico**: la esperada sale de los nombres `V<n>__*.sql` del directorio de migraciones del repo, extrayendo `n` con regex y ordenando como entero (`sort -n`: `V15` > `V10` > `V9`); la aplicada, de `SELECT max(version::numeric) FROM flyway_schema_history WHERE success AND version IS NOT NULL`. Deben coincidir;
+     - **tablas, desde la propia copia (sin parsear SQL)**: la lista esperada sale del índice del volcado (`pg_restore --list db.dump`, entradas `TABLE` de los esquemas de la aplicación) y cada una debe existir en la base restaurada (`pg_class`/`pg_namespace`, comparando el nombre exacto, sin cambiar mayúsculas). Junto con la versión de migraciones: la versión prueba que la base copiada tiene **todo el esquema del repo**, y el índice prueba que **cada tabla de la copia** se restauró. Así no hay que interpretar `CREATE TABLE` (`IF NOT EXISTS`, comillas, esquema, comentarios). Hoy: `app_metadata`, `flyway_schema_history`, `orthodontic_records`, `record_unlock_events`, `refresh_tokens`, `users`;
+     - **fail-closed**: el paso falla si `MIGRATIONS_DIR` no existe, si no tiene ningún `V<n>__*.sql`, si `flyway_schema_history` no existe o no tiene versiones aplicadas, o si el índice del volcado no tiene ninguna tabla. Una lista vacía nunca da "ok";
+     - el directorio de migraciones es una variable del workflow (`MIGRATIONS_DIR`, por defecto `modules/backend/src/main/resources/db/migration`);
+  4. cifrado a `<archivo>.age` y borrado del volcado sin cifrar;
+  5. subida del `.age`.
+- Cualquier paso que falle corta el job antes de la subida. GitHub envía un correo cuando falla un workflow programado.
+- Comparar con la última migración del repo detecta también una copia de una base atrasada (p. ej. el despliegue no corrió).
+- Las comprobaciones no imprimen conteos ni datos (logs públicos): solo "ok" o el nombre de lo que falta.
+
+### Sin configuración, se omite
+- Primer paso: si falta `BACKUP_DATABASE_URL` o `BACKUP_AGE_RECIPIENT`, escribe "Copia omitida: falta configuración" en `$GITHUB_STEP_SUMMARY` y los demás pasos se saltan (`if:` sobre una salida del paso). El job termina en verde.
+- Nada específico del proyecto en el workflow (nombres genéricos), así sirve igual en un proyecto derivado de la plantilla.
+
+### Logs, limpieza y superficie del runner
+- La URL va solo por variable de entorno (`env: DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}` en el paso del volcado, y `-e DATABASE_URL` al contenedor), nunca escrita en `run:`; Actions además enmascara el secreto. Sin `set -x`. Ninguna salida de `psql` con datos.
+- **Limpieza incondicional**: un paso final con `if: always()` borra `$RUNNER_TEMP/backup` (volcado y `.age`). El volcado sin cifrar se borra también apenas termina el cifrado. Los runners de GitHub son máquinas efímeras que se destruyen al acabar el job; la limpieza cubre igual el tiempo del job y un runner propio futuro.
+- **Superficie mínima**: el workflow solo usa `actions/checkout` y `actions/upload-artifact`, **fijadas por SHA** (con la versión en comentario), la imagen `postgres:16` **fijada por digest** y el paquete `age` de Ubuntu 24.04. Nada más se ejecuta en ese job (sin `pnpm install`, sin scripts del repo).
+- **Imagen fijada por digest**: `PG_IMAGE: postgres:16@sha256:<digest>` como `env` del workflow, usado en el `docker run` y en el servicio (el valor se copia en ambos lugares; el servicio no acepta expresiones de `env`). El digest se toma al implementar (`docker buildx imagetools inspect postgres:16`) y se anota con la fecha. Actualizarlo es un cambio revisado en un PR (comentario en el workflow con el comando); un tag mutable nunca recibe el secreto ni el volcado.
+- `permissions: contents: read` (lo mínimo; subir artifacts no requiere más).
+- **Quién puede ejecutar código con el secreto**: el `schedule` y `workflow_dispatch` corren en `main`; los PRs desde forks no reciben secretos y este workflow no escucha `pull_request`. Cambiarlo exige un commit en `main`, que solo hace el responsable (PR revisado).
+- **Riesgo aceptado**: un commit malicioso en `main` podría leer el secreto o el volcado antes del cifrado. Para este proyecto (un responsable, sin colaboradores con escritura) se acepta. Si se suman colaboradores, mover el workflow a un repositorio privado aparte o a un servicio de copias.
+
+### Riesgos operativos documentados
+- **GitHub desactiva los workflows programados de un repo público tras 60 días sin actividad** (avisa por correo antes) y los `schedule` solo corren en la rama por defecto. Por eso el requisito dice "diaria **mientras el workflow esté habilitado**". La guía indica cómo detectarlo (el correo y la fecha del último artifact en la pestaña Actions, que se revisa al bajar la copia mensual) y reactivarlo (botón *Enable workflow* o `gh workflow enable db-backup.yml`). No se agrega monitoreo externo: la copia mensual manual obliga a mirar.
+- Restaurar: `gh run download` (o la pestaña Actions) → `age -d -i clave.txt` → `pg_restore` en una **rama nueva de Neon** o en una PostgreSQL local (Docker). Nunca sobre la base de producción en uso; si hay que reemplazarla, se apunta `DB_URL` de Render a la rama restaurada.
+
+## Risks / Trade-offs
+
+- **Perder la clave privada** deja las copias inservibles: la guía exige guardarla en dos lugares.
+- **90 días de retención**: lo anterior depende de la copia mensual manual.
+- **Una copia al día**: se puede perder hasta un día de trabajo si no alcanza la restauración a un punto anterior de Neon.
+- **Dependencia de GitHub** para guardar las copias: aceptable; la copia mensual a un disco propio cubre una caída o pérdida de la cuenta.
+- **Pruebas**: el workflow no se prueba con tests de unidad. Se verifica ejecutándolo a mano (una vez sin configuración y otra configurado) y restaurando una copia en local siguiendo la guía.

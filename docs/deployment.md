@@ -65,7 +65,99 @@ Las de `modules/backend/secrets.properties.example`, más:
   cada consulta cruza regiones.
 - ⚠️ **"No caduca" no es copia de seguridad.** Un borrado por error o un cambio del plan siguen
   siendo riesgo, y la restauración a un punto anterior del plan gratuito cubre poco tiempo. Las
-  copias (`pg_dump` diario fuera de Neon + restauración probada) van en `add-database-backups`.
+  copias propias están en §2.1.
+
+### 2.1 Copias de seguridad (`.github/workflows/db-backup.yml`)
+
+**Qué hace.** Todos los días a las 08:00 UTC (03:00 en Lima), y a pedido desde la pestaña *Actions*:
+
+1. `pg_dump` de la base con un rol de **solo lectura**;
+2. restauración en una PostgreSQL 16 vacía del propio job, comprobando que la última migración
+   del repo (`V<n>`, en orden numérico) está aplicada y que cada tabla de la copia se restauró;
+3. cifrado con [`age`](https://age-encryption.org) a una **clave pública**;
+4. subida como artifact `db-backup-AAAA-MM-DD` (**90 días** de retención).
+
+Si algo falla, el workflow queda en rojo, no sube nada y GitHub avisa por correo. El volcado sin
+cifrar se borra del runner siempre, también cuando falla. **El repo es público**: cualquiera con
+cuenta de GitHub puede bajar el artifact, pero sin la clave privada solo obtiene un archivo cifrado.
+Los logs no muestran la conexión ni datos.
+
+Sin el secreto y la variable de abajo, la copia se **omite en verde** (p. ej. un proyecto recién
+creado desde la plantilla).
+
+La imagen `postgres:16` y las actions van fijadas por digest/SHA (reciben el secreto y el volcado).
+Actualizar el digest es un cambio en un PR: `docker buildx imagetools inspect postgres:16`.
+
+#### Configuración (una vez)
+
+1. **Par de claves `age`** en tu PC (Windows: `winget install FiloSottile.age`):
+   ```bash
+   age-keygen -o backup.key      # imprime la clave pública: "Public key: age1…"
+   ```
+   `backup.key` es la **clave privada**: **nunca** al repo ni a GitHub. Guárdala en **dos
+   lugares** (p. ej. gestor de contraseñas + memoria USB). Sin ella, las copias no sirven.
+2. **Rol de solo lectura en Neon** (*SQL Editor*, rama de producción). Neon exige una contraseña
+   fuerte para roles creados por SQL (larga y aleatoria):
+   ```sql
+   CREATE ROLE backup_reader WITH LOGIN PASSWORD '<contraseña larga y aleatoria>';
+   GRANT pg_read_all_data TO backup_reader;
+   ```
+   Si Neon no deja otorgar `pg_read_all_data`, la alternativa:
+   ```sql
+   GRANT USAGE ON SCHEMA public TO backup_reader;
+   GRANT SELECT ON ALL TABLES IN SCHEMA public TO backup_reader;
+   GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO backup_reader;
+   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO backup_reader;
+   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO backup_reader;
+   ```
+   (`ALTER DEFAULT PRIVILEGES` se ejecuta con el rol dueño de las tablas, el de la app.)
+   Comprobación: conectado como `backup_reader`, un `INSERT` debe responder *permission denied*.
+3. **GitHub** (la URL es la **directa**, sin `-pooler`, con `sslmode=require`):
+   ```bash
+   gh secret set BACKUP_DATABASE_URL     # pega: postgresql://backup_reader:<pass>@<host-directo>/<base>?sslmode=require
+   gh variable set BACKUP_AGE_RECIPIENT --body "age1…"
+   ```
+   `gh secret set` pide el valor sin dejarlo en el historial de la terminal.
+4. **Probar**: *Actions → DB backup → Run workflow* (o `gh workflow run db-backup.yml`). Debe
+   quedar un artifact `db-backup-AAAA-MM-DD`. El workflow solo aparece una vez que está en `main`.
+
+#### Mantenimiento
+
+- **Una vez al mes**, baja la última copia a un disco propio (es el archivo cifrado; se puede
+  guardar en cualquier lado). Es lo que cubre más allá de los 90 días y una pérdida de la cuenta.
+- **60 días sin actividad**: GitHub desactiva los workflows programados de un repo público (avisa
+  por correo antes). Al bajar la copia mensual mira la fecha de la última; si se detuvo, reactívalo
+  en *Actions → DB backup → Enable workflow* o con `gh workflow enable db-backup.yml`.
+- Una copia al día: se puede perder hasta un día de trabajo. Para errores recientes, primero mira
+  la restauración a un punto anterior de Neon (*Branches → Restore*), de ventana corta en Free.
+
+#### Restaurar
+
+Nunca sobre la base de producción en uso: siempre a una base nueva.
+
+1. **Descargar** (o desde la pestaña *Actions*, sección *Artifacts* de la ejecución):
+   ```bash
+   gh run list --workflow db-backup.yml --limit 5
+   gh run download <run-id> --name db-backup-AAAA-MM-DD
+   ```
+2. **Descifrar**:
+   ```bash
+   age -d -i backup.key -o db.dump db-backup-AAAA-MM-DD.dump.age
+   ```
+3. **Restaurar en local** (para revisar o rescatar datos):
+   ```bash
+   docker run -d --name restore -e POSTGRES_PASSWORD=restore -p 5433:5432 postgres:16
+   docker cp db.dump restore:/db.dump
+   docker exec restore pg_restore -U postgres -d postgres --no-owner --no-acl /db.dump
+   docker exec -it restore psql -U postgres -c "select count(*) from orthodontic_records"
+   ```
+   o **en una rama nueva de Neon** (*Branches → New branch*), con su cadena de conexión directa:
+   ```bash
+   pg_restore --no-owner --no-acl --clean --if-exists -d "<url-directa-de-la-rama>" db.dump
+   ```
+4. **Si hay que reemplazar producción**: apunta `DB_URL`, `DB_USERNAME` y `DB_PASSWORD` de Render a
+   la rama restaurada y redespliega. Flyway encuentra su historial y no migra de nuevo.
+5. **Borra** `db.dump` al terminar: son datos de salud sin cifrar.
 
 ## 3. Condición previa: cookie de sesión entre frontend y API
 

@@ -1,0 +1,139 @@
+name: DB backup
+
+# Copia diaria de la base de producción, cifrada con `age` y verificada por restauración antes de
+# subirla como artifact. El repositorio es público: nada sin cifrar sale del runner y los logs no
+# muestran la cadena de conexión ni datos. Guía y restauración: docs/deployment.md §2.1.
+#
+# Configuración (si falta, la copia se omite en verde, p. ej. en un proyecto nuevo de la plantilla):
+#   - secreto  BACKUP_DATABASE_URL  URL libpq directa de un rol de solo lectura (sslmode=require)
+#   - variable BACKUP_AGE_RECIPIENT clave pública de `age` (la privada nunca entra a GitHub)
+
+on:
+  schedule:
+    - cron: "0 8 * * *" # 08:00 UTC = 03:00 en Lima
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+env:
+  # Imagen fijada por digest: recibe el secreto y el volcado, así que nunca un tag mutable.
+  # Actualizar en un PR: `docker buildx imagetools inspect postgres:16` (Digest del índice).
+  # El servicio `restore` repite el mismo valor (no admite expresiones de `env`).
+  PG_IMAGE: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d # 2026-10-08
+  MIGRATIONS_DIR: modules/backend/src/main/resources/db/migration
+  RESTORE_URL: postgresql://restore:restore@localhost:5432/restore
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      restore:
+        image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+        env:
+          POSTGRES_DB: restore
+          POSTGRES_USER: restore
+          # Efímera: la base del servicio está vacía hasta la restauración y muere con el job.
+          POSTGRES_PASSWORD: restore
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U restore -d restore"
+          --health-interval 2s --health-timeout 2s --health-retries 30
+    steps:
+      - name: Configuración
+        id: config
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$AGE_RECIPIENT" ]; then
+            echo "Copia omitida: falta configuración (BACKUP_DATABASE_URL o BACKUP_AGE_RECIPIENT)." >> "$GITHUB_STEP_SUMMARY"
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Solo las migraciones: es lo único del repo que usa el job (sin scripts ni dependencias).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.config.outputs.configured == 'true'
+        with:
+          persist-credentials: false
+          sparse-checkout: ${{ env.MIGRATIONS_DIR }}
+
+      - name: Volcado
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/backup"
+          chmod 700 "$RUNNER_TEMP/backup"
+          # La URL entra por variable de entorno; `--user` deja el archivo legible para el runner.
+          docker run --rm --network host --user "$(id -u):$(id -g)" -e DATABASE_URL \
+            -v "$RUNNER_TEMP/backup:/backup" "$PG_IMAGE" \
+            sh -c 'pg_dump --format=custom --no-owner --no-acl --dbname="$DATABASE_URL" --file=/backup/db.dump'
+          test -s "$RUNNER_TEMP/backup/db.dump"
+          echo "Volcado ok."
+
+      - name: Restauración y verificación
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          pg() { docker run --rm --network host --user "$(id -u):$(id -g)" -v "$RUNNER_TEMP/backup:/backup" "$PG_IMAGE" "$@"; }
+          for _ in $(seq 30); do pg pg_isready -q -d "$RESTORE_URL" && break; sleep 2; done
+          pg pg_isready -q -d "$RESTORE_URL"
+
+          pg pg_restore --no-owner --no-acl --exit-on-error --dbname="$RESTORE_URL" /backup/db.dump
+
+          # Migraciones: la mayor versión del repo (orden numérico: V15 > V10 > V9) debe ser la
+          # mayor aplicada con éxito en la copia. Sin referencia, falla (nunca "ok" por vacío).
+          test -d "$MIGRATIONS_DIR" || { echo "::error::No existe $MIGRATIONS_DIR"; exit 1; }
+          expected=$(find "$MIGRATIONS_DIR" -maxdepth 1 -type f -printf '%f\n' | sed -nE 's/^V([0-9]+)__.*\.sql$/\1/p' | sort -n | tail -n 1)
+          [ -n "$expected" ] || { echo "::error::No hay migraciones V<n>__*.sql en $MIGRATIONS_DIR"; exit 1; }
+          applied=$(pg psql -X -At -v ON_ERROR_STOP=1 -d "$RESTORE_URL" -c \
+            "SELECT max(version::numeric) FROM flyway_schema_history WHERE success AND version IS NOT NULL")
+          [ -n "$applied" ] || { echo "::error::La copia no tiene migraciones aplicadas"; exit 1; }
+          [ "$applied" = "$expected" ] || { echo "::error::La copia está en V$applied y el repositorio en V$expected"; exit 1; }
+
+          # Tablas: cada TABLE del índice del volcado debe existir en la base restaurada.
+          pg pg_restore --list /backup/db.dump | awk '$4 == "TABLE" && $5 != "DATA" { print $5 "." $6 }' | sort -u > "$RUNNER_TEMP/backup/expected.txt"
+          [ -s "$RUNNER_TEMP/backup/expected.txt" ] || { echo "::error::La copia no incluye tablas"; exit 1; }
+          pg psql -X -At -v ON_ERROR_STOP=1 -d "$RESTORE_URL" -c \
+            "SELECT n.nspname || '.' || c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE c.relkind IN ('r', 'p') AND n.nspname NOT IN ('pg_catalog', 'information_schema')" \
+            | sort -u > "$RUNNER_TEMP/backup/restored.txt"
+          missing=$(comm -23 "$RUNNER_TEMP/backup/expected.txt" "$RUNNER_TEMP/backup/restored.txt")
+          [ -z "$missing" ] || { echo "::error::Tablas sin restaurar: $(tr '\n' ' ' <<< "$missing")"; exit 1; }
+          echo "Restauración ok: V$expected, $(wc -l < "$RUNNER_TEMP/backup/expected.txt") tablas."
+
+      - name: Cifrado
+        if: steps.config.outputs.configured == 'true'
+        id: encrypt
+        env:
+          AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age > /dev/null
+          age --version
+          name="db-backup-$(date -u +%F)"
+          age -r "$AGE_RECIPIENT" -o "$RUNNER_TEMP/backup/$name.dump.age" "$RUNNER_TEMP/backup/db.dump"
+          rm -f "$RUNNER_TEMP/backup/db.dump"
+          test -s "$RUNNER_TEMP/backup/$name.dump.age"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.config.outputs.configured == 'true'
+        with:
+          name: ${{ steps.encrypt.outputs.name }}
+          path: ${{ runner.temp }}/backup/${{ steps.encrypt.outputs.name }}.dump.age
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0 # ya está cifrado: no comprime
+
+      # Siempre, también si algo falló: no queda nada de la copia en el runner.
+      - name: Limpieza
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/backup"
