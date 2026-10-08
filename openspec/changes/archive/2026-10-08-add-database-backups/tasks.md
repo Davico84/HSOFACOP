@@ -31,4 +31,4 @@
 ## 4. Docs
 
 - [x] 4.1 `docs/deployment.md`: sección de copias (qué, dónde, retención, clave privada en dos lugares, copia mensual a disco propio, 60 días sin actividad: cómo detectarlo y `gh workflow enable`) y guía de restauración (descargar, descifrar, restaurar en rama de Neon o local, cómo apuntar Render a la rama restaurada); quitar el aviso "van en `add-database-backups`"
-- [ ] 4.2 Al archivar: `docs/vision.md` ✅
+- [x] 4.2 Al archivar: `docs/vision.md` ✅
