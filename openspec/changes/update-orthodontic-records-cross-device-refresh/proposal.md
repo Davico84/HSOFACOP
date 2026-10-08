@@ -25,7 +25,7 @@ El tratante llena la historia en varios dispositivos: empieza en la PC de la cl�
 
 - Frontend:
   - `RecordForm` (revisión de versión y aviso);
-  - un hook en `modules/records/hooks` que escucha la visibilidad y el foco de la ventana;
+  - un hook genérico en `modules/core/hooks` (`useWindowReturn`) que escucha la visibilidad, el foco y la restauración de la página;
   - `RecordFormFeature` (recarga sin cambios locales).
 - Sin cambios en backend, contrato ni base de datos.
 - Docs: `docs/frontend.md` (patrón de la copia de trabajo y la revisión al volver).

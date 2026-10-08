@@ -27,6 +27,14 @@ Cuando el usuario vuelve a una historia abierta (la pestaña vuelve a estar visi
 - **THEN** el paso 1 refleja los datos fijos o desbloqueados y su aviso
 - **AND** lo escrito en el formulario se conserva, sin aviso de historia cambiada
 
+#### Scenario: Autoguardado pendiente durante la revisión
+- **WHEN** el autoguardado de lo escrito en la PC queda en espera mientras la revisión al volver detecta cambios distintos en el servidor
+- **THEN** ese autoguardado no se envía y lo escrito se conserva con el aviso de historia cambiada
+
+#### Scenario: Escribir mientras se revisa
+- **WHEN** el usuario empieza a escribir después de volver y antes de que la revisión muestre los datos del otro dispositivo
+- **THEN** lo escrito no se pierde: en lugar de recargar se muestra el aviso de historia cambiada
+
 #### Scenario: Volver sin cambios en el servidor
 - **WHEN** el usuario vuelve a la pestaña y la historia no cambió en el servidor
 - **THEN** el formulario no se recarga y no aparece ningún aviso
