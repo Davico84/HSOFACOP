@@ -12,7 +12,7 @@ Cuando la historia cambió en otro dispositivo u otra pestaña y hay cambios pro
 - Vale para los dos motivos del aviso:
   - **al volver desde otro dispositivo**: usa la versión que ya trajo la revisión;
   - **tras un `409` al guardar** (otra pestaña u otro usuario): una consulta de la historia para armar la lista. Si falla, el aviso sale como hoy, sin la lista.
-- Los nombres de los campos pasan a un **mapa único** (ruta → etiqueta); los pasos leen de ahí las etiquetas de sus campos, para que la lista y el formulario no se desalineen.
+- Las etiquetas de los controles del formulario pasan a un **mapa único** (ruta → etiqueta y formato); los pasos leen de ahí las etiquetas de sus controles, para que la lista y el formulario no se desalineen. No cubre encabezados, ayudas, títulos de paneles ni impresión.
 - No se combina nada: recargar y seguir editando hacen lo mismo que hoy.
 - Sin cambios de backend ni de contrato.
 

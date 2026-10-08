@@ -42,25 +42,26 @@
 - Alternativa descartada: comparar solo `mine` con `server`. No distingue lo que se pierde de lo que llega, que es justo lo que el usuario necesita para decidir qué copiar.
 
 ### Mapa único de etiquetas con formato
+- `FIELD_LABELS` es la fuente única de las etiquetas de los **controles del formulario** que puede listar el aviso. No cubre encabezados, textos de ayuda, títulos de paneles ni etiquetas de impresión.
 - `config/fieldLabels.ts`: `FIELD_LABELS`, arreglo ordenado (orden del formulario) de entradas:
   - `path: FieldPath<RecordFormValues>`;
   - `label`;
   - `format`: `"text" | "date" | "choice" | "choiceList" | "toothList" | "textList" | "group"`;
   - `options` (para `choice`/`choiceList`, de `config/options.ts`);
-  - `panel` (solo paso 5: `"transversal" | "moyers" | "nance" | "bolton"`).
+  - `panel` (solo paso 5: `"transversal" | "moyers" | "nance" | "bolton"`);
+  - `control`: cómo se encuentra en pantalla: `"label"` (control etiquetado: texto, fecha, medida, área de texto), `"group"` (grupo con nombre: opciones, varias opciones, piezas) o `"table"` (entradas `group`).
 - Los pasos leen de ahí **solo las etiquetas de sus campos** (`label={labelOf("address")}`); los textos visibles no cambian. Encabezados, ayudas, títulos de paneles e impresión quedan como están.
-- Tests del mapa:
-  - cada `path` existe en los valores vacíos del formulario (`emptyRecordValues`);
-  - **toda ruta hoja** de esos valores (con arrays como hoja) queda cubierta por alguna entrada: un campo nuevo sin entrada rompe el test;
-  - las etiquetas visibles de cada paso coinciden con las del mapa (se renderiza el paso y se busca cada `field` por su etiqueta).
+- Dos tests del mapa, separados:
+  1. **Estructural**: cada `path` existe en `emptyRecordValues()` y **toda ruta hoja** (arrays como hoja) queda cubierta por alguna entrada; un campo nuevo sin entrada rompe el test.
+  2. **De pantalla**: se renderiza cada paso con valores que muestran sus campos condicionales (p. ej. hábitos de succión "Sí", bruxismo con desgaste, patrón II/III, menarquia, mordida cruzada; el paso 5 con todos los paneles abiertos) y cada entrada se encuentra según su `control`: `getByLabelText(label)` para `"label"`, `getByRole("group", { name: label })` para `"group"`; las `"table"` se buscan por el título de su sección. Así el texto visible coincide con el mapa.
 - Alternativas descartadas:
   - leer la etiqueta del DOM: solo funciona con el paso montado;
   - un mapa aparte solo para el aviso: dos fuentes de texto que se desalinean.
 
 ### Agrupar por entrada
 - Cada ruta se lleva a la entrada más específica que la contiene (subiendo por los prefijos). Varias rutas en la misma entrada (las celdas de una tabla) se muestran **una sola vez**; si sus orígenes difieren, la fila queda en `"both"`.
-- Entradas `group` (tablas de medidas de transversal, Moyers, Nance y Bolton): sin valor, con "Ir al paso" (abre además su panel).
-- Una ruta sin entrada no pasa en desarrollo (lo impide el test de cobertura). Como último recurso en producción cae en una fila de grupo con el título de su paso ("Otros datos del paso N").
+- Entradas `group` (tablas de medidas de transversal, Moyers, Nance y Bolton): sin valor, con "Ir al paso", que abre el paso y, en el paso 5, su panel, sin enfocar una celda.
+- Una ruta sin entrada no pasa en desarrollo (lo impide el test estructural). Como último recurso en producción se muestra como **"Campo no identificado (paso N)"**, con "Ir al paso" y sin valor (no parece una fila normal), y se registra con `console.error` (ruta incluida) para detectarlo.
 - Orden: por paso y, dentro del paso, por el orden del mapa.
 
 ### Valores legibles (`formatFieldValue(entry, value)`)
@@ -76,22 +77,26 @@
 - **Motivo `save` (`409`)**, tanto del autoguardado como del guardado manual:
   - el aviso se muestra enseguida, sin lista;
   - **una sola consulta por aviso**: `conflictDetail` (ref) guarda la promesa en curso; mientras exista no se lanza otra, y `checkRemote` no encola revisión (ya sale con `stale`/`staleRef` activos; el ref lo cubre también en el camino del guardado manual). Se limpia al cerrar el aviso o recargar;
+  - **respuestas tardías**: cada consulta lleva un token (`const token = ++conflictToken.current`). Cerrar el aviso o recargar incrementa `conflictToken`. Al resolver, la lista solo se aplica si el token sigue vigente y `stale` sigue activo; si no, se descarta sin tocar nada;
   - la consulta (`getRecord(id)`) se encola en `queue` y no se acepta (ver la invariante);
   - si falla (red, `5xx`, `404`) el aviso queda sin lista; el `401` lo resuelve el interceptor como siempre;
-  - si el aviso se cerró o se recargó antes de que llegue, la respuesta se descarta.
 - La lista vive en el estado de `RecordForm` junto con `stale` y se borra al cerrar el aviso o al recargar.
 
 ### Presentación y accesibilidad
 - `role="alert"` solo envuelve el **mensaje breve y las acciones** (como hoy).
 - La lista va **fuera** de esa región viva, debajo, en un bloque sin `aria-live`: "Qué cambió (N)" y un `<ul>` con alto máximo y desplazamiento propio en pantallas chicas.
-- Al llegar la lista tarde (motivo `save`), un `role="status"` aparte anuncia solo "Se encontraron N diferencias". No se mueve el foco ni se vuelve a desplazar la vista (el desplazamiento y el foco ocurren una sola vez, al aparecer el aviso).
+- **Foco y desplazamiento una sola vez**: solo la transición del aviso de oculto a visible (`stale`: `null` → motivo) desplaza la vista y da el foco al aviso. El efecto del banner depende de su montaje (y del motivo), **no** de la lista.
+- La llegada de la lista (`undefined` → filas) solo actualiza el `role="status"` aparte con "Se encontraron N diferencias"; no mueve el foco ni desplaza la vista.
 - Cada fila: etiqueta · "Paso N" · marca de origen (texto, no solo color) · "En el servidor: …" · botón "Ir al campo" (o "Ir al paso" en los grupos).
 
-### Ir al campo
-1. `RecordForm` guarda un `focusTarget` (`path`, `panel?`) y cambia `?paso=N`.
-2. Se monta el paso. Si la entrada tiene `panel`, `RecordStepContent` se lo pasa a `Step5Models`, que lo agrega a su estado `open` en un efecto y avisa (`onPanelRevealed`).
-3. En el render siguiente (paso montado y, si hacía falta, panel abierto), `RecordForm` ejecuta `form.setFocus(path)` y limpia `focusTarget`.
-4. Los grupos no enfocan una celda: abren el paso (y su panel) y nada más.
+### Ir al campo (protocolo con identificador de pedido)
+1. `RecordForm` guarda `focusTarget = { id, path, panel?, focus }` con `id = ++focusSeq.current` (`focus` es falso en los grupos) y cambia `?paso=N`. Un pedido nuevo reemplaza al anterior; cerrar el aviso o recargar lo anula.
+2. **Sin panel** (pasos 1–4, 6–8, o campos del paso 5 fuera de paneles): un efecto de `RecordForm` que depende de `step` y `focusTarget` ejecuta `form.setFocus(path)` cuando el paso del URL ya es el del pedido (el paso se monta en el mismo commit) y limpia el pedido.
+3. **Con panel** (paso 5): `RecordStepContent` pasa a `Step5Models` `revealPanel = { id, panel }` y `onPanelRevealed(id)`.
+   - Efecto A (depende de `revealPanel.id`): `setOpen(prev => union(prev, panel))`. Así el panel queda en el estado propio `open` (no depende de `withErrors`) y un `onValueChange` posterior lo conserva salvo que el usuario lo cierre a propósito.
+   - Efecto B (depende de `value` y `revealPanel.id`): cuando `value.includes(panel)` (el contenido ya está montado en ese commit) llama una sola vez `onPanelRevealed(id)` (ref con el último `id` avisado).
+   - `RecordForm` al recibirlo: si `id === focusTarget.id`, ejecuta `setFocus(path)` (si `focus`) y limpia el pedido; si no, lo ignora.
+4. Los grupos (`focus` falso) siguen el mismo camino y solo abren paso y panel.
 - El aviso sigue visible; lo escrito no cambia.
 
 ## Risks / Trade-offs
