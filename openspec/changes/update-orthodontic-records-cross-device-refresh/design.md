@@ -36,9 +36,9 @@
 
 ### Qué se revisa: una sola consulta
 - La revisión **se encola con los guardados** (la misma `queue`): si un autoguardado está en curso al volver, espera su respuesta y compara contra la versión que ese guardado devolvió.
-- **Una sola operación de React Query**: `queryClient.fetchQuery({ queryKey: recordKeys.detail(id), queryFn: () => getRecord(id), retry: false, staleTime: 0 })`.
-  - En éxito actualiza la caché: es la respuesta `fresh` que se compara y con la que se remonta.
-  - En error deja la consulta en error.
+- **Una sola consulta**: `getRecord(id)` (sin reintentos) y, si trae algo nuevo, `queryClient.setQueryData(recordKeys.detail(id), fresh)`.
+  - Es la respuesta `fresh` que se compara y con la que se remonta.
+  - No se usa `fetchQuery`: un error de red dejaría la consulta en error y la pantalla pasaría a "No se pudo cargar", perdiendo lo escrito.
   - No hay `refetch` adicional en ningún caso.
 
 ### Barrera para el autoguardado
@@ -77,11 +77,11 @@
 
 ### Errores al revisar
 - **Red o servidor (5xx):** se ignora en silencio. La próxima vuelta lo reintenta y un guardado posterior sigue protegido por el `409`.
-- **`404`** (la historia dejó de estar al alcance): el mismo `fetchQuery` deja la consulta en error y `RecordFormFeature`, que observa esa consulta, muestra "Historia no encontrada", igual que en la carga inicial, sin otra consulta.
+- **`404`** (la historia dejó de estar al alcance): `RecordForm` lo informa con `onNotFound` y `RecordFormFeature` muestra "Historia no encontrada", igual que en la carga inicial, sin otra consulta.
 - **`401`:** lo maneja el interceptor de `httpClient`: si el refresh funciona, reintenta la revisión; si falla, cierra la sesión y los guards llevan al login. La revisión no lo trata como error de red.
 
 ### Vuelta desde la impresión
-`/imprimir` no revisa nada. Al volver de la vista previa al formulario, este se monta de nuevo y `useRecord` pide la historia (`refetchOnMount`, la consulta está vencida). Un test fija que se vea lo último guardado o impreso.
+`/imprimir` no revisa nada. Al volver de la vista previa al formulario, este se monta de nuevo y `useRecord` pide la historia (`refetchOnMount`, la consulta está vencida). Como la caché ya tiene una copia, `RecordFormFeature` muestra la carga hasta esa consulta (`isFetching && !isFetchedAfterMount`): si no, el formulario se montaría con la copia anterior y no tomaría la respuesta. Un test fija que se vea lo último guardado o impreso.
 
 ### Tests y alcance de esta propuesta
 - Esta propuesta describe el diseño; el código y los tests se escriben en `/opsx:apply` (tareas 1.x).

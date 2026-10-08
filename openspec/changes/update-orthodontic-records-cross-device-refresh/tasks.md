@@ -2,13 +2,13 @@
 
 ## 1. Frontend
 
-- [ ] 1.1 `modules/core/hooks/useWindowReturn.ts` (genérico), con su test:
+- [x] 1.1 `modules/core/hooks/useWindowReturn.ts` (genérico), con su test:
   - escucha `visibilitychange` (a visible), `focus` y `pageshow` con `persisted`;
   - ignora los eventos con la pestaña oculta;
   - un solo límite de `minIntervalMs` compartido por los tres;
   - limpia los listeners al desmontar.
-- [ ] 1.2 `StaleRecordBanner` con `reason` (`"save"` | `"remote"`) y sus dos textos (design)
-- [ ] 1.3 `RecordForm`: revisión encolada en `queue` con un solo `queryClient.fetchQuery` (misma key y queryFn que `useRecord`, `retry: false`, `staleTime: 0`) y firma `version`/`patientLockedAt`/`unlockRequest.requestedAt`/`lastUnlock.at`:
+- [x] 1.2 `StaleRecordBanner` con `reason` (`"save"` | `"remote"`) y sus dos textos (design)
+- [x] 1.3 `RecordForm`: revisión encolada en `queue` con una sola consulta (`getRecord` + `setQueryData` en la key de `useRecord`) y firma `version`/`patientLockedAt`/`unlockRequest.requestedAt`/`lastUnlock.at`:
   - `autosave.cancel()` al iniciar;
   - barrera `staleRef` comprobada justo antes del PUT en cada autoguardado encolado;
   - `version.current` solo desde la cola (`acceptFresh`);
@@ -21,10 +21,10 @@
     - con diferencias y cambios propios → banner `remote` y autoguardado pausado;
   - errores:
     - red o 5xx → se ignora;
-    - `404` → la consulta queda en error y "Historia no encontrada", sin otra consulta;
+    - `404` → `onNotFound` y "Historia no encontrada", sin otra consulta;
     - `401` → interceptor.
-- [ ] 1.4 `RecordFormFeature`: remontaje con la historia ya en caché (sin segundo GET) y aviso `role="status"` ("Actualizada con cambios hechos en otro dispositivo") que sobrevive al remontaje y se borra con el primer cambio
-- [ ] 1.5 Tests (uno por scenario; MSW contando los GET; visibilidad, `focus` y `pageshow` simulados):
+- [x] 1.4 `RecordFormFeature`: remontaje con la historia ya en caché (sin segundo GET) y aviso `role="status"` ("Actualizada con cambios hechos en otro dispositivo") que sobrevive al remontaje y se borra con el primer cambio
+- [x] 1.5 Tests (uno por scenario; MSW contando los GET; visibilidad, `focus` y `pageshow` simulados):
   - volver sin cambios propios;
   - autoguardado encolado durante la revisión con conflicto → no se envía el PUT;
   - escribir entre la consulta y el remontaje → no se pierde, banner `remote`;
@@ -47,5 +47,5 @@
 
 ## 2. Docs
 
-- [ ] 2.1 `docs/frontend.md` §4.1: `useWindowReturn`, la copia de trabajo (sin refetch automático) con revisión al volver, la firma que incluye el bloqueo y la comparación por valores
+- [x] 2.1 `docs/frontend.md` §4.1: `useWindowReturn`, la copia de trabajo (sin refetch automático) con revisión al volver, la firma que incluye el bloqueo y la comparación por valores
 - [ ] 2.2 Al archivar: `docs/vision.md` ✅
