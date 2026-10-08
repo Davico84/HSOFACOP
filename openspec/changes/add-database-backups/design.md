@@ -35,16 +35,34 @@
 ### Volcado: `pg_dump` con credencial de solo lectura
 - Rol de Neon `backup_reader` con `pg_read_all_data` (predefinido desde PG 14), sin permisos de escritura. Se crea una vez desde el SQL Editor de Neon (la guía trae el SQL). Si Neon no permitiera otorgar ese rol, alternativa documentada: `GRANT USAGE` en el esquema y `GRANT SELECT` en todas las tablas y secuencias, con `ALTER DEFAULT PRIVILEGES` para las futuras.
 - Secreto `BACKUP_DATABASE_URL`: URL libpq **directa** (`postgresql://backup_reader:…@<host-directo>/<base>?sslmode=require`), no el `-pooler`.
-- `pg_dump --format=custom --no-owner --no-acl`, con el cliente de la misma versión mayor (contenedor `postgres:16`), así no depende del cliente que traiga Ubuntu.
+- `pg_dump --format=custom --no-owner --no-acl`, con el cliente de la misma versión mayor (contenedor `postgres:16`), así no depende del cliente que traiga Ubuntu:
+  `docker run --rm --network host -e DATABASE_URL -v "$RUNNER_TEMP/backup:/backup" postgres:16 sh -c 'pg_dump --format=custom --no-owner --no-acl --dbname="$DATABASE_URL" --file=/backup/db.dump'`
+  (la URL entra por variable de entorno, nunca escrita en la línea de comando del log).
 - Despertar la base una vez al día consume unos minutos de cómputo; el cupo gratuito lo cubre de sobra.
 
 ### Verificación: restaurar antes de subir
-- El job tiene un servicio `postgres:16` vacío. Orden de pasos:
+- **Servicio** del job (aislado, solo vive en el job):
+  ```yaml
+  services:
+    restore:
+      image: postgres:16
+      env:
+        POSTGRES_DB: restore
+        POSTGRES_USER: restore
+        POSTGRES_PASSWORD: restore   # efímera; el servicio no tiene datos hasta la restauración y muere con el job
+      ports: ["5432:5432"]
+      options: >-
+        --health-cmd "pg_isready -U restore -d restore"
+        --health-interval 2s --health-timeout 2s --health-retries 30
+  ```
+  Actions no arranca los pasos hasta que el healthcheck pasa; además el paso de restauración espera con `pg_isready` (hasta 60 s) antes de empezar. Conexión desde el contenedor `postgres:16` con `--network host` a `localhost:5432`.
+- Orden de pasos:
   1. volcado a un archivo en `$RUNNER_TEMP`;
   2. `pg_restore --no-owner --no-acl --exit-on-error` en el servicio;
   3. comprobaciones con `psql`:
-     - la versión máxima de `flyway_schema_history` (aplicadas con éxito) es la del **último `V<n>__*.sql` del repositorio**;
-     - existen las tablas de la aplicación (`users` y `orthodontic_records` como mínimo; la lista sale de un archivo del workflow, no del código);
+     - **migraciones en orden numérico**: la esperada sale de los nombres `V<n>__*.sql` del directorio de migraciones del repo, extrayendo `n` con regex y ordenando como entero (`sort -n`: `V15` > `V10` > `V9`); la aplicada, de `SELECT max(version::numeric) FROM flyway_schema_history WHERE success AND version IS NOT NULL`. Deben coincidir;
+     - **tablas**: la lista esperada se genera de las migraciones (`CREATE TABLE <nombre>`, sin distinguir mayúsculas) y cada una debe existir en `information_schema.tables` del esquema `public`. Así una tabla nueva entra sola, sin mantener una lista aparte. Hoy: `app_metadata`, `orthodontic_records`, `record_unlock_events`, `refresh_tokens`, `users`;
+     - el directorio de migraciones es una variable del workflow (`MIGRATIONS_DIR`, por defecto `modules/backend/src/main/resources/db/migration`);
   4. cifrado a `<archivo>.age` y borrado del volcado sin cifrar;
   5. subida del `.age`.
 - Cualquier paso que falle corta el job antes de la subida. GitHub envía un correo cuando falla un workflow programado.
@@ -55,12 +73,16 @@
 - Primer paso: si falta `BACKUP_DATABASE_URL` o `BACKUP_AGE_RECIPIENT`, escribe "Copia omitida: falta configuración" en `$GITHUB_STEP_SUMMARY` y los demás pasos se saltan (`if:` sobre una salida del paso). El job termina en verde.
 - Nada específico del proyecto en el workflow (nombres genéricos), así sirve igual en un proyecto derivado de la plantilla.
 
-### Logs sin secretos
-- La URL va solo por variable de entorno (`PGURL`/argumento de `pg_dump` desde `env`), nunca en `run:` literal; Actions enmascara el secreto.
-- Sin `set -x`. Ninguna salida de `psql` con datos.
+### Logs, limpieza y superficie del runner
+- La URL va solo por variable de entorno (`env: DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}` en el paso del volcado, y `-e DATABASE_URL` al contenedor), nunca escrita en `run:`; Actions además enmascara el secreto. Sin `set -x`. Ninguna salida de `psql` con datos.
+- **Limpieza incondicional**: un paso final con `if: always()` borra `$RUNNER_TEMP/backup` (volcado y `.age`). El volcado sin cifrar se borra también apenas termina el cifrado. Los runners de GitHub son máquinas efímeras que se destruyen al acabar el job; la limpieza cubre igual el tiempo del job y un runner propio futuro.
+- **Superficie mínima**: el workflow solo usa `actions/checkout` y `actions/upload-artifact`, **fijadas por SHA** (con la versión en comentario), más la imagen `postgres:16` y el paquete `age` de Ubuntu. Nada más se ejecuta en ese job (sin `pnpm install`, sin scripts del repo).
+- `permissions: contents: read` (lo mínimo; subir artifacts no requiere más).
+- **Quién puede ejecutar código con el secreto**: el `schedule` y `workflow_dispatch` corren en `main`; los PRs desde forks no reciben secretos y este workflow no escucha `pull_request`. Cambiarlo exige un commit en `main`, que solo hace el responsable (PR revisado).
+- **Riesgo aceptado**: un commit malicioso en `main` podría leer el secreto o el volcado antes del cifrado. Para este proyecto (un responsable, sin colaboradores con escritura) se acepta. Si se suman colaboradores, mover el workflow a un repositorio privado aparte o a un servicio de copias.
 
 ### Riesgos operativos documentados
-- **GitHub desactiva los workflows programados de un repo público tras 60 días sin actividad** (avisa por correo antes). La guía lo indica: volver a activarlo desde la pestaña Actions o con cualquier commit.
+- **GitHub desactiva los workflows programados de un repo público tras 60 días sin actividad** (avisa por correo antes) y los `schedule` solo corren en la rama por defecto. Por eso el requisito dice "diaria **mientras el workflow esté habilitado**". La guía indica cómo detectarlo (el correo y la fecha del último artifact en la pestaña Actions, que se revisa al bajar la copia mensual) y reactivarlo (botón *Enable workflow* o `gh workflow enable db-backup.yml`). No se agrega monitoreo externo: la copia mensual manual obliga a mirar.
 - Restaurar: `gh run download` (o la pestaña Actions) → `age -d -i clave.txt` → `pg_restore` en una **rama nueva de Neon** o en una PostgreSQL local (Docker). Nunca sobre la base de producción en uso; si hay que reemplazarla, se apunta `DB_URL` de Render a la rama restaurada.
 
 ## Risks / Trade-offs

@@ -2,11 +2,14 @@
 
 ## 1. Workflow
 
-- [ ] 1.1 `.github/workflows/db-backup.yml`: `schedule` diario 08:00 UTC + `workflow_dispatch`, `permissions: contents: read`, `concurrency` sin cancelar en curso
+- [ ] 1.1 `.github/workflows/db-backup.yml`: `schedule` diario 08:00 UTC + `workflow_dispatch` (sin `pull_request`), `permissions: contents: read`, `concurrency` sin cancelar en curso; solo `actions/checkout` y `actions/upload-artifact` fijadas por SHA
 - [ ] 1.2 Paso de configuración: sin `BACKUP_DATABASE_URL` o `BACKUP_AGE_RECIPIENT` → "Copia omitida: falta configuración" en el resumen y el resto se salta, en verde
-- [ ] 1.3 Volcado con `postgres:16` (`pg_dump --format=custom --no-owner --no-acl`) a `$RUNNER_TEMP`, la URL solo por `env`
-- [ ] 1.4 Servicio `postgres:16` vacío; `pg_restore --no-owner --no-acl --exit-on-error`; comprobaciones: versión máxima aplicada de `flyway_schema_history` = último `V<n>__*.sql` del repo y tablas mínimas presentes; sin imprimir datos
-- [ ] 1.5 Cifrado con `age -r "$BACKUP_AGE_RECIPIENT"`, borrado del volcado sin cifrar, subida `db-backup-<AAAA-MM-DD>` (`retention-days: 90`) solo si todo lo anterior pasó
+- [ ] 1.3 Volcado con `postgres:16` (`pg_dump --format=custom --no-owner --no-acl`) a `$RUNNER_TEMP/backup`, la URL solo por `env` y `-e DATABASE_URL`
+- [ ] 1.4 Servicio `restore` (`postgres:16`, `POSTGRES_DB/USER/PASSWORD` efímeros, healthcheck `pg_isready`, puerto 5432) + espera con `pg_isready`; `pg_restore --no-owner --no-acl --exit-on-error`; comprobaciones sin imprimir datos:
+  - versión: `n` de `V<n>__*.sql` de `MIGRATIONS_DIR` por regex y `sort -n` contra `max(version::numeric)` con `success`;
+  - tablas: todas las de `CREATE TABLE` de las migraciones presentes en `public`;
+  - probar el script de versión con nombres `V9`, `V10`, `V15` (que gane `V15`).
+- [ ] 1.5 Cifrado con `age -r "$BACKUP_AGE_RECIPIENT"`, borrado del volcado sin cifrar, subida `db-backup-<AAAA-MM-DD>` (`retention-days: 90`) solo si todo lo anterior pasó; paso final `if: always()` que borra `$RUNNER_TEMP/backup`
 - [ ] 1.6 Nombres genéricos (sirve igual en un proyecto derivado de la plantilla); revisar que `pnpm project:apply` no necesita tocarlo
 
 ## 2. Configuración (responsable, guiado)
@@ -17,11 +20,14 @@
 
 ## 3. Verificación
 
-- [ ] 3.1 Ejecutar el workflow en la rama sin configuración → omitido en verde
-- [ ] 3.2 Ejecutarlo configurado → artifact `.age`; logs sin URL ni datos
-- [ ] 3.3 Restaurar ese artifact en una PostgreSQL local siguiendo la guía y comprobar que están las historias
+> `schedule` y `workflow_dispatch` solo se ofrecen con el workflow en la rama por defecto: la verificación se hace **después del merge a `main`**, en este orden.
+
+- [ ] 3.1 Sin configuración: ejecutarlo a mano → omitido en verde
+- [ ] 3.2 Con la variable y un secreto **inválido** (URL a un host inexistente) → rojo, sin artifact y con el paso de limpieza ejecutado
+- [ ] 3.3 Con el secreto correcto → artifact `.age`; logs sin URL ni datos
+- [ ] 3.4 Restaurar ese artifact en una PostgreSQL local siguiendo la guía y comprobar que están las historias
 
 ## 4. Docs
 
-- [ ] 4.1 `docs/deployment.md`: sección de copias (qué, dónde, retención, clave privada en dos lugares, copia mensual a disco propio, aviso de 60 días sin actividad) y guía de restauración (descargar, descifrar, restaurar en rama de Neon o local, cómo apuntar Render a la rama restaurada); quitar el aviso "van en `add-database-backups`"
+- [ ] 4.1 `docs/deployment.md`: sección de copias (qué, dónde, retención, clave privada en dos lugares, copia mensual a disco propio, 60 días sin actividad: cómo detectarlo y `gh workflow enable`) y guía de restauración (descargar, descifrar, restaurar en rama de Neon o local, cómo apuntar Render a la rama restaurada); quitar el aviso "van en `add-database-backups`"
 - [ ] 4.2 Al archivar: `docs/vision.md` ✅
