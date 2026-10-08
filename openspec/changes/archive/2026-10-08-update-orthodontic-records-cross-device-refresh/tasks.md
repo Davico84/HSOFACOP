@@ -48,4 +48,4 @@
 ## 2. Docs
 
 - [x] 2.1 `docs/frontend.md` §4.1: `useWindowReturn`, la copia de trabajo (sin refetch automático) con revisión al volver, la firma que incluye el bloqueo y la comparación por valores
-- [ ] 2.2 Al archivar: `docs/vision.md` ✅
+- [x] 2.2 Al archivar: `docs/vision.md` ✅
