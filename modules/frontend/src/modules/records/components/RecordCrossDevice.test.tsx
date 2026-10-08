@@ -132,7 +132,8 @@ describe("orthodontic-records — Actualización al volver a la historia desde o
     expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
   });
 
-  it("volver con cambios propios que chocan: los conserva, avisa y no autoguarda", async () => {
+  it("volver con cambios propios que chocan: los conserva, avisa (llevando la vista al aviso) y no autoguarda", async () => {
+    const scroll = vi.spyOn(Element.prototype, "scrollIntoView");
     const backend = await open();
     await user.clear(address());
     await user.type(address(), "Mi casa");
@@ -140,7 +141,10 @@ describe("orthodontic-records — Actualización al volver a la historia desde o
 
     await returnToTab();
 
-    expect(await screen.findByText(REMOTE_BANNER)).toBeInTheDocument();
+    const banner = await screen.findByRole("alert");
+    expect(banner).toHaveTextContent(REMOTE_BANNER);
+    expect(scroll.mock.contexts).toContain(banner);
+    expect(banner).toHaveFocus();
     expect(address().value).toBe("Mi casa");
     await advance(15_000);
     expect(backend.puts).toHaveLength(0);
