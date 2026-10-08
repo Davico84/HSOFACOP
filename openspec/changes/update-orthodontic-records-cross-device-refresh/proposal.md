@@ -4,12 +4,13 @@ El tratante llena la historia en varios dispositivos: empieza en la PC de la cl�
 
 ## What Changes
 
-- **Revisión al volver a la pestaña** del formulario de una historia existente. Cuando la pestaña vuelve a estar visible o recibe el foco, el formulario consulta la versión de la historia en el servidor:
-  - **sin cambios en el servidor**: no hace nada;
-  - **con cambios en el servidor y sin cambios locales sin guardar**: muestra los datos del servidor en el mismo paso, con un aviso discreto "Actualizada con cambios hechos en otro dispositivo";
-  - **con cambios en el servidor y cambios locales sin guardar**: muestra enseguida el aviso existente de historia cambiada (recargar o seguir editando) y pausa el autoguardado, igual que tras un `409`. Así no se sigue escribiendo sobre una versión vieja.
-- La revisión se encola con los guardados (no compite con un autoguardado en curso) y no se repite más de una vez cada 5 segundos.
-- **Sin consultas periódicas**: con la pestaña oculta o sin cambiar de ventana no se consulta nada, así la base (Neon) puede suspenderse.
+- **Revisión al volver a la pestaña** del formulario de una historia existente (pestaña visible, foco de la ventana o restauración de la página en iOS). Una sola consulta de la historia, que detecta también lo que no sube la versión: datos del paciente fijados al imprimir, solicitud o desbloqueo.
+  - **sin nada nuevo**: no hace nada;
+  - **solo cambió el bloqueo o el desbloqueo**: el paso 1 lo refleja sin tocar lo escrito;
+  - **datos nuevos y sin cambios propios**: muestra lo guardado en el otro dispositivo en el mismo paso, con el aviso "Actualizada con cambios hechos en otro dispositivo";
+  - **datos nuevos y cambios propios distintos**: los conserva, muestra el aviso de historia cambiada (con un texto propio para este caso) y pausa el autoguardado. Si los valores propios ya coinciden con el servidor (un guardado cuya respuesta se perdió), no avisa.
+- La revisión se encola con los guardados, no se repite más de una vez cada 5 segundos y no hace un segundo pedido para recargar. Un `404` muestra "Historia no encontrada"; un `401` sigue el flujo de renovación de sesión.
+- **Sin consultas periódicas**: con la pestaña oculta no se consulta nada, así la base (Neon) puede suspenderse.
 - Sin cambios de backend ni de contrato: usa la lectura de la historia que ya existe.
 
 ## Capabilities
