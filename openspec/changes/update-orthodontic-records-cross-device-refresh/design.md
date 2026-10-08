@@ -73,6 +73,7 @@
 ### Texto del aviso de historia cambiada
 `StaleRecordBanner` recibe `reason`:
 - `"save"` (tras un `409`, como hoy): "La historia cambió desde que la abriste (otra pestaña u otro usuario). Tus cambios no se guardaron."
+- Al aparecer (cualquier motivo), el aviso se desplaza a la vista (`scrollIntoView`, centrado; sin animación con `prefers-reduced-motion`) y recibe el foco: se puede estar editando al final del formulario, lejos del aviso, y sin verlo no se entiende por qué no se guarda.
 - `"remote"` (detectado al volver): "La historia cambió en otro dispositivo mientras tenías cambios sin guardar aquí. Recárgala para ver la versión actual (perderás lo escrito aquí) o sigue editando para copiarlo."
 
 ### Errores al revisar

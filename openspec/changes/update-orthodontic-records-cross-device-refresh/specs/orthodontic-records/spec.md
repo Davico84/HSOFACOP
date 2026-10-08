@@ -12,6 +12,7 @@ Cuando el usuario vuelve a una historia abierta (la pestaña vuelve a estar visi
 - **WHEN** la historia se guardó desde otro dispositivo y el usuario vuelve a la pestaña con cambios sin guardar distintos de lo guardado en el servidor
 - **THEN** sus cambios siguen en el formulario
 - **AND** aparece el aviso "La historia cambió en otro dispositivo mientras tenías cambios sin guardar aquí…" con "Recargar historia" y "Seguir editando"
+- **AND** la vista se desplaza hasta el aviso aunque el usuario estuviera más abajo en el formulario
 - **AND** el autoguardado se pausa
 
 #### Scenario: Cambios propios que ya están en el servidor
