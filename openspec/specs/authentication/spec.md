@@ -30,7 +30,7 @@ El sistema SHALL permitir crear una cuenta con nombre completo, correo y contras
 - **AND** no envía la petición al backend
 
 ### Requirement: Inicio de sesión con credenciales
-El sistema SHALL autenticar a un usuario existente por correo y contraseña cuando la cuenta no esté bloqueada temporalmente ni deshabilitada, establecer su sesión al validarlas y rechazar credenciales inválidas sin revelar cuál campo falló. Una contraseña incorrecta SHALL registrar el fallo también cuando la cuenta esté deshabilitada; una cuenta bloqueada temporalmente SHALL responder con el error genérico antes de comparar la contraseña, aunque también esté deshabilitada. Una cuenta deshabilitada SHALL rechazarse con un mensaje específico solo cuando la contraseña es correcta, sin alterar el contador de intentos fallidos.
+El sistema SHALL autenticar a un usuario existente por correo y contraseña cuando la cuenta no esté bloqueada temporalmente ni deshabilitada, establecer su sesión al validarlas y rechazar credenciales inválidas sin revelar cuál campo falló.
 
 #### Scenario: Credenciales válidas
 - **WHEN** un usuario registrado, con la cuenta activa y no bloqueada, envía su correo y contraseña correctos
@@ -42,6 +42,14 @@ El sistema SHALL autenticar a un usuario existente por correo y contraseña cuan
 - **THEN** el sistema responde `401` con el mensaje "Correo electrónico o contraseña incorrectos"
 - **AND** no establece ninguna sesión
 - **AND** si la cuenta existe (esté activa o deshabilitada), registra el intento fallido
+
+#### Scenario: Campos vacíos
+- **WHEN** un usuario intenta enviar el formulario de login con el correo o la contraseña vacíos
+- **THEN** el frontend muestra errores de validación en los campos vacíos
+- **AND** no envía la petición al backend
+
+### Requirement: Orden de las comprobaciones al iniciar sesión
+Una cuenta bloqueada temporalmente SHALL responder con el error genérico antes de comparar la contraseña, aunque también esté deshabilitada. Una contraseña incorrecta SHALL registrar el fallo también en una cuenta deshabilitada. Una cuenta deshabilitada SHALL rechazarse con un mensaje específico solo cuando la contraseña es correcta, sin alterar el contador de intentos fallidos.
 
 #### Scenario: Cuenta deshabilitada con contraseña correcta
 - **WHEN** el usuario de una cuenta deshabilitada, no bloqueada temporalmente, envía su correo y contraseña correctos
@@ -57,11 +65,6 @@ El sistema SHALL autenticar a un usuario existente por correo y contraseña cuan
 - **WHEN** la contraseña es correcta pero la cuenta se deshabilita entre la lectura inicial y el establecimiento de la sesión
 - **THEN** el sistema responde `401` sin establecer sesión
 - **AND** no modifica el contador de intentos fallidos ni el bloqueo
-
-#### Scenario: Campos vacíos
-- **WHEN** un usuario intenta enviar el formulario de login con el correo o la contraseña vacíos
-- **THEN** el frontend muestra errores de validación en los campos vacíos
-- **AND** no envía la petición al backend
 
 ### Requirement: Persistencia de sesión
 El sistema SHALL restaurar la sesión del usuario tras recargar la aplicación cuando la sesión siga vigente (token de refresco válido), y presentarse como no autenticado cuando no exista una sesión restaurable.

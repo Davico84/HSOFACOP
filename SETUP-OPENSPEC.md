@@ -2,7 +2,7 @@
 
 Repo: `D:\proyectos\drivenSpec\HS FACOP\Odontorisas`
 Paquete: **`@fission-ai/openspec`** · integra nativo con Claude Code.
-CLI de referencia en esta guía: **v1.5.0** (verifica con `openspec --version`).
+CLI de referencia en esta guía: **v1.14.1** (verifica con `openspec --version`).
 
 > **Convención de terminal.** El entorno de este repo es **Windows + PowerShell**.
 > Los bloques marcados como `powershell` son los que debes usar en tu día a día.
@@ -44,7 +44,7 @@ npm install -g @fission-ai/openspec@latest
 
 **Verificación:**
 ```powershell
-openspec --version    # debe imprimir 1.5.0 (o superior)
+openspec --version    # debe imprimir 1.14.1 (la fijada en CI)
 openspec --help       # lista de comandos disponibles
 ```
 
@@ -114,6 +114,7 @@ Los 5 slash commands que instala el init (Claude Code):
 - El delta usa `## ADDED Requirements` (o `## MODIFIED` / `## REMOVED` Requirements).
 - `change-id` en **kebab-case liderado por verbo**: `add-...`, `update-...`, `remove-...`.
 - `design.md` es **opcional**: solo cuando hay una decisión técnica real que justificar.
+- El **texto de un requirement** (entre `### Requirement:` y su primer `#### Scenario:`) mide **≤ 500 caracteres**: desde v1.14 uno más largo es aviso, y `--strict` lo vuelve error. Los ejemplos y casos borde van en los scenarios; si un requirement dice varias cosas, pártelo en varios, cada uno con sus scenarios.
 
 ### Comandos CLI útiles durante el ciclo
 ```powershell
@@ -251,7 +252,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm dlx @fission-ai/openspec@1.5.0 validate --all --strict   # en CI (no interactivo) usar --all; versión fija = la local
+      - run: pnpm dlx @fission-ai/openspec@1.14.1 validate --all --strict   # en CI (no interactivo) usar --all; versión fija = la local, nunca @latest
       - run: pnpm validate
 ```
 
@@ -297,6 +298,17 @@ context: |
 #     - Incluir siempre una sección "Non-goals"
 ```
 
+### Actualizar la versión de OpenSpec
+
+La versión se fija en dos lugares que deben coincidir: el CI (`.github/workflows/openspec.yml`) y el CLI instalado en la PC (`pnpm add -g`, compartido por todos los proyectos de esa PC). **Nunca `@latest` en CI**: una versión nueva puede sumar avisos que `--strict` convierte en error sin que cambie ninguna spec.
+
+1. Rama `chore/actualiza-openspec` desde `main`.
+2. Diagnóstico sin instalar nada: `npx -y @fission-ai/openspec@<nueva> validate --all --strict`.
+3. Corregir lo que marque **sin cambiar comportamiento**: solo redacción de requirements (acortar o partir), con los scenarios **idénticos** (mismo texto; solo pueden cambiar de requirement). Comparar el conjunto de scenarios antes y después.
+4. `npx -y @fission-ai/openspec@<nueva> update`: regenera `/opsx:*` y `.claude/skills/openspec-*`. Revisar el diff por si había cambios propios.
+5. Fijar `<nueva>` en el CI y en esta guía; validar con la versión vieja y la nueva.
+6. PR a `main`. Tras el merge: `pnpm add -g @fission-ai/openspec@<nueva>` en la PC.
+
 ---
 
 ## 8. Troubleshooting
@@ -305,6 +317,7 @@ context: |
 |---|---|---|
 | `openspec: command not found` | bin global no está en PATH | `pnpm setup`, reiniciar terminal; revisar `pnpm bin -g` |
 | `/opsx:*` no aparece en Claude Code | no elegiste **Claude Code** en el init | re-ejecuta `openspec init --tools claude` |
+| `validate --strict` falla con "Requirement text is very long" | requirement de más de 500 caracteres (v1.14+) | acórtalo o pártelo en varios requirements, repartiendo sus scenarios (§3 Reglas clave) |
 | `validate --strict` falla | requirement sin scenario o formato del delta incorrecto | cada `### Requirement:` necesita ≥1 `#### Scenario:`; el delta usa `## ADDED/MODIFIED/REMOVED Requirements` |
 | Estructura distinta a §2 | versión del CLI o plantilla distinta | compara con lo generado y ajusta esta guía; corre `openspec doctor` |
 | Change "aplicado" pero no en `specs/` | falta el archive | `/opsx:archive <change-id>` o `openspec archive <change-id>` |

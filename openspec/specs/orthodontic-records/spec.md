@@ -4,12 +4,24 @@
 Historia clínica de ortodoncia de la clínica AEO/FACOP en formato digital: el tratante la llena en un formulario de 8 pasos que sigue el PDF de la clínica (anamnesis, análisis facial, funcional, oclusal, análisis de modelos —transversal, Moyers, Nance y Bolton—, radiográfico, diagnóstico y planes, firmas), la guarda como borrador, la encuentra en un listado con búsqueda y la imprime en hojas A4 con la presentación del PDF. Un `USER` (tratante) alcanza solo sus historias; un `ADMIN` (supervisor), todas. Las notas de evolución no se registran en el sistema: se imprime su hoja en blanco para llenarla a mano.
 ## Requirements
 ### Requirement: Crear una historia clínica de ortodoncia
-El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) crear una historia clínica de ortodoncia indicando como mínimo el nombre del paciente y el número de historia que asignan los docentes, con formato `AOC-` seguido de exactamente cuatro dígitos (`AOC-0001` a `AOC-9999`). La historia SHALL quedar asociada a su autor, y el odontólogo tratante SHALL proponerse con el nombre completo del autor (editable). El número SHALL ser único entre todas las historias del sistema, de cualquier autor y cohorte (los docentes no reinician la numeración); al corregirse, el número anterior SHALL quedar libre, porque pudo ingresarse por error y pertenecer a otra historia. Quien puede editar la historia (su autor o un `ADMIN`) SHALL poder corregir el número desde el primer paso, también después de imprimirla. El número NO SHALL confundirse con el identificador técnico interno, que no cambia.
+El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) crear una historia clínica de ortodoncia indicando como mínimo el nombre del paciente y el número de historia que asignan los docentes. La historia SHALL quedar asociada a su autor, y el odontólogo tratante SHALL proponerse con el nombre completo del autor (editable).
 
 #### Scenario: Creación con el mínimo de datos
 - **WHEN** un usuario autenticado crea una historia con el nombre del paciente "Ana Quispe" y el número "AOC-0015"
 - **THEN** el sistema guarda la historia, responde `201` con su identificador y número, y la abre en el primer paso del formulario
 - **AND** el autor de la historia es ese usuario y el odontólogo tratante propuesto es su nombre completo
+
+#### Scenario: Falta el nombre del paciente
+- **WHEN** un usuario intenta crear una historia sin nombre de paciente (vacío o solo espacios)
+- **THEN** el sistema responde `400` con el error en el campo del nombre y no crea la historia
+- **AND** el formulario muestra el mensaje junto al campo
+
+#### Scenario: Sin sesión
+- **WHEN** una petición sin sesión válida intenta crear una historia
+- **THEN** el sistema responde `401` y no crea nada
+
+### Requirement: Número de historia
+El número de historia SHALL tener el formato `AOC-` seguido de exactamente cuatro dígitos (`AOC-0001` a `AOC-9999`) y SHALL ser único entre todas las historias del sistema, de cualquier autor y cohorte (los docentes no reinician la numeración). El número NO SHALL confundirse con el identificador técnico interno, que no cambia.
 
 #### Scenario: Número obligatorio
 - **WHEN** un usuario intenta crear o guardar una historia sin número (vacío o solo espacios)
@@ -29,6 +41,9 @@ El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) cre
 - **WHEN** dos usuarios crean o guardan a la vez historias con el mismo número
 - **THEN** solo una lo conserva y la otra recibe `409` (`/errors/record-number-taken`)
 
+### Requirement: Corrección del número de historia
+Quien puede editar la historia (su autor o un `ADMIN`) SHALL poder corregir el número desde el primer paso, también después de imprimirla. Al corregirse, el número anterior SHALL quedar libre, porque pudo ingresarse por error y pertenecer a otra historia.
+
 #### Scenario: El autor corrige el número después de imprimir
 - **WHEN** el autor cambia el número de una historia ya impresa a otro número válido y libre
 - **THEN** el sistema guarda el nuevo número sin cambiar el identificador técnico ni el autor
@@ -42,17 +57,8 @@ El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) cre
 - **WHEN** un `ADMIN` cambia el número de una historia de otro autor a un número válido y libre
 - **THEN** el sistema guarda el nuevo número
 
-#### Scenario: Falta el nombre del paciente
-- **WHEN** un usuario intenta crear una historia sin nombre de paciente (vacío o solo espacios)
-- **THEN** el sistema responde `400` con el error en el campo del nombre y no crea la historia
-- **AND** el formulario muestra el mensaje junto al campo
-
-#### Scenario: Sin sesión
-- **WHEN** una petición sin sesión válida intenta crear una historia
-- **THEN** el sistema responde `401` y no crea nada
-
 ### Requirement: Datos del paciente con edad calculada
-La historia SHALL registrar los datos del paciente de la página 1 del PDF: nombre, documento de identidad, sexo, lugar y fecha de nacimiento, domicilio, celular, fecha de inicio de tratamiento y odontólogo tratante. El documento SHALL indicar su tipo y un número con el formato de ese tipo: DNI (8 dígitos), Carné de extranjería (9 dígitos) o Pasaporte (6 a 12 dígitos); en todos los tipos solo se aceptan dígitos. La edad NO SHALL teclearse: el sistema SHALL calcularla en años cumplidos a la fecha de inicio de tratamiento o, si no la hay, a la fecha actual. Las fechas SHALL ser coherentes.
+La historia SHALL registrar los datos del paciente de la pág. 1 del PDF: nombre, documento, sexo, lugar y fecha de nacimiento, domicilio, celular, inicio de tratamiento y odontólogo tratante. El documento SHALL indicar su tipo y un número solo de dígitos con el largo de ese tipo: DNI (8), Carné de extranjería (9) o Pasaporte (6 a 12). La edad NO SHALL teclearse: SHALL calcularse en años cumplidos a la fecha de inicio de tratamiento o, sin ella, a la fecha actual. Las fechas SHALL ser coherentes.
 
 #### Scenario: Documento válido según su tipo
 - **WHEN** se guarda DNI `74125896`, Carné de extranjería `001234567` o Pasaporte `12345678`
@@ -87,7 +93,7 @@ La historia SHALL registrar los datos del paciente de la página 1 del PDF: nomb
 - **THEN** el sistema responde `400` con el error en la fecha de inicio y no guarda
 
 ### Requirement: Formulario por pasos con guardado de borrador
-El sistema SHALL presentar la historia como un formulario de 8 pasos en el orden del PDF (Paciente y anamnesis · Análisis facial · Análisis funcional · Análisis oclusal y extra · Análisis de modelos · Análisis radiográfico · Diagnóstico y planes · Firmas). Salvo el nombre del paciente, ningún campo SHALL ser obligatorio: la historia es un borrador que se completa en varias sesiones. Al pasar a otro paso, si hay cambios, el sistema SHALL guardarlos antes de cambiar; si el guardado falla, SHALL quedarse en el paso actual mostrando el error.
+El sistema SHALL presentar la historia como un formulario de 8 pasos en el orden del PDF (Paciente y anamnesis · Análisis facial · Análisis funcional · Análisis oclusal y extra · Análisis de modelos · Análisis radiográfico · Diagnóstico y planes · Firmas). Salvo el nombre del paciente, ningún campo SHALL ser obligatorio: es un borrador. Al pasar a otro paso con cambios, SHALL guardarlos antes; si el guardado falla, SHALL quedarse en el paso mostrando el error.
 
 #### Scenario: Avanzar guarda los cambios
 - **WHEN** el usuario edita campos del paso 2 y pulsa "Siguiente"
@@ -119,7 +125,7 @@ El sistema SHALL presentar la historia como un formulario de 8 pasos en el orden
 - **THEN** se abre el paso 5 "Análisis de modelos", y el análisis radiográfico pasa a ser el paso 6
 
 ### Requirement: Secciones clínicas de la fase 1
-El formulario SHALL cubrir los campos de las páginas 1–4 y 10–13 del PDF. Donde el PDF ofrece opciones sobre líneas ("Mesofacial ___ Dolicofacial ___"), el sistema SHALL usar selección única, salvo en las listas donde puede marcarse más de una (hábitos de succión del análisis funcional), que SHALL ser selección múltiple; donde el PDF deja líneas para escribir, SHALL ofrecer texto libre. Los campos condicionados SHALL mostrarse solo cuando aplican, y SHALL descartarse al guardar si su condición deja de cumplirse. Los valores numéricos SHALL respetar su unidad y rango.
+El formulario SHALL cubrir los campos de las págs. 1–4 y 10–13 del PDF. Donde el PDF ofrece opciones sobre líneas, SHALL usar selección única, salvo en las listas que admiten más de una (hábitos de succión del análisis funcional), con selección múltiple; donde deja líneas para escribir, texto libre. Los campos condicionados SHALL mostrarse solo cuando aplican y descartarse al guardar si su condición deja de cumplirse. Los valores numéricos SHALL respetar su unidad y rango.
 
 #### Scenario: Selección única
 - **WHEN** el usuario marca "Dolicofacial" en Tipo facial y luego "Braquifacial"
@@ -317,7 +323,7 @@ El sistema SHALL detectar que una historia cambió desde que el usuario la carg�
 - **AND** el formulario avisa que la historia cambió y ofrece recargarla (descartando lo propio) o seguir editando para copiar lo escrito
 
 ### Requirement: Impresión con presentación del PDF
-El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce los títulos, el orden y los logos ARO/FACOP del PDF original, para imprimir o guardar como PDF desde el navegador. Los datos escritos en el sistema SHALL imprimirse como texto, sin las líneas del PDF (eran para llenar a mano); los campos de opciones SHALL listar todas las opciones con la elegida marcada; un campo de texto vacío NO SHALL imprimir líneas en blanco; cada sección SHALL empezar en página nueva como en el PDF; solo la fecha y las firmas (que se llenan sobre el papel) y los datos del paciente de la hoja 1 (PACIENTE a Celular, que conservan la forma del PDF) SHALL llevar su línea. La interfaz de la aplicación (menú, cabecera, botones) NO SHALL imprimirse.
+El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce los títulos, el orden y los logos ARO/FACOP del PDF original, para imprimir o guardar como PDF desde el navegador; cada sección SHALL empezar en página nueva como en el PDF. La interfaz de la aplicación (menú, cabecera, botones) NO SHALL imprimirse.
 
 #### Scenario: Imprimir una historia completa
 - **WHEN** el usuario pulsa "Vista previa" en una historia
@@ -325,6 +331,21 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 - **AND** el diálogo de impresión del navegador se abre solo al pulsar "Imprimir" en esa vista
 - **AND** "Volver" regresa a donde se abrió: el listado con su búsqueda y página, o el paso del formulario
 - **AND** cada página lleva el logo ARO/FACOP y la cabecera "HISTORIA CLÍNICA ORTODONCIA Nro. <número>"
+
+#### Scenario: Historia a medio llenar
+- **WHEN** se imprime una historia con campos vacíos
+- **THEN** esos campos salen sin texto ni líneas (salvo los textos de la anamnesis, que salen "No refiere") y las opciones sin marcar, sin textos como "null" o "undefined"
+
+#### Scenario: Hoja de notas de evolución para llenar a mano
+- **WHEN** se imprime una historia
+- **THEN** después de la hoja de firmas sale la hoja "Notas de evolución" en blanco, como la pág. 14 del PDF: "Tratante encargado:" y una tabla Fecha / Trabajo realizado / Firma de docente con 37 renglones vacíos para llenar a mano
+
+#### Scenario: Sin acceso a la historia
+- **WHEN** un `USER` abre la vista de impresión de una historia ajena
+- **THEN** ve "Historia no encontrada" y no se imprime contenido
+
+### Requirement: Datos en la hoja impresa
+Los datos escritos SHALL imprimirse como texto, sin las líneas del PDF (eran para llenar a mano); los campos de opciones SHALL listar todas las opciones con la elegida marcada; un texto vacío NO SHALL imprimir líneas en blanco. Solo la fecha y las firmas (que se llenan sobre el papel) y los datos del paciente de la hoja 1 (PACIENTE a Celular, que conservan la forma del PDF) SHALL llevar su línea.
 
 #### Scenario: Opciones de una pregunta en la hoja impresa
 - **WHEN** una pregunta termina en ":" (p. ej. "3. PROPORCIÓN DE LOS TERCIOS FACIALES:")
@@ -340,10 +361,6 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 - **WHEN** se imprime una historia con Tipo facial "Mesofacial"
 - **THEN** la línea muestra "☒ Mesofacial ☐ Dolicofacial ☐ Braquifacial"
 
-#### Scenario: Historia a medio llenar
-- **WHEN** se imprime una historia con campos vacíos
-- **THEN** esos campos salen sin texto ni líneas (salvo los textos de la anamnesis, que salen "No refiere") y las opciones sin marcar, sin textos como "null" o "undefined"
-
 #### Scenario: Datos escritos sin líneas de llenado a mano
 - **WHEN** se imprime una historia con diagnóstico general y lista de problemas escritos
 - **THEN** esos datos salen como texto sin subrayado ni renglones debajo
@@ -353,29 +370,8 @@ El sistema SHALL ofrecer una vista de impresión A4 de la historia que reproduce
 - **WHEN** un campo de texto libre ocupa más de lo que el PDF reserva
 - **THEN** el texto se imprime completo continuando en la página siguiente, sin cortarse ni solaparse
 
-#### Scenario: Hoja de notas de evolución para llenar a mano
-- **WHEN** se imprime una historia
-- **THEN** después de la hoja de firmas sale la hoja "Notas de evolución" en blanco, como la pág. 14 del PDF: "Tratante encargado:" y una tabla Fecha / Trabajo realizado / Firma de docente con 37 renglones vacíos para llenar a mano
-
-#### Scenario: Sin acceso a la historia
-- **WHEN** un `USER` abre la vista de impresión de una historia ajena
-- **THEN** ve "Historia no encontrada" y no se imprime contenido
-
 ### Requirement: Análisis transversal de los modelos
-El sistema SHALL registrar el análisis transversal de los modelos de la pág. 5 del PDF: AIS, AII, AMS y AMI; ancho del borde WALA, ancho X Pc, ancho X´ Pc y ancho X ideal; distancias WALA–EV de canino, 1er y 2do premolar, 1er y 2do molar inferiores; e interpretación. Las medidas SHALL estar en milímetros, entre 0 y 99,9, con a lo sumo un decimal. Paciente, edad y sexo SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión, la diferencia del AMS y del AMI con el promedio intermolar según el sexo del paciente (maxilar: 54,0 mm hombres / 52,4 mm mujeres; mandibular: 47,2 / 46,1 mm) y la diferencia de cada distancia WALA–EV con su norma (canino 0,6; 1er premolar 0,8; 2do premolar 1,3; 1er molar 2,0; 2do molar 2,2 mm).
-
-#### Scenario: Diferencia con el promedio según el sexo
-- **WHEN** la paciente es de sexo femenino y se registra AMS 50,1 mm y AMI 45,8 mm
-- **THEN** se muestra e imprime "promedio 52,4 mm · −2,3" para el AMS y "promedio 46,1 mm · −0,3" para el AMI
-
-#### Scenario: Sin sexo indicado
-- **WHEN** el paciente no tiene sexo indicado
-- **THEN** no se calcula la diferencia del AMS ni del AMI y se muestran los dos promedios como referencia
-
-#### Scenario: Diferencia de las distancias WALA–EV
-- **WHEN** se registra la distancia WALA–EV del 1er molar inferior en 2,6 mm
-- **THEN** se muestra e imprime la norma 2,0 mm y la diferencia "+0,6"
-- **AND** una distancia sin valor no muestra diferencia
+El sistema SHALL registrar el análisis transversal de los modelos de la pág. 5 del PDF: AIS, AII, AMS y AMI; ancho del borde WALA, ancho X Pc, ancho X´ Pc y ancho X ideal; distancias WALA–EV de canino, 1er y 2do premolar, 1er y 2do molar inferiores; e interpretación. Las medidas SHALL estar en milímetros, entre 0 y 99,9, con a lo sumo un decimal. Paciente, edad y sexo SHALL tomarse de la historia.
 
 #### Scenario: Ancho X ideal escrito a mano
 - **WHEN** el usuario escribe el ancho X ideal
@@ -393,8 +389,54 @@ El sistema SHALL registrar el análisis transversal de los modelos de la pág. 5
 - **WHEN** se imprime una historia
 - **THEN** después de la hoja del análisis oclusal sale "ANÁLISIS DE MODELOS · Análisis Transversal de los Modelos" con paciente, edad y sexo, las medidas, las diferencias calculadas, el texto de referencia de los promedios y la interpretación
 
+### Requirement: Cálculos del análisis transversal
+El sistema SHALL calcular, en pantalla y en la impresión, la diferencia del AMS y del AMI con el promedio intermolar según el sexo del paciente (maxilar: 54,0 mm hombres / 52,4 mm mujeres; mandibular: 47,2 / 46,1 mm) y la diferencia de cada distancia WALA–EV con su norma (canino 0,6; 1er premolar 0,8; 2do premolar 1,3; 1er molar 2,0; 2do molar 2,2 mm).
+
+#### Scenario: Diferencia con el promedio según el sexo
+- **WHEN** la paciente es de sexo femenino y se registra AMS 50,1 mm y AMI 45,8 mm
+- **THEN** se muestra e imprime "promedio 52,4 mm · −2,3" para el AMS y "promedio 46,1 mm · −0,3" para el AMI
+
+#### Scenario: Sin sexo indicado
+- **WHEN** el paciente no tiene sexo indicado
+- **THEN** no se calcula la diferencia del AMS ni del AMI y se muestran los dos promedios como referencia
+
+#### Scenario: Diferencia de las distancias WALA–EV
+- **WHEN** se registra la distancia WALA–EV del 1er molar inferior en 2,6 mm
+- **THEN** se muestra e imprime la norma 2,0 mm y la diferencia "+0,6"
+- **AND** una distancia sin valor no muestra diferencia
+
 ### Requirement: Análisis de Moyers
-El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de 42, 41, 31 y 32, espacio disponible de mandíbula y maxilar por lado (derecho e izquierdo), predisposición de apiñamiento dental (un texto por fila: Positivo, Nulo y Negativo, escrito por el odontólogo) e interpretación. Las medidas SHALL estar en milímetros con a lo sumo un decimal: los anchos de 42, 41, 31 y 32 entre 4,0 y 13,0 (el ancho real de una pieza) y los espacios disponibles entre 0 y 99,9. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión: la suma de los cuatro incisivos; el espacio requerido de cada arcada con la tabla de Moyers al 75 % a partir de la suma redondeada al 0,5 mm más cercano (igual para ambos lados); y la diferencia disponible − requerido por arcada y lado. La predisposición de apiñamiento SHALL NOT calcularse.
+El sistema SHALL registrar la ficha del análisis de Moyers de la pág. 6 del PDF en el paso "Análisis de modelos": fecha del análisis, ancho mesiodistal de 42, 41, 31 y 32, espacio disponible de mandíbula y maxilar por lado (derecho e izquierdo), predisposición de apiñamiento dental (un texto por fila: Positivo, Nulo y Negativo, escrito por el odontólogo, que SHALL NOT calcularse) e interpretación. Nombre y edad SHALL tomarse de la historia.
+
+#### Scenario: Predisposición de apiñamiento escrita por el odontólogo
+- **WHEN** el odontólogo escribe en la fila Negativo "Mandíbula derecho" y deja vacías Positivo y Nulo
+- **THEN** se guarda e imprime tal cual en la Tabla 2, sin completarse a partir de las diferencias
+
+#### Scenario: Historias guardadas antes del cambio
+- **WHEN** se abre una historia guardada antes de existir el análisis de Moyers
+- **THEN** el bloque aparece vacío y la historia se guarda sin errores
+
+#### Scenario: Hoja impresa de Moyers
+- **WHEN** se imprime una historia
+- **THEN** después de la hoja del análisis transversal sale "FICHA PARA EL ANÁLISIS DE MOYERS" con nombre, edad y fecha, la ficha con incisivos, suma, disponible, requerido y diferencia, la tabla de predisposición de apiñamiento con lo escrito y la interpretación
+
+### Requirement: Datos del análisis de Moyers
+La fecha del análisis SHALL escribirla el tratante: puede ser anterior al inicio del tratamiento, pero no futura. Las medidas SHALL estar en milímetros con a lo sumo un decimal: los anchos de 42, 41, 31 y 32 entre 4,0 y 13,0 (el ancho real de una pieza) y los espacios disponibles entre 0 y 99,9.
+
+#### Scenario: Fecha anterior al tratamiento
+- **WHEN** la fecha del análisis es anterior a la fecha de inicio de tratamiento
+- **THEN** la historia se guarda sin errores
+
+#### Scenario: Datos fuera de rango
+- **WHEN** se guarda un ancho de incisivo menor que 4,0 mm o mayor que 13,0 mm, un espacio disponible negativo o de 100 mm o más, una medida con dos decimales, o una fecha futura
+- **THEN** el sistema responde `400` con el error en ese campo y no guarda
+
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
+
+### Requirement: Cálculos del análisis de Moyers
+El sistema SHALL calcular, en pantalla y en la impresión: la suma de los cuatro incisivos; el espacio requerido de cada arcada con la tabla de Moyers al 75 % a partir de la suma redondeada al 0,5 mm más cercano (igual para ambos lados); y la diferencia disponible − requerido por arcada y lado.
 
 #### Scenario: Suma y espacio requerido
 - **WHEN** se registran 42 = 6,0, 41 = 5,5, 31 = 5,4 y 32 = 6,1 mm
@@ -412,52 +454,12 @@ El sistema SHALL registrar la ficha para el análisis de Moyers de la pág. 6 de
 - **WHEN** con requerido mandibular 22,2 y maxilar 22,6 se registra disponible mandíbula derecho 21,0, mandíbula izquierdo 22,6, maxilar derecho 23,5 y maxilar izquierdo 22,6
 - **THEN** las diferencias son −1,2, +0,4, +0,9 y 0,0
 
-#### Scenario: Predisposición de apiñamiento escrita por el odontólogo
-- **WHEN** el odontólogo escribe en la fila Negativo "Mandíbula derecho" y deja vacías Positivo y Nulo
-- **THEN** se guarda e imprime tal cual en la Tabla 2, sin completarse a partir de las diferencias
-
-#### Scenario: Fecha anterior al tratamiento
-- **WHEN** la fecha del análisis es anterior a la fecha de inicio de tratamiento
-- **THEN** la historia se guarda sin errores
-
-#### Scenario: Datos fuera de rango
-- **WHEN** se guarda un ancho de incisivo menor que 4,0 mm o mayor que 13,0 mm, un espacio disponible negativo o de 100 mm o más, una medida con dos decimales, o una fecha futura
-- **THEN** el sistema responde `400` con el error en ese campo y no guarda
-
-#### Scenario: Historias guardadas antes del cambio
-- **WHEN** se abre una historia guardada antes de existir el análisis de Moyers
-- **THEN** el bloque aparece vacío y la historia se guarda sin errores
-
-#### Scenario: Hoja impresa de Moyers
-- **WHEN** se imprime una historia
-- **THEN** después de la hoja del análisis transversal sale "FICHA PARA EL ANÁLISIS DE MOYERS" con nombre, edad y fecha, la ficha con incisivos, suma, disponible, requerido y diferencia, la tabla de predisposición de apiñamiento con lo escrito y la interpretación
-
-#### Scenario: Flechas de un ancho de pieza
-- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
-- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
-
 ### Requirement: Análisis de Nance
-El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia óseo dentaria) de la pág. 7 del PDF en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), espacio disponible (SA) superior e inferior, ancho mesiodistal de las piezas 15 a 25 y 45 a 35, conclusión superior e inferior (escritas por el odontólogo) e interpretación. Las medidas SHALL estar en milímetros con a lo sumo un decimal: los anchos de las piezas entre 4,0 y 13,0 y el SA entre 0 y 99,9. Nombre y edad SHALL tomarse de la historia. El sistema SHALL calcular, en pantalla y en la impresión, el espacio requerido (ST) de cada arcada como la suma de sus 10 piezas y la discrepancia SA − ST, y SHALL mostrar un dibujo de la arcada superior que indica las piezas que se miden. La conclusión SHALL NOT calcularse.
-
-#### Scenario: Espacio requerido y discrepancia
-- **WHEN** se registran las 10 piezas superiores con un total de 73,9 mm y SA superior 70,5 mm
-- **THEN** el ST superior es 73,9 mm y la discrepancia superior es −3,4 mm
-
-#### Scenario: Falta una pieza
-- **WHEN** falta el ancho de alguna de las 10 piezas de una arcada
-- **THEN** el ST y la discrepancia de esa arcada quedan vacíos y se avisa que faltan piezas por medir
+El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia óseo dentaria) de la pág. 7 del PDF en el paso "Análisis de modelos": fecha del análisis, espacio disponible (SA) superior e inferior, ancho mesiodistal de las piezas 15 a 25 y 45 a 35, conclusión superior e inferior (escritas por el odontólogo, que SHALL NOT calcularse) e interpretación. Nombre y edad SHALL tomarse de la historia.
 
 #### Scenario: Conclusión escrita por el odontólogo
 - **WHEN** el odontólogo escribe la conclusión superior "Falta de espacio leve" y deja vacía la inferior
 - **THEN** se guarda e imprime tal cual, sin completarse a partir de la discrepancia
-
-#### Scenario: Datos fuera de rango
-- **WHEN** se guarda un ancho de pieza menor que 4,0 mm o mayor que 13,0 mm, un SA negativo o de 100 mm o más, una medida con dos decimales, o una fecha futura
-- **THEN** el sistema responde `400` con el error en ese campo y no guarda
-
-#### Scenario: Flechas de un ancho de pieza
-- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
-- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
 
 #### Scenario: Historias guardadas antes del cambio
 - **WHEN** se abre una historia guardada antes de existir el análisis de Nance
@@ -468,21 +470,50 @@ El sistema SHALL registrar la ficha del análisis de Nance & Carey (discrepancia
 - **THEN** después de la hoja de Moyers sale "ANÁLISIS DE NANCE · DISCREPANCIA ÓSEO DENTARIA" con nombre, edad y fecha, SA y ST por arcada, el dibujo de la arcada, los anchos de cada pieza con su total, la tabla con discrepancia y conclusión, y la interpretación
 - **AND** la pág. 8 del PDF (en blanco) no se imprime
 
+### Requirement: Datos del análisis de Nance
+La fecha del análisis SHALL escribirla el tratante: puede ser anterior al inicio del tratamiento, pero no futura. Las medidas SHALL estar en milímetros con a lo sumo un decimal: los anchos de las piezas entre 4,0 y 13,0 y el SA entre 0 y 99,9.
+
+#### Scenario: Datos fuera de rango
+- **WHEN** se guarda un ancho de pieza menor que 4,0 mm o mayor que 13,0 mm, un SA negativo o de 100 mm o más, una medida con dos decimales, o una fecha futura
+- **THEN** el sistema responde `400` con el error en ese campo y no guarda
+
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
+
+### Requirement: Cálculos del análisis de Nance
+El sistema SHALL calcular, en pantalla y en la impresión, el espacio requerido (ST) de cada arcada como la suma de sus 10 piezas y la discrepancia SA − ST, y SHALL mostrar un dibujo de la arcada superior que indica las piezas que se miden.
+
+#### Scenario: Espacio requerido y discrepancia
+- **WHEN** se registran las 10 piezas superiores con un total de 73,9 mm y SA superior 70,5 mm
+- **THEN** el ST superior es 73,9 mm y la discrepancia superior es −3,4 mm
+
+#### Scenario: Falta una pieza
+- **WHEN** falta el ancho de alguna de las 10 piezas de una arcada
+- **THEN** el ST y la discrepancia de esa arcada quedan vacíos y se avisa que faltan piezas por medir
+
 ### Requirement: Análisis de Bolton
-El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en español, en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante, puede ser anterior al inicio del tratamiento y no puede ser futura), ancho mesiodistal de los incisivos 12, 11, 21, 22, 42, 41, 31 y 32 y de los primeros molares 16, 26, 46 y 36, e interpretación. Los anchos de los caninos y premolares (13, 14, 15, 23, 24, 25, 33, 34, 35, 43, 44 y 45) SHALL ser los mismos del análisis de Nance (un solo dato, editable desde cualquiera de los dos análisis); los incisivos y los primeros molares SHALL ser propios de Bolton. Los anchos SHALL estar entre 4,0 y 13,0 mm, con a lo sumo un decimal. El sistema SHALL calcular, en pantalla y en la impresión, la relación total (12 piezas por arcada; media 91,3 %, rango 87,5–94,8) y la relación anterior (6 piezas; media 77,2 %, rango 74,5–80,4): las sumas, la relación (suma mandibular ÷ suma maxilar × 100), si está dentro del rango y, según quede sobre o bajo la media, el real, el ideal y la diferencia de la arcada mandibular o de la maxilar. La fórmula SHALL mostrarse como fracción, con la suma mandibular sobre la línea y la maxilar debajo.
+El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en español, en el paso "Análisis de modelos": fecha del análisis (escrita por el tratante; puede ser anterior al inicio del tratamiento, pero no futura), ancho mesiodistal de los incisivos 12, 11, 21, 22, 42, 41, 31 y 32 y de los primeros molares 16, 26, 46 y 36, e interpretación. Los anchos SHALL estar entre 4,0 y 13,0 mm, con a lo sumo un decimal.
 
-#### Scenario: Relación total con exceso mandibular
-- **WHEN** la suma de los 12 superiores es 94,2 mm y la de los 12 inferiores 87,5 mm
-- **THEN** la relación total es 92,9 %, dentro del rango, y del lado "sobre 91,3 %" se muestra real mandibular 87,5, ideal mandibular 86,0 y diferencia +1,5 mm
-- **AND** el lado "bajo 91,3 %" queda vacío
+#### Scenario: Datos fuera de rango
+- **WHEN** se guarda un ancho menor que 4,0 mm o mayor que 13,0 mm, con dos decimales, o una fecha futura
+- **THEN** el sistema responde `400` con el error en ese campo y no guarda
 
-#### Scenario: Relación anterior con exceso maxilar
-- **WHEN** la suma de los 6 superiores anteriores es 48,0 mm y la de los 6 inferiores 36,0 mm
-- **THEN** la relación anterior es 75,0 %, dentro del rango, y del lado "bajo 77,2 %" se muestra real maxilar 48,0, ideal maxilar 46,6 y diferencia +1,4 mm
+#### Scenario: Flechas de un ancho de pieza
+- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
+- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
 
-#### Scenario: Fuera del rango
-- **WHEN** la relación total es 96,0 %
-- **THEN** se indica que está fuera del rango 87,5–94,8
+#### Scenario: Ancho guardado fuera de rango
+- **WHEN** se abre una historia que tiene guardado un ancho fuera de 4,0–13,0 mm (de antes de este cambio)
+- **THEN** la historia se abre y muestra el valor sin error
+- **AND** al intentar guardar, el error aparece junto a ese campo y no se guarda hasta corregirlo
+
+#### Scenario: Hoja impresa de Bolton
+- **WHEN** se imprime una historia
+- **THEN** después de la hoja de Nance sale "ANÁLISIS DE BOLTON" con fecha, los anchos de las 24 piezas, la relación total y la anterior con su fórmula, sus resultados y la interpretación
+
+### Requirement: Piezas compartidas entre Bolton y Nance
+Los anchos de caninos y premolares (13, 14, 15, 23, 24, 25, 33, 34, 35, 43, 44 y 45) SHALL ser los mismos del análisis de Nance (un solo dato, editable desde cualquiera de los dos análisis); los incisivos y los primeros molares SHALL ser propios de Bolton.
 
 #### Scenario: Caninos y premolares compartidos con Nance
 - **WHEN** el usuario escribe el ancho de la pieza 13 en el análisis de Nance
@@ -500,23 +531,6 @@ El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en espa
 - **WHEN** el usuario abre el análisis de Bolton
 - **THEN** solo los caninos y premolares aparecen sombreados y el aviso dice que se comparten con Nance y que los incisivos y los primeros molares corresponden exclusivamente a Bolton
 
-#### Scenario: Falta una pieza
-- **WHEN** falta el ancho de alguna pieza de una suma
-- **THEN** esa suma, su relación y sus resultados quedan vacíos
-
-#### Scenario: Datos fuera de rango
-- **WHEN** se guarda un ancho menor que 4,0 mm o mayor que 13,0 mm, con dos decimales, o una fecha futura
-- **THEN** el sistema responde `400` con el error en ese campo y no guarda
-
-#### Scenario: Flechas de un ancho de pieza
-- **WHEN** el campo del ancho de una pieza está vacío y el usuario pulsa la flecha de subir
-- **THEN** el valor pasa a 4,0 mm, y las flechas no lo llevan por debajo de 4,0 ni por encima de 13,0
-
-#### Scenario: Ancho guardado fuera de rango
-- **WHEN** se abre una historia que tiene guardado un ancho fuera de 4,0–13,0 mm (de antes de este cambio)
-- **THEN** la historia se abre y muestra el valor sin error
-- **AND** al intentar guardar, el error aparece junto a ese campo y no se guarda hasta corregirlo
-
 #### Scenario: Historias con incisivos en Nance guardadas antes del cambio
 - **WHEN** se abre una historia guardada antes de este cambio que tenía incisivos registrados en Nance
 - **THEN** Bolton muestra esos mismos valores como incisivos propios (los copió la migración), y Nance conserva los suyos
@@ -525,9 +539,25 @@ El sistema SHALL registrar el análisis de Bolton de la pág. 9 del PDF, en espa
 - **WHEN** se abre una historia guardada antes de este cambio sin incisivos en Nance
 - **THEN** los incisivos de Bolton aparecen vacíos y la historia se guarda sin errores
 
-#### Scenario: Hoja impresa de Bolton
-- **WHEN** se imprime una historia
-- **THEN** después de la hoja de Nance sale "ANÁLISIS DE BOLTON" con fecha, los anchos de las 24 piezas, la relación total y la anterior con su fórmula, sus resultados y la interpretación
+### Requirement: Cálculos del análisis de Bolton
+El sistema SHALL calcular, en pantalla y en la impresión, la relación total (12 piezas por arcada; media 91,3 %, rango 87,5–94,8) y la anterior (6 piezas; media 77,2 %, rango 74,5–80,4): las sumas, la relación (suma mandibular ÷ suma maxilar × 100), si está dentro del rango y, según quede sobre o bajo la media, el real, el ideal y la diferencia de la arcada mandibular o de la maxilar. La fórmula SHALL mostrarse como fracción, con la suma mandibular sobre la línea y la maxilar debajo.
+
+#### Scenario: Relación total con exceso mandibular
+- **WHEN** la suma de los 12 superiores es 94,2 mm y la de los 12 inferiores 87,5 mm
+- **THEN** la relación total es 92,9 %, dentro del rango, y del lado "sobre 91,3 %" se muestra real mandibular 87,5, ideal mandibular 86,0 y diferencia +1,5 mm
+- **AND** el lado "bajo 91,3 %" queda vacío
+
+#### Scenario: Relación anterior con exceso maxilar
+- **WHEN** la suma de los 6 superiores anteriores es 48,0 mm y la de los 6 inferiores 36,0 mm
+- **THEN** la relación anterior es 75,0 %, dentro del rango, y del lado "bajo 77,2 %" se muestra real maxilar 48,0, ideal maxilar 46,6 y diferencia +1,4 mm
+
+#### Scenario: Fuera del rango
+- **WHEN** la relación total es 96,0 %
+- **THEN** se indica que está fuera del rango 87,5–94,8
+
+#### Scenario: Falta una pieza
+- **WHEN** falta el ancho de alguna pieza de una suma
+- **THEN** esa suma, su relación y sus resultados quedan vacíos
 
 ### Requirement: Uso en celular y tablet
 El módulo de historia clínica (listado, formulario de 8 pasos y vista previa) SHALL poder usarse desde 375 px de ancho sin desplazamiento horizontal de la página. Las acciones de cada historia y del formulario SHALL quedar visibles sin desplazarse de lado. Las tablas que no caben en el ancho SHALL desplazarse dentro de su propia caja, con un indicador visual de que hay más contenido. La hoja impresa SHALL NOT cambiar.
@@ -567,7 +597,7 @@ El módulo de historia clínica (listado, formulario de 8 pasos y vista previa) 
 - **THEN** "Anterior", "Guardar" y "Siguiente" caben en una sola fila, y "Anterior" y "Siguiente" conservan su nombre para el lector de pantalla
 
 ### Requirement: Navegación entre pasos con estado y progreso
-El formulario de la historia SHALL mostrar la lista de sus 8 pasos con el estado de cada uno y el progreso general. El estado de un paso SHALL ser, por prioridad: "con errores" si algún campo del paso es inválido (por la validación del formulario o por un error del servidor marcado en un campo), "con datos" si tiene algún dato registrado, y "vacío" en otro caso. Cada estado SHALL mostrarse con un ícono propio y no solo con el color, y anunciarse al lector de pantalla. El progreso SHALL indicar cuántos de los 8 pasos tienen datos. En pantallas de 1024 px o más la lista SHALL ir en una columna lateral junto al formulario; en pantallas más angostas, en un panel que se abre desde el encabezado del paso. Elegir un paso SHALL seguir guardando antes los cambios, como cualquier cambio de paso.
+El formulario de la historia SHALL mostrar la lista de sus 8 pasos con el estado de cada uno y el progreso general (cuántos de los 8 tienen datos). El estado de un paso SHALL ser, por prioridad: "con errores" si algún campo es inválido (por la validación del formulario o por un error del servidor marcado en un campo), "con datos" si tiene algún dato, y "vacío" en otro caso. Cada estado SHALL mostrarse con un ícono propio, no solo con el color, y anunciarse al lector de pantalla.
 
 #### Scenario: Estado de cada paso
 - **WHEN** el usuario abre una historia con datos en los pasos 1, 2 y 4 y sin datos en los demás
@@ -582,6 +612,13 @@ El formulario de la historia SHALL mostrar la lista de sus 8 pasos con el estado
 - **WHEN** el usuario escribe el primer dato de un paso vacío
 - **THEN** ese paso pasa a "con datos" y el progreso aumenta en uno, sin guardar todavía
 
+#### Scenario: Estado accesible
+- **WHEN** el lector de pantalla recorre la lista de pasos
+- **THEN** cada paso se anuncia con su número, su título y su estado ("con datos", "vacío" o "con errores"), y el paso actual como paso actual
+
+### Requirement: Ubicación de la lista de pasos
+En pantallas de 1024 px o más la lista de pasos SHALL ir en una columna lateral junto al formulario; en las más angostas, en un panel que se abre desde el encabezado del paso. Elegir un paso SHALL guardar antes los cambios, como cualquier cambio de paso.
+
 #### Scenario: Columna lateral en escritorio
 - **WHEN** el usuario abre un paso en una pantalla de 1024 px o más
 - **THEN** a la izquierda del formulario se ven los 8 pasos con su número, título, página del PDF y estado, el paso actual resaltado y la barra de progreso
@@ -589,10 +626,6 @@ El formulario de la historia SHALL mostrar la lista de sus 8 pasos con el estado
 #### Scenario: Panel de pasos en celular
 - **WHEN** el usuario, en una pantalla de menos de 1024 px, pulsa "Pasos" en el encabezado y elige otro paso
 - **THEN** se abre un panel con los 8 pasos, sus estados y el progreso; al elegir el paso, el panel se cierra y se abre ese paso (guardando antes si hay cambios)
-
-#### Scenario: Estado accesible
-- **WHEN** el lector de pantalla recorre la lista de pasos
-- **THEN** cada paso se anuncia con su número, su título y su estado ("con datos", "vacío" o "con errores"), y el paso actual como paso actual
 
 #### Scenario: Pasos deshabilitados en historia nueva
 - **WHEN** el usuario está creando una historia que todavía no se guardó
@@ -607,7 +640,7 @@ El formulario de la historia SHALL mostrar la lista de sus 8 pasos con el estado
 - **THEN** el panel se cierra, no cambia de paso, el foco va al campo inválido y un aviso pide corregir los campos marcados
 
 ### Requirement: Límite de historias por tratante
-Al crear una historia clínica, si el autor es un `USER` con cupo y ya creó tantas historias como su cupo, el sistema SHALL rechazar la creación con `409` y el mensaje "Alcanzaste el máximo de N historias clínicas. Comunícate con el administrador para solicitar más.", sin crear nada. La verificación SHALL hacerse de forma que dos creaciones simultáneas no superen el cupo. Editar, imprimir y buscar las historias existentes SHALL seguir igual. Un `ADMIN` no tiene cupo. En el listado, el tratante con cupo SHALL ver cuántas historias usó de su cupo ("N de M historias"), y, si llegó al tope, "Nueva historia" SHALL estar deshabilitado con el aviso visible.
+Al crear una historia, si el autor es un `USER` con cupo y ya creó tantas historias como su cupo, el sistema SHALL rechazarla con `409` y el mensaje "Alcanzaste el máximo de N historias clínicas. Comunícate con el administrador para solicitar más.", sin crear nada, también ante dos creaciones simultáneas. Editar, imprimir y buscar las existentes SHALL seguir igual. Un `ADMIN` no tiene cupo.
 
 #### Scenario: Crear dentro del cupo
 - **WHEN** un `USER` con cupo 5 y 4 historias crea una historia
@@ -621,18 +654,9 @@ Al crear una historia clínica, si el autor es un `USER` con cupo y ya creó tan
 - **WHEN** un tratante recién registrado (cupo inicial 1) crea su primera historia e intenta crear otra
 - **THEN** la primera se crea, el listado muestra "1 de 1 historias" y la segunda recibe `409` con "Alcanzaste el máximo de 1 historia clínica. Comunícate con el administrador para solicitar más."
 
-#### Scenario: Botón deshabilitado al llegar al tope
-- **WHEN** un `USER` con el cupo lleno abre el listado de historias
-- **THEN** "Nueva historia" está deshabilitado y se ve el aviso "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más."
-
 #### Scenario: Cupo cero sin historias
 - **WHEN** un `USER` con cupo 0 y ninguna historia abre el listado
 - **THEN** el estado vacío muestra "Nueva historia" deshabilitado con el aviso de que alcanzó el máximo
-
-#### Scenario: Abrir el formulario nuevo con el cupo lleno
-- **WHEN** un `USER` con el cupo lleno abre directamente la pantalla de nueva historia
-- **THEN** ve el aviso desde el inicio y "Crear historia" está deshabilitado
-- **AND** si el servidor rechaza una creación por cupo, el formulario muestra el aviso y no navega
 
 #### Scenario: Editar con el cupo lleno
 - **WHEN** un `USER` con el cupo lleno edita, guarda o imprime una de sus historias
@@ -650,8 +674,20 @@ Al crear una historia clínica, si el autor es un `USER` con cupo y ya creó tan
 - **WHEN** un `ADMIN` crea historias
 - **THEN** nunca se le aplica un límite
 
+### Requirement: Cupo visible en el listado
+En el listado, el tratante con cupo SHALL ver cuántas historias usó de su cupo ("N de M historias") y, al llegar al tope, "Nueva historia" SHALL estar deshabilitado con el aviso visible.
+
+#### Scenario: Botón deshabilitado al llegar al tope
+- **WHEN** un `USER` con el cupo lleno abre el listado de historias
+- **THEN** "Nueva historia" está deshabilitado y se ve el aviso "Alcanzaste el máximo de 5 historias clínicas. Comunícate con el administrador para solicitar más."
+
+#### Scenario: Abrir el formulario nuevo con el cupo lleno
+- **WHEN** un `USER` con el cupo lleno abre directamente la pantalla de nueva historia
+- **THEN** ve el aviso desde el inicio y "Crear historia" está deshabilitado
+- **AND** si el servidor rechaza una creación por cupo, el formulario muestra el aviso y no navega
+
 ### Requirement: Volver al listado desde la historia
-La historia clínica (edición y nueva) SHALL mostrar arriba a la izquierda, sobre el título, el enlace "Historias clínicas" con una flecha hacia atrás. El enlace SHALL llevar al listado con la búsqueda y la página que tenía la última vez que se vio en la pestaña, aunque después se haya cambiado de paso, creado la historia o abierto la vista previa; sin un listado previo SHALL llevar a `/historias`. Con cambios sin guardar SHALL pedir la misma confirmación que cualquier salida del formulario. El listado recordado SHALL borrarse al cerrar sesión.
+La historia (edición y nueva) SHALL mostrar arriba a la izquierda, sobre el título, el enlace "Historias clínicas" con una flecha hacia atrás, que SHALL llevar al listado con la búsqueda y la página vistas por última vez en la pestaña, aunque luego se haya cambiado de paso, creado la historia o abierto la vista previa; sin listado previo, a `/historias`. Con cambios sin guardar SHALL pedir la confirmación de cualquier salida del formulario. El listado recordado SHALL borrarse al cerrar sesión.
 
 #### Scenario: Vuelve con la búsqueda y la página
 - **WHEN** el usuario busca "quispe", pasa a la página 2, abre una historia, cambia de paso y pulsa "Historias clínicas"
@@ -682,7 +718,7 @@ La historia clínica (edición y nueva) SHALL mostrar arriba a la izquierda, sob
 - **THEN** el enlace de este último lleva a `/historias`, sin la búsqueda anterior
 
 ### Requirement: Autoguardado del paso en curso
-En una historia ya creada, el sistema SHALL guardar automáticamente los cambios pendientes unos segundos después de que el usuario deja de editar (como máximo un autoguardado cada 10 segundos) y, de inmediato, cuando la pestaña deja de estar visible (cambio de app, pantalla bloqueada). Antes de autoguardar SHALL validar el paso actual; si tiene errores NO SHALL guardar y SHALL indicarlo. Un indicador junto al título SHALL mostrar el estado ("Guardando…", "Guardado", "Sin guardar: corrige los campos marcados", "No se pudo guardar" con opción de reintentar). Lo que el usuario escribe mientras un guardado está en curso NO SHALL perderse ni reemplazarse por la respuesta del servidor. El autoguardado NO SHALL mostrar notificaciones emergentes. Una historia nueva NO SHALL autoguardarse antes de crearse con "Crear historia".
+En una historia ya creada, el sistema SHALL guardar los cambios pendientes unos segundos después de que el usuario deja de editar (como máximo una vez cada 10 segundos) y, de inmediato, cuando la pestaña deja de estar visible. Antes SHALL validar el paso actual; con errores NO SHALL guardar y SHALL indicarlo. Lo escrito durante un guardado en curso NO SHALL perderse ni reemplazarse por la respuesta del servidor. Una historia nueva NO SHALL autoguardarse antes de crearse con "Crear historia".
 
 #### Scenario: Guarda al dejar de escribir
 - **WHEN** el usuario escribe en un campo de una historia ya creada y deja de editar unos segundos
@@ -705,10 +741,6 @@ En una historia ya creada, el sistema SHALL guardar automáticamente los cambios
 - **WHEN** el usuario sigue escribiendo mientras un autoguardado está en curso
 - **THEN** al terminar ese guardado lo escrito después se conserva en pantalla, sigue como cambio pendiente y se guarda en el siguiente autoguardado
 
-#### Scenario: Fallo de red
-- **WHEN** el autoguardado falla por un error del servidor o de red
-- **THEN** el indicador muestra "No se pudo guardar" con "Reintentar", lo escrito se conserva y se vuelve a intentar al editar de nuevo o al recuperar la conexión
-
 #### Scenario: Edición desde otro dispositivo
 - **WHEN** la historia se guardó desde otro dispositivo y el autoguardado envía una versión anterior
 - **THEN** el sistema responde `409`, muestra el aviso de historia desactualizada con la opción de recargar y no vuelve a autoguardar hasta recargar
@@ -721,8 +753,15 @@ En una historia ya creada, el sistema SHALL guardar automáticamente los cambios
 - **WHEN** el usuario llena el paso 1 de una historia nueva sin pulsar "Crear historia"
 - **THEN** el sistema no la crea ni la guarda automáticamente
 
+### Requirement: Indicador del autoguardado
+Un indicador junto al título SHALL mostrar el estado del autoguardado ("Guardando…", "Guardado", "Sin guardar: corrige los campos marcados", "No se pudo guardar" con opción de reintentar), y el autoguardado NO SHALL mostrar notificaciones emergentes.
+
+#### Scenario: Fallo de red
+- **WHEN** el autoguardado falla por un error del servidor o de red
+- **THEN** el indicador muestra "No se pudo guardar" con "Reintentar", lo escrito se conserva y se vuelve a intentar al editar de nuevo o al recuperar la conexión
+
 ### Requirement: Retomar en el último paso trabajado
-El sistema SHALL guardar con la historia el último paso en que el usuario guardó cambios (el paso al que se dirige al cambiar de paso, o el paso actual al autoguardar o pulsar "Guardar") y SHALL abrir la historia en ese paso cuando se abre sin indicar uno (desde el listado, en tabla o tarjetas, en cualquier dispositivo). Un paso indicado en la dirección (`?paso=N`) SHALL tener prioridad. Una historia sin paso guardado SHALL abrirse en el paso 1. El servidor SHALL rechazar un paso fuera de 1–8 con `400`.
+El sistema SHALL guardar con la historia el último paso en que el usuario guardó cambios (el de destino al cambiar de paso, o el actual al autoguardar o pulsar "Guardar") y SHALL abrir la historia en ese paso cuando se abre sin indicar uno (desde el listado, en tabla o tarjetas, en cualquier dispositivo). Un paso en la dirección (`?paso=N`) SHALL tener prioridad. Sin paso guardado SHALL abrirse en el paso 1. El servidor SHALL rechazar un paso fuera de 1–8 con `400`.
 
 #### Scenario: Retoma en otro dispositivo
 - **WHEN** el usuario guarda cambios en el paso 6 desde la tablet y luego abre la historia desde el listado en la PC
@@ -745,11 +784,18 @@ El sistema SHALL guardar con la historia el último paso en que el usuario guard
 - **THEN** la API responde `400` con el error en `lastStep` y no guarda
 
 ### Requirement: Pasos con datos guardados con la historia
-Al crear y al guardar una historia, el cliente SHALL enviar qué pasos tienen datos (`filledSteps`, un conjunto de 1–8 sin repetidos, el mismo criterio que la navegación de pasos: lo que viene por defecto no cuenta), y el servidor SHALL guardarlo con la historia y devolverlo. Al guardar, si no se envía, el valor guardado no cambia. Como el nombre del paciente es obligatorio, el servidor SHALL incluir siempre el paso 1 en lo que guarda (al crear, aunque el cliente no envíe el dato o envíe una lista vacía). La respuesta SHALL devolver los pasos tal como quedaron guardados. Una historia nunca guardada con este dato SHALL quedar "sin calcular". El servidor SHALL rechazar pasos fuera de 1–8 o repetidos con `400`.
+Al crear y al guardar una historia, el cliente SHALL enviar qué pasos tienen datos (`filledSteps`: de 1–8 sin repetidos, con el criterio de la navegación de pasos; lo que viene por defecto no cuenta) y el servidor SHALL guardarlo y devolverlo tal como quedó. Al guardar sin enviarlo, el valor guardado no cambia. El servidor SHALL rechazar pasos fuera de 1–8 o repetidos con `400`.
 
 #### Scenario: Guardar con los pasos llenos
 - **WHEN** el usuario guarda una historia con datos en los pasos 1, 2 y 5
 - **THEN** la historia queda con los pasos 1, 2 y 5 con datos
+
+#### Scenario: Paso inválido
+- **WHEN** se guarda una historia con `filledSteps` que incluye 9, o `[1, 1, 2]`
+- **THEN** la API responde `400` con el error en `filledSteps` y no guarda
+
+### Requirement: Paso 1 siempre con datos e historias sin calcular
+Como el nombre del paciente es obligatorio, el servidor SHALL incluir siempre el paso 1 en lo que guarda, también al crear sin el dato o con una lista vacía. Una historia nunca guardada con este dato SHALL quedar "sin calcular".
 
 #### Scenario: Crear una historia
 - **WHEN** el usuario crea una historia con el nombre del paciente, se envíe o no `filledSteps` (o se envíe vacío)
@@ -759,12 +805,8 @@ Al crear y al guardar una historia, el cliente SHALL enviar qué pasos tienen da
 - **WHEN** se consulta una historia que no se volvió a guardar desde este cambio
 - **THEN** sus pasos con datos figuran como sin calcular
 
-#### Scenario: Paso inválido
-- **WHEN** se guarda una historia con `filledSteps` que incluye 9, o `[1, 1, 2]`
-- **THEN** la API responde `400` con el error en `filledSteps` y no guarda
-
 ### Requirement: Datos del paciente fijos tras imprimir
-La primera impresión registrada de una historia, esté completa o no, SHALL fijar sus datos de identidad del paciente: nombre, tipo y número de documento, fecha de nacimiento, sexo y lugar de nacimiento. Desde entonces, un guardado que los cambie SHALL rechazarse con `409` (`/errors/patient-locked`) y el mensaje "Los datos del paciente quedaron fijos al imprimir la historia. Solicita el desbloqueo para corregirlos.", sin guardar nada. La comparación SHALL hacerse en forma canónica (sin distinguir mayúsculas, tildes, formas Unicode equivalentes ni espacios sobrantes; documento por tipo y dígitos): un cambio que solo corrige la escritura SHALL guardarse. Domicilio, teléfono, fecha de inicio de tratamiento y el contenido clínico SHALL seguir editables y la historia reimprimible. En el formulario, los datos fijos SHALL mostrarse de solo lectura con un aviso que indica qué datos están fijos y desde cuándo, y los guardados SHALL seguir enviándolos sin cambios. La regla SHALL aplicarse igual a historias de autor `ADMIN`.
+La primera impresión registrada de una historia, completa o no, SHALL fijar los datos de identidad del paciente: nombre, tipo y número de documento, fecha de nacimiento, sexo y lugar de nacimiento. Desde entonces, un guardado que los cambie SHALL rechazarse con `409` (`/errors/patient-locked`) y el mensaje "Los datos del paciente quedaron fijos al imprimir la historia. Solicita el desbloqueo para corregirlos.", sin guardar nada. La regla SHALL aplicarse igual a historias de autor `ADMIN`.
 
 #### Scenario: Corregir antes de imprimir
 - **WHEN** el tratante cambia el nombre del paciente de una historia que nunca se imprimió
@@ -782,18 +824,6 @@ La primera impresión registrada de una historia, esté completa o no, SHALL fij
 - **WHEN** se intenta guardar otro nombre, documento, fecha de nacimiento, sexo o lugar de nacimiento en una historia ya impresa
 - **THEN** la API responde `409` con el mensaje de datos fijos y la historia queda exactamente como estaba
 
-#### Scenario: Corregir solo la escritura
-- **WHEN** en una historia fijada se guarda "ANA  QUÍSPE" o "ana quispe" donde decía "Ana Quispe", o el mismo DNI
-- **THEN** se guarda (es la misma identidad)
-
-#### Scenario: Datos que sí cambian
-- **WHEN** el tratante cambia el domicilio, el teléfono, la fecha de inicio o el contenido clínico de una historia ya impresa, guarda y reimprime
-- **THEN** todo se guarda y se imprime normalmente
-
-#### Scenario: Autoguardado con datos fijos
-- **WHEN** el autoguardado guarda un cambio en otro paso de una historia fijada
-- **THEN** el cuerpo enviado conserva los datos fijos sin cambios y el guardado funciona
-
 #### Scenario: Guardado de otra pestaña después de imprimir
 - **WHEN** otra pestaña, abierta antes de la primera impresión, guarda un cambio en el nombre del paciente
 - **THEN** la API responde `409` de datos fijos y no guarda nada
@@ -810,12 +840,41 @@ La primera impresión registrada de una historia, esté completa o no, SHALL fij
 - **WHEN** se abre una historia impresa antes de este cambio
 - **THEN** sus datos están desbloqueados hasta la próxima impresión registrada
 
+### Requirement: Comparación de los datos fijos
+La comparación de los datos fijos SHALL hacerse en forma canónica (sin distinguir mayúsculas, tildes, formas Unicode equivalentes ni espacios sobrantes; el documento por tipo y dígitos): un cambio que solo corrige la escritura SHALL guardarse. Domicilio, teléfono, fecha de inicio de tratamiento y el contenido clínico SHALL seguir editables y la historia reimprimible.
+
+#### Scenario: Corregir solo la escritura
+- **WHEN** en una historia fijada se guarda "ANA  QUÍSPE" o "ana quispe" donde decía "Ana Quispe", o el mismo DNI
+- **THEN** se guarda (es la misma identidad)
+
+#### Scenario: Datos que sí cambian
+- **WHEN** el tratante cambia el domicilio, el teléfono, la fecha de inicio o el contenido clínico de una historia ya impresa, guarda y reimprime
+- **THEN** todo se guarda y se imprime normalmente
+
+### Requirement: Datos fijos en el formulario
+En el formulario, los datos fijos SHALL mostrarse de solo lectura con un aviso que indica qué datos están fijos y desde cuándo, y los guardados SHALL seguir enviándolos sin cambios.
+
+#### Scenario: Autoguardado con datos fijos
+- **WHEN** el autoguardado guarda un cambio en otro paso de una historia fijada
+- **THEN** el cuerpo enviado conserva los datos fijos sin cambios y el guardado funciona
+
 ### Requirement: Impresión registrada en el servidor
-La vista preliminar SHALL imprimir las hojas solo con su botón "Imprimir", que primero registra la impresión en el servidor (`POST /api/orthodontic-records/{id}/print`). El registro SHALL responder la fecha de impresión (zona horaria de la app) y los pasos clínicos con datos de la historia guardada, calculados en el servidor. Las hojas SHALL estar ocultas al imprimir por defecto y mostrarse solo durante la impresión iniciada por el botón tras un registro exitoso; si se imprime de otra forma (Ctrl+P, menú del navegador), o se cancela o termina esa impresión, SHALL salir solo el aviso "Usa el botón Imprimir de la vista preliminar." Si el registro falla, el diálogo NO SHALL abrirse y se SHALL mostrar el error con opción de reintentar. Registrar la impresión NO SHALL cambiar la versión de la historia (un formulario abierto no queda desactualizado); registrar una ya registrada SHALL ser idempotente. Imprimir y guardar SHALL serializarse, de modo que un guardado nunca cambie datos fijados por una impresión simultánea. Registrar la impresión de una historia ajena SHALL responder `404` a un `USER`.
+La vista preliminar SHALL imprimir las hojas solo con su botón "Imprimir", que primero registra la impresión en el servidor (`POST /api/orthodontic-records/{id}/print`), que responde la fecha de impresión (zona horaria de la app) y los pasos clínicos con datos de la historia guardada, calculados en el servidor. Si el registro falla, el diálogo NO SHALL abrirse y SHALL mostrarse el error con opción de reintentar. Registrar una historia ajena SHALL responder `404` a un `USER`.
 
 #### Scenario: Imprimir con el botón
 - **WHEN** el usuario pulsa "Imprimir" en la vista preliminar
 - **THEN** el servidor registra la impresión, se abre el diálogo y salen las hojas
+
+#### Scenario: Falla el registro
+- **WHEN** el registro de la impresión falla por un error de red o del servidor
+- **THEN** no se abre el diálogo y se muestra el error con "Reintentar"
+
+#### Scenario: Historia ajena
+- **WHEN** un `USER` intenta registrar la impresión de una historia de otro tratante
+- **THEN** la API responde `404`
+
+### Requirement: Hojas ocultas fuera de la impresión con el botón
+Las hojas SHALL estar ocultas al imprimir por defecto y mostrarse solo durante la impresión iniciada por el botón tras un registro exitoso; si se imprime de otra forma (Ctrl+P, menú del navegador), o se cancela o termina esa impresión, SHALL salir solo el aviso "Usa el botón Imprimir de la vista preliminar."
 
 #### Scenario: Imprimir con el menú del navegador
 - **WHEN** el usuario imprime la vista preliminar con Ctrl+P sin pulsar "Imprimir"
@@ -825,20 +884,15 @@ La vista preliminar SHALL imprimir las hojas solo con su botón "Imprimir", que 
 - **WHEN** el usuario imprime con el botón, cierra o cancela el diálogo y luego pulsa Ctrl+P
 - **THEN** sale solo el aviso
 
-#### Scenario: Falla el registro
-- **WHEN** el registro de la impresión falla por un error de red o del servidor
-- **THEN** no se abre el diálogo y se muestra el error con "Reintentar"
+### Requirement: Registro de impresión sin conflictos
+Registrar la impresión NO SHALL cambiar la versión de la historia (un formulario abierto no queda desactualizado) y registrar una ya registrada SHALL ser idempotente. Imprimir y guardar SHALL serializarse, de modo que un guardado nunca cambie datos fijados por una impresión simultánea.
 
 #### Scenario: Reimpresión
 - **WHEN** se imprime de nuevo una historia ya fijada
 - **THEN** se registra sin cambiar la versión de la historia ni la fecha en que quedó fija
 
-#### Scenario: Historia ajena
-- **WHEN** un `USER` intenta registrar la impresión de una historia de otro tratante
-- **THEN** la API responde `404`
-
 ### Requirement: Marca de avance en impresiones incompletas
-Si la historia impresa no tiene datos en los 7 pasos clínicos (Firmas no cuenta), cada hoja SHALL llevar, en el margen superior y sin mover el contenido, la marca "AVANCE · N de 7 pasos clínicos con datos · impreso el dd/mm/aaaa", con N y la fecha que devuelve el registro de la impresión. Una historia completa SHALL imprimirse sin la marca. Si la historia guardada no tiene pasos calculados (anterior a las métricas), el registro SHALL calcularlos con los pasos que envía la vista sobre la historia guardada, con el mismo criterio que la navegación de pasos.
+Si la historia impresa no tiene datos en los 7 pasos clínicos (Firmas no cuenta), cada hoja SHALL llevar en el margen superior, sin mover el contenido, la marca "AVANCE · N de 7 pasos clínicos con datos · impreso el dd/mm/aaaa", con N y la fecha del registro de la impresión; una historia completa SHALL imprimirse sin ella. Si la historia guardada no tiene pasos calculados, el registro SHALL calcularlos con los pasos que envía la vista, con el criterio de la navegación de pasos.
 
 #### Scenario: Avance impreso
 - **WHEN** se imprime una historia con 4 de 7 pasos clínicos con datos el 5 de octubre de 2026
@@ -861,7 +915,7 @@ Si la historia impresa no tiene datos en los 7 pasos clínicos (Firmas no cuenta
 - **THEN** las hojas conservan la cantidad, el tamaño A4, los márgenes y la posición del contenido de una impresión sin marca
 
 ### Requirement: Desbloqueo con registro de eventos
-Un `ADMIN` SHALL poder desbloquear los datos fijos de una historia; se vuelven a fijar en la siguiente impresión. Cada desbloqueo y cada descarte de solicitud SHALL registrarse como evento (historia, ADMIN, fecha, acción y motivo de la solicitud si la había), sin borrarse nunca. La historia SHALL mostrar el último desbloqueo ("Desbloqueada por <nombre> el dd/mm/aaaa"). Desbloquear una historia sin datos fijos SHALL responder `409` (`/errors/patient-not-locked`). Un `USER` que intente desbloquear SHALL recibir `403`.
+Un `ADMIN` SHALL poder desbloquear los datos fijos de una historia; se vuelven a fijar en la siguiente impresión. Cada desbloqueo y cada descarte de solicitud SHALL registrarse como evento (historia, ADMIN, fecha, acción y motivo de la solicitud si la había), sin borrarse nunca. La historia SHALL mostrar el último desbloqueo ("Desbloqueada por <nombre> el dd/mm/aaaa"). Desbloquear sin datos fijos SHALL responder `409` (`/errors/patient-not-locked`); un `USER` SHALL recibir `403`.
 
 #### Scenario: El ADMIN desbloquea
 - **WHEN** el `ADMIN` "Admin FACOP" desbloquea una historia impresa el 6 de octubre de 2026
@@ -884,7 +938,7 @@ Un `ADMIN` SHALL poder desbloquear los datos fijos de una historia; se vuelven a
 - **THEN** la API responde `403`
 
 ### Requirement: Solicitud de desbloqueo
-Con los datos fijos, el autor SHALL poder solicitar el desbloqueo desde la historia con un motivo (1–200 caracteres); mientras esté pendiente, la historia SHALL mostrar "Desbloqueo solicitado el dd/mm/aaaa" y no SHALL admitir otra. El `ADMIN` SHALL resolverla desbloqueando (la cierra) o descartándola. Solicitar sin datos fijos SHALL responder `409` (`/errors/patient-not-locked`); con una solicitud pendiente, `409` (`/errors/unlock-already-requested`); sobre una historia ajena, `404`. Un `USER` que intente descartar SHALL recibir `403`. Dos solicitudes simultáneas SHALL dejar una sola.
+Con los datos fijos, el autor SHALL poder pedir el desbloqueo con un motivo (1–200 caracteres); mientras esté pendiente, la historia SHALL mostrar "Desbloqueo solicitado el dd/mm/aaaa" y no admitir otra (dos simultáneas dejan una). El `ADMIN` SHALL resolverla desbloqueando o descartándola. Sin datos fijos SHALL responder `409` (`/errors/patient-not-locked`); con una pendiente, `409` (`/errors/unlock-already-requested`); en una historia ajena, `404`. Un `USER` que descarte SHALL recibir `403`.
 
 #### Scenario: Solicitar el desbloqueo
 - **WHEN** el tratante solicita el desbloqueo de su historia fijada con el motivo "Error en el número de DNI"
@@ -926,40 +980,7 @@ En el listado de historias (tabla y tarjetas), cada historia con los datos del p
 - **THEN** el listado deja de mostrar su candado hasta la próxima impresión
 
 ### Requirement: Actualización al volver a la historia desde otro dispositivo
-Cuando el usuario vuelve a una historia abierta (la pestaña vuelve a estar visible, la ventana recibe el foco o el navegador restaura la página), el formulario SHALL consultar una vez si la historia cambió en el servidor, incluidos los cambios que no suben la versión (datos del paciente fijados al imprimir, solicitud o desbloqueo). Lo que cambió en el servidor SHALL mostrarse sin reemplazar nunca cambios propios distintos: si no hay cambios propios, el formulario SHALL mostrar los datos del servidor en el mismo paso con un aviso "Actualizada con cambios hechos en otro dispositivo"; si los hay y difieren de lo guardado en el servidor, SHALL conservarlos y mostrar el aviso de historia cambiada, pausando el autoguardado. La consulta NO SHALL repetirse más de una vez cada 5 segundos, NO SHALL hacerse con la pestaña oculta ni de forma periódica, y SHALL esperar a que termine un guardado en curso.
-
-#### Scenario: Volver sin cambios propios
-- **WHEN** la historia se guardó desde el celular y el usuario vuelve a la pestaña de la PC sin cambios sin guardar
-- **THEN** el formulario muestra los datos guardados desde el celular en el mismo paso
-- **AND** aparece el aviso "Actualizada con cambios hechos en otro dispositivo" en una región `status`
-
-#### Scenario: Volver con cambios propios que chocan
-- **WHEN** la historia se guardó desde otro dispositivo y el usuario vuelve a la pestaña con cambios sin guardar distintos de lo guardado en el servidor
-- **THEN** sus cambios siguen en el formulario
-- **AND** aparece el aviso "La historia cambió en otro dispositivo mientras tenías cambios sin guardar aquí…" con "Recargar historia" y "Seguir editando"
-- **AND** la vista se desplaza hasta el aviso aunque el usuario estuviera más abajo en el formulario
-- **AND** el autoguardado se pausa
-
-#### Scenario: Cambios propios que ya están en el servidor
-- **WHEN** al volver, la versión del servidor es mayor pero sus valores son iguales a los del formulario (p. ej. el guardado al ocultar la pestaña llegó al servidor aunque su respuesta se perdió)
-- **THEN** el formulario queda sin cambios pendientes, sin aviso ni recarga
-
-#### Scenario: Guardado fallido al ocultar y cambios remotos
-- **WHEN** el guardado al ocultar la pestaña falló por la red, mientras tanto otro dispositivo guardó otros valores, y el usuario vuelve
-- **THEN** sus valores se conservan, aparece el aviso de historia cambiada y no se vuelve a autoguardar
-
-#### Scenario: Impresión o desbloqueo desde otro dispositivo
-- **WHEN** desde otro dispositivo se imprimió la historia (sus datos del paciente quedan fijos) o el ADMIN la desbloqueó, y el usuario vuelve a la pestaña
-- **THEN** el paso 1 refleja los datos fijos o desbloqueados y su aviso
-- **AND** lo escrito en el formulario se conserva, sin aviso de historia cambiada
-
-#### Scenario: Autoguardado pendiente durante la revisión
-- **WHEN** el autoguardado de lo escrito en la PC queda en espera mientras la revisión al volver detecta cambios distintos en el servidor
-- **THEN** ese autoguardado no se envía y lo escrito se conserva con el aviso de historia cambiada
-
-#### Scenario: Escribir mientras se revisa
-- **WHEN** el usuario empieza a escribir después de volver y antes de que la revisión muestre los datos del otro dispositivo
-- **THEN** lo escrito no se pierde: en lugar de recargar se muestra el aviso de historia cambiada
+Cuando el usuario vuelve a una historia abierta (la pestaña vuelve a estar visible, la ventana recibe el foco o el navegador restaura la página), el formulario SHALL consultar una vez si la historia cambió en el servidor, incluidos los cambios que no suben la versión (datos fijados al imprimir, solicitud o desbloqueo). La consulta NO SHALL repetirse más de una vez cada 5 segundos ni hacerse con la pestaña oculta o de forma periódica, y SHALL esperar a que termine un guardado en curso.
 
 #### Scenario: Volver sin cambios en el servidor
 - **WHEN** el usuario vuelve a la pestaña y la historia no cambió en el servidor
@@ -990,4 +1011,40 @@ Cuando el usuario vuelve a una historia abierta (la pestaña vuelve a estar visi
 #### Scenario: Historia todavía sin crear
 - **WHEN** el usuario vuelve a la pestaña de una historia nueva que aún no se creó
 - **THEN** no se consulta nada
+
+#### Scenario: Impresión o desbloqueo desde otro dispositivo
+- **WHEN** desde otro dispositivo se imprimió la historia (sus datos del paciente quedan fijos) o el ADMIN la desbloqueó, y el usuario vuelve a la pestaña
+- **THEN** el paso 1 refleja los datos fijos o desbloqueados y su aviso
+- **AND** lo escrito en el formulario se conserva, sin aviso de historia cambiada
+
+### Requirement: Cambios remotos sin pisar los propios
+Lo que cambió en el servidor SHALL mostrarse sin reemplazar nunca cambios propios distintos: sin cambios propios, el formulario SHALL mostrar los datos del servidor en el mismo paso con el aviso "Actualizada con cambios hechos en otro dispositivo"; con cambios propios distintos de lo guardado, SHALL conservarlos y mostrar el aviso de historia cambiada, pausando el autoguardado.
+
+#### Scenario: Volver sin cambios propios
+- **WHEN** la historia se guardó desde el celular y el usuario vuelve a la pestaña de la PC sin cambios sin guardar
+- **THEN** el formulario muestra los datos guardados desde el celular en el mismo paso
+- **AND** aparece el aviso "Actualizada con cambios hechos en otro dispositivo" en una región `status`
+
+#### Scenario: Volver con cambios propios que chocan
+- **WHEN** la historia se guardó desde otro dispositivo y el usuario vuelve a la pestaña con cambios sin guardar distintos de lo guardado en el servidor
+- **THEN** sus cambios siguen en el formulario
+- **AND** aparece el aviso "La historia cambió en otro dispositivo mientras tenías cambios sin guardar aquí…" con "Recargar historia" y "Seguir editando"
+- **AND** la vista se desplaza hasta el aviso aunque el usuario estuviera más abajo en el formulario
+- **AND** el autoguardado se pausa
+
+#### Scenario: Cambios propios que ya están en el servidor
+- **WHEN** al volver, la versión del servidor es mayor pero sus valores son iguales a los del formulario (p. ej. el guardado al ocultar la pestaña llegó al servidor aunque su respuesta se perdió)
+- **THEN** el formulario queda sin cambios pendientes, sin aviso ni recarga
+
+#### Scenario: Guardado fallido al ocultar y cambios remotos
+- **WHEN** el guardado al ocultar la pestaña falló por la red, mientras tanto otro dispositivo guardó otros valores, y el usuario vuelve
+- **THEN** sus valores se conservan, aparece el aviso de historia cambiada y no se vuelve a autoguardar
+
+#### Scenario: Autoguardado pendiente durante la revisión
+- **WHEN** el autoguardado de lo escrito en la PC queda en espera mientras la revisión al volver detecta cambios distintos en el servidor
+- **THEN** ese autoguardado no se envía y lo escrito se conserva con el aviso de historia cambiada
+
+#### Scenario: Escribir mientras se revisa
+- **WHEN** el usuario empieza a escribir después de volver y antes de que la revisión muestre los datos del otro dispositivo
+- **THEN** lo escrito no se pierde: en lugar de recargar se muestra el aviso de historia cambiada
 

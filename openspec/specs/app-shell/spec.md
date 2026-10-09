@@ -15,7 +15,7 @@ El sistema SHALL renderizar todas las rutas autenticadas dentro de un layout com
 - **THEN** el sistema muestra la pantalla de autenticación sin barra lateral ni cabecera del shell
 
 ### Requirement: Navegación declarada por configuración
-El sistema SHALL construir los ítems de la barra lateral y el árbol de rutas privadas a partir de una única configuración de secciones (ruta y, opcionalmente, los roles que pueden verla) más su presentación (etiqueta e icono), mostrar solo los ítems permitidos para el rol del usuario, aplicar a cada sección restringida —incluidas sus subrutas— la regla de acceso por rol de `authentication` ("Rol sin permiso") con esos mismos roles, resaltar el ítem correspondiente a la ruta activa y enrutar cada ítem de ejemplo a una página "Próximamente" dentro del shell.
+El sistema SHALL construir los ítems de la barra lateral y el árbol de rutas privadas desde una única configuración de secciones (ruta, roles opcionales que pueden verla, etiqueta e icono). SHALL mostrar solo los ítems permitidos para el rol, aplicar a cada sección restringida y sus subrutas la regla "Rol sin permiso" de `authentication` con esos roles, resaltar el ítem de la ruta activa y enrutar cada ítem de ejemplo a una página "Próximamente" dentro del shell.
 
 #### Scenario: Ítem activo resaltado
 - **WHEN** el usuario está en la ruta de un ítem de navegación
@@ -67,7 +67,7 @@ La cabecera SHALL mostrar el nombre completo del usuario (o su correo si no tien
 - **THEN** el sistema ejecuta el logout y el botón queda deshabilitado mientras la petición está en curso
 
 ### Requirement: Navegación responsive
-El sistema SHALL adaptar la barra lateral al ancho de pantalla: en escritorio, expandida o contraída según la preferencia del usuario (ver "Barra lateral contraíble en escritorio"); compacta (solo iconos, con `aria-label`) en tablet y oculta tras un botón de menú en móvil, donde se abre como cajón superpuesto que se cierra al navegar, al pulsar fuera o con la tecla `Escape`. En la barra compacta, cada ítem de navegación y la acción de cerrar sesión SHALL mostrar su nombre en un tooltip al pasar el ratón o al recibir el foco con el teclado, sin usar el atributo `title` y conservando el `aria-label`.
+El sistema SHALL adaptar la barra lateral al ancho de pantalla: en escritorio, expandida o contraída según la preferencia del usuario ("Barra lateral contraíble en escritorio"); compacta (solo iconos, con `aria-label`) en tablet; y en móvil oculta tras un botón de menú, como cajón superpuesto que se cierra al navegar, al pulsar fuera o con la tecla `Escape`.
 
 #### Scenario: Abrir el cajón en móvil
 - **WHEN** en móvil el usuario pulsa el botón de menú
@@ -81,6 +81,13 @@ El sistema SHALL adaptar la barra lateral al ancho de pantalla: en escritorio, e
 - **WHEN** con el cajón abierto el usuario pulsa `Escape` o hace clic en el fondo superpuesto
 - **THEN** el cajón se cierra sin navegar
 
+#### Scenario: Sin tooltip en el cajón móvil
+- **WHEN** el usuario enfoca un ítem dentro del cajón móvil (etiquetas visibles)
+- **THEN** no aparece tooltip
+
+### Requirement: Tooltips en la barra compacta
+En la barra compacta, cada ítem de navegación y la acción de cerrar sesión SHALL mostrar su nombre en un tooltip al pasar el ratón o al recibir el foco con el teclado, sin usar el atributo `title` y conservando el `aria-label`.
+
 #### Scenario: Tooltip en la barra compacta
 - **WHEN** en la barra compacta el usuario pasa el ratón sobre un ítem de navegación o lo enfoca con el teclado
 - **THEN** aparece un tooltip con el nombre de la sección, el ítem conserva su `aria-label` y no tiene atributo `title`
@@ -89,12 +96,8 @@ El sistema SHALL adaptar la barra lateral al ancho de pantalla: en escritorio, e
 - **WHEN** en la barra compacta el usuario enfoca la acción de cerrar sesión
 - **THEN** aparece un tooltip "Cerrar sesión"
 
-#### Scenario: Sin tooltip en el cajón móvil
-- **WHEN** el usuario enfoca un ítem dentro del cajón móvil (etiquetas visibles)
-- **THEN** no aparece tooltip
-
 ### Requirement: Barra lateral contraíble en escritorio
-En pantallas de 1024 px o más, el sistema SHALL permitir contraer la barra lateral a una barra de solo íconos y volver a expandirla con un botón. Contraída, SHALL mostrar solo los íconos de las secciones y del cierre de sesión, conservando su nombre accesible y mostrándolo en un tooltip al pasar el ratón o al enfocarlos con el teclado, y el ícono de la marca en lugar del logo completo. La preferencia SHALL ser del usuario, igual en todas las pantallas, y recordarse en el navegador entre recargas y visitas; el sistema SHALL NOT contraerla ni expandirla por su cuenta según la pantalla. En pantallas de menos de 1024 px el comportamiento existente SHALL NOT cambiar.
+En pantallas de 1024 px o más, el sistema SHALL permitir contraer la barra lateral a solo íconos y volver a expandirla con un botón. Contraída, SHALL mostrar solo los íconos de las secciones y del cierre de sesión, con su nombre accesible y en un tooltip al pasar el ratón o al enfocarlos con el teclado, y el ícono de la marca en lugar del logo completo. En pantallas de menos de 1024 px el comportamiento existente SHALL NOT cambiar.
 
 #### Scenario: Contraer la barra lateral
 - **WHEN** en una pantalla de 1024 px o más el usuario pulsa "Contraer barra lateral"
@@ -107,14 +110,6 @@ En pantallas de 1024 px o más, el sistema SHALL permitir contraer la barra late
 - **THEN** la barra vuelve a mostrar los nombres de las secciones y el logo completo
 - **AND** el botón pasa a "Contraer barra lateral" con `aria-expanded="true"`
 
-#### Scenario: La preferencia se recuerda
-- **WHEN** el usuario contrae la barra y luego recarga la página o va a otra sección
-- **THEN** la barra sigue contraída
-
-#### Scenario: Sin cambios automáticos por pantalla
-- **WHEN** el usuario con la barra expandida abre una historia clínica u otra sección
-- **THEN** la barra sigue expandida; solo cambia cuando el usuario pulsa el botón
-
 #### Scenario: Tooltips en la barra contraída
 - **WHEN** con la barra contraída en escritorio el usuario pasa el ratón o enfoca con el teclado un ítem de navegación o el cierre de sesión
 - **THEN** aparece un tooltip con su nombre, el ítem conserva su `aria-label` y el lector de pantalla no anuncia el nombre dos veces
@@ -122,6 +117,17 @@ En pantallas de 1024 px o más, el sistema SHALL permitir contraer la barra late
 #### Scenario: Tablet y celular no cambian
 - **WHEN** la aplicación se abre en una pantalla de menos de 1024 px
 - **THEN** el botón para contraer o expandir no se muestra, y siguen la barra compacta en tablet y el cajón en celular
+
+### Requirement: Preferencia de la barra lateral
+La preferencia de contraer o expandir la barra lateral SHALL ser del usuario, igual en todas las pantallas, y recordarse en el navegador entre recargas y visitas; el sistema SHALL NOT contraerla ni expandirla por su cuenta según la pantalla.
+
+#### Scenario: La preferencia se recuerda
+- **WHEN** el usuario contrae la barra y luego recarga la página o va a otra sección
+- **THEN** la barra sigue contraída
+
+#### Scenario: Sin cambios automáticos por pantalla
+- **WHEN** el usuario con la barra expandida abre una historia clínica u otra sección
+- **THEN** la barra sigue expandida; solo cambia cuando el usuario pulsa el botón
 
 ### Requirement: Ancho máximo de la app y del contenido
 En pantallas anchas, el marco de las pantallas privadas (barra lateral, cabecera y contenido) SHALL medir como máximo 1920 px y quedar centrado, con la barra lateral junto al contenido; fuera del marco SHALL verse el fondo. Dentro del marco, el contenido SHALL medir como máximo 1536 px, y la cabecera SHALL alinear su contenido (usuario, tema) a ese mismo ancho. En pantallas de hasta 1536 px el contenido SHALL seguir ocupando el ancho disponible, como hasta ahora.
