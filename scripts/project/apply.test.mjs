@@ -32,6 +32,7 @@ const blockOf = (css, index) => [...css.matchAll(/@template:brand[\s\S]*?@end-te
 
 test("Identidad visible, contrato y documentación", () =>
   withCopy((root) => {
+    const contractBefore = read(root, "contracts/openapi.json");
     editConfig(root, acme);
     applyProject(root, {});
 
@@ -42,6 +43,9 @@ test("Identidad visible, contrato y documentación", () =>
     const contract = JSON.parse(read(root, "contracts/openapi.json"));
     assert.equal(contract.info.title, "Acme CRM API");
     assert.equal(contract.info.description, "Plataforma de gestión de clientes de Acme.");
+    // Fuera de `info`, el contrato queda igual byte a byte (orden de respuestas "200", "404"… incluido).
+    const withoutInfo = (text) => text.replace(/"info"\s*:\s*\{[^}]*\}/, '"info": {}');
+    assert.equal(withoutInfo(read(root, "contracts/openapi.json")), withoutInfo(contractBefore));
     const header = read(root, "modules/frontend/src/modules/core/services/generated/auth.ts");
     assert.match(header, /^ \* Acme CRM API$/m);
     assert.match(header, /^ \* Plataforma de gestión de clientes de Acme\.$/m);
