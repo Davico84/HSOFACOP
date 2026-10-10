@@ -49,6 +49,36 @@ function replaceOnce(text, re, replacement, file) {
   return text.replace(re, replacement);
 }
 
+/** Fin (exclusivo) del objeto JSON que abre en `start` (`{`), saltando el contenido de los strings. */
+function objectEnd(text, start) {
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      for (i++; text[i] !== '"'; i++) if (text[i] === "\\") i++;
+    } else if (c === "{") depth++;
+    else if (c === "}" && --depth === 0) return i + 1;
+  }
+  throw new Error("objeto JSON sin cerrar");
+}
+
+/**
+ * Reemplaza solo el objeto `info` de nivel superior del contrato, sin reserializar el resto:
+ * `JSON.stringify` ordena primero las claves numéricas ("200", "404"…) y cambiaría el orden que
+ * genera el backend.
+ */
+function replaceContractInfo(text, patch, file) {
+  const contract = JSON.parse(text); // valida y da el `info` actual
+  const match = /^( *)"info"\s*:\s*\{/m.exec(text);
+  if (!match || !contract.info) throw new Error(`${file}: no se encontró "info" (¿se editó a mano?)`);
+  const start = match.index + match[0].length - 1;
+  const end = objectEnd(text, start);
+  const info = JSON.stringify({ ...contract.info, ...patch }, null, 2).replace(/\n/g, `\n${match[1]}`);
+  const out = text.slice(0, start) + info + text.slice(end);
+  JSON.parse(out); // sigue siendo JSON válido
+  return out;
+}
+
 export const dbUrl = (db) => `jdbc:postgresql://localhost:${db.port}/${db.name}`;
 
 export function dbKeys(to) {
@@ -90,11 +120,8 @@ export const FILE_RULES = [
   },
   {
     file: PATHS.contract,
-    apply(text, _from, to) {
-      const contract = JSON.parse(text);
-      contract.info = { ...contract.info, title: `${to.name} API`, description: to.description };
-      return JSON.stringify(contract, null, 2) + "\n";
-    },
+    apply: (text, _from, to) =>
+      replaceContractInfo(text, { title: `${to.name} API`, description: to.description }, PATHS.contract),
   },
   {
     file: PATHS.secretsExample,
