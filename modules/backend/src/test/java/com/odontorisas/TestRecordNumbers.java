@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Números de historia únicos para toda la suite: el número es único entre todas las historias y
- * los IT comparten la base, así que cada historia de prueba toma el siguiente ({@code AOC-0001}, …).
+ * los IT comparten la base, así que cada historia de prueba toma el siguiente ({@code AEO-0001}, …).
  */
 public final class TestRecordNumbers {
 
@@ -16,9 +16,9 @@ public final class TestRecordNumbers {
     public static String next() {
         int n = NEXT.getAndIncrement();
         if (n > 9999) {
-            throw new IllegalStateException("Se agotaron los números AOC- de prueba");
+            throw new IllegalStateException("Se agotaron los números AEO- de prueba");
         }
-        return "AOC-%04d".formatted(n);
+        return "AEO-%04d".formatted(n);
     }
 
     /** El cuerpo JSON con {@code recordNumber} (si no lo trae ya). */

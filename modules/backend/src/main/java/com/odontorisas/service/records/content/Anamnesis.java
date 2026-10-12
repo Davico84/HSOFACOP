@@ -2,8 +2,6 @@ package com.odontorisas.service.records.content;
 
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
-
 import static com.odontorisas.service.records.content.ContentLimits.LONG_TEXT;
 
 /** Paso 1 (pág. 1): anamnesis. Los datos personales del paciente van en columnas propias. */
@@ -16,8 +14,8 @@ public record Anamnesis(
     YesNo suckingHabits,
     /** Solo si el paciente es de sexo femenino. */
     YesNo menarche,
-    /** Fecha de la primera menstruación (sin hora): solo con sexo femenino y {@code menarche} = Sí. */
-    LocalDate menarcheDate,
+    /** Año de la primera menstruación (cuatro cifras): solo con sexo femenino y {@code menarche} = Sí. */
+    Integer menarcheYear,
     @Size(max = LONG_TEXT) String medicalHistory,
     @Size(max = LONG_TEXT) String accidentsHistory,
     @Size(max = LONG_TEXT) String familyStructure,

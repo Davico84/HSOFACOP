@@ -62,7 +62,7 @@ class OrthodonticRecordServiceTest {
     }
 
     private static RecordData data(String patient) {
-        return data("AOC-0015", patient);
+        return data("AEO-0015", patient);
     }
 
     private static RecordData data(String number, String patient) {
@@ -70,8 +70,8 @@ class OrthodonticRecordServiceTest {
     }
 
     private OrthodonticRecord stored(User author, long version) {
-        return OrthodonticRecord.builder().id(10L).author(author).recordNumber("AOC-0015")
-            .patientName("Ana Quispe").treatingDentist(author.getFullName()).searchText("ana quispe aoc-0015")
+        return OrthodonticRecord.builder().id(10L).author(author).recordNumber("AEO-0015")
+            .patientName("Ana Quispe").treatingDentist(author.getFullName()).searchText("ana quispe aeo-0015")
             .content("{}").version(version).build();
     }
 
@@ -86,9 +86,9 @@ class OrthodonticRecordServiceTest {
         when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(torres));
         saveReturnsArgument();
 
-        RecordView view = service.create(torresActor, data("AOC-0015", "  Ana Quispe "));
+        RecordView view = service.create(torresActor, data("AEO-0015", "  Ana Quispe "));
 
-        assertThat(view.recordNumber()).isEqualTo("AOC-0015");
+        assertThat(view.recordNumber()).isEqualTo("AEO-0015");
         assertThat(view.authorId()).isEqualTo(1L);
         assertThat(view.treatingDentist()).isEqualTo("Dra. María Torres");
         assertThat(view.patientName()).isEqualTo("Ana Quispe");
@@ -98,11 +98,11 @@ class OrthodonticRecordServiceTest {
     @Test
     void creation_locks_the_author_row_and_rejects_a_number_of_another_record() {
         when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(torres));
-        when(records.existsNumberInOtherRecord("AOC-0015", null)).thenReturn(true);
+        when(records.existsNumberInOtherRecord("AEO-0015", null)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.create(torresActor, data("AOC-0015", "P")))
+        assertThatThrownBy(() -> service.create(torresActor, data("AEO-0015", "P")))
             .isInstanceOf(RecordNumberTakenException.class)
-            .hasMessage("El número AOC-0015 ya está registrado en otra historia. Verifica el número con la coordinación.");
+            .hasMessage("El número AEO-0015 ya está registrado en otra historia. Verifica el número con la coordinación.");
         verify(users).findByIdForUpdate(1L);
         verify(records, never()).saveAndFlush(any());
     }
@@ -114,7 +114,7 @@ class OrthodonticRecordServiceTest {
             "duplicate key value violates unique constraint \"ux_orthodontic_records_record_number\"", "23505");
         when(records.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("dup", unique));
 
-        assertThatThrownBy(() -> service.create(torresActor, data("AOC-0015", "P")))
+        assertThatThrownBy(() -> service.create(torresActor, data("AEO-0015", "P")))
             .isInstanceOf(RecordNumberTakenException.class);
     }
 
@@ -124,7 +124,7 @@ class OrthodonticRecordServiceTest {
         SQLException other = new SQLException("violates check constraint \"ck_orthodontic_records_record_number\"", "23514");
         when(records.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("check", other));
 
-        assertThatThrownBy(() -> service.create(torresActor, data("AOC-0015", "P")))
+        assertThatThrownBy(() -> service.create(torresActor, data("AEO-0015", "P")))
             .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -134,19 +134,19 @@ class OrthodonticRecordServiceTest {
         saveReturnsArgument();
         ArgumentCaptor<OrthodonticRecord> saved = ArgumentCaptor.forClass(OrthodonticRecord.class);
 
-        RecordView view = service.update(torresActor, 10L, 0, data("AOC-0051", "Ana Quispe"));
+        RecordView view = service.update(torresActor, 10L, 0, data("AEO-0051", "Ana Quispe"));
 
-        assertThat(view.recordNumber()).isEqualTo("AOC-0051");
-        verify(records).existsNumberInOtherRecord("AOC-0051", 10L);
+        assertThat(view.recordNumber()).isEqualTo("AEO-0051");
+        verify(records).existsNumberInOtherRecord("AEO-0051", 10L);
         verify(records).saveAndFlush(saved.capture());
-        assertThat(saved.getValue().getSearchText()).isEqualTo("ana quispe aoc-0051");
+        assertThat(saved.getValue().getSearchText()).isEqualTo("ana quispe aeo-0051");
     }
 
     @Test
     void search_text_contains_normalized_patient_document_and_number() {
-        assertThat(OrthodonticRecordService.searchText("Ana QUÍSPE", "74125896", "AOC-0015"))
-            .isEqualTo("ana quispe 74125896 aoc-0015");
-        assertThat(OrthodonticRecordService.searchText("Ana", null, "AOC-0002")).isEqualTo("ana aoc-0002");
+        assertThat(OrthodonticRecordService.searchText("Ana QUÍSPE", "74125896", "AEO-0015"))
+            .isEqualTo("ana quispe 74125896 aeo-0015");
+        assertThat(OrthodonticRecordService.searchText("Ana", null, "AEO-0002")).isEqualTo("ana aeo-0002");
     }
 
     // --- Alcance ---
@@ -173,12 +173,12 @@ class OrthodonticRecordServiceTest {
         when(records.findByIdForUpdate(10L)).thenReturn(Optional.of(record));
         saveReturnsArgument();
 
-        RecordView view = service.update(admin, 10L, 3, data("AOC-0015", "Ana Lucía Quispe"));
+        RecordView view = service.update(admin, 10L, 3, data("AEO-0015", "Ana Lucía Quispe"));
 
         assertThat(view.authorId()).isEqualTo(1L);
-        assertThat(view.recordNumber()).isEqualTo("AOC-0015");
+        assertThat(view.recordNumber()).isEqualTo("AEO-0015");
         assertThat(view.patientName()).isEqualTo("Ana Lucía Quispe");
-        assertThat(record.getSearchText()).isEqualTo("ana lucia quispe aoc-0015");
+        assertThat(record.getSearchText()).isEqualTo("ana lucia quispe aeo-0015");
     }
 
     // --- Versión ---
@@ -209,7 +209,7 @@ class OrthodonticRecordServiceTest {
         Anamnesis anamnesis = new Anamnesis(" Dientes salidos ", null, null, null, null, YesNo.NO,
             null, null, null, null, null, null);
         RecordContent e = RecordContent.empty();
-        RecordData data = new RecordData("AOC-0015", null, "Juan", DocumentType.DNI, "74125896", PatientSex.MALE,
+        RecordData data = new RecordData("AEO-0015", null, "Juan", DocumentType.DNI, "74125896", PatientSex.MALE,
             LocalDate.of(2012, 5, 20), null, null, null, LocalDate.of(2026, 5, 19),
             new RecordContent(null, anamnesis, e.facial(), e.functional(), e.occlusal(), e.models(), e.radiographic(),
                 e.diagnosis(), e.signatures()));

@@ -91,7 +91,7 @@ public final class RecordNormalizer {
             text(a.chiefComplaint()), text(a.personalPreferences()), a.cooperation(), a.oralHygiene(),
             a.suckingHabits(),
             menarche,
-            menarche == YesNo.YES ? a.menarcheDate() : null,
+            menarche == YesNo.YES ? a.menarcheYear() : null,
             text(a.medicalHistory()), text(a.accidentsHistory()), text(a.familyStructure()),
             text(a.generalTreatmentNeeds()), text(a.heredity()));
     }

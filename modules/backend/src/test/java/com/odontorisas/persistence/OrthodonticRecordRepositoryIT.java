@@ -46,7 +46,7 @@ class OrthodonticRecordRepositoryIT extends AbstractIntegrationTest {
     }
 
     private OrthodonticRecord record(User author, int seq, String patient) {
-        String number = seq >= 9000 ? "AOC-%04d".formatted(seq) : TestRecordNumbers.next();
+        String number = seq >= 9000 ? "AEO-%04d".formatted(seq) : TestRecordNumbers.next();
         return records.saveAndFlush(OrthodonticRecord.builder().author(author).recordNumber(number)
             .patientName(patient).searchText(SearchNormalizer.normalize(patient + " " + number))
             .content("{\"schemaVersion\":1,\"anamnesis\":{\"chiefComplaint\":\"Dientes \\\"salidos\\\"\"}}")
@@ -84,10 +84,10 @@ class OrthodonticRecordRepositoryIT extends AbstractIntegrationTest {
         OrthodonticRecord own = record(ana, 9001, "P1");
         record(beto, 9002, "P2");
 
-        assertThat(records.existsNumberInOtherRecord("AOC-9002", null)).isTrue();
-        assertThat(records.existsNumberInOtherRecord("AOC-9002", own.getId())).isTrue();
-        assertThat(records.existsNumberInOtherRecord("AOC-9001", own.getId())).isFalse();
-        assertThat(records.existsNumberInOtherRecord("AOC-9003", null)).isFalse();
+        assertThat(records.existsNumberInOtherRecord("AEO-9002", null)).isTrue();
+        assertThat(records.existsNumberInOtherRecord("AEO-9002", own.getId())).isTrue();
+        assertThat(records.existsNumberInOtherRecord("AEO-9001", own.getId())).isFalse();
+        assertThat(records.existsNumberInOtherRecord("AEO-9003", null)).isFalse();
     }
 
     @Test
