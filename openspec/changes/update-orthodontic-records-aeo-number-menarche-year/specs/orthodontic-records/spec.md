@@ -122,12 +122,12 @@ El formulario SHALL cubrir los campos de las págs. 1–4 y 10–13 del PDF. Don
 - **THEN** la pregunta "¿La 1ª menstruación ya ocurrió?" y su año no se muestran ni se imprimen
 - **AND** si tenían valor y el sexo cambia a masculino o se quita, ambos se descartan al guardar
 
-#### Scenario: Año de la primera menstruación
+#### Scenario: Fecha de la primera menstruación
 - **WHEN** el sexo es femenino, el usuario responde "Sí" y registra el año 2023
 - **THEN** se guardan la respuesta y el año (solo el año, sin mes ni día) y se imprimen
 - **AND** si la respuesta cambia a "No", el año se oculta y se descarta al guardar
 
-#### Scenario: Año de la primera menstruación inválido
+#### Scenario: Fecha de la primera menstruación inválida
 - **WHEN** el año de la primera menstruación es posterior al año actual (zona horaria de la clínica), anterior al año de nacimiento o no es un número de cuatro cifras
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda la historia
 - **AND** el formulario muestra el mensaje junto al campo; sin fecha de nacimiento solo se exige que no sea futuro
