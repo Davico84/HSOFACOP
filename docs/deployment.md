@@ -13,28 +13,64 @@ duerme vienen de `add-cold-start-warmup`. Pasos: §5; verificación: §6. Produc
 - El servicio **se suspende tras 15 min sin tráfico entrante**; la siguiente petición lo despierta y
   espera el arranque de Spring Boot (**~1 min**). Mientras tanto el frontend muestra la pantalla de
   arranque en frío ("Preparando tu consultorio digital").
-- **750 h de instancia al mes por workspace**: alcanzan para **un** servicio despierto 24/7 (hasta 744 h
-  en un mes de 31 días, que es lo que gasta el monitor). Un segundo servicio gratuito en el mismo
-  workspace no cabe: al pasar las 750 h, Render suspende los servicios hasta el mes siguiente.
+- **750 h de instancia al mes por workspace**, compartidas por todos sus servicios gratuitos. Un
+  servicio despierto 24/7 gasta hasta 744 h (mes de 31 días): por eso, desde que **Dentdesk** (repo
+  `Davico84/Odontorisas`) comparte el workspace, las dos apps solo están despiertas en horario de
+  atención (abajo). Al pasar las 750 h, Render suspende **los servicios** hasta el mes siguiente.
 - **512 MB de RAM y 0,1 CPU.** En el primer despliegue mide la memoria (RSS) y el tiempo de
   arranque; ajusta la JVM (`JAVA_TOOL_OPTIONS`, p. ej. `-Xmx`) **solo tras medir**.
 
-### Mantenerlo despierto: monitor externo (obligatorio)
+### Horario de atención: lunes a sábado, 9:00–21:00 (hora de Perú)
 
-Configura un monitor HTTP gratuito (UptimeRobot o cron-job.org):
+Decisión del 2026-10-11 (compartida con Dentdesk). Fuera de horario (noches y domingos) el servicio
+duerme y el primer ingreso ve la pantalla de arranque en frío (~1 min; medido: 64 s). Perú no tiene
+horario de verano.
+
+**Mantenerlo despierto: cron-job.org** (un job por app):
 
 | Campo | Valor |
 |---|---|
-| URL | `https://<tu-servicio>.onrender.com/actuator/health/liveness` |
-| Método | `GET` |
-| Intervalo | **10 min** (menor que los 15 min de inactividad) |
-| Esperado | `200` con `"status":"UP"` |
+| URL | `https://hs-facop-api.onrender.com/actuator/health/liveness` (sin `/api`) |
+| Método | `GET`, encabezado `Accept: application/json` |
+| Zona horaria | `America/Lima` |
+| Programación | lunes a sábado, horas **9 a 20**, minutos 0, 10, 20, 30, 40, 50 (`*/10 9-20 * * 1-6`) |
+| Aviso de fallo | tras **3 fallos seguidos** (a las 9:00 un ping puede pasar los 30 s que espera cron-job.org) |
 
+- Último ping 20:50: Render suspende 15 min después, despierto hasta ~21:05. La última hora es la
+  **20**: marcar la 21 extiende el horario a las 22:00 y deja el margen en ~34 h.
+- ⚠️ **cron-job.org no despierta un servicio dormido**: Render le responde en ~1 s con una página
+  HTML propia sin arrancar el servicio (hallazgo del 2026-10-12, con y sin el encabezado). Solo lo
+  **mantiene** despierto. El encabezado se deja porque no estorba.
 - Usa **liveness**, no `/actuator/health`: liveness **no consulta la base**, así la base puede
   dormir (§2). `/actuator/health` sí la consulta en cada llamada.
-- El **health check de Render** puede apuntar a la misma ruta, pero **no sustituye al monitor**:
-  Render lo usa para verificar instancias y despliegues, no documenta que evite la suspensión.
-- Si el monitor falla o se pausa, el arranque en frío vuelve (con la pantalla de espera).
+
+**Despertarlo cada mañana: GitHub Actions del repo de Dentdesk.** `.github/workflows/wake-up.yml` de
+`Davico84/Odontorisas` corre lunes a sábado a las **8:45** (13:45 UTC; GitHub puede atrasar los
+programados) y despierta Dentdesk **y HSO** con `curl` (hasta 3 intentos de 150 s); si alguna no
+responde `UP`, falla y GitHub avisa por correo. Se puede lanzar a mano (*Run workflow*). Verificado
+el 2026-10-12. Es un repo privado: el desactivado por 60 días sin actividad no le aplica.
+
+- Si el despertar falla (o ese repo deja de existir), HSO sigue funcionando: el primer ingreso lo
+  despierta (~1 min con la pantalla de espera) y desde ahí cron-job.org lo mantiene.
+- **UptimeRobot** (el monitor 24/7 anterior) está **pausado**, no borrado: sin horarios en el plan
+  gratuito, despertaría a HSO de noche y agotaría el cupo compartido.
+- El **health check de Render** puede apuntar a la misma ruta, pero no mantiene despierto el servicio.
+
+**Presupuesto del workspace** (peor mes: 27 días hábiles):
+
+| Concepto | Horas |
+|---|---|
+| Por app: 8:45 → ~21:05 ≈ 12 h 15 min/día × 27 | ≈ 331 h |
+| Dentdesk + HSO | ≈ 662 h |
+| Cupo del workspace | 750 h |
+| Margen para uso fuera de horario | ≈ 88 h |
+
+- Cada ingreso fuera de horario cuesta **~17 min** (arranque + 15 min hasta la suspensión), aunque
+  dure segundos: el margen alcanza para unos 300 al mes entre las dos apps.
+- Consumo del mes: Render → *Billing / Usage*. Si se agota, Render suspende **los dos** servicios
+  hasta el mes siguiente (ni la pantalla de espera los despierta).
+- Alternativas evaluadas (lun–sáb): 9–20 (~142 h de margen), 8–20 (~88 h), 8–21 (~44 h), 9–22
+  (~34 h); todos los días 9–20: ~52 h. Detalle en `docs/deployment.md` §3 del repo de Dentdesk.
 
 ### Variables del servicio
 
@@ -229,7 +265,8 @@ Producción = rama **`main`** (Render y Vercel). `dev` llega por PR con el CI en
 4. **Vercel** — *Add New → Project*, importa el repo. Root Directory = **raíz** (el build lo define
    `vercel.json`), rama de producción `main`, **sin** `VITE_API_URL`. Tras el primer deploy, en
    Render: `CORS_ALLOWED_ORIGINS=https://<app>.vercel.app` (exacto, sin `/` final).
-5. **Monitor** — UptimeRobot o cron-job.org a liveness cada 10 min (§1).
+5. **Monitor** — cron-job.org a liveness en horario (lunes a sábado, 9–20 cada 10 min) y despertar
+   diario de las 8:45 (workflow del repo de Dentdesk); §1.
 6. **Primer ADMIN** — regístrate en `https://<app>.vercel.app/registro` y, enseguida, en el SQL
    Editor de Neon:
    ```sql
@@ -251,4 +288,5 @@ Producción = rama **`main`** (Render y Vercel). `dev` llega por PR con el CI en
 | Contacto | enlaces de WhatsApp y correo | abren lo esperado | ✅ |
 | Smoke E2E | `E2E_BASE_URL=https://<app>.vercel.app pnpm exec playwright test e2e/auth.smoke.spec.ts` | verde | ✅ 3/3 |
 | Memoria en Render | métricas del servicio tras el arranque | < 512 MB | ✅ sin reinicios por memoria (Live desde el deploy, `ExitOnOutOfMemoryError` no saltó). Render Free solo muestra métricas de red; medido en local con 512 MB: ~293 MiB |
-| Monitor y ADMIN | UptimeRobot a liveness; primer ADMIN | Up; ve Usuarios | ✅ |
+| Monitor y ADMIN | UptimeRobot a liveness; primer ADMIN | Up; ve Usuarios | ✅ (UptimeRobot pausado desde 2026-10-11) |
+| Monitor con horario | `wake-up.yml` (Dentdesk) a mano con el servicio dormido; pings de cron-job.org | `UP` tras el arranque; pings solo lun–sáb 9:00–20:50 | ✅ 2026-10-12: despertar verificado (Dentdesk dormida 63 s; HSO `UP`) |
