@@ -18,4 +18,4 @@
 ## 3. Docs
 
 - [x] 3.1 `docs/domain.md`: formato `AEO-` + 4 dígitos, `menarcheYear`, `schemaVersion` 9
-- [ ] 3.2 Al archivar: `docs/vision.md` ✅
+- [x] 3.2 Al archivar: `docs/vision.md` ✅
