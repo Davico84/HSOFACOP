@@ -25,9 +25,9 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
  */
 @PatientFields.Consistent
 public record CreateRecordRequest(
-    @Schema(requiredMode = REQUIRED, description = "Número de historia que asignan los docentes", example = "AOC-0015")
+    @Schema(requiredMode = REQUIRED, description = "Número de historia que asignan los docentes", example = "AEO-0015")
     @NotBlank(message = "Indica el número de historia.")
-    @Pattern(regexp = "AOC-[0-9]{4}", message = "Usa el formato AOC-0001.")
+    @Pattern(regexp = "AEO-[0-9]{4}", message = "Usa el formato AEO-0001.")
     String recordNumber,
     @Size(max = 120) String treatingDentist,
     @Schema(requiredMode = REQUIRED) @NotBlank(message = "Indica el nombre del paciente.") @Size(max = 120) String patientName,

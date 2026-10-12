@@ -47,8 +47,8 @@ import { today } from "../utils/age";
  */
 
 /** Número de historia que asignan los docentes (paridad con `@Pattern` de los requests). */
-export const RECORD_NUMBER_PATTERN = /^AOC-[0-9]{4}$/;
-export const RECORD_NUMBER_FORMAT_MESSAGE = "Usa el formato AOC-0001.";
+export const RECORD_NUMBER_PATTERN = /^AEO-[0-9]{4}$/;
+export const RECORD_NUMBER_FORMAT_MESSAGE = "Usa el formato AEO-0001.";
 
 export const SHORT_TEXT = 200;
 export const LONG_TEXT = 4000;
@@ -102,7 +102,7 @@ const anamnesis = z.object({
   oralHygiene: one(AnamnesisOralHygiene),
   suckingHabits: one(AnamnesisMenarche),
   menarche: one(AnamnesisMenarche),
-  menarcheDate: z.string().nullish(),
+  menarcheYear: z.number().int("Usa un año de cuatro cifras.").nullish(),
   medicalHistory: text(LONG_TEXT),
   accidentsHistory: text(LONG_TEXT),
   familyStructure: text(LONG_TEXT),
@@ -372,13 +372,15 @@ export const recordFormSchema = z
     }
     // Primera menstruación: solo se valida si aplica (sexo femenino y respuesta Sí); si no, el
     // servidor la descarta al guardar.
-    const menarcheDate = r.content.anamnesis.menarcheDate;
-    if (r.patientSex === "FEMALE" && r.content.anamnesis.menarche === "YES" && menarcheDate) {
-      const path = ["content", "anamnesis", "menarcheDate"];
-      if (menarcheDate > today()) {
-        ctx.addIssue({ code: "custom", path, message: "La fecha de la primera menstruación no puede ser futura." });
-      } else if (r.birthDate && menarcheDate < r.birthDate) {
-        ctx.addIssue({ code: "custom", path, message: "La fecha de la primera menstruación no puede ser anterior a la de nacimiento." });
+    const menarcheYear = r.content.anamnesis.menarcheYear;
+    if (r.patientSex === "FEMALE" && r.content.anamnesis.menarche === "YES" && menarcheYear != null) {
+      const path = ["content", "anamnesis", "menarcheYear"];
+      if (menarcheYear < 1000 || menarcheYear > 9999) {
+        ctx.addIssue({ code: "custom", path, message: "Usa un año de cuatro cifras." });
+      } else if (menarcheYear > Number(today().slice(0, 4))) {
+        ctx.addIssue({ code: "custom", path, message: "El año de la primera menstruación no puede ser futuro." });
+      } else if (r.birthDate && menarcheYear < Number(r.birthDate.slice(0, 4))) {
+        ctx.addIssue({ code: "custom", path, message: "El año de la primera menstruación no puede ser anterior al de nacimiento." });
       }
     }
   });

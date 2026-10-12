@@ -1,5 +1,6 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { TextField } from "@/modules/core/components/form/TextField";
+import { MeasureField } from "@/modules/core/components/form/MeasureField";
 import { TextAreaField } from "@/modules/core/components/form/TextAreaField";
 import { ChoiceField } from "@/modules/core/components/form/ChoiceField";
 import { FormField } from "@/modules/core/components/form/FormField";
@@ -31,7 +32,7 @@ export function Step1Patient({ patientLocked = false }: Step1PatientProps) {
     <div className="flex flex-col gap-8">
       <section aria-labelledby="s1-patient" className="grid gap-4 md:grid-cols-2">
         <h3 id="s1-patient" className="text-lg font-semibold md:col-span-2">Paciente</h3>
-        <TextField name="recordNumber" label="Nro. de historia" placeholder="AOC-0001" autoComplete="off"
+        <TextField name="recordNumber" label="Nro. de historia" placeholder="AEO-0001" autoComplete="off"
           hint="Lo asignan los docentes. Se puede corregir aunque la historia ya esté impresa." />
         <TextField name="treatingDentist" label="Odontólogo tratante" />
         <TextField name="patientName" label="Paciente" className="md:col-span-2" autoComplete="off" readOnly={patientLocked} />
@@ -65,7 +66,7 @@ export function Step1Patient({ patientLocked = false }: Step1PatientProps) {
           <div className="grid gap-4 md:grid-cols-2">
             <ChoiceField name="content.anamnesis.menarche" label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} />
             {menarche === "YES" ? (
-              <TextField name="content.anamnesis.menarcheDate" label="Fecha de la 1ª menstruación" type="date" />
+              <MeasureField name="content.anamnesis.menarcheYear" label="Año de la 1ª menstruación" step={1} min={1900} />
             ) : null}
           </div>
         ) : null}

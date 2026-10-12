@@ -93,7 +93,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
 
     private String currentNumber(long id) {
         List<String> found = jdbc.queryForList("SELECT record_number FROM orthodontic_records WHERE id = ?", String.class, id);
-        return found.isEmpty() ? "AOC-0000" : found.get(0);
+        return found.isEmpty() ? "AEO-0000" : found.get(0);
     }
 
     /** Campo ausente o nulo en la respuesta. */
@@ -219,17 +219,17 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         JsonNode missing = read(create(torres, "{\"recordNumber\":\"  \",\"patientName\":\"Ana\"}"));
         assertThat(missing.get("status").asInt()).isEqualTo(400);
         assertThat(fieldError(missing, "recordNumber")).isNotNull();
-        for (String invalid : List.of("AOC-15", "AOC-00001", "AEO-0015")) {
+        for (String invalid : List.of("AEO-15", "AEO-00001", "AOC-0015")) {
             MvcResult result = create(torres, "{\"recordNumber\":\"" + invalid + "\",\"patientName\":\"Ana\"}");
             assertThat(result.getResponse().getStatus()).as(invalid).isEqualTo(400);
-            assertThat(fieldError(read(result), "recordNumber")).as(invalid).isEqualTo("Usa el formato AOC-0001.");
+            assertThat(fieldError(read(result), "recordNumber")).as(invalid).isEqualTo("Usa el formato AEO-0001.");
         }
 
         JsonNode created = createOk(torres, "Ana");
         MvcResult save = save(torres, created.get("id").asLong(), "{\"version\":" + created.get("version").asLong()
-            + ",\"recordNumber\":\"AOC-15\",\"patientName\":\"Ana\"}");
+            + ",\"recordNumber\":\"AEO-15\",\"patientName\":\"Ana\"}");
         assertThat(save.getResponse().getStatus()).isEqualTo(400);
-        assertThat(fieldError(read(save), "recordNumber")).isEqualTo("Usa el formato AOC-0001.");
+        assertThat(fieldError(read(save), "recordNumber")).isEqualTo("Usa el formato AEO-0001.");
     }
 
     @Test
@@ -266,44 +266,44 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void menarche_date_is_saved_only_with_yes_for_female_patients() throws Exception {
+    void menarche_year_is_saved_only_with_yes_for_female_patients() throws Exception {
         Session torres = register("Dra. Torres");
         long id = createOk(torres, "Ana").get("id").asLong();
         String female = "\"patientName\":\"Ana\",\"patientSex\":\"FEMALE\",\"birthDate\":\"2012-05-20\"";
 
         JsonNode yes = read(save(torres, id, "{\"version\":0," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2023-03-15\"}}}"));
-        assertThat(yes.get("content").get("anamnesis").get("menarcheDate").stringValue()).isEqualTo("2023-03-15");
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2023}}}"));
+        assertThat(yes.get("content").get("anamnesis").get("menarcheYear").asInt()).isEqualTo(2023);
 
         JsonNode no = read(save(torres, id, "{\"version\":" + yes.get("version").asLong() + "," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"NO\",\"menarcheDate\":\"2023-03-15\"}}}"));
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"NO\",\"menarcheYear\":2023}}}"));
         assertThat(no.get("content").get("anamnesis").get("menarche").stringValue()).isEqualTo("NO");
-        assertThat(isEmpty(no.get("content").get("anamnesis").get("menarcheDate"))).isTrue();
+        assertThat(isEmpty(no.get("content").get("anamnesis").get("menarcheYear"))).isTrue();
 
         JsonNode male = read(save(torres, id, "{\"version\":" + no.get("version").asLong()
             + ",\"patientName\":\"Ana\",\"patientSex\":\"MALE\",\"birthDate\":\"2012-05-20\""
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2023-03-15\"}}}"));
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2023}}}"));
         assertThat(isEmpty(male.get("content").get("anamnesis").get("menarche"))).isTrue();
-        assertThat(isEmpty(male.get("content").get("anamnesis").get("menarcheDate"))).isTrue();
+        assertThat(isEmpty(male.get("content").get("anamnesis").get("menarcheYear"))).isTrue();
     }
 
     @Test
-    void menarche_date_cannot_be_future_or_before_birth() throws Exception {
+    void menarche_year_cannot_be_future_or_before_the_birth_year() throws Exception {
         Session torres = register("Dra. Torres");
         long id = createOk(torres, "Ana").get("id").asLong();
         String female = "\"patientName\":\"Ana\",\"patientSex\":\"FEMALE\",\"birthDate\":\"2012-05-20\"";
 
         MvcResult future = save(torres, id, "{\"version\":0," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2099-01-01\"}}}");
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2099}}}");
         assertThat(future.getResponse().getStatus()).isEqualTo(400);
-        assertThat(fieldError(read(future), "content.anamnesis.menarcheDate"))
-            .isEqualTo("La fecha de la primera menstruación no puede ser futura.");
+        assertThat(fieldError(read(future), "content.anamnesis.menarcheYear"))
+            .isEqualTo("El año de la primera menstruación no puede ser futuro.");
 
         MvcResult beforeBirth = save(torres, id, "{\"version\":0," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2010-01-01\"}}}");
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2011}}}");
         assertThat(beforeBirth.getResponse().getStatus()).isEqualTo(400);
-        assertThat(fieldError(read(beforeBirth), "content.anamnesis.menarcheDate"))
-            .isEqualTo("La fecha de la primera menstruación no puede ser anterior a la de nacimiento.");
+        assertThat(fieldError(read(beforeBirth), "content.anamnesis.menarcheYear"))
+            .isEqualTo("El año de la primera menstruación no puede ser anterior al de nacimiento.");
         assertThat(read(getRecord(torres, id)).get("version").asLong()).isZero();
     }
 
@@ -532,7 +532,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
     }
 
     @Test
@@ -566,7 +566,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
         assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
             String.class, id)).isEqualTo("2026-09-01");
     }
@@ -596,7 +596,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(n.get("upperWidths").get("tooth25").decimalValue()).isEqualByComparingTo("6.9");
         assertThat(n.get("lowerWidths").get("tooth31").decimalValue()).isEqualByComparingTo("5.4");
         assertThat(n.get("conclusionUpper").stringValue()).isEqualTo("Falta de espacio leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
     }
 
     @Test
@@ -629,7 +629,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(b.get("incisors").get("tooth11").decimalValue()).isEqualByComparingTo("8.7");
         assertThat(saved.get("content").get("models").get("nance").get("upperWidths").get("tooth11").decimalValue())
             .isEqualByComparingTo("8.6");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(8);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
     }
 
     @Test

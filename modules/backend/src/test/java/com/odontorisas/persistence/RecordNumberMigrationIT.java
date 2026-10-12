@@ -75,4 +75,73 @@ class RecordNumberMigrationIT extends AbstractIntegrationTest {
 
         jdbc.execute("DROP SCHEMA " + schema + " CASCADE");
     }
+
+    // ---- V16: AOC -> AEO y año de la primera menstruación ----
+
+    private String schemaAt15(JdbcTemplate jdbc) {
+        String schema = "v16_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        flyway(schema, "15").migrate();
+        return schema;
+    }
+
+    private long aocRecord(JdbcTemplate jdbc, String schema, long author, String number, String content) {
+        return jdbc.queryForObject("INSERT INTO " + schema + ".orthodontic_records "
+            + "(author_id, record_number, patient_name, search_text, content) "
+            + "VALUES (?, ?, 'Ana Quispe', ?, CAST(? AS jsonb)) RETURNING id",
+            Long.class, author, number, "ana quispe " + number.toLowerCase(), content);
+    }
+
+    private String text(JdbcTemplate jdbc, String schema, String column, long id) {
+        return jdbc.queryForObject("SELECT " + column + " FROM " + schema + ".orthodontic_records WHERE id = ?", String.class, id);
+    }
+
+    @Test
+    void v16_turns_aoc_into_aeo_and_the_menarche_date_into_its_year() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        String schema = schemaAt15(jdbc);
+        long ana = user(jdbc, schema);
+        long dated = aocRecord(jdbc, schema, ana, "AOC-0018",
+            "{\"schemaVersion\":8,\"anamnesis\":{\"menarche\":\"YES\",\"menarcheDate\":\"2023-03-15\"}}");
+        long nullDate = aocRecord(jdbc, schema, ana, "AOC-0019", "{\"schemaVersion\":8,\"anamnesis\":{\"menarcheDate\":null}}");
+        long noAnamnesis = aocRecord(jdbc, schema, ana, "AOC-0020", "{\"schemaVersion\":8}");
+        long noVersion = aocRecord(jdbc, schema, ana, "AOC-0021", "{\"anamnesis\":{}}");
+
+        flyway(schema, "16").migrate();
+
+        assertThat(text(jdbc, schema, "record_number", dated)).isEqualTo("AEO-0018");
+        assertThat(text(jdbc, schema, "search_text", dated)).isEqualTo("ana quispe aeo-0018");
+        assertThat(text(jdbc, schema, "content::text", dated))
+            .contains("\"menarcheYear\": 2023").doesNotContain("menarcheDate").contains("\"schemaVersion\": 9");
+        assertThat(text(jdbc, schema, "content::text", nullDate)).doesNotContain("menarche").contains("\"schemaVersion\": 9");
+        assertThat(text(jdbc, schema, "content::text", noAnamnesis)).isEqualTo("{\"schemaVersion\": 9}");
+        assertThat(text(jdbc, schema, "content::text", noVersion)).contains("\"schemaVersion\": 9");
+        assertThat(text(jdbc, schema, "record_number", noVersion)).isEqualTo("AEO-0021");
+        // El formato viejo ya no entra.
+        assertThatThrownBy(() -> jdbc.update("UPDATE " + schema + ".orthodontic_records SET record_number = 'AOC-0099' WHERE id = ?", dated))
+            .hasMessageContaining("ck_orthodontic_records_record_number");
+
+        jdbc.execute("DROP SCHEMA " + schema + " CASCADE");
+    }
+
+    @Test
+    void v16_aborts_without_changing_anything_when_the_content_is_invalid() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        for (String bad : java.util.List.of(
+                "{\"schemaVersion\":8,\"anamnesis\":{\"menarcheDate\":\"2023-02-30\"}}",
+                "{\"schemaVersion\":8,\"anamnesis\":{\"menarcheDate\":\"15/03/2023\"}}",
+                "{\"schemaVersion\":8,\"anamnesis\":{\"menarcheDate\":2023}}",
+                "{\"schemaVersion\":\"8\"}",
+                "{\"schemaVersion\":8.0}")) {
+            String schema = schemaAt15(jdbc);
+            long ana = user(jdbc, schema);
+            long ok = aocRecord(jdbc, schema, ana, "AOC-0018", "{\"schemaVersion\":8}");
+            long broken = aocRecord(jdbc, schema, ana, "AOC-0019", bad);
+
+            assertThatThrownBy(() -> flyway(schema, "16").migrate()).as(bad)
+                .hasStackTraceContaining("V16: contenido inválido").hasStackTraceContaining("{" + broken + "}");
+            assertThat(text(jdbc, schema, "record_number", ok)).as(bad).isEqualTo("AOC-0018");
+
+            jdbc.execute("DROP SCHEMA " + schema + " CASCADE");
+        }
+    }
 }

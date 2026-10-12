@@ -52,7 +52,7 @@ public class OrthodonticRecord {
     private User author;
 
     /**
-     * Número que asignan los docentes ({@code AOC-0001}): único entre todas las historias
+     * Número que asignan los docentes ({@code AEO-0001}): único entre todas las historias
      * (índice {@code ux_orthodontic_records_record_number}); lo corrigen el autor o un ADMIN.
      */
     @Column(name = "record_number", nullable = false, length = 20)

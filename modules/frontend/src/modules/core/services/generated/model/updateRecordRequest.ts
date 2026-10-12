@@ -15,7 +15,7 @@ export interface UpdateRecordRequest {
   /**
    * Número de historia que asignan los docentes
    * @minLength 1
-   * @pattern AOC-[0-9]{4}
+   * @pattern AEO-[0-9]{4}
    */
   recordNumber: string;
   /**

@@ -64,7 +64,7 @@ class RecordNormalizerTest {
     }
 
     private static RecordData data(PatientSex sex, RecordContent content) {
-        return new RecordData(" AOC-0015 ", "  Dra. Torres ", " Ana Quispe ", DocumentType.DNI, " 74125896 ", sex,
+        return new RecordData(" AEO-0015 ", "  Dra. Torres ", " Ana Quispe ", DocumentType.DNI, " 74125896 ", sex,
             null, "", "   ", null, null, content);
     }
 
@@ -93,26 +93,26 @@ class RecordNormalizerTest {
 
     @Test
     void record_number_is_trimmed() {
-        assertThat(RecordNormalizer.normalize(data(PatientSex.FEMALE, null), null).recordNumber()).isEqualTo("AOC-0015");
+        assertThat(RecordNormalizer.normalize(data(PatientSex.FEMALE, null), null).recordNumber()).isEqualTo("AEO-0015");
     }
 
     @Test
-    void menarche_date_is_kept_only_with_a_yes_answer_for_female_patients() {
-        LocalDate date = LocalDate.of(2023, 3, 15);
-        Anamnesis yes = new Anamnesis(null, null, null, null, null, YesNo.YES, date, null, null, null, null, null);
-        Anamnesis no = new Anamnesis(null, null, null, null, null, YesNo.NO, date, null, null, null, null, null);
+    void menarche_year_is_kept_only_with_a_yes_answer_for_female_patients() {
+        Integer year = 2023;
+        Anamnesis yes = new Anamnesis(null, null, null, null, null, YesNo.YES, year, null, null, null, null, null);
+        Anamnesis no = new Anamnesis(null, null, null, null, null, YesNo.NO, year, null, null, null, null, null);
 
         Anamnesis female = RecordNormalizer.content(with(yes, null, null, null, null, null, null), PatientSex.FEMALE, null).anamnesis();
         assertThat(female.menarche()).isEqualTo(YesNo.YES);
-        assertThat(female.menarcheDate()).isEqualTo(date);
-        // "No" descarta la fecha; sin sexo femenino se descartan respuesta y fecha.
+        assertThat(female.menarcheYear()).isEqualTo(year);
+        // "No" descarta el año; sin sexo femenino se descartan respuesta y año.
         assertThat(RecordNormalizer.content(with(no, null, null, null, null, null, null), PatientSex.FEMALE, null)
-            .anamnesis().menarcheDate()).isNull();
+            .anamnesis().menarcheYear()).isNull();
         Anamnesis male = RecordNormalizer.content(with(yes, null, null, null, null, null, null), PatientSex.MALE, null).anamnesis();
         assertThat(male.menarche()).isNull();
-        assertThat(male.menarcheDate()).isNull();
+        assertThat(male.menarcheYear()).isNull();
         assertThat(RecordNormalizer.content(with(yes, null, null, null, null, null, null), null, null)
-            .anamnesis().menarcheDate()).isNull();
+            .anamnesis().menarcheYear()).isNull();
     }
 
     @Test

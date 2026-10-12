@@ -17,8 +17,8 @@ import java.time.LocalDate;
 /**
  * Datos del paciente comunes a crear y guardar una historia, con sus reglas entre campos
  * (scenarios de "Datos del paciente con edad calculada"): documento con tipo y número del formato
- * de ese tipo, inicio de tratamiento no anterior al nacimiento, y fecha de la primera menstruación
- * no futura ni anterior al nacimiento. Cada error va a su campo. "Hoy" sale del {@code ClockProvider}
+ * de ese tipo, inicio de tratamiento no anterior al nacimiento, y año de la primera menstruación
+ * de cuatro cifras, no futuro ni anterior al año de nacimiento. Cada error va a su campo. "Hoy" sale del {@code ClockProvider}
  * de la validación, que usa el reloj de la app (zona de la clínica).
  */
 public interface PatientFields {
@@ -68,15 +68,17 @@ public interface PatientFields {
                 valid = violation(context, "treatmentStartDate",
                     "La fecha de inicio de tratamiento no puede ser anterior a la de nacimiento.");
             }
-            LocalDate menarcheDate = value.content() == null || value.content().anamnesis() == null
-                ? null : value.content().anamnesis().menarcheDate();
-            if (menarcheDate != null) {
-                LocalDate today = LocalDate.now(context.getClockProvider().getClock());
-                if (menarcheDate.isAfter(today)) {
-                    valid = menarcheViolation(context, "La fecha de la primera menstruación no puede ser futura.");
-                } else if (value.birthDate() != null && menarcheDate.isBefore(value.birthDate())) {
+            Integer menarcheYear = value.content() == null || value.content().anamnesis() == null
+                ? null : value.content().anamnesis().menarcheYear();
+            if (menarcheYear != null) {
+                int thisYear = LocalDate.now(context.getClockProvider().getClock()).getYear();
+                if (menarcheYear < 1000 || menarcheYear > 9999) {
+                    valid = menarcheViolation(context, "Usa un año de cuatro cifras.");
+                } else if (menarcheYear > thisYear) {
+                    valid = menarcheViolation(context, "El año de la primera menstruación no puede ser futuro.");
+                } else if (value.birthDate() != null && menarcheYear < value.birthDate().getYear()) {
                     valid = menarcheViolation(context,
-                        "La fecha de la primera menstruación no puede ser anterior a la de nacimiento.");
+                        "El año de la primera menstruación no puede ser anterior al de nacimiento.");
                 }
             }
             return valid;
@@ -84,7 +86,7 @@ public interface PatientFields {
 
         private static boolean menarcheViolation(ConstraintValidatorContext context, String message) {
             context.buildConstraintViolationWithTemplate(message)
-                .addPropertyNode("content").addPropertyNode("anamnesis").addPropertyNode("menarcheDate")
+                .addPropertyNode("content").addPropertyNode("anamnesis").addPropertyNode("menarcheYear")
                 .addConstraintViolation();
             return false;
         }
