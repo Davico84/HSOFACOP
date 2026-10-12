@@ -23,11 +23,29 @@
    ALTER TABLE orthodontic_records ADD CONSTRAINT ck_orthodontic_records_record_number CHECK (record_number ~ '^AEO-[0-9]{4}$');
    ```
    Mismos dígitos ⇒ el índice único no puede chocar. No se toca `version` (no es una edición; un formulario abierto no queda desactualizado por esto, y al guardar enviaría el AOC viejo → 400 con el mensaje de formato; aceptable para un cambio de un día).
-2. Menarquia: para cada historia con `content->'anamnesis'->>'menarcheDate'` no nulo, poner `menarcheYear` = primeros 4 caracteres como número y quitar `menarcheDate`; quitar también `menarcheDate` nulo. `schemaVersion` = `GREATEST(…, 9)`.
+2. **Preflight del contenido** (aborta antes de cambiar nada, como V15 con los ids): si alguna historia tiene `anamnesis.menarcheDate` presente, no nulo y que **no** sea un string ISO `^[0-9]{4}-[0-9]{2}-[0-9]{2}$`, o un `schemaVersion` presente que no sea un entero, `RAISE EXCEPTION` con los ids afectados. Solo la API escribe ese contenido (siempre ISO y entero), así que no debería ocurrir; si ocurre, se corrige a mano y se reintenta el despliegue. Política: **abortar**, nunca adivinar ni perder datos en silencio.
+3. **Menarquia** (solo strings ISO válidos, garantizado por el preflight):
+   ```sql
+   UPDATE orthodontic_records
+   SET content = jsonb_set(content #- '{anamnesis,menarcheDate}', '{anamnesis,menarcheYear}',
+                           to_jsonb(substring(content->'anamnesis'->>'menarcheDate' from 1 for 4)::int))
+   WHERE jsonb_typeof(content->'anamnesis'->'menarcheDate') = 'string';
+   -- La clave vieja se quita siempre, también con valor null.
+   UPDATE orthodontic_records
+   SET content = content #- '{anamnesis,menarcheDate}'
+   WHERE content->'anamnesis' ? 'menarcheDate';
+   ```
+4. **schemaVersion** seguro (el preflight garantiza entero o ausente):
+   ```sql
+   UPDATE orthodontic_records
+   SET content = jsonb_set(content, '{schemaVersion}',
+                           to_jsonb(GREATEST(COALESCE((content->>'schemaVersion')::int, 1), 9)));
+   ```
+5. **Código**: `RecordContent.CURRENT_SCHEMA_VERSION = 9`. Sin esto, el primer guardado tras la migración volvería a escribir 8 (lo escribe `RecordNormalizer`).
 - Alternativa descartada: aceptar ambos prefijos. Dos formatos para lo mismo complican búsqueda y reportes.
 
 ### Número: dónde cambia
-- Backend: `@Pattern(regexp = "AEO-[0-9]{4}", message = "Usa el formato AEO-0001.")` en create/update; ejemplos de `@Schema`; Javadoc de la entidad; mensaje de número repetido usa el número tal cual.
+- Backend: `@Pattern(regexp = "AEO-[0-9]{4}", message = "Usa el formato AEO-0001.")` en create/update; **todos** los ejemplos `@Schema(example = "AOC-0015")`: `CreateRecordRequest`, `UpdateRecordRequest`, `RecordResponse`, `RecordSummaryResponse`, `UserDashboardResponse` y `AdminDashboardResponse` (si no, el contrato regenerado conserva AOC); Javadoc de la entidad; el mensaje de número repetido usa el número tal cual. Control: tras regenerar, `contracts/openapi.json` y el código de orval no contienen "AOC".
 - Frontend: Zod (`record.ts`) con el mismo patrón y mensaje; placeholder "AEO-0001" en `Step1Patient`; ejemplos en tests y fixtures.
 - Tests: `TestRecordNumbers` (backend) y `e2e/support/recordNumber.ts` generan `AEO-`. `RecordNumberMigrationIT` cubre V16 (AOC → AEO y búsqueda).
 
