@@ -2,12 +2,14 @@
 
 ## Purpose
 Historia clínica de ortodoncia de la clínica AEO/FACOP en formato digital: el tratante la llena en un formulario de 8 pasos que sigue el PDF de la clínica (anamnesis, análisis facial, funcional, oclusal, análisis de modelos —transversal, Moyers, Nance y Bolton—, radiográfico, diagnóstico y planes, firmas), la guarda como borrador, la encuentra en un listado con búsqueda y la imprime en hojas A4 con la presentación del PDF. Un `USER` (tratante) alcanza solo sus historias; un `ADMIN` (supervisor), todas. Las notas de evolución no se registran en el sistema: se imprime su hoja en blanco para llenarla a mano.
+
 ## Requirements
+
 ### Requirement: Crear una historia clínica de ortodoncia
 El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) crear una historia clínica de ortodoncia indicando como mínimo el nombre del paciente y el número de historia que asignan los docentes. La historia SHALL quedar asociada a su autor, y el odontólogo tratante SHALL proponerse con el nombre completo del autor (editable).
 
 #### Scenario: Creación con el mínimo de datos
-- **WHEN** un usuario autenticado crea una historia con el nombre del paciente "Ana Quispe" y el número "AOC-0015"
+- **WHEN** un usuario autenticado crea una historia con el nombre del paciente "Ana Quispe" y el número "AEO-0015"
 - **THEN** el sistema guarda la historia, responde `201` con su identificador y número, y la abre en el primer paso del formulario
 - **AND** el autor de la historia es ese usuario y el odontólogo tratante propuesto es su nombre completo
 
@@ -21,7 +23,7 @@ El sistema SHALL permitir a cualquier usuario autenticado (`USER` o `ADMIN`) cre
 - **THEN** el sistema responde `401` y no crea nada
 
 ### Requirement: Número de historia
-El número de historia SHALL tener el formato `AOC-` seguido de exactamente cuatro dígitos (`AOC-0001` a `AOC-9999`) y SHALL ser único entre todas las historias del sistema, de cualquier autor y cohorte (los docentes no reinician la numeración). El número NO SHALL confundirse con el identificador técnico interno, que no cambia.
+El número de historia SHALL tener el formato `AEO-` seguido de exactamente cuatro dígitos (`AEO-0001` a `AEO-9999`) y SHALL ser único entre todas las historias del sistema, de cualquier autor y cohorte (los docentes no reinician la numeración). El número NO SHALL confundirse con el identificador técnico interno, que no cambia.
 
 #### Scenario: Número obligatorio
 - **WHEN** un usuario intenta crear o guardar una historia sin número (vacío o solo espacios)
@@ -29,17 +31,22 @@ El número de historia SHALL tener el formato `AOC-` seguido de exactamente cuat
 - **AND** el formulario muestra el mensaje junto al campo
 
 #### Scenario: Formato del número
-- **WHEN** un usuario intenta crear o guardar una historia con "AOC-15", "AOC-00001" o "AEO-0015"
-- **THEN** el sistema responde `400` con el error en el campo del número ("Usa el formato AOC-0001") y no guarda nada
+- **WHEN** un usuario intenta crear o guardar una historia con "AEO-15", "AEO-00001" o "AOC-0015"
+- **THEN** el sistema responde `400` con el error en el campo del número ("Usa el formato AEO-0001") y no guarda nada
 
 #### Scenario: Número ya usado
 - **WHEN** un usuario intenta crear o guardar una historia con un número que ya tiene otra historia, de cualquier autor
-- **THEN** el sistema responde `409` (`/errors/record-number-taken`) con "El número AOC-0015 ya está registrado en otra historia. Verifica el número con la coordinación." y no guarda nada
+- **THEN** el sistema responde `409` (`/errors/record-number-taken`) con "El número AEO-0015 ya está registrado en otra historia. Verifica el número con la coordinación." y no guarda nada
 - **AND** el formulario muestra el mensaje junto al número, conserva lo escrito y el autoguardado no se pausa
 
 #### Scenario: Mismo número a la vez
 - **WHEN** dos usuarios crean o guardan a la vez historias con el mismo número
 - **THEN** solo una lo conserva y la otra recibe `409` (`/errors/record-number-taken`)
+
+#### Scenario: Historias con el número anterior
+- **WHEN** una historia tenía el número "AOC-0018" antes de este cambio
+- **THEN** pasa a "AEO-0018" sin cambiar sus demás datos ni su versión
+- **AND** buscar "aeo-0018" la encuentra
 
 ### Requirement: Corrección del número de historia
 Quien puede editar la historia (su autor o un `ADMIN`) SHALL poder corregir el número desde el primer paso, también después de imprimirla. Al corregirse, el número anterior SHALL quedar libre, porque pudo ingresarse por error y pertenecer a otra historia.
@@ -50,8 +57,8 @@ Quien puede editar la historia (su autor o un `ADMIN`) SHALL poder corregir el n
 - **AND** los datos del paciente fijados al imprimir siguen fijos
 
 #### Scenario: Un número corregido queda libre
-- **WHEN** una historia tenía por error "AOC-0015", se corrige a "AOC-0051" y luego otro alumno guarda su historia con "AOC-0015"
-- **THEN** el sistema guarda "AOC-0015" en la historia del otro alumno
+- **WHEN** una historia tenía por error "AEO-0015", se corrige a "AEO-0051" y luego otro alumno guarda su historia con "AEO-0015"
+- **THEN** el sistema guarda "AEO-0015" en la historia del otro alumno
 
 #### Scenario: El ADMIN corrige el número
 - **WHEN** un `ADMIN` cambia el número de una historia de otro autor a un número válido y libre
@@ -184,18 +191,22 @@ El formulario SHALL cubrir los campos de las págs. 1–4 y 10–13 del PDF. Don
 
 #### Scenario: Pregunta solo para niñas
 - **WHEN** el sexo del paciente es masculino o no está indicado
-- **THEN** la pregunta "¿La 1ª menstruación ya ocurrió?" y su fecha no se muestran ni se imprimen
+- **THEN** la pregunta "¿La 1ª menstruación ya ocurrió?" y su año no se muestran ni se imprimen
 - **AND** si tenían valor y el sexo cambia a masculino o se quita, ambos se descartan al guardar
 
 #### Scenario: Fecha de la primera menstruación
-- **WHEN** el sexo es femenino, el usuario responde "Sí" y registra la fecha 15/03/2023
-- **THEN** se guardan la respuesta y la fecha (sin hora) y se imprimen
-- **AND** si la respuesta cambia a "No", la fecha se oculta y se descarta al guardar
+- **WHEN** el sexo es femenino, el usuario responde "Sí" y registra el año 2023
+- **THEN** se guardan la respuesta y el año (solo el año, sin mes ni día) y se imprimen
+- **AND** si la respuesta cambia a "No", el año se oculta y se descarta al guardar
 
 #### Scenario: Fecha de la primera menstruación inválida
-- **WHEN** la fecha de la primera menstruación es posterior al día de hoy (zona horaria de la clínica) o anterior a la fecha de nacimiento
+- **WHEN** el año de la primera menstruación es posterior al año actual (zona horaria de la clínica), anterior al año de nacimiento o no es un número de cuatro cifras
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda la historia
-- **AND** el formulario muestra el mensaje junto al campo; sin fecha de nacimiento solo se exige que no sea futura
+- **AND** el formulario muestra el mensaje junto al campo; sin fecha de nacimiento solo se exige que no sea futuro
+
+#### Scenario: Historias con la fecha completa de la primera menstruación
+- **WHEN** una historia guardada antes de este cambio tenía la fecha de la primera menstruación 15/03/2023
+- **THEN** conserva el año 2023 y deja de guardar el mes y el día
 
 #### Scenario: Campos condicionados por la opción elegida
 - **WHEN** el usuario elige "Mordida cruzada posterior unilateral" o "Sí, con presencia de desgastes" (bruxismo)
@@ -295,12 +306,12 @@ El sistema SHALL ofrecer la sección "Historias clínicas" con un listado pagina
 - **THEN** la historia aparece en el resultado
 
 #### Scenario: Búsqueda por documento o número
-- **WHEN** el usuario busca un número de documento o un número de historia existentes (p. ej. "aoc-0015")
+- **WHEN** el usuario busca un número de documento o un número de historia existentes (p. ej. "aeo-0015")
 - **THEN** el resultado incluye la historia correspondiente
 
 #### Scenario: Búsqueda por el número corregido
-- **WHEN** el número de una historia se corrige de "AOC-0015" a "AOC-0051"
-- **THEN** buscar "aoc-0051" la encuentra y buscar "aoc-0015" ya no
+- **WHEN** el número de una historia se corrige de "AEO-0015" a "AEO-0051"
+- **THEN** buscar "aeo-0051" la encuentra y buscar "aeo-0015" ya no
 
 #### Scenario: Búsqueda y página en la dirección
 - **WHEN** el usuario busca "quispe" y pasa a la página 2 del listado
@@ -1047,4 +1058,3 @@ Lo que cambió en el servidor SHALL mostrarse sin reemplazar nunca cambios propi
 #### Scenario: Escribir mientras se revisa
 - **WHEN** el usuario empieza a escribir después de volver y antes de que la revisión muestre los datos del otro dispositivo
 - **THEN** lo escrito no se pierde: en lugar de recargar se muestra el aviso de historia cambiada
-
