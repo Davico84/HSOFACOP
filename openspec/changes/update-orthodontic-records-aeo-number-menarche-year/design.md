@@ -13,35 +13,78 @@
 ## Decisions
 
 ### Migración `V16` (una sola, transaccional)
-1. Número: soltar el `CHECK` viejo, actualizar y poner el nuevo:
-   ```sql
-   ALTER TABLE orthodontic_records DROP CONSTRAINT ck_orthodontic_records_record_number;
-   UPDATE orthodontic_records
-   SET record_number = 'AEO-' || substring(record_number from 5),
-       search_text   = replace(search_text, lower(record_number), lower('AEO-' || substring(record_number from 5)))
-   WHERE record_number LIKE 'AOC-%';
-   ALTER TABLE orthodontic_records ADD CONSTRAINT ck_orthodontic_records_record_number CHECK (record_number ~ '^AEO-[0-9]{4}$');
-   ```
-   Mismos dígitos ⇒ el índice único no puede chocar. No se toca `version` (no es una edición; un formulario abierto no queda desactualizado por esto, y al guardar enviaría el AOC viejo → 400 con el mensaje de formato; aceptable para un cambio de un día).
-2. **Preflight del contenido** (aborta antes de cambiar nada, como V15 con los ids): si alguna historia tiene `anamnesis.menarcheDate` presente, no nulo y que **no** sea un string ISO `^[0-9]{4}-[0-9]{2}-[0-9]{2}$`, o un `schemaVersion` presente que no sea un entero, `RAISE EXCEPTION` con los ids afectados. Solo la API escribe ese contenido (siempre ISO y entero), así que no debería ocurrir; si ocurre, se corrige a mano y se reintenta el despliegue. Política: **abortar**, nunca adivinar ni perder datos en silencio.
-3. **Menarquia** (solo strings ISO válidos, garantizado por el preflight):
-   ```sql
-   UPDATE orthodontic_records
-   SET content = jsonb_set(content #- '{anamnesis,menarcheDate}', '{anamnesis,menarcheYear}',
-                           to_jsonb(substring(content->'anamnesis'->>'menarcheDate' from 1 for 4)::int))
-   WHERE jsonb_typeof(content->'anamnesis'->'menarcheDate') = 'string';
-   -- La clave vieja se quita siempre, también con valor null.
-   UPDATE orthodontic_records
-   SET content = content #- '{anamnesis,menarcheDate}'
-   WHERE content->'anamnesis' ? 'menarcheDate';
-   ```
-4. **schemaVersion** seguro (el preflight garantiza entero o ausente):
-   ```sql
-   UPDATE orthodontic_records
-   SET content = jsonb_set(content, '{schemaVersion}',
-                           to_jsonb(GREATEST(COALESCE((content->>'schemaVersion')::int, 1), 9)));
-   ```
-5. **Código**: `RecordContent.CURRENT_SCHEMA_VERSION = 9`. Sin esto, el primer guardado tras la migración volvería a escribir 8 (lo escribe `RecordNormalizer`).
+V16 corre en **una transacción** (Flyway con PostgreSQL, sin `executeInTransaction=false` ni sentencias que la impidan): si algo falla, no queda nada a medias. Además el **preflight va primero**, antes de cualquier `ALTER` o `UPDATE`, así que un dato inválido aborta sin haber tocado nada. Política ante datos inválidos: **abortar** con los ids, nunca adivinar ni perder datos en silencio. Solo la API escribe `content` (fechas ISO válidas y `schemaVersion` entero), así que no debería ocurrir; si ocurre, se corrige a mano y se reintenta el despliegue.
+
+Definiciones exactas:
+- `menarcheDate` **válida**: ausente, JSON `null`, o JSON string `^[0-9]{4}-[0-9]{2}-[0-9]{2}$` que PostgreSQL convierte a `date` (rechaza `2023-99-99` o `2023-02-30`).
+- `schemaVersion` **válido**: ausente, o JSON number cuya representación textual sea `^[0-9]+$` (rechaza `8.0`, `"8"`, negativos y no números), compatible con el `::int` posterior.
+
+```sql
+-- 1. Preflight: nada se toca si hay contenido inválido.
+DO $$
+DECLARE
+    r record;
+    bad_dates bigint[] := '{}';
+    bad_versions bigint[];
+BEGIN
+    FOR r IN
+        SELECT id, content->'anamnesis'->'menarcheDate' AS v
+        FROM orthodontic_records
+        WHERE jsonb_typeof(content->'anamnesis') = 'object'
+          AND content->'anamnesis' ? 'menarcheDate'
+          AND jsonb_typeof(content->'anamnesis'->'menarcheDate') <> 'null'
+    LOOP
+        IF jsonb_typeof(r.v) <> 'string' OR NOT (r.v #>> '{}') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN
+            bad_dates := bad_dates || r.id;
+        ELSE
+            BEGIN
+                PERFORM (r.v #>> '{}')::date;
+            EXCEPTION WHEN others THEN
+                bad_dates := bad_dates || r.id;
+            END;
+        END IF;
+    END LOOP;
+
+    SELECT array_agg(id) INTO bad_versions
+    FROM orthodontic_records
+    WHERE content ? 'schemaVersion'
+      AND (jsonb_typeof(content->'schemaVersion') <> 'number'
+           OR NOT (content->>'schemaVersion') ~ '^[0-9]+$');
+
+    IF cardinality(bad_dates) > 0 OR bad_versions IS NOT NULL THEN
+        RAISE EXCEPTION 'V16: contenido inválido. menarcheDate en historias %; schemaVersion en historias %. Corríjalas y reintente.',
+            bad_dates, coalesce(bad_versions, '{}');
+    END IF;
+END $$;
+
+-- 2. Número: AOC-nnnn -> AEO-nnnn (mismos dígitos: el índice único no puede chocar).
+ALTER TABLE orthodontic_records DROP CONSTRAINT ck_orthodontic_records_record_number;
+UPDATE orthodontic_records
+SET record_number = 'AEO-' || substring(record_number from 5),
+    search_text   = replace(search_text, lower(record_number), lower('AEO-' || substring(record_number from 5)))
+WHERE record_number LIKE 'AOC-%';
+ALTER TABLE orthodontic_records
+    ADD CONSTRAINT ck_orthodontic_records_record_number CHECK (record_number ~ '^AEO-[0-9]{4}$');
+
+-- 3. Menarquia: fecha válida -> año; la clave vieja se quita siempre (también null).
+UPDATE orthodontic_records
+SET content = jsonb_set(content, '{anamnesis,menarcheYear}',
+                        to_jsonb(extract(year FROM (content->'anamnesis'->>'menarcheDate')::date)::int))
+WHERE jsonb_typeof(content->'anamnesis'->'menarcheDate') = 'string';
+UPDATE orthodontic_records
+SET content = content #- '{anamnesis,menarcheDate}'
+WHERE jsonb_typeof(content->'anamnesis') = 'object' AND content->'anamnesis' ? 'menarcheDate';
+
+-- 4. schemaVersion 9 (el preflight garantiza entero o ausente).
+UPDATE orthodontic_records
+SET content = jsonb_set(content, '{schemaVersion}',
+                        to_jsonb(GREATEST(COALESCE((content->>'schemaVersion')::int, 1), 9)));
+```
+
+- `search_text` guarda el número en minúsculas (`aoc-0018`), igual que lo dejó V15: el `replace` es exacto. No se toca `version` (no es una edición del usuario).
+- Historias sin `anamnesis` o sin la clave: el preflight y los `UPDATE` las saltan (`jsonb_typeof(...)` es `NULL` o la clave no existe).
+- **Código**: `RecordContent.CURRENT_SCHEMA_VERSION = 9`. Sin esto, el primer guardado tras la migración volvería a escribir 8 (lo escribe `RecordNormalizer`).
+- **Tests** (`RecordNumberMigrationIT` o uno propio de V16, aplicando V16 sobre datos sembrados en V15): número y búsqueda; menarquia ausente, `null`, ISO válida (→ año), formato inválido y fecha imposible (`2023-02-30`) → V16 aborta y no cambia nada; `schemaVersion` ausente, `8` y `"8"`/`8.0` → aborta.
 - Alternativa descartada: aceptar ambos prefijos. Dos formatos para lo mismo complican búsqueda y reportes.
 
 ### Número: dónde cambia
