@@ -400,7 +400,8 @@ decidir a la vez si el endpoint nuevo queda público o autenticado (siguiente pu
 - **Ping del monitor externo: `/actuator/health/liveness`** (probes activos con
   `management.endpoint.health.probes.enabled: true`, que fuera de Kubernetes no se activan solos).
   Responde `200` con `status: UP` y **no consulta la BD**: el grupo liveness no incluye el indicador
-  `db` (no configures `management.endpoint.health.group.liveness.include`). Un monitor que pegue a
+  `db` (no configures `management.endpoint.health.group.liveness.include`). El monitor pega en horario
+  de atención (lunes a sábado, 9:00–21:00; `docs/deployment.md` §1). Uno que pegue a
   `/actuator/health` cada 10 min mantendría despierta una base que se suspende sola (Neon). Lo fija
   `HealthPingIT` (con un indicador en `DOWN`, el health general cae y el liveness sigue `UP`).
   Despliegue: `docs/deployment.md`.
