@@ -32,7 +32,7 @@ function mockRecord(initial: Partial<RecordResponse> = {}) {
     http.post("*/api/orthodontic-records", async ({ request }) => {
       calls.post += 1;
       const body = (await request.json()) as Partial<RecordResponse>;
-      record = { ...recordResponse(), ...body, id: 10, recordNumber: "AOC-0001", version: 0 } as RecordResponse;
+      record = { ...recordResponse(), ...body, id: 10, recordNumber: "AEO-0001", version: 0 } as RecordResponse;
       return HttpResponse.json(record, { status: 201 });
     }),
   );
@@ -62,7 +62,7 @@ describe("orthodontic-records — Crear una historia", () => {
     const { router } = renderRecordRoutes("/historias/nueva");
 
     expect(screen.getByLabelText("Odontólogo tratante")).toHaveValue("Dra. María Torres");
-    await userEvent.type(screen.getByRole("textbox", { name: "Nro. de historia" }), "AOC-0015");
+    await userEvent.type(screen.getByRole("textbox", { name: "Nro. de historia" }), "AEO-0015");
     await userEvent.type(screen.getByRole("textbox", { name: "Paciente" }), "Ana Quispe");
     await userEvent.click(screen.getByRole("button", { name: /Crear historia/ }));
 
@@ -97,14 +97,14 @@ describe("orthodontic-records — Número de historia", () => {
 
   it("un número que ya tiene otra historia (409) se muestra junto al campo, sin 'Reintentar'", async () => {
     mockRecord();
-    const detail = "El número AOC-0015 ya está registrado en otra historia. Verifica el número con la coordinación.";
+    const detail = "El número AEO-0015 ya está registrado en otra historia. Verifica el número con la coordinación.";
     server.use(
       http.post("*/api/orthodontic-records", () =>
         HttpResponse.json({ type: "/errors/record-number-taken", detail }, { status: 409 }),
       ),
     );
     const { router } = renderRecordRoutes("/historias/nueva");
-    await userEvent.type(screen.getByRole("textbox", { name: "Nro. de historia" }), "AOC-0015");
+    await userEvent.type(screen.getByRole("textbox", { name: "Nro. de historia" }), "AEO-0015");
     await userEvent.type(screen.getByRole("textbox", { name: "Paciente" }), "Ana Quispe");
 
     await userEvent.click(screen.getByRole("button", { name: /Crear historia/ }));
@@ -123,11 +123,11 @@ describe("orthodontic-records — Número de historia", () => {
     expect(number).not.toHaveAttribute("readonly");
 
     await userEvent.clear(number);
-    await userEvent.type(number, "AOC-0051");
+    await userEvent.type(number, "AEO-0051");
     await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
 
     await waitFor(() => expect(calls.put).toHaveLength(1));
-    expect(calls.put[0].recordNumber).toBe("AOC-0051");
+    expect(calls.put[0].recordNumber).toBe("AEO-0051");
   });
 });
 
@@ -143,18 +143,18 @@ describe("orthodontic-records — Anamnesis y cefalometría", () => {
     }
   });
 
-  it("la fecha de la 1ª menstruación aparece solo con sexo femenino y respuesta Sí", async () => {
+  it("el año de la 1ª menstruación aparece solo con sexo femenino y respuesta Sí", async () => {
     mockRecord({ patientSex: "FEMALE" });
     renderRecordRoutes("/historias/10?paso=1");
     await stepHeading(/Paciente y anamnesis/);
-    expect(screen.queryByLabelText("Fecha de la 1ª menstruación")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Año de la 1ª menstruación")).not.toBeInTheDocument();
 
     const menarche = screen.getByRole("radiogroup", { name: "¿La 1ª menstruación ya ocurrió?" });
     await userEvent.click(within(menarche).getByRole("radio", { name: "Sí" }));
-    expect(screen.getByLabelText("Fecha de la 1ª menstruación")).toBeInTheDocument();
+    expect(screen.getByLabelText("Año de la 1ª menstruación")).toBeInTheDocument();
 
     await userEvent.click(within(menarche).getByRole("radio", { name: "No" }));
-    expect(screen.queryByLabelText("Fecha de la 1ª menstruación")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Año de la 1ª menstruación")).not.toBeInTheDocument();
 
     await userEvent.click(within(screen.getByRole("radiogroup", { name: "Sexo" })).getByRole("radio", { name: "Masculino" }));
     expect(screen.queryByRole("radiogroup", { name: "¿La 1ª menstruación ya ocurrió?" })).not.toBeInTheDocument();
@@ -201,7 +201,7 @@ describe("orthodontic-records — Cupo de historias al crear", () => {
     );
     const { router } = renderRecordRoutes("/historias/nueva");
 
-    await userEvent.type(screen.getByRole("textbox", { name: "Nro. de historia" }), "AOC-0015");
+    await userEvent.type(screen.getByRole("textbox", { name: "Nro. de historia" }), "AEO-0015");
     await userEvent.type(screen.getByRole("textbox", { name: "Paciente" }), "Ana Quispe");
     await userEvent.click(screen.getByRole("button", { name: /Crear historia/ }));
 
@@ -319,7 +319,7 @@ describe("orthodontic-records — Abrir un paso no cuenta como cambio", () => {
     await screen.findByRole("heading", { level: 2 });
 
     expect(screen.queryByText(/Cambios sin guardar/)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Vista previa de impresión de la historia AOC-0001" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Vista previa de impresión de la historia AEO-0001" })).toBeInTheDocument();
   });
 });
 

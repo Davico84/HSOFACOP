@@ -6,7 +6,7 @@ function values(overrides: Partial<RecordFormValues> = {}, content: Record<strin
   const base = emptyRecordValues("Dra. Torres");
   return {
     ...base,
-    recordNumber: "AOC-0015",
+    recordNumber: "AEO-0015",
     patientName: "Ana Quispe",
     ...overrides,
     content: { ...base.content, ...content } as RecordFormValues["content"],
@@ -24,29 +24,34 @@ describe("orthodontic-records — schema del formulario (paridad con el backend)
     expect(errorsOf(values())).toEqual({});
   });
 
-  it("número de historia obligatorio y con el formato AOC-0001", () => {
+  it("número de historia obligatorio y con el formato AEO-0001", () => {
     expect(errorsOf(values({ recordNumber: "  " }))).toEqual({ recordNumber: "Indica el número de historia." });
-    for (const invalid of ["AOC-15", "AOC-00001", "AEO-0015", "aoc-0015"]) {
-      expect(errorsOf(values({ recordNumber: invalid }))).toEqual({ recordNumber: "Usa el formato AOC-0001." });
+    for (const invalid of ["AEO-15", "AEO-00001", "AOC-0015", "aeo-0015"]) {
+      expect(errorsOf(values({ recordNumber: invalid }))).toEqual({ recordNumber: "Usa el formato AEO-0001." });
     }
   });
 
-  it("fecha de la primera menstruación: no futura ni anterior al nacimiento, solo si aplica", () => {
+  it("año de la primera menstruación: cuatro cifras, no futuro ni anterior al año de nacimiento, solo si aplica", () => {
     const female = { patientSex: "FEMALE" as const, birthDate: "2012-05-20" };
-    const anamnesis = (menarche: "YES" | "NO", menarcheDate: string) => ({
-      anamnesis: { ...emptyRecordValues().content.anamnesis, menarche, menarcheDate },
+    const anamnesis = (menarche: "YES" | "NO", menarcheYear: number) => ({
+      anamnesis: { ...emptyRecordValues().content.anamnesis, menarche, menarcheYear },
     });
-    const path = "content.anamnesis.menarcheDate";
-    expect(errorsOf(values(female, anamnesis("YES", "2023-03-15")))).toEqual({});
-    expect(errorsOf(values(female, anamnesis("YES", "2099-01-01")))).toEqual({
-      [path]: "La fecha de la primera menstruación no puede ser futura.",
+    const path = "content.anamnesis.menarcheYear";
+    expect(errorsOf(values(female, anamnesis("YES", 2023)))).toEqual({});
+    // El año de nacimiento vale (nació en mayo y puede ser ese mismo año).
+    expect(errorsOf(values(female, anamnesis("YES", 2012)))).toEqual({});
+    expect(errorsOf(values(female, anamnesis("YES", 2099)))).toEqual({
+      [path]: "El año de la primera menstruación no puede ser futuro.",
     });
-    expect(errorsOf(values(female, anamnesis("YES", "2010-01-01")))).toEqual({
-      [path]: "La fecha de la primera menstruación no puede ser anterior a la de nacimiento.",
+    expect(errorsOf(values(female, anamnesis("YES", 2011)))).toEqual({
+      [path]: "El año de la primera menstruación no puede ser anterior al de nacimiento.",
     });
-    // Con "No" o sin sexo femenino la fecha no aplica (el servidor la descarta al guardar).
-    expect(errorsOf(values(female, anamnesis("NO", "2099-01-01")))).toEqual({});
-    expect(errorsOf(values({ patientSex: "MALE", birthDate: "2012-05-20" }, anamnesis("YES", "2099-01-01")))).toEqual({});
+    expect(errorsOf(values(female, anamnesis("YES", 999)))).toEqual({ [path]: "Usa un año de cuatro cifras." });
+    // Sin fecha de nacimiento solo se exige que no sea futuro.
+    expect(errorsOf(values({ patientSex: "FEMALE", birthDate: "" }, anamnesis("YES", 1990)))).toEqual({});
+    // Con "No" o sin sexo femenino el año no aplica (el servidor lo descarta al guardar).
+    expect(errorsOf(values(female, anamnesis("NO", 2099)))).toEqual({});
+    expect(errorsOf(values({ patientSex: "MALE", birthDate: "2012-05-20" }, anamnesis("YES", 2099)))).toEqual({});
   });
 
   it("nombre vacío o solo espacios: error en el campo", () => {

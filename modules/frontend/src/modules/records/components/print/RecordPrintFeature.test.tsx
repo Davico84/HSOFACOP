@@ -55,7 +55,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     const sheets = await screen.findAllByRole("article");
     expect(sheets.length).toBeGreaterThanOrEqual(7);
     for (const sheet of sheets) {
-      expect(within(sheet).getByText(/HISTORIA CLÍNICA ORTODONCIA Nro\./)).toHaveTextContent("AOC-0001");
+      expect(within(sheet).getByText(/HISTORIA CLÍNICA ORTODONCIA Nro\./)).toHaveTextContent("AEO-0001");
       expect(within(sheet).getByRole("img", { name: /AEO/ })).toBeInTheDocument();
       expect(within(sheet).getByRole("img", { name: /FACOP/ })).toBeInTheDocument();
     }
@@ -64,6 +64,14 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
 
     await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Imprimir" }));
     await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+  });
+
+  it("primera menstruación: se imprime solo el año", async () => {
+    serve({ ...withContent({ anamnesis: { menarche: "YES", menarcheYear: 2023 } }), patientSex: "FEMALE" });
+    renderRecordRoutes("/historias/10/imprimir");
+
+    const year = (await screen.findByText("Año:")).parentElement!;
+    expect(year).toHaveTextContent("2023");
   });
 
   it("opciones con la elegida marcada: ☒ Mesofacial ☐ Dolicofacial ☐ Braquifacial", async () => {

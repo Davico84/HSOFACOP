@@ -25,7 +25,7 @@ export interface Anamnesis {
   oralHygiene?: AnamnesisOralHygiene;
   suckingHabits?: AnamnesisSuckingHabits;
   menarche?: AnamnesisMenarche;
-  menarcheDate?: string;
+  menarcheYear?: number;
   /**
    * @minLength 0
    * @maxLength 4000

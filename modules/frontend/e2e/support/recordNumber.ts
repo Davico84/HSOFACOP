@@ -5,5 +5,5 @@
  */
 export function uniqueRecordNumber(): string {
   const n = (Date.now() + Math.floor(Math.random() * 1000)) % 10000;
-  return `AOC-${String(n).padStart(4, "0")}`;
+  return `AEO-${String(n).padStart(4, "0")}`;
 }

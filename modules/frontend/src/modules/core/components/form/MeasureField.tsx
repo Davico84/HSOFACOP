@@ -7,8 +7,8 @@ import { fieldError, fieldId } from "./fieldError";
 interface MeasureFieldProps<T extends FieldValues> {
   name: Path<T>;
   label: ReactNode;
-  /** Unidad mostrada junto al número ("mm", "%"). */
-  unit: string;
+  /** Unidad mostrada junto al número ("mm", "%"); sin unidad, solo el número (p. ej. un año). */
+  unit?: string;
   step?: number;
   /** Rango de las flechas (la validación sigue en el schema). */
   min?: number;
@@ -16,7 +16,7 @@ interface MeasureFieldProps<T extends FieldValues> {
   className?: string;
 }
 
-/** Número con unidad. Vacío = `null`; el rango lo valida el schema. */
+/** Número (con su unidad, si tiene). Vacío = `null`; el rango lo valida el schema. */
 export function MeasureField<T extends FieldValues>({ name, label, unit, step = 0.1, min, max, className }: MeasureFieldProps<T>) {
   const { control, formState } = useFormContext<T>();
   const id = fieldId(name);
@@ -40,7 +40,7 @@ export function MeasureField<T extends FieldValues>({ name, label, unit, step = 
               onBlur={field.onBlur}
               ref={field.ref}
             />
-            <span className="text-sm text-muted-foreground">{unit}</span>
+            {unit ? <span className="text-sm text-muted-foreground">{unit}</span> : null}
           </div>
         )}
       />
