@@ -15,10 +15,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * V15 sobre datos con el formato anterior, en un schema propio (migrado hasta V14 con Flyway) para
- * no tocar la base que comparten los demás tests: números AEO- repetidos entre autores pasan a
- * números provisionales AOC- únicos, la búsqueda los sigue, la higiene oral Sí/No se quita y el
- * contenido queda en schemaVersion 8.
+ * Migraciones del número de historia, cada una en un schema propio (migrado con Flyway hasta la
+ * versión anterior) para no tocar la base que comparten los demás tests:
+ * <ul>
+ *   <li>V15: números AEO- repetidos entre autores pasan a números provisionales AOC- únicos, la
+ *   búsqueda los sigue, la higiene oral Sí/No se quita y el contenido queda en schemaVersion 8;</li>
+ *   <li>V16: AOC-nnnn pasa a AEO-nnnn (también en la búsqueda), la fecha de la primera
+ *   menstruación a su año y el contenido a schemaVersion 9; con contenido inválido aborta sin
+ *   cambiar nada.</li>
+ * </ul>
  */
 @SpringBootTest
 class RecordNumberMigrationIT extends AbstractIntegrationTest {
