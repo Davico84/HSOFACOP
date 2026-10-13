@@ -260,6 +260,13 @@ Producción = rama **`main`** (Render y Vercel). `dev` llega por PR con el CI en
    - `CORS_ALLOWED_ORIGINS=https://pendiente.invalid` (provisional, paso 4).
 
    Primer deploy: el log muestra las 14 migraciones y `GET https://<servicio>.onrender.com/actuator/health/liveness` → `200`.
+
+   ⚠️ **Auto-deploy**: la app **Render** de GitHub (*GitHub → Settings → Applications → Installed
+   GitHub Apps → Render → Configure → Repository access*) debe incluir **este repo**. Sin acceso, el
+   servicio se crea y despliega a mano igual, pero GitHub no le avisa de los merges y **nunca hay
+   auto-deploy**, aunque Render muestre *Auto-Deploy: After CI Checks Pass* (pasó hasta el 2026-10-12:
+   de ahí al PR #20 todo se desplegó a mano). Comprobación: tras un merge que toque `modules/backend`,
+   *Events* del servicio muestra un deploy unos minutos después del CI.
 3. **URL de Render en `vercel.json`** — si la URL asignada no es `https://hs-facop-api.onrender.com`,
    corrígela en las dos reglas de `vercel.json` (PR a `main`).
 4. **Vercel** — *Add New → Project*, importa el repo. Root Directory = **raíz** (el build lo define
