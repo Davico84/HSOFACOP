@@ -124,6 +124,11 @@ El formulario SHALL cubrir los campos de las págs. 1–4 y 10–13 del PDF. Don
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda la historia
 - **AND** el formulario muestra el mensaje junto al campo; sin fecha de nacimiento solo se exige el rango de 8 a 18
 
+#### Scenario: Paciente menor de la edad mínima
+- **WHEN** la paciente tiene fecha de nacimiento y hoy tiene menos de 8 años
+- **THEN** la opción "Sí" de "¿La 1ª menstruación ya ocurrió?" está deshabilitada, con un aviso que explica que antes de los 8 años no aplica; "No" se puede marcar
+- **AND** si ya estaba marcado "Sí", el formulario muestra el error junto a la pregunta y el servidor responde `400` con el error en ese campo sin guardar la historia
+
 #### Scenario: Historias con la fecha completa de la primera menstruación
 - **WHEN** una historia guardada antes de este cambio tenía el año de la primera menstruación 2023 y la fecha de nacimiento 20/05/2010
 - **THEN** pasa a registrar la edad 13 (año de la menstruación − año de nacimiento) y deja de guardar el año

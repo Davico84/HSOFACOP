@@ -22,6 +22,7 @@
 ### Edad de la primera menstruación
 - **Campo**: `Anamnesis.menarcheAge: Integer` reemplaza a `menarcheYear` (BREAKING para el contrato; único cliente, el frontend).
 - **Validación** (backend `PatientFields` y Zod iguales): entero de 8 a 18 ("Usa una edad entre 8 y 18 años."); con fecha de nacimiento, no mayor que la edad actual (años cumplidos a hoy, reloj de la app): "La edad de la primera menstruación no puede superar la edad actual de la paciente."
+- **Paciente menor de 8 años** (edad actual conocida): "Sí" en "¿La 1ª menstruación ya ocurrió?" se deshabilita con un aviso; si ya estaba "Sí", error en `content.anamnesis.menarche`: "Antes de los 8 años la primera menstruación no aplica." Mismo control en `PatientFields` (que suma `patientSex()` para aplicarlo solo a sexo femenino, como el normalizador). `ChoiceField` (genérico, `core`) gana `disabledValues` para deshabilitar opciones sueltas sin quitar el valor del formulario.
 - **Formulario**: `MeasureField` "Edad de la 1ª menstruación" con unidad "años", `step` 1, `min` 8, `max` 18: el campo arranca vacío y las flechas se mueven dentro del rango (se acaba el 1900).
 - **Impresión**: "Edad:" con "13 años".
 - **Migración `V17`** (transaccional, preflight primero como V16):

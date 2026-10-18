@@ -12,7 +12,7 @@ Tres ajustes del formulario de la historia pedidos tras el uso de prueba:
 - Si la respuesta cambia a "No presenta" o se borra, la medida se oculta y se **descarta al guardar** (como los demás campos condicionados).
 - **Hoja impresa**: con "Presenta" y medida, junto a la pregunta se imprime la medida (p. ej. "2,5 mm").
 - **Cambio de paso al inicio**: al cambiar de paso (Siguiente, Anterior, la lista de pasos o el panel en celular), la vista vuelve al inicio de la página y el título del paso nuevo recibe el foco, para que el lector de pantalla lo anuncie. Al abrir o recargar una historia no se mueve la vista.
-- **Edad de la primera menstruación** en lugar del año: entero de **8 a 18 años**; con fecha de nacimiento, no mayor que la edad actual de la paciente. En pantalla "Edad de la 1ª menstruación" (años) y en la hoja impresa "Edad: 13 años".
+- **Edad de la primera menstruación** en lugar del año: entero de **8 a 18 años**; con fecha de nacimiento, no mayor que la edad actual de la paciente. Si la paciente tiene fecha de nacimiento y hoy es menor de 8 años, "Sí" en "¿La 1ª menstruación ya ocurrió?" queda deshabilitado (y el servidor lo rechaza). En pantalla "Edad de la 1ª menstruación" (años) y en la hoja impresa "Edad: 13 años".
 - **Migración `V17`**: el año guardado pasa a edad = año − año de nacimiento; sin fecha de nacimiento o con resultado no positivo, el dato queda vacío (la respuesta "Sí" se conserva). `schemaVersion` 10. **BREAKING (contrato)**: `Anamnesis.menarcheYear` → `menarcheAge`.
 - **Contrato**: `FacialAnalysis.lipSealMm` (decimal, opcional). Cambio aditivo: las historias existentes no tienen el dato y siguen igual; sin migración de datos.
 
