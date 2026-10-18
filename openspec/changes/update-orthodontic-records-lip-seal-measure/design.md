@@ -19,6 +19,18 @@
 - No choca con los errores: cuando el paso tiene errores o el guardado falla, el paso no cambia y el efecto no corre. El remontaje por una actualización desde otro dispositivo monta en el mismo paso: es un primer render y tampoco corre.
 - El aviso de historia cambiada mantiene su propio desplazamiento (aparece sin cambio de paso).
 
+### Edad de la primera menstruación
+- **Campo**: `Anamnesis.menarcheAge: Integer` reemplaza a `menarcheYear` (BREAKING para el contrato; único cliente, el frontend).
+- **Validación** (backend `PatientFields` y Zod iguales): entero de 8 a 18 ("Usa una edad entre 8 y 18 años."); con fecha de nacimiento, no mayor que la edad actual (años cumplidos a hoy, reloj de la app): "La edad de la primera menstruación no puede superar la edad actual de la paciente."
+- **Formulario**: `MeasureField` "Edad de la 1ª menstruación" con unidad "años", `step` 1, `min` 8, `max` 18: el campo arranca vacío y las flechas se mueven dentro del rango (se acaba el 1900).
+- **Impresión**: "Edad:" con "13 años".
+- **Migración `V17`** (transaccional, preflight primero como V16):
+  1. preflight: si algún `anamnesis.menarcheYear` presente no es `null` ni JSON number entero, aborta con los ids;
+  2. con fecha de nacimiento y año: `menarcheAge = menarcheYear − extract(year from birth_date)` si el resultado es > 0; si no, sin edad;
+  3. se quita siempre `menarcheYear`;
+  4. `schemaVersion` = `GREATEST(…, 10)` y `RecordContent.CURRENT_SCHEMA_VERSION = 10`.
+  El resultado puede caer fuera de 8–18 (dato viejo raro): se conserva y el formulario lo marcará al guardar, en vez de perderlo.
+
 ## Risks / Trade-offs
 
 - Contrato con un campo nuevo: frontend y backend se despliegan casi juntos; un frontend nuevo contra un backend viejo enviaría un campo desconocido. Se despliegan en el mismo merge (backend con auto-deploy, ~10 min); uso real aún en prueba.
