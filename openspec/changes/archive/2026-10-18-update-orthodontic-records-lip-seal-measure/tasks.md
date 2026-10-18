@@ -21,4 +21,4 @@
 ## 3. Docs
 
 - [x] 3.1 `docs/domain.md`: análisis facial con la medida del sellado labial; `menarcheAge` y `schemaVersion` 10
-- [ ] 3.2 Al archivar: `docs/vision.md` ✅
+- [x] 3.2 Al archivar: `docs/vision.md` ✅
