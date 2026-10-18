@@ -54,6 +54,15 @@ describe("orthodontic-records — schema del formulario (paridad con el backend)
     expect(errorsOf(values({ patientSex: "MALE", birthDate: "2012-05-20" }, anamnesis("YES", 30)))).toEqual({});
   });
 
+  it("menor de 8 años: 'Sí' en la 1ª menstruación es un error; sin nacimiento no se controla", () => {
+    const anamnesis = { anamnesis: { ...emptyRecordValues().content.anamnesis, menarche: "YES" as const } };
+    const fiveYearsAgo = `${new Date().getFullYear() - 5}-01-01`;
+    expect(errorsOf(values({ patientSex: "FEMALE", birthDate: fiveYearsAgo }, anamnesis))).toEqual({
+      "content.anamnesis.menarche": "Antes de los 8 años la primera menstruación no aplica.",
+    });
+    expect(errorsOf(values({ patientSex: "FEMALE", birthDate: "" }, anamnesis))).toEqual({});
+  });
+
   it("separación interlabial: 0 a 20 mm con un decimal, opcional", () => {
     const facial = (lipSealMm: number | null) => ({
       facial: { ...emptyRecordValues().content.facial, lipSeal: "PRESENT" as const, lipSealMm },

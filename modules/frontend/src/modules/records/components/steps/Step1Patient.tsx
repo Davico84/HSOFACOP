@@ -6,7 +6,7 @@ import { ChoiceField } from "@/modules/core/components/form/ChoiceField";
 import { FormField } from "@/modules/core/components/form/FormField";
 import { Input } from "@/modules/core/ui/input";
 import type { RecordFormValues } from "../../schemas/record";
-import { LONG_TEXT, MAX_MENARCHE_AGE, MIN_MENARCHE_AGE } from "../../schemas/record";
+import { LONG_TEXT, MAX_MENARCHE_AGE, MENARCHE_TOO_YOUNG, MIN_MENARCHE_AGE } from "../../schemas/record";
 import { cooperationOptions, documentTypeOptions, NOT_REPORTED, oralHygieneOptions, sexOptions, yesNoOptions } from "../../config/options";
 import { ageYears } from "../../utils/age";
 import { formatAge } from "../../utils/recordDisplay";
@@ -27,6 +27,9 @@ export function Step1Patient({ patientLocked = false }: Step1PatientProps) {
     name: ["birthDate", "treatmentStartDate", "patientSex", "content.anamnesis.menarche"],
   });
   const age = ageYears(birthDate, startDate);
+  // La 1ª menstruación se mide contra la edad actual (no la del inicio de tratamiento).
+  const currentAge = ageYears(birthDate);
+  const tooYoung = currentAge !== null && currentAge < MIN_MENARCHE_AGE;
 
   return (
     <div className="flex flex-col gap-8">
@@ -64,7 +67,8 @@ export function Step1Patient({ patientLocked = false }: Step1PatientProps) {
         </div>
         {sex === "FEMALE" ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <ChoiceField name="content.anamnesis.menarche" label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} />
+            <ChoiceField name="content.anamnesis.menarche" label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions}
+              disabledValues={tooYoung ? ["YES"] : undefined} hint={tooYoung && menarche !== "YES" ? MENARCHE_TOO_YOUNG : undefined} />
             {menarche === "YES" ? (
               <MeasureField name="content.anamnesis.menarcheAge" label="Edad de la 1ª menstruación" unit="años" step={1}
                 min={MIN_MENARCHE_AGE} max={MAX_MENARCHE_AGE} />

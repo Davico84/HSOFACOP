@@ -160,6 +160,17 @@ describe("orthodontic-records — Anamnesis y cefalometría", () => {
     expect(screen.queryByRole("radiogroup", { name: "¿La 1ª menstruación ya ocurrió?" })).not.toBeInTheDocument();
   });
 
+  it("con una paciente menor de 8 años, 'Sí' en la 1ª menstruación está deshabilitado y se explica", async () => {
+    mockRecord({ patientSex: "FEMALE", birthDate: `${new Date().getFullYear() - 5}-01-01` });
+    renderRecordRoutes("/historias/10?paso=1");
+    await stepHeading(/Paciente y anamnesis/);
+
+    const menarche = screen.getByRole("radiogroup", { name: "¿La 1ª menstruación ya ocurrió?" });
+    expect(within(menarche).getByRole("radio", { name: "Sí" })).toBeDisabled();
+    expect(within(menarche).getByRole("radio", { name: "No" })).toBeEnabled();
+    expect(screen.getByText("Antes de los 8 años la primera menstruación no aplica.")).toBeInTheDocument();
+  });
+
   it("diagnóstico cefalométrico: seis opciones y el contador se queda en 3 de 3 con más", async () => {
     mockRecord({
       content: {

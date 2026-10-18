@@ -50,6 +50,7 @@ import { ageYears, today } from "../utils/age";
 /** Edad de la primera menstruación (años enteros), igual que el backend. */
 export const MIN_MENARCHE_AGE = 8;
 export const MAX_MENARCHE_AGE = 18;
+export const MENARCHE_TOO_YOUNG = "Antes de los 8 años la primera menstruación no aplica.";
 
 export const RECORD_NUMBER_PATTERN = /^AEO-[0-9]{4}$/;
 export const RECORD_NUMBER_FORMAT_MESSAGE = "Usa el formato AEO-0001.";
@@ -378,9 +379,13 @@ export const recordFormSchema = z
     // Primera menstruación: solo se valida si aplica (sexo femenino y respuesta Sí); si no, el
     // servidor la descarta al guardar.
     const menarcheAge = r.content.anamnesis.menarcheAge;
-    if (r.patientSex === "FEMALE" && r.content.anamnesis.menarche === "YES" && menarcheAge != null) {
+    const menarcheApplies = r.patientSex === "FEMALE" && r.content.anamnesis.menarche === "YES";
+    const currentAge = ageYears(r.birthDate);
+    if (menarcheApplies && currentAge !== null && currentAge < MIN_MENARCHE_AGE) {
+      ctx.addIssue({ code: "custom", path: ["content", "anamnesis", "menarche"], message: MENARCHE_TOO_YOUNG });
+    }
+    if (menarcheApplies && menarcheAge != null) {
       const path = ["content", "anamnesis", "menarcheAge"];
-      const currentAge = ageYears(r.birthDate);
       if (menarcheAge < MIN_MENARCHE_AGE || menarcheAge > MAX_MENARCHE_AGE) {
         ctx.addIssue({ code: "custom", path, message: "Usa una edad entre 8 y 18 años." });
       } else if (currentAge !== null && menarcheAge > currentAge) {
