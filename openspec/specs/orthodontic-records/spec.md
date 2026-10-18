@@ -191,22 +191,28 @@ El formulario SHALL cubrir los campos de las págs. 1–4 y 10–13 del PDF. Don
 
 #### Scenario: Pregunta solo para niñas
 - **WHEN** el sexo del paciente es masculino o no está indicado
-- **THEN** la pregunta "¿La 1ª menstruación ya ocurrió?" y su año no se muestran ni se imprimen
+- **THEN** la pregunta "¿La 1ª menstruación ya ocurrió?" y su edad no se muestran ni se imprimen
 - **AND** si tenían valor y el sexo cambia a masculino o se quita, ambos se descartan al guardar
 
 #### Scenario: Fecha de la primera menstruación
-- **WHEN** el sexo es femenino, el usuario responde "Sí" y registra el año 2023
-- **THEN** se guardan la respuesta y el año (solo el año, sin mes ni día) y se imprimen
-- **AND** si la respuesta cambia a "No", el año se oculta y se descarta al guardar
+- **WHEN** el sexo es femenino, el usuario responde "Sí" y registra que ocurrió a los 13 años
+- **THEN** se guardan la respuesta y la edad (años enteros) y se imprimen
+- **AND** si la respuesta cambia a "No", la edad se oculta y se descarta al guardar
 
 #### Scenario: Fecha de la primera menstruación inválida
-- **WHEN** el año de la primera menstruación es posterior al año actual (zona horaria de la clínica), anterior al año de nacimiento o no es un número de cuatro cifras
+- **WHEN** la edad de la primera menstruación no es un entero entre 8 y 18 años, o con fecha de nacimiento supera la edad actual de la paciente (zona horaria de la clínica)
 - **THEN** el sistema responde `400` con el error en ese campo y no guarda la historia
-- **AND** el formulario muestra el mensaje junto al campo; sin fecha de nacimiento solo se exige que no sea futuro
+- **AND** el formulario muestra el mensaje junto al campo; sin fecha de nacimiento solo se exige el rango de 8 a 18
+
+#### Scenario: Paciente menor de la edad mínima
+- **WHEN** la paciente tiene fecha de nacimiento y hoy tiene menos de 8 años
+- **THEN** la opción "Sí" de "¿La 1ª menstruación ya ocurrió?" está deshabilitada, con un aviso que explica que antes de los 8 años no aplica; "No" se puede marcar
+- **AND** si ya estaba marcado "Sí", el formulario muestra el error junto a la pregunta y el servidor responde `400` con el error en ese campo sin guardar la historia
 
 #### Scenario: Historias con la fecha completa de la primera menstruación
-- **WHEN** una historia guardada antes de este cambio tenía la fecha de la primera menstruación 15/03/2023
-- **THEN** conserva el año 2023 y deja de guardar el mes y el día
+- **WHEN** una historia guardada antes de este cambio tenía el año de la primera menstruación 2023 y la fecha de nacimiento 20/05/2010
+- **THEN** pasa a registrar la edad 13 (año de la menstruación − año de nacimiento) y deja de guardar el año
+- **AND** si no tenía fecha de nacimiento, o el cálculo no da una edad positiva, el dato queda vacío y la respuesta "Sí" se conserva
 
 #### Scenario: Campos condicionados por la opción elegida
 - **WHEN** el usuario elige "Mordida cruzada posterior unilateral" o "Sí, con presencia de desgastes" (bruxismo)
@@ -1058,3 +1064,52 @@ Lo que cambió en el servidor SHALL mostrarse sin reemplazar nunca cambios propi
 #### Scenario: Escribir mientras se revisa
 - **WHEN** el usuario empieza a escribir después de volver y antes de que la revisión muestre los datos del otro dispositivo
 - **THEN** lo escrito no se pierde: en lugar de recargar se muestra el aviso de historia cambiada
+
+### Requirement: Medida del sellado labial
+En "4. Sellado labial" del análisis facial, con la respuesta "Presenta", el sistema SHALL permitir registrar la separación interlabial en milímetros, opcional, entre 0 y 20 mm con a lo sumo un decimal. Con otra respuesta o sin respuesta, la medida NO SHALL mostrarse y SHALL descartarse al guardar. La hoja impresa SHALL mostrar la medida junto a la pregunta cuando la respuesta es "Presenta" y hay medida.
+
+#### Scenario: Registrar la medida con "Presenta"
+- **WHEN** el usuario marca "Presenta" en "4. Sellado labial" y escribe 2,5 en "Separación interlabial (mm)"
+- **THEN** se guardan la respuesta y la medida 2,5 mm
+
+#### Scenario: La medida solo aparece con "Presenta"
+- **WHEN** la respuesta de "4. Sellado labial" es "No presenta" o está vacía
+- **THEN** el campo de la medida no se muestra
+- **AND** si tenía una medida y la respuesta cambia a "No presenta" o se quita, la medida se descarta al guardar
+
+#### Scenario: Medida fuera de rango
+- **WHEN** la medida es menor que 0, mayor que 20 o tiene más de un decimal
+- **THEN** el formulario muestra el error junto al campo y el servidor responde `400` con el error en ese campo sin guardar la historia
+
+#### Scenario: Medida opcional
+- **WHEN** el usuario marca "Presenta" y deja la medida vacía
+- **THEN** la historia se guarda con la respuesta y sin medida
+
+#### Scenario: Medida en la hoja impresa
+- **WHEN** se imprime una historia con "Presenta" y la medida 2,5 mm
+- **THEN** la línea "4. SELLADO LABIAL" muestra la opción marcada y "2,5 mm"
+- **AND** sin medida, la línea queda como hoy
+
+#### Scenario: Historias anteriores sin medida
+- **WHEN** se abre una historia guardada antes de este cambio
+- **THEN** se muestra y se imprime como antes, con la medida vacía
+
+### Requirement: Cambio de paso al inicio del paso
+Al cambiar de paso en el formulario de la historia (con "Siguiente", "Anterior", la lista de pasos o el panel de pasos en celular), el sistema SHALL llevar la vista al inicio de la página y SHALL dar el foco al título del paso nuevo, sin animación de desplazamiento. Al abrir o recargar una historia, o cuando el cambio de paso no ocurre (por ejemplo, por errores del paso actual), la vista NO SHALL moverse.
+
+#### Scenario: Siguiente desde el final del paso
+- **WHEN** el usuario está al final del paso 4 y pulsa "Siguiente"
+- **THEN** el formulario muestra el paso 5 con la vista al inicio de la página
+- **AND** el título "5. Análisis de modelos" tiene el foco
+
+#### Scenario: Elegir un paso de la lista
+- **WHEN** el usuario está abajo de un paso y elige otro en la lista de pasos (o en el panel de pasos en celular)
+- **THEN** el paso elegido se muestra desde el inicio de la página
+
+#### Scenario: El paso no cambia
+- **WHEN** el usuario pulsa "Siguiente" y el paso actual tiene errores o el guardado falla
+- **THEN** sigue en el mismo paso y la vista no se mueve
+
+#### Scenario: Abrir o recargar una historia
+- **WHEN** el usuario abre una historia o recarga la página en un paso
+- **THEN** la vista no se desplaza por este motivo
