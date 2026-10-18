@@ -1,7 +1,9 @@
 package com.odontorisas.presentation.dto;
 
 import com.odontorisas.common.DocumentType;
+import com.odontorisas.common.PatientSex;
 import com.odontorisas.service.records.content.RecordContent;
+import com.odontorisas.service.records.content.YesNo;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -19,7 +21,8 @@ import java.time.Period;
  * Datos del paciente comunes a crear y guardar una historia, con sus reglas entre campos
  * (scenarios de "Datos del paciente con edad calculada"): documento con tipo y número del formato
  * de ese tipo, inicio de tratamiento no anterior al nacimiento, y edad de la primera menstruación
- * entre 8 y 18 años, no mayor que la edad actual de la paciente. Cada error va a su campo. "Hoy" sale del {@code ClockProvider}
+ * entre 8 y 18 años, no mayor que la edad actual de la paciente; antes de los 8 años la respuesta
+ * no puede ser Sí. Cada error va a su campo. "Hoy" sale del {@code ClockProvider}
  * de la validación, que usa el reloj de la app (zona de la clínica).
  */
 public interface PatientFields {
@@ -27,6 +30,8 @@ public interface PatientFields {
     DocumentType documentType();
 
     String documentNumber();
+
+    PatientSex patientSex();
 
     LocalDate birthDate();
 
@@ -74,22 +79,30 @@ public interface PatientFields {
             }
             Integer menarcheAge = value.content() == null || value.content().anamnesis() == null
                 ? null : value.content().anamnesis().menarcheAge();
-            if (menarcheAge != null) {
-                LocalDate today = LocalDate.now(context.getClockProvider().getClock());
+            YesNo menarche = value.content() == null || value.content().anamnesis() == null
+                ? null : value.content().anamnesis().menarche();
+            LocalDate today = LocalDate.now(context.getClockProvider().getClock());
+            // Solo aplica con sexo femenino y respuesta Sí (si no, el normalizador lo descarta al guardar).
+            boolean applies = menarche == YesNo.YES && value.patientSex() == PatientSex.FEMALE;
+            Integer currentAge = value.birthDate() == null || value.birthDate().isAfter(today)
+                ? null : Period.between(value.birthDate(), today).getYears();
+            if (applies && currentAge != null && currentAge < MIN_MENARCHE_AGE) {
+                valid = anamnesisViolation(context, "menarche", "Antes de los 8 años la primera menstruación no aplica.");
+            }
+            if (applies && menarcheAge != null) {
                 if (menarcheAge < MIN_MENARCHE_AGE || menarcheAge > MAX_MENARCHE_AGE) {
-                    valid = menarcheViolation(context, "Usa una edad entre 8 y 18 años.");
-                } else if (value.birthDate() != null && !value.birthDate().isAfter(today)
-                        && menarcheAge > Period.between(value.birthDate(), today).getYears()) {
-                    valid = menarcheViolation(context,
+                    valid = anamnesisViolation(context, "menarcheAge", "Usa una edad entre 8 y 18 años.");
+                } else if (currentAge != null && menarcheAge > currentAge) {
+                    valid = anamnesisViolation(context, "menarcheAge",
                         "La edad de la primera menstruación no puede superar la edad actual de la paciente.");
                 }
             }
             return valid;
         }
 
-        private static boolean menarcheViolation(ConstraintValidatorContext context, String message) {
+        private static boolean anamnesisViolation(ConstraintValidatorContext context, String field, String message) {
             context.buildConstraintViolationWithTemplate(message)
-                .addPropertyNode("content").addPropertyNode("anamnesis").addPropertyNode("menarcheAge")
+                .addPropertyNode("content").addPropertyNode("anamnesis").addPropertyNode(field)
                 .addConstraintViolation();
             return false;
         }

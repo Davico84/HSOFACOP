@@ -71,6 +71,33 @@ class MenarcheAgeValidationTest {
         assertThat(messagesOnMenarcheAge(request(null, 19))).containsExactly("Usa una edad entre 8 y 18 años.");
     }
 
+    private static Set<String> messagesOn(String field, UpdateRecordRequest request) {
+        return validator.validate(request).stream()
+            .filter(v -> v.getPropertyPath().toString().equals("content.anamnesis." + field))
+            .map(ConstraintViolation::getMessage)
+            .collect(Collectors.toSet());
+    }
+
+    @Test
+    void under_the_minimum_age_the_answer_cannot_be_yes() {
+        // El 19/05/2026 en Lima, quien nació el 20/05/2018 tiene 7 años; la del 19/05/2018, 8.
+        assertThat(messagesOn("menarche", request(LocalDate.of(2018, 5, 20), null)))
+            .containsExactly("Antes de los 8 años la primera menstruación no aplica.");
+        assertThat(messagesOn("menarche", request(LocalDate.of(2018, 5, 19), null))).isEmpty();
+        assertThat(messagesOn("menarche", request(null, null))).isEmpty();
+    }
+
+    @Test
+    void the_rules_only_apply_to_female_patients_with_yes() {
+        RecordContent e = RecordContent.empty();
+        Anamnesis anamnesis = new Anamnesis(null, null, null, null, null, YesNo.YES, 30, null, null, null, null, null);
+        RecordContent content = new RecordContent(null, anamnesis, e.facial(), e.functional(), e.occlusal(), e.models(),
+            e.radiographic(), e.diagnosis(), e.signatures());
+        UpdateRecordRequest male = new UpdateRecordRequest(0L, "AEO-0015", null, "Juan", null, null, PatientSex.MALE,
+            LocalDate.of(2020, 1, 1), null, null, null, null, content, null, null);
+        assertThat(validator.validate(male)).isEmpty();
+    }
+
     @Test
     void it_cannot_be_above_the_current_age_in_lima() {
         LocalDate birth = LocalDate.of(2013, 5, 20); // en Lima todavía tiene 12
