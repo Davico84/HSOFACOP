@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { recordFormSchema, type RecordFormValues } from "./record";
 import { emptyRecordValues } from "../utils/recordForm";
+import { ageYears } from "../utils/age";
 
 function values(overrides: Partial<RecordFormValues> = {}, content: Record<string, unknown> = {}): RecordFormValues {
   const base = emptyRecordValues("Dra. Torres");
@@ -31,27 +32,47 @@ describe("orthodontic-records — schema del formulario (paridad con el backend)
     }
   });
 
-  it("año de la primera menstruación: cuatro cifras, no futuro ni anterior al año de nacimiento, solo si aplica", () => {
+  it("edad de la primera menstruación: 8 a 18 años, no mayor que la edad actual, solo si aplica", () => {
     const female = { patientSex: "FEMALE" as const, birthDate: "2012-05-20" };
-    const anamnesis = (menarche: "YES" | "NO", menarcheYear: number) => ({
-      anamnesis: { ...emptyRecordValues().content.anamnesis, menarche, menarcheYear },
+    const anamnesis = (menarche: "YES" | "NO", menarcheAge: number) => ({
+      anamnesis: { ...emptyRecordValues().content.anamnesis, menarche, menarcheAge },
     });
-    const path = "content.anamnesis.menarcheYear";
-    expect(errorsOf(values(female, anamnesis("YES", 2023)))).toEqual({});
-    // El año de nacimiento vale (nació en mayo y puede ser ese mismo año).
-    expect(errorsOf(values(female, anamnesis("YES", 2012)))).toEqual({});
-    expect(errorsOf(values(female, anamnesis("YES", 2099)))).toEqual({
-      [path]: "El año de la primera menstruación no puede ser futuro.",
+    const path = "content.anamnesis.menarcheAge";
+    const currentAge = ageYears(female.birthDate)!;
+    expect(errorsOf(values(female, anamnesis("YES", 13)))).toEqual({});
+    expect(errorsOf(values(female, anamnesis("YES", 7)))).toEqual({ [path]: "Usa una edad entre 8 y 18 años." });
+    expect(errorsOf(values(female, anamnesis("YES", 19)))).toEqual({ [path]: "Usa una edad entre 8 y 18 años." });
+    if (currentAge < 18) {
+      expect(errorsOf(values(female, anamnesis("YES", currentAge + 1)))).toEqual({
+        [path]: "La edad de la primera menstruación no puede superar la edad actual de la paciente.",
+      });
+    }
+    // Sin fecha de nacimiento solo se exige el rango.
+    expect(errorsOf(values({ patientSex: "FEMALE", birthDate: "" }, anamnesis("YES", 18)))).toEqual({});
+    // Con "No" o sin sexo femenino la edad no aplica (el servidor la descarta al guardar).
+    expect(errorsOf(values(female, anamnesis("NO", 30)))).toEqual({});
+    expect(errorsOf(values({ patientSex: "MALE", birthDate: "2012-05-20" }, anamnesis("YES", 30)))).toEqual({});
+  });
+
+  it("menor de 8 años: 'Sí' en la 1ª menstruación es un error; sin nacimiento no se controla", () => {
+    const anamnesis = { anamnesis: { ...emptyRecordValues().content.anamnesis, menarche: "YES" as const } };
+    const fiveYearsAgo = `${new Date().getFullYear() - 5}-01-01`;
+    expect(errorsOf(values({ patientSex: "FEMALE", birthDate: fiveYearsAgo }, anamnesis))).toEqual({
+      "content.anamnesis.menarche": "Antes de los 8 años la primera menstruación no aplica.",
     });
-    expect(errorsOf(values(female, anamnesis("YES", 2011)))).toEqual({
-      [path]: "El año de la primera menstruación no puede ser anterior al de nacimiento.",
+    expect(errorsOf(values({ patientSex: "FEMALE", birthDate: "" }, anamnesis))).toEqual({});
+  });
+
+  it("separación interlabial: 0 a 20 mm con un decimal, opcional", () => {
+    const facial = (lipSealMm: number | null) => ({
+      facial: { ...emptyRecordValues().content.facial, lipSeal: "PRESENT" as const, lipSealMm },
     });
-    expect(errorsOf(values(female, anamnesis("YES", 999)))).toEqual({ [path]: "Usa un año de cuatro cifras." });
-    // Sin fecha de nacimiento solo se exige que no sea futuro.
-    expect(errorsOf(values({ patientSex: "FEMALE", birthDate: "" }, anamnesis("YES", 1990)))).toEqual({});
-    // Con "No" o sin sexo femenino el año no aplica (el servidor lo descarta al guardar).
-    expect(errorsOf(values(female, anamnesis("NO", 2099)))).toEqual({});
-    expect(errorsOf(values({ patientSex: "MALE", birthDate: "2012-05-20" }, anamnesis("YES", 2099)))).toEqual({});
+    const path = "content.facial.lipSealMm";
+    expect(errorsOf(values({}, facial(2.5)))).toEqual({});
+    expect(errorsOf(values({}, facial(null)))).toEqual({});
+    expect(errorsOf(values({}, facial(20.5)))).toEqual({ [path]: "Máximo 20 mm." });
+    expect(errorsOf(values({}, facial(-1)))).toEqual({ [path]: "Mínimo 0 mm." });
+    expect(errorsOf(values({}, facial(2.55)))).toEqual({ [path]: "Máximo un decimal." });
   });
 
   it("nombre vacío o solo espacios: error en el campo", () => {

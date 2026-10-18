@@ -4,6 +4,7 @@ import {
   mentolabialOptions, nasolabialOptions, patternIIFeatureOptions, patternIIIFeatureOptions, presenceOptions,
   zygomaticOptions,
 } from "../../config/options";
+import { formatMm } from "../../utils/transversal";
 import { PrintChoice } from "./PrintChoice";
 import { PrintLines } from "./PrintLines";
 import { PrintPage } from "./PrintPage";
@@ -31,7 +32,8 @@ export function PrintFacialSection({ record }: PrintFacialSectionProps) {
       <PrintChoice label="2. CONVEXIDAD:" options={convexityOptions} value={f.convexity} />
       <PrintChoice label="3. PROPORCIÓN DE LOS TERCIOS FACIALES:" options={presenceOptions} value={f.facialThirds} />
       <PrintLines value={f.facialThirdsNotes} lines={2} />
-      <PrintChoice label="4. SELLADO LABIAL:" options={presenceOptions} value={f.lipSeal} />
+      <PrintChoice label="4. SELLADO LABIAL:" options={presenceOptions} value={f.lipSeal}
+        suffix={f.lipSeal === "PRESENT" && f.lipSealMm != null ? `(${formatMm(f.lipSealMm)} mm)` : undefined} />
       <PrintChoice label="5. RELACIÓN ANTEROPOSTERIOR DE LABIOS:" options={lipRelationOptions} value={f.lipAnteroposteriorRelation} />
       <PrintChoice label="6. SIMETRÍA FACIAL EN REPOSO:" options={presenceOptions} value={f.restSymmetry} />
       <PrintLines value={f.restSymmetryNotes} lines={2} />

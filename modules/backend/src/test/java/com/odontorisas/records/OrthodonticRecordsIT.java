@@ -266,44 +266,66 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void menarche_year_is_saved_only_with_yes_for_female_patients() throws Exception {
+    void menarche_age_is_saved_only_with_yes_for_female_patients() throws Exception {
         Session torres = register("Dra. Torres");
         long id = createOk(torres, "Ana").get("id").asLong();
         String female = "\"patientName\":\"Ana\",\"patientSex\":\"FEMALE\",\"birthDate\":\"2012-05-20\"";
 
         JsonNode yes = read(save(torres, id, "{\"version\":0," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2023}}}"));
-        assertThat(yes.get("content").get("anamnesis").get("menarcheYear").asInt()).isEqualTo(2023);
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheAge\":13}}}"));
+        assertThat(yes.get("content").get("anamnesis").get("menarcheAge").asInt()).isEqualTo(13);
 
         JsonNode no = read(save(torres, id, "{\"version\":" + yes.get("version").asLong() + "," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"NO\",\"menarcheYear\":2023}}}"));
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"NO\",\"menarcheAge\":13}}}"));
         assertThat(no.get("content").get("anamnesis").get("menarche").stringValue()).isEqualTo("NO");
-        assertThat(isEmpty(no.get("content").get("anamnesis").get("menarcheYear"))).isTrue();
+        assertThat(isEmpty(no.get("content").get("anamnesis").get("menarcheAge"))).isTrue();
 
         JsonNode male = read(save(torres, id, "{\"version\":" + no.get("version").asLong()
             + ",\"patientName\":\"Ana\",\"patientSex\":\"MALE\",\"birthDate\":\"2012-05-20\""
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2023}}}"));
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheAge\":13}}}"));
         assertThat(isEmpty(male.get("content").get("anamnesis").get("menarche"))).isTrue();
-        assertThat(isEmpty(male.get("content").get("anamnesis").get("menarcheYear"))).isTrue();
+        assertThat(isEmpty(male.get("content").get("anamnesis").get("menarcheAge"))).isTrue();
     }
 
     @Test
-    void menarche_year_cannot_be_future_or_before_the_birth_year() throws Exception {
+    void lip_seal_measure_is_saved_with_present_and_validated() throws Exception {
+        Session torres = register("Dra. Torres");
+        long id = createOk(torres, "Ana").get("id").asLong();
+
+        JsonNode saved = read(save(torres, id, "{\"version\":0,\"patientName\":\"Ana\""
+            + ",\"content\":{\"facial\":{\"lipSeal\":\"PRESENT\",\"lipSealMm\":2.5}}}"));
+        assertThat(saved.get("content").get("facial").get("lipSealMm").decimalValue()).isEqualByComparingTo("2.5");
+
+        for (String invalid : List.of("-1", "20.5", "2.55")) {
+            MvcResult bad = save(torres, id, "{\"version\":" + saved.get("version").asLong() + ",\"patientName\":\"Ana\""
+                + ",\"content\":{\"facial\":{\"lipSeal\":\"PRESENT\",\"lipSealMm\":" + invalid + "}}}");
+            assertThat(bad.getResponse().getStatus()).as(invalid).isEqualTo(400);
+            assertThat(fieldError(read(bad), "content.facial.lipSealMm")).as(invalid).isNotBlank();
+        }
+
+        JsonNode absent = read(save(torres, id, "{\"version\":" + saved.get("version").asLong() + ",\"patientName\":\"Ana\""
+            + ",\"content\":{\"facial\":{\"lipSeal\":\"ABSENT\",\"lipSealMm\":2.5}}}"));
+        assertThat(isEmpty(absent.get("content").get("facial").get("lipSealMm"))).isTrue();
+    }
+
+    @Test
+    void menarche_age_must_be_between_8_and_18_and_not_above_the_current_age() throws Exception {
         Session torres = register("Dra. Torres");
         long id = createOk(torres, "Ana").get("id").asLong();
         String female = "\"patientName\":\"Ana\",\"patientSex\":\"FEMALE\",\"birthDate\":\"2012-05-20\"";
 
+        // Nació el 20/05/2012: hoy tiene 14 años (el reloj de los tests es el real, en 2026 o después).
         MvcResult future = save(torres, id, "{\"version\":0," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2099}}}");
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheAge\":20}}}");
         assertThat(future.getResponse().getStatus()).isEqualTo(400);
-        assertThat(fieldError(read(future), "content.anamnesis.menarcheYear"))
-            .isEqualTo("El año de la primera menstruación no puede ser futuro.");
+        assertThat(fieldError(read(future), "content.anamnesis.menarcheAge"))
+            .isEqualTo("Usa una edad entre 8 y 18 años.");
 
         MvcResult beforeBirth = save(torres, id, "{\"version\":0," + female
-            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheYear\":2011}}}");
+            + ",\"content\":{\"anamnesis\":{\"menarche\":\"YES\",\"menarcheAge\":16}}}");
         assertThat(beforeBirth.getResponse().getStatus()).isEqualTo(400);
-        assertThat(fieldError(read(beforeBirth), "content.anamnesis.menarcheYear"))
-            .isEqualTo("El año de la primera menstruación no puede ser anterior al de nacimiento.");
+        assertThat(fieldError(read(beforeBirth), "content.anamnesis.menarcheAge"))
+            .isEqualTo("La edad de la primera menstruación no puede superar la edad actual de la paciente.");
         assertThat(read(getRecord(torres, id)).get("version").asLong()).isZero();
     }
 
@@ -532,7 +554,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
     }
 
     @Test
@@ -566,7 +588,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
         assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
             String.class, id)).isEqualTo("2026-09-01");
     }
@@ -596,7 +618,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(n.get("upperWidths").get("tooth25").decimalValue()).isEqualByComparingTo("6.9");
         assertThat(n.get("lowerWidths").get("tooth31").decimalValue()).isEqualByComparingTo("5.4");
         assertThat(n.get("conclusionUpper").stringValue()).isEqualTo("Falta de espacio leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
     }
 
     @Test
@@ -629,7 +651,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(b.get("incisors").get("tooth11").decimalValue()).isEqualByComparingTo("8.7");
         assertThat(saved.get("content").get("models").get("nance").get("upperWidths").get("tooth11").decimalValue())
             .isEqualByComparingTo("8.6");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(9);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
     }
 
     @Test

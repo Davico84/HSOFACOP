@@ -294,6 +294,8 @@ export function RecordForm({ record, onReload, onRemoteUpdate, onNotFound, remot
           onSuccess: (saved) => {
             form.reset(toFormValues(saved));
             allowNextNavigation();
+            // Crear lleva al paso 2 en un formulario nuevo (primer render): sube aquí.
+            window.scrollTo({ top: 0, behavior: "auto" });
             navigate(recordPath(saved.id, target === step ? 2 : target), { replace: true });
             resolve("ok");
           },
@@ -326,6 +328,19 @@ export function RecordForm({ record, onReload, onRemoteUpdate, onNotFound, remot
   };
 
   const current = RECORD_STEPS[step - 1];
+
+  // Al cambiar de paso, el nuevo empieza arriba: sin esto la página queda a la altura del paso
+  // anterior (p. ej. al final). Sin animación (es otra página, no un recorrido) y con el foco en el
+  // título para que el lector de pantalla anuncie el paso. El primer render (abrir, recargar,
+  // remontar) no mueve nada.
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  const shownStep = useRef(step);
+  useEffect(() => {
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    window.scrollTo({ top: 0, behavior: "auto" });
+    stepHeading.current?.focus({ preventScroll: true });
+  }, [step]);
   // Deshabilita la navegación solo en guardados pedidos por el usuario (no en el autoguardado).
   const saving = record ? manualSaving : save.isPending;
 
@@ -371,7 +386,7 @@ export function RecordForm({ record, onReload, onRemoteUpdate, onNotFound, remot
             }}
             className="flex min-w-0 flex-col gap-6"
           >
-            <h2 className="text-xl font-semibold">
+            <h2 ref={stepHeading} tabIndex={-1} className="text-xl font-semibold outline-none">
               {current.number}. {current.title} <span className="text-sm font-normal text-muted-foreground">({current.pages})</span>
             </h2>
             <RecordStepContent step={step} patientLocked={Boolean(record?.patientLockedAt)} />

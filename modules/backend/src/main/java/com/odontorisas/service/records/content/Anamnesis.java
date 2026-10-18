@@ -14,8 +14,8 @@ public record Anamnesis(
     YesNo suckingHabits,
     /** Solo si el paciente es de sexo femenino. */
     YesNo menarche,
-    /** Año de la primera menstruación (cuatro cifras): solo con sexo femenino y {@code menarche} = Sí. */
-    Integer menarcheYear,
+    /** Edad (años) de la primera menstruación, 8–18: solo con sexo femenino y {@code menarche} = Sí. */
+    Integer menarcheAge,
     @Size(max = LONG_TEXT) String medicalHistory,
     @Size(max = LONG_TEXT) String accidentsHistory,
     @Size(max = LONG_TEXT) String familyStructure,

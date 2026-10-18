@@ -143,21 +143,32 @@ describe("orthodontic-records — Anamnesis y cefalometría", () => {
     }
   });
 
-  it("el año de la 1ª menstruación aparece solo con sexo femenino y respuesta Sí", async () => {
+  it("la edad de la 1ª menstruación aparece solo con sexo femenino y respuesta Sí", async () => {
     mockRecord({ patientSex: "FEMALE" });
     renderRecordRoutes("/historias/10?paso=1");
     await stepHeading(/Paciente y anamnesis/);
-    expect(screen.queryByLabelText("Año de la 1ª menstruación")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Edad de la 1ª menstruación")).not.toBeInTheDocument();
 
     const menarche = screen.getByRole("radiogroup", { name: "¿La 1ª menstruación ya ocurrió?" });
     await userEvent.click(within(menarche).getByRole("radio", { name: "Sí" }));
-    expect(screen.getByLabelText("Año de la 1ª menstruación")).toBeInTheDocument();
+    expect(screen.getByLabelText("Edad de la 1ª menstruación")).toBeInTheDocument();
 
     await userEvent.click(within(menarche).getByRole("radio", { name: "No" }));
-    expect(screen.queryByLabelText("Año de la 1ª menstruación")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Edad de la 1ª menstruación")).not.toBeInTheDocument();
 
     await userEvent.click(within(screen.getByRole("radiogroup", { name: "Sexo" })).getByRole("radio", { name: "Masculino" }));
     expect(screen.queryByRole("radiogroup", { name: "¿La 1ª menstruación ya ocurrió?" })).not.toBeInTheDocument();
+  });
+
+  it("con una paciente menor de 8 años, 'Sí' en la 1ª menstruación está deshabilitado y se explica", async () => {
+    mockRecord({ patientSex: "FEMALE", birthDate: `${new Date().getFullYear() - 5}-01-01` });
+    renderRecordRoutes("/historias/10?paso=1");
+    await stepHeading(/Paciente y anamnesis/);
+
+    const menarche = screen.getByRole("radiogroup", { name: "¿La 1ª menstruación ya ocurrió?" });
+    expect(within(menarche).getByRole("radio", { name: "Sí" })).toBeDisabled();
+    expect(within(menarche).getByRole("radio", { name: "No" })).toBeEnabled();
+    expect(screen.getByText("Antes de los 8 años la primera menstruación no aplica.")).toBeInTheDocument();
   });
 
   it("diagnóstico cefalométrico: seis opciones y el contador se queda en 3 de 3 con más", async () => {
@@ -246,6 +257,55 @@ describe("orthodontic-records — Formulario por pasos con guardado de borrador"
 
     await stepHeading(/Diagnóstico y planes/);
     expect(calls.put[0].address).toBe("Av. Ejército 512");
+  });
+
+  it("cambiar de paso lleva la vista al inicio y el foco al título; abrir no la mueve", async () => {
+    mockRecord();
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    renderRecordRoutes("/historias/10?paso=1");
+    await stepHeading(/Paciente y anamnesis/);
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
+
+    const heading = await stepHeading(/Análisis facial/);
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
+    await waitFor(() => expect(heading).toHaveFocus());
+
+    scrollTo.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: /Diagnóstico y planes/ }));
+    await stepHeading(/Diagnóstico y planes/);
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
+    scrollTo.mockRestore();
+  });
+
+  it("si el paso no cambia por errores, la vista no se mueve", async () => {
+    mockRecord();
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    renderRecordRoutes("/historias/10?paso=1");
+    await stepHeading(/Paciente y anamnesis/);
+
+    await userEvent.click(screen.getByRole("radio", { name: "DNI" }));
+    await userEvent.type(screen.getByLabelText("Número"), "7412589");
+    await userEvent.click(screen.getByRole("button", { name: /Siguiente/ }));
+
+    expect(await screen.findByText("El DNI debe tener 8 dígitos.")).toBeInTheDocument();
+    expect(scrollTo).not.toHaveBeenCalled();
+    scrollTo.mockRestore();
+  });
+
+  it("la separación interlabial aparece solo con 'Presenta' en el sellado labial", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=2");
+    await stepHeading(/Análisis facial/);
+    const lipSeal = screen.getByRole("radiogroup", { name: "4. Sellado labial" });
+    expect(screen.queryByLabelText("Separación interlabial")).not.toBeInTheDocument();
+
+    await userEvent.click(within(lipSeal).getByRole("radio", { name: "Presenta" }));
+    expect(screen.getByLabelText("Separación interlabial")).toBeInTheDocument();
+
+    await userEvent.click(within(lipSeal).getByRole("radio", { name: "No presenta" }));
+    expect(screen.queryByLabelText("Separación interlabial")).not.toBeInTheDocument();
   });
 
   it("un error de validación deja el paso y no envía nada", async () => {

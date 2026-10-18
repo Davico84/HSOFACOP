@@ -43,8 +43,8 @@ export function PrintPatientSection({ record }: PrintPatientSectionProps) {
       {record.patientSex === "FEMALE" ? (
         <div className="flex flex-wrap items-baseline gap-x-8">
           <PrintChoice label="¿La 1ª menstruación ya ocurrió?" options={yesNoOptions} value={a.menarche} />
-          {a.menarche === "YES" && a.menarcheYear != null ? (
-            <PrintField label="Año:" value={String(a.menarcheYear)} lined center />
+          {a.menarche === "YES" && a.menarcheAge != null ? (
+            <PrintField label="Edad:" value={`${a.menarcheAge} años`} lined center />
           ) : null}
         </div>
       ) : null}

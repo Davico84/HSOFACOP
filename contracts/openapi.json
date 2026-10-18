@@ -1421,7 +1421,7 @@
               "NO"
             ]
           },
-          "menarcheYear": {
+          "menarcheAge": {
             "type": "integer",
             "format": "int32"
           },
@@ -1652,6 +1652,11 @@
               "PRESENT",
               "ABSENT"
             ]
+          },
+          "lipSealMm": {
+            "type": "number",
+            "maximum": 20,
+            "minimum": 0
           },
           "lipAnteroposteriorRelation": {
             "type": "string",

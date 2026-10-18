@@ -25,6 +25,7 @@ import com.odontorisas.service.records.content.OcclusalAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis.SpeeCurve;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Transverse;
 import com.odontorisas.service.records.content.OcclusalAnalysis.Vertical;
+import com.odontorisas.service.records.content.Presence;
 import com.odontorisas.service.records.content.RadiographicAnalysis;
 import com.odontorisas.service.records.content.RecordContent;
 import com.odontorisas.service.records.content.SideRelations;
@@ -91,7 +92,7 @@ public final class RecordNormalizer {
             text(a.chiefComplaint()), text(a.personalPreferences()), a.cooperation(), a.oralHygiene(),
             a.suckingHabits(),
             menarche,
-            menarche == YesNo.YES ? a.menarcheYear() : null,
+            menarche == YesNo.YES ? a.menarcheAge() : null,
             text(a.medicalHistory()), text(a.accidentsHistory()), text(a.familyStructure()),
             text(a.generalTreatmentNeeds()), text(a.heredity()));
     }
@@ -102,7 +103,7 @@ public final class RecordNormalizer {
         return new FacialAnalysis(
             f.facialType(), f.convexity(),
             f.facialThirds(), text(f.facialThirdsNotes()),
-            f.lipSeal(), f.lipAnteroposteriorRelation(),
+            f.lipSeal(), f.lipSeal() == Presence.PRESENT ? f.lipSealMm() : null, f.lipAnteroposteriorRelation(),
             f.restSymmetry(), text(f.restSymmetryNotes()),
             f.openingSymmetry(), text(f.openingSymmetryNotes()),
             f.nasolabialAngle(), f.mentolabialSulcus(), f.zygomaticProjection(), f.chinNeckLine(), f.chinNeckAngle(),

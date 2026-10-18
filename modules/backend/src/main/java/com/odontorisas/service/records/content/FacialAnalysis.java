@@ -1,10 +1,15 @@
 package com.odontorisas.service.records.content;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static com.odontorisas.service.records.content.ContentLimits.LONG_TEXT;
+import static com.odontorisas.service.records.content.ContentLimits.MAX_LIP_SEAL_MM;
 
 /**
  * Paso 2 (pág. 2): análisis facial con las opciones de la Guía de análisis facial. Tercios y
@@ -16,6 +21,8 @@ public record FacialAnalysis(
     Presence facialThirds,
     @Size(max = LONG_TEXT) String facialThirdsNotes,
     Presence lipSeal,
+    /** Separación interlabial en mm (0–20, un decimal): solo con {@code lipSeal} = Presenta. */
+    @DecimalMin("0") @DecimalMax(MAX_LIP_SEAL_MM) @Digits(integer = 2, fraction = 1) BigDecimal lipSealMm,
     LipRelation lipAnteroposteriorRelation,
     Presence restSymmetry,
     @Size(max = LONG_TEXT) String restSymmetryNotes,
@@ -48,7 +55,7 @@ public record FacialAnalysis(
     public enum PatternIIIFeature { MANDIBULAR_PROTRUSION, MAXILLARY_RETRUSION }
 
     public static FacialAnalysis empty() {
-        return new FacialAnalysis(null, null, null, null, null, null, null, null, null, null,
+        return new FacialAnalysis(null, null, null, null, null, null, null, null, null, null, null,
             null, null, null, null, null, null, List.of(), null, List.of(), null);
     }
 }

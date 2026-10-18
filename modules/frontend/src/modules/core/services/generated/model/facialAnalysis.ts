@@ -33,6 +33,11 @@ export interface FacialAnalysis {
    */
   facialThirdsNotes?: string;
   lipSeal?: FacialAnalysisLipSeal;
+  /**
+   * @minimum 0
+   * @maximum 20
+   */
+  lipSealMm?: number;
   lipAnteroposteriorRelation?: FacialAnalysisLipAnteroposteriorRelation;
   restSymmetry?: FacialAnalysisRestSymmetry;
   /**

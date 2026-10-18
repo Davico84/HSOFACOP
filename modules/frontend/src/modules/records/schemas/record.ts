@@ -36,7 +36,7 @@ import {
   RadiographicAnalysisCephalometricAnalysesItem,
 } from "@/modules/core/services/generated/model";
 import { isValidFdi } from "../utils/fdi";
-import { today } from "../utils/age";
+import { ageYears, today } from "../utils/age";
 
 /**
  * Schema del formulario de la historia, en paridad con el backend (docs/coding-style.md §7):
@@ -47,6 +47,11 @@ import { today } from "../utils/age";
  */
 
 /** Número de historia que asignan los docentes (paridad con `@Pattern` de los requests). */
+/** Edad de la primera menstruación (años enteros), igual que el backend. */
+export const MIN_MENARCHE_AGE = 8;
+export const MAX_MENARCHE_AGE = 18;
+export const MENARCHE_TOO_YOUNG = "Antes de los 8 años la primera menstruación no aplica.";
+
 export const RECORD_NUMBER_PATTERN = /^AEO-[0-9]{4}$/;
 export const RECORD_NUMBER_FORMAT_MESSAGE = "Usa el formato AEO-0001.";
 
@@ -102,7 +107,7 @@ const anamnesis = z.object({
   oralHygiene: one(AnamnesisOralHygiene),
   suckingHabits: one(AnamnesisMenarche),
   menarche: one(AnamnesisMenarche),
-  menarcheYear: z.number().int("Usa un año de cuatro cifras.").nullish(),
+  menarcheAge: z.number().int("Usa una edad entre 8 y 18 años.").nullish(),
   medicalHistory: text(LONG_TEXT),
   accidentsHistory: text(LONG_TEXT),
   familyStructure: text(LONG_TEXT),
@@ -116,6 +121,7 @@ const facial = z.object({
   facialThirds: one(FacialAnalysisLipSeal),
   facialThirdsNotes: text(LONG_TEXT),
   lipSeal: one(FacialAnalysisLipSeal),
+  lipSealMm: decimal(0, 20, "mm"),
   lipAnteroposteriorRelation: one(FacialAnalysisLipAnteroposteriorRelation),
   restSymmetry: one(FacialAnalysisLipSeal),
   restSymmetryNotes: text(LONG_TEXT),
@@ -372,15 +378,18 @@ export const recordFormSchema = z
     }
     // Primera menstruación: solo se valida si aplica (sexo femenino y respuesta Sí); si no, el
     // servidor la descarta al guardar.
-    const menarcheYear = r.content.anamnesis.menarcheYear;
-    if (r.patientSex === "FEMALE" && r.content.anamnesis.menarche === "YES" && menarcheYear != null) {
-      const path = ["content", "anamnesis", "menarcheYear"];
-      if (menarcheYear < 1000 || menarcheYear > 9999) {
-        ctx.addIssue({ code: "custom", path, message: "Usa un año de cuatro cifras." });
-      } else if (menarcheYear > Number(today().slice(0, 4))) {
-        ctx.addIssue({ code: "custom", path, message: "El año de la primera menstruación no puede ser futuro." });
-      } else if (r.birthDate && menarcheYear < Number(r.birthDate.slice(0, 4))) {
-        ctx.addIssue({ code: "custom", path, message: "El año de la primera menstruación no puede ser anterior al de nacimiento." });
+    const menarcheAge = r.content.anamnesis.menarcheAge;
+    const menarcheApplies = r.patientSex === "FEMALE" && r.content.anamnesis.menarche === "YES";
+    const currentAge = ageYears(r.birthDate);
+    if (menarcheApplies && currentAge !== null && currentAge < MIN_MENARCHE_AGE) {
+      ctx.addIssue({ code: "custom", path: ["content", "anamnesis", "menarche"], message: MENARCHE_TOO_YOUNG });
+    }
+    if (menarcheApplies && menarcheAge != null) {
+      const path = ["content", "anamnesis", "menarcheAge"];
+      if (menarcheAge < MIN_MENARCHE_AGE || menarcheAge > MAX_MENARCHE_AGE) {
+        ctx.addIssue({ code: "custom", path, message: "Usa una edad entre 8 y 18 años." });
+      } else if (currentAge !== null && menarcheAge > currentAge) {
+        ctx.addIssue({ code: "custom", path, message: "La edad de la primera menstruación no puede superar la edad actual de la paciente." });
       }
     }
   });

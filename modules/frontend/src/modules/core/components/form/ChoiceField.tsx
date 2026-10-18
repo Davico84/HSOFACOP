@@ -19,6 +19,11 @@ interface ChoiceFieldProps<T extends FieldValues> {
    * el `disabled` de react-hook-form, que lo quitaría de lo que se guarda).
    */
   readOnly?: boolean;
+  /**
+   * Opciones que no se pueden elegir (se ven deshabilitadas). Si una ya está elegida, se puede quitar
+   * o cambiar por otra: el valor no se borra solo, así el error del schema lo explica.
+   */
+  disabledValues?: readonly string[];
   className?: string;
 }
 
@@ -27,7 +32,7 @@ interface ChoiceFieldProps<T extends FieldValues> {
  * traen imagen se pintan como tarjetas: pulsar la imagen selecciona igual que la etiqueta.
  */
 export function ChoiceField<T extends FieldValues>({
-  name, label, options, hint, referenceImage, vertical, readOnly = false, className,
+  name, label, options, hint, referenceImage, vertical, readOnly = false, disabledValues, className,
 }: ChoiceFieldProps<T>) {
   const { control, formState } = useFormContext<T>();
   const id = fieldId(name);
@@ -57,12 +62,13 @@ export function ChoiceField<T extends FieldValues>({
             >
               {options.map((option) => {
                 const checked = field.value === option.value;
+                const unavailable = !checked && (disabledValues?.includes(option.value) ?? false);
                 return (
                   <label
                     key={option.value}
                     className={cn(
                       "flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm transition-colors",
-                      readOnly ? "cursor-not-allowed opacity-70" : "cursor-pointer",
+                      readOnly || unavailable ? "cursor-not-allowed opacity-70" : "cursor-pointer",
                       "has-focus-visible:ring-2 has-focus-visible:ring-ring",
                       withImages && "flex-col p-2 text-center",
                       checked && "border-primary bg-primary/10",
@@ -77,9 +83,9 @@ export function ChoiceField<T extends FieldValues>({
                         checked={checked}
                         onChange={() => undefined}
                         onClick={() => {
-                          if (!readOnly) field.onChange(checked ? null : option.value);
+                          if (!readOnly && !unavailable) field.onChange(checked ? null : option.value);
                         }}
-                        disabled={readOnly && !checked}
+                        disabled={(readOnly && !checked) || unavailable}
                         onBlur={field.onBlur}
                         className="accent-primary"
                       />
