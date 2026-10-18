@@ -97,22 +97,22 @@ class RecordNormalizerTest {
     }
 
     @Test
-    void menarche_year_is_kept_only_with_a_yes_answer_for_female_patients() {
-        Integer year = 2023;
-        Anamnesis yes = new Anamnesis(null, null, null, null, null, YesNo.YES, year, null, null, null, null, null);
-        Anamnesis no = new Anamnesis(null, null, null, null, null, YesNo.NO, year, null, null, null, null, null);
+    void menarche_age_is_kept_only_with_a_yes_answer_for_female_patients() {
+        Integer age = 13;
+        Anamnesis yes = new Anamnesis(null, null, null, null, null, YesNo.YES, age, null, null, null, null, null);
+        Anamnesis no = new Anamnesis(null, null, null, null, null, YesNo.NO, age, null, null, null, null, null);
 
         Anamnesis female = RecordNormalizer.content(with(yes, null, null, null, null, null, null), PatientSex.FEMALE, null).anamnesis();
         assertThat(female.menarche()).isEqualTo(YesNo.YES);
-        assertThat(female.menarcheYear()).isEqualTo(year);
-        // "No" descarta el año; sin sexo femenino se descartan respuesta y año.
+        assertThat(female.menarcheAge()).isEqualTo(age);
+        // "No" descarta la edad; sin sexo femenino se descartan respuesta y edad.
         assertThat(RecordNormalizer.content(with(no, null, null, null, null, null, null), PatientSex.FEMALE, null)
-            .anamnesis().menarcheYear()).isNull();
+            .anamnesis().menarcheAge()).isNull();
         Anamnesis male = RecordNormalizer.content(with(yes, null, null, null, null, null, null), PatientSex.MALE, null).anamnesis();
         assertThat(male.menarche()).isNull();
-        assertThat(male.menarcheYear()).isNull();
+        assertThat(male.menarcheAge()).isNull();
         assertThat(RecordNormalizer.content(with(yes, null, null, null, null, null, null), null, null)
-            .anamnesis().menarcheYear()).isNull();
+            .anamnesis().menarcheAge()).isNull();
     }
 
     @Test
@@ -129,10 +129,22 @@ class RecordNormalizerTest {
     // --- Análisis facial ---
 
     private static FacialAnalysis facial(FacialPattern pattern) {
-        return new FacialAnalysis(null, null, Presence.ABSENT, "  Tercio inferior aumentado ", null, null,
+        return facial(pattern, null, null);
+    }
+
+    private static FacialAnalysis facial(FacialPattern pattern, Presence lipSeal, BigDecimal lipSealMm) {
+        return new FacialAnalysis(null, null, Presence.ABSENT, "  Tercio inferior aumentado ", lipSeal, lipSealMm, null,
             Presence.ABSENT, "   ", null, null, null, null, null, null, null,
             pattern, List.of(PatternIIFeature.MAXILLARY_PROTRUSION, PatternIIFeature.MANDIBULAR_RETRUSION),
             AfaiChange.INCREASED, List.of(), AfaiChange.DECREASED);
+    }
+
+    @Test
+    void lip_seal_measure_is_kept_only_with_present() {
+        BigDecimal mm = new BigDecimal("2.5");
+        assertThat(RecordNormalizer.facial(facial(null, Presence.PRESENT, mm)).lipSealMm()).isEqualByComparingTo(mm);
+        assertThat(RecordNormalizer.facial(facial(null, Presence.ABSENT, mm)).lipSealMm()).isNull();
+        assertThat(RecordNormalizer.facial(facial(null, null, mm)).lipSealMm()).isNull();
     }
 
     @Test

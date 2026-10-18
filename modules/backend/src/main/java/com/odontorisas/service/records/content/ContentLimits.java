@@ -13,6 +13,9 @@ public final class ContentLimits {
     public static final int LIST_ITEMS = 30;
     /** Milímetros: 0–30 con un decimal. */
     public static final String MAX_MM = "30.0";
+
+    /** Separación interlabial del sellado labial: 0–20 mm con un decimal. */
+    public static final String MAX_LIP_SEAL_MM = "20.0";
     /** Medidas de los análisis de modelos: 0–99,9 mm con un decimal. */
     public static final String MAX_MODEL_MM = "99.9";
     /** Ancho mesiodistal de una pieza: 4,0–13,0 mm con un decimal (lo que mide un diente real). */
