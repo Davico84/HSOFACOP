@@ -1,5 +1,6 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { ChoiceField } from "@/modules/core/components/form/ChoiceField";
+import { MeasureField } from "@/modules/core/components/form/MeasureField";
 import { MultiChoiceField } from "@/modules/core/components/form/MultiChoiceField";
 import { TextAreaField } from "@/modules/core/components/form/TextAreaField";
 import type { RecordFormValues } from "../../schemas/record";
@@ -20,6 +21,7 @@ import {
 export function Step2Facial() {
   const { control } = useFormContext<RecordFormValues>();
   const pattern = useWatch({ control, name: "content.facial.facialPattern" });
+  const lipSeal = useWatch({ control, name: "content.facial.lipSeal" });
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,8 +32,13 @@ export function Step2Facial() {
           referenceImage={terciosImg} hint={facialHints.facialThirds} />
         <TextAreaField name="content.facial.facialThirdsNotes" label="Observaciones (tercios)" rows={2} maxLength={LONG_TEXT} />
       </div>
-      <ChoiceField name="content.facial.lipSeal" label="4. Sellado labial" options={presenceOptions}
-        referenceImage={selladoLabialImg} hint={facialHints.lipSeal} />
+      <div className="flex flex-col gap-3">
+        <ChoiceField name="content.facial.lipSeal" label="4. Sellado labial" options={presenceOptions}
+          referenceImage={selladoLabialImg} hint={facialHints.lipSeal} />
+        {lipSeal === "PRESENT" ? (
+          <MeasureField name="content.facial.lipSealMm" label="Separación interlabial" unit="mm" min={0} max={20} />
+        ) : null}
+      </div>
       <ChoiceField name="content.facial.lipAnteroposteriorRelation" label="5. Relación anteroposterior de labios"
         options={lipRelationOptions} hint={facialHints.lipRelation} />
       <div className="flex flex-col gap-3">

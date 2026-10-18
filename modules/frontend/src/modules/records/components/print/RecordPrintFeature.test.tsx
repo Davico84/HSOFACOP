@@ -66,12 +66,29 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
   });
 
-  it("primera menstruación: se imprime solo el año", async () => {
-    serve({ ...withContent({ anamnesis: { menarche: "YES", menarcheYear: 2023 } }), patientSex: "FEMALE" });
+  it("sellado labial: con 'Presenta' y medida se imprime la separación", async () => {
+    serve(withContent({ facial: { lipSeal: "PRESENT", lipSealMm: 2.5 } }));
     renderRecordRoutes("/historias/10/imprimir");
 
-    const year = (await screen.findByText("Año:")).parentElement!;
-    expect(year).toHaveTextContent("2023");
+    const line = (await screen.findByText("4. SELLADO LABIAL:")).parentElement!;
+    expect(line).toHaveTextContent("(2,5 mm)");
+  });
+
+  it("sellado labial sin medida: la línea queda como antes", async () => {
+    serve(withContent({ facial: { lipSeal: "PRESENT" } }));
+    renderRecordRoutes("/historias/10/imprimir");
+
+    const line = (await screen.findByText("4. SELLADO LABIAL:")).parentElement!;
+    expect(line).not.toHaveTextContent("mm");
+  });
+
+  it("primera menstruación: se imprime la edad", async () => {
+    serve({ ...withContent({ anamnesis: { menarche: "YES", menarcheAge: 13 } }), patientSex: "FEMALE" });
+    renderRecordRoutes("/historias/10/imprimir");
+
+    // "Edad:" también es la del paciente: la de la menstruación es la que dice "13 años".
+    const ages = (await screen.findAllByText("Edad:")).map((label) => label.parentElement!.textContent);
+    expect(ages).toContainEqual(expect.stringContaining("13 años"));
   });
 
   it("opciones con la elegida marcada: ☒ Mesofacial ☐ Dolicofacial ☐ Braquifacial", async () => {
