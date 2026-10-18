@@ -9,7 +9,8 @@
 
 - [ ] 2.1 Regenerar `contracts/openapi.json` y el cliente orval
 - [ ] 2.2 Zod `lipSealMm: decimal(0, 20, "mm")`; `Step2Facial`: `MeasureField` "Separación interlabial" solo con "Presenta"; `PrintFacialSection`: medida en la línea 4
-- [ ] 2.3 Tests: campo visible solo con "Presenta", rango y decimal en el schema, hoja impresa con y sin medida; `pnpm validate` en verde
+- [ ] 2.3 `RecordForm`: al cambiar de paso, vista al inicio sin animación y foco en el título del paso (no en el primer render ni si el paso no cambia)
+- [ ] 2.4 Tests: campo visible solo con "Presenta", rango y decimal en el schema, hoja impresa con y sin medida; cambio de paso con `scrollTo` al inicio y foco en el título, sin desplazamiento al abrir ni con errores; `pnpm validate` en verde
 
 ## 3. Docs
 

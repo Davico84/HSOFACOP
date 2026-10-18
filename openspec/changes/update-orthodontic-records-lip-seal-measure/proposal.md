@@ -1,12 +1,16 @@
 ## Why
 
-En el análisis facial, la pregunta "4. Sellado labial" solo registra Presenta / No presenta. La guía indica que con labios relajados hay **1 a 3 mm** entre el borde inferior del labio superior y el superior del inferior: cuando el tratante marca **Presenta**, necesita registrar esa medida, y hoy no hay dónde.
+Dos ajustes del formulario de la historia pedidos tras el uso de prueba:
+
+1. **Sellado labial**: en el análisis facial, la pregunta "4. Sellado labial" solo registra Presenta / No presenta. La guía indica que con labios relajados hay **1 a 3 mm** entre el borde inferior del labio superior y el superior del inferior: cuando el tratante marca **Presenta**, necesita registrar esa medida, y hoy no hay dónde.
+2. **Cambio de paso**: al pasar de un paso a otro, la página queda a la misma altura. Si se terminó de llenar el paso 4 abajo de todo y se pasa al 5, el 5 aparece por el final y hay que subir a mano todo el paso.
 
 ## What Changes
 
 - Nuevo campo **"Separación interlabial (mm)"** en "4. Sellado labial", visible **solo con "Presenta"**: número de **0 a 20 mm con a lo sumo un decimal**, **opcional**.
 - Si la respuesta cambia a "No presenta" o se borra, la medida se oculta y se **descarta al guardar** (como los demás campos condicionados).
 - **Hoja impresa**: con "Presenta" y medida, junto a la pregunta se imprime la medida (p. ej. "2,5 mm").
+- **Cambio de paso al inicio**: al cambiar de paso (Siguiente, Anterior, la lista de pasos o el panel en celular), la vista vuelve al inicio de la página y el título del paso nuevo recibe el foco, para que el lector de pantalla lo anuncie. Al abrir o recargar una historia no se mueve la vista.
 - **Contrato**: `FacialAnalysis.lipSealMm` (decimal, opcional). Cambio aditivo: las historias existentes no tienen el dato y siguen igual; sin migración de datos.
 
 ## Capabilities
@@ -15,13 +19,13 @@ En el análisis facial, la pregunta "4. Sellado labial" solo registra Presenta /
 <!-- ninguna -->
 
 ### Modified Capabilities
-- `orthodontic-records`: nuevo requisito "Medida del sellado labial".
+- `orthodontic-records`: nuevos requisitos "Medida del sellado labial" y "Cambio de paso al inicio del paso".
 
 ## Impact
 
 - Backend: `FacialAnalysis` (campo con `@DecimalMin("0") @DecimalMax("20") @Digits(integer = 2, fraction = 1)`), `RecordNormalizer` (descarta la medida sin "Presenta"), tests.
 - Contrato `contracts/openapi.json` y cliente orval.
-- Frontend: schema Zod (`decimal(0, 20, "mm")`), `Step2Facial` (`MeasureField` condicionado), `PrintFacialSection`, tests.
+- Frontend: `RecordForm` (vista al inicio y foco en el título al cambiar de paso); schema Zod (`decimal(0, 20, "mm")`), `Step2Facial` (`MeasureField` condicionado), `PrintFacialSection`, tests.
 - Docs: `docs/domain.md` (análisis facial).
 
 ### Non-goals

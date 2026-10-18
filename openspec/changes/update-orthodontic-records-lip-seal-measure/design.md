@@ -13,6 +13,12 @@
 - **Impresión**: con "Presenta" y medida, en la línea "4. SELLADO LABIAL:" a continuación de las opciones se imprime la medida con coma decimal ("2,5 mm"), con el mismo formateo de números del resto de la hoja.
 - Alternativa descartada: guardar la medida aunque la respuesta sea "No presenta". El usuario indicó que la medida se registra solo con "Presenta".
 
+### Cambio de paso al inicio
+- La página se desplaza con la ventana (no hay contenedor con scroll propio; la cabecera no es fija).
+- En `RecordForm`, un efecto que depende de `step` y **omite el primer render** (ref con el paso anterior): al cambiar de paso, `window.scrollTo({ top: 0, behavior: "auto" })` (sin animación: es un cambio de página, no un recorrido) y foco en el título del paso (`<h2 tabIndex={-1}>`, `focus({ preventScroll: true })`, `outline-none`).
+- No choca con los errores: cuando el paso tiene errores o el guardado falla, el paso no cambia y el efecto no corre. El remontaje por una actualización desde otro dispositivo monta en el mismo paso: es un primer render y tampoco corre.
+- El aviso de historia cambiada mantiene su propio desplazamiento (aparece sin cambio de paso).
+
 ## Risks / Trade-offs
 
 - Contrato con un campo nuevo: frontend y backend se despliegan casi juntos; un frontend nuevo contra un backend viejo enviaría un campo desconocido. Se despliegan en el mismo merge (backend con auto-deploy, ~10 min); uso real aún en prueba.
