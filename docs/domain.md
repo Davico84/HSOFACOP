@@ -17,8 +17,9 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | **Usuario** | Usa las funcionalidades del producto dentro de su rol. | `USER` |
 | **Tratante** | Alumno u odontólogo del posgrado (AEO/FACOP) que llena y corrige sus historias clínicas de ortodoncia. Solo ve las suyas. | `USER` |
 | **Supervisor** | Docente que revisa y corrige las historias de todos los tratantes. | `ADMIN` |
+| **Coordinación** | Docente que supervisa en solo lectura el avance y las historias de los alumnos de sus turmas (capacidad `cohorts`). No crea, edita ni imprime historias. | `COORDINATOR` |
 
-> Los roles de sistema (`ADMIN`/`USER`) los define `authentication`; el mapeo fino de permisos se detalla al construir cada capacidad.
+> Los roles de sistema (`ADMIN`/`USER`/`COORDINATOR`) los define `authentication` (`COORDINATOR` desde `add-cohorts-coordinator`); el mapeo fino de permisos se detalla al construir cada capacidad. En pantalla: "Administrador", "Alumno" y "Coordinación".
 
 ## Glosario de términos clave ✏️
 
@@ -46,6 +47,7 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | Historia completa | Historia con datos en los 7 pasos clínicos (1–7); Firmas (paso 8) no cuenta. Una historia anterior a las métricas, aún no vuelta a guardar, figura "sin calcular". |
 | Datos fijos del paciente | Nombre, documento, fecha y lugar de nacimiento y sexo: quedan fijos al imprimir la historia por primera vez; solo el ADMIN los desbloquea (a pedido del tratante). |
 | Avance impreso | Impresión de una ficha incompleta: lleva la marca "AVANCE · N de 7". |
+| Turma | Grupo de alumnos de la institución (Turma 1, Turma 2…). Un alumno está en una turma o en ninguna; una coordinación supervisa una o más. Hoy hay una sola institución (no se modela). |
 
 ---
 
@@ -74,11 +76,13 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 
 ### `authentication` → **User** *(construida)*
 Cuenta de acceso al sistema.
-- `email` (único), `passwordHash` (BCrypt), `role` (`ADMIN` | `USER`), `fullName`, `createdAt`/`updatedAt`.
+- `email` (único), `passwordHash` (BCrypt), `role` (`ADMIN` | `USER` | `COORDINATOR`, con `CHECK` en la base desde V18), `fullName`, `createdAt`/`updatedAt`.
 - Bloqueo temporal por intentos fallidos (`add-login-lockout`): `failedLoginAttempts` (fallos consecutivos, se resetea con un login correcto o al fallar tras expirar el bloqueo) y `lockedUntil` (fin del bloqueo automático; nulo = sin bloqueo). Solo los modifican `UPDATE` atómicos; la entidad los lee pero no los escribe.
-- Estado administrativo (`users`, `add-user-account-status`): `status` (`ACTIVE` | `DISABLED`), **independiente** de `lockedUntil` (si compartieran campo, expirar el bloqueo automático reactivaría una cuenta deshabilitada a mano). Las cuentas nuevas nacen `ACTIVE`; solo un `ADMIN` cambia el estado, y solo de cuentas `USER`; una cuenta `DISABLED` no inicia ni renueva sesión.
+- Estado administrativo (`users`, `add-user-account-status`): `status` (`ACTIVE` | `DISABLED`), **independiente** de `lockedUntil` (si compartieran campo, expirar el bloqueo automático reactivaría una cuenta deshabilitada a mano). Las cuentas nuevas nacen `ACTIVE`; solo un `ADMIN` cambia el estado, y solo de cuentas `USER` o `COORDINATOR` (una coordinación deshabilitada conserva sus turmas); una cuenta `DISABLED` no inicia ni renueva sesión.
 - Cupo de historias (`users` + `orthodontic-records`, `add-record-quota`): `recordQuota` (entero 0–9999 o nulo = sin límite). Las cuentas nuevas nacen con el cupo inicial del despliegue (`app.records.default-quota` / `RECORDS_DEFAULT_QUOTA`, 1 por defecto; vacío = sin límite; `update-default-record-quota`); las cuentas anteriores conservan el suyo. Solo aplica a cuentas `USER` y solo lo cambia un `ADMIN` (a una cuenta `ADMIN` responde 409); el `ADMIN` nunca se limita. El uso es la cantidad de historias con ese `author` (no se guarda). Se controla al crear, bajo el mismo bloqueo de la fila del autor que el correlativo (dos creaciones simultáneas no pasan el tope); cupo lleno → 409 `record-quota-reached` ("1 historia clínica" en singular). La numeración `AEO-NNN` es independiente por tratante. Un cupo por debajo de lo creado se permite y no toca las existentes; editar no consulta el cupo.
-- Candidatos para cambios posteriores de `users` (perfil, alta por admin, roles): `username`, `phone`.
+- Turma del alumno (`cohorts`, `add-cohorts-coordinator`): `cohort` (FK `Cohort`, nula = sin turma). Solo cuentas `USER` (`CHECK ck_users_cohort_only_user`); la asigna el `ADMIN` y no toca historias ni cupo.
+- Turmas de coordinación: `coordinatorCohorts` (tabla `coordinator_cohorts`, una o más). Solo un `USER` **sin historias** pasa a `COORDINATOR` (pierde su turma y su cupo); volver a `USER` borra sus turmas y le da el cupo inicial. El rol nuevo llega al token en la siguiente renovación (≤ 15 min); las turmas se leen de la base en cada petición, y crear historias exige en la base el rol `USER` o `ADMIN`, así el token anterior no sirve para crear.
+- Candidatos para cambios posteriores de `users` (perfil, alta por admin): `username`, `phone`.
 
 ### `authentication` → **RefreshToken** *(construida)*
 Token de refresco persistido para rotación y revocación real (logout). Se guarda el **hash** del token, nunca el valor en claro.
@@ -97,8 +101,13 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 - Desbloqueo: el autor pide `unlockRequest` (fecha + motivo ≤ 200, una pendiente a la vez); el `ADMIN` desbloquea (vuelve a fijarse en la próxima impresión) o descarta. Cada acción del ADMIN queda en `RecordUnlockEvent` (historia, ADMIN, acción `UNLOCKED`/`DISCARDED`, motivo, fecha), solo inserción.
 - Impresión: las hojas solo salen desde el botón "Imprimir" (registra primero); las fichas incompletas llevan la marca "AVANCE · N de 7 pasos clínicos con datos · impreso el <fecha>" con fecha y conteo del servidor.
 - "Hoy" (fechas no futuras, "impreso el", meses del panel) usa el reloj de la app en la zona de la clínica (`app.time-zone`, por defecto America/Lima), no la del servidor.
-- Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor. No se borran.
+- Reglas: un `USER` solo alcanza sus historias (una ajena responde 404); un `ADMIN` alcanza todas y al guardar conserva el autor; un `COORDINATOR` solo **lee** las de los alumnos de sus turmas (fuera de ellas o sin turma, 404) y toda escritura (crear, guardar, imprimir, pedir o descartar desbloqueo, desbloquear) le responde 403. No se borran.
 - Notas de evolución: no se registran en el sistema; se imprime la hoja en blanco (pág. 14 del PDF) y se llena a mano (decisión del usuario).
+
+### `cohorts` → **Cohort** *(construida)*
+Turma de alumnos (`add-cohorts-coordinator`).
+- `name` (1–80, sin espacios sobrantes) y `nameKey` (nombre en minúsculas con espacios colapsados, único: `ux_cohorts_name_key`; repetido → 409 `cohort-name-taken`), `createdAt`. La crea y renombra el `ADMIN`; no se borra.
+- Inicio de la coordinación: por turma, alumnos, historias (completas, en progreso, sin calcular), alumnos sin historias y el detalle por alumno.
 
 ---
 
@@ -112,6 +121,8 @@ erDiagram
     User ||--o{ OrthodonticRecord : "es autor de"
     OrthodonticRecord ||--o{ RecordUnlockEvent : "desbloqueos"
     User ||--o{ RecordUnlockEvent : "desbloquea (ADMIN)"
+    Cohort |o--o{ User : "alumnos (USER)"
+    User }o--o{ Cohort : "coordina (COORDINATOR)"
 
     User {
         Long id PK
@@ -123,6 +134,12 @@ erDiagram
         DateTime lockedUntil
         String status
         Integer recordQuota
+        Long cohortId FK
+    }
+    Cohort {
+        Long id PK
+        String name
+        String nameKey UK
     }
     RefreshToken {
         Long id PK

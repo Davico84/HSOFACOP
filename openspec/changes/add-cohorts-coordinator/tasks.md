@@ -20,5 +20,5 @@
 
 ## 3. Docs
 
-- [ ] 3.1 `docs/domain.md`: turma, rol `COORDINATOR`, alcance de solo lectura
+- [x] 3.1 `docs/domain.md`: turma, rol `COORDINATOR`, alcance de solo lectura
 - [ ] 3.2 Al archivar: `docs/vision.md` ✅
