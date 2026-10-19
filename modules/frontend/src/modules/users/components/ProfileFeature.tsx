@@ -3,6 +3,7 @@ import { Button } from "@/modules/core/ui/button";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
 import { useMyProfile } from "../hooks/useMyProfile";
 import { ProfileForm } from "./ProfileForm";
+import { ChangePasswordForm } from "@/modules/auth/components/ChangePasswordForm";
 
 /** "Mis datos" (todos los roles): carga los datos de la cuenta y muestra carga, error o el formulario. */
 export function ProfileFeature() {
@@ -25,7 +26,12 @@ export function ProfileFeature() {
       </div>
     );
   } else {
-    content = <ProfileForm profile={profile.data} />;
+    content = (
+      <div className="flex max-w-2xl flex-col gap-6">
+        <ProfileForm profile={profile.data} />
+        <ChangePasswordForm />
+      </div>
+    );
   }
 
   return (
@@ -34,7 +40,7 @@ export function ProfileFeature() {
         <h1 id="profile-title" className="text-2xl font-bold">
           Mis datos
         </h1>
-        <p className="text-muted-foreground">Tu celular, tu documento y tu colegiatura.</p>
+        <p className="text-muted-foreground">Tu celular, tu documento, tu colegiatura y tu contraseña.</p>
       </header>
       {content}
     </section>

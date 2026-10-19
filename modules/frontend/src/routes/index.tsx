@@ -10,6 +10,7 @@ import { RecordFormScreen } from "@/screens/records/RecordFormScreen";
 import { RecordPrintScreen } from "@/screens/records/RecordPrintScreen";
 import { LoginView } from "@/screens/auth/LoginView";
 import { RegisterView } from "@/screens/auth/RegisterView";
+import { ResetPasswordView } from "@/screens/auth/ResetPasswordView";
 import { RequireAuth } from "@/modules/core/auth/RequireAuth";
 import { RequireGuest } from "@/modules/core/auth/RequireGuest";
 import { RequireRole } from "@/modules/core/auth/RequireRole";
@@ -26,6 +27,8 @@ import { sectionRoute } from "./sectionRoute";
  *   sección por subárbol (`sectionRoute`), con su guard de rol si la sección declara roles
  */
 export const appRoutes: RouteObject[] = [
+  // Nueva contraseña con un enlace de restablecimiento: pública, con o sin sesión.
+  { path: PATHS.RESET_PASSWORD, element: <ResetPasswordView /> },
   {
     element: <RequireGuest />,
     children: [

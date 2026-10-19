@@ -10,11 +10,11 @@
 
 ## 2. Contrato y frontend
 
-- [ ] 2.1 Regenerar `contracts/openapi.json` (`-Dcontract.update=true`) y el cliente orval; `OpenApiContractIT` y `ContractDriftIT` en verde
-- [ ] 2.2 "Mis datos": bloque "Cambiar contraseña" (schema Zod en `modules/auth/schemas`, errores del servidor en su campo, sesión nueva al éxito)
-- [ ] 2.3 Usuarios: acción "Restablecer contraseña" (no disponible en deshabilitadas), confirmación y diálogo del enlace con copiar y vencimiento
-- [ ] 2.4 Página pública `/restablecer`: token del fragmento (quitado de la barra), nueva contraseña con confirmación, enlace no válido y vuelta al login con aviso
-- [ ] 2.5 Tests (uno por scenario de la UI): cambio (correcto, actual incorrecta en el campo, igual/corta en cliente); restablecer desde Usuarios (confirmar y copiar, cancelar no genera); página (válido va al login, no válido, sin token, corta); `pnpm validate` en verde
+- [x] 2.1 Regenerar `contracts/openapi.json` (`-Dcontract.update=true`) y el cliente orval; `OpenApiContractIT` y `ContractDriftIT` en verde
+- [x] 2.2 "Mis datos": bloque "Cambiar contraseña" (schema Zod en `modules/auth/schemas`, errores del servidor en su campo, sesión nueva al éxito)
+- [x] 2.3 Usuarios: acción "Restablecer contraseña" (no disponible en deshabilitadas), confirmación y diálogo del enlace con copiar y vencimiento
+- [x] 2.4 Página pública `/restablecer`: token del fragmento (quitado de la barra), nueva contraseña con confirmación, enlace no válido y vuelta al login con aviso
+- [x] 2.5 Tests (uno por scenario de la UI): cambio (correcto, actual incorrecta en el campo, igual/corta en cliente); restablecer desde Usuarios (confirmar y copiar, cancelar no genera); página (válido va al login, no válido, sin token, corta); `pnpm validate` en verde
 
 ## 3. Docs
 

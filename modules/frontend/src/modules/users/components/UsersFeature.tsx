@@ -14,6 +14,9 @@ import { RecordQuotaDialog } from "./RecordQuotaDialog";
 import { CoordinationDialog } from "./CoordinationDialog";
 import { RevertToStudentDialog } from "./RevertToStudentDialog";
 import { UserContactDialog } from "./UserContactDialog";
+import { ConfirmPasswordResetDialog } from "./ConfirmPasswordResetDialog";
+import { ResetLinkDialog, type ResetLink } from "./ResetLinkDialog";
+import { useCreatePasswordReset } from "../hooks/useCreatePasswordReset";
 import { useChangeUserRole } from "../hooks/useChangeUserRole";
 import { useCohorts } from "@/modules/cohorts/hooks/useCohorts";
 import { CohortsDialog } from "@/modules/cohorts/components/CohortsDialog";
@@ -36,6 +39,16 @@ export function UsersFeature() {
   const [revertTarget, setRevertTarget] = useState<UserSummaryResponse | null>(null);
   const [cohortsOpen, setCohortsOpen] = useState(false);
   const [contactTarget, setContactTarget] = useState<UserSummaryResponse | null>(null);
+  const [resetTarget, setResetTarget] = useState<UserSummaryResponse | null>(null);
+  const [resetLink, setResetLink] = useState<ResetLink | null>(null);
+  const createReset = useCreatePasswordReset();
+
+  const confirmReset = (user: UserSummaryResponse) => {
+    setResetTarget(null);
+    createReset.mutate(user.id, {
+      onSuccess: (link) => setResetLink({ fullName: user.fullName, token: link.token, expiresAt: link.expiresAt }),
+    });
+  };
   const changeRole = useChangeUserRole();
   const rolePendingId = changeRole.isPending ? (changeRole.variables?.id ?? null) : null;
 
@@ -91,6 +104,7 @@ export function UsersFeature() {
           onRequestCoordination={setCoordinationTarget}
           onRequestRevert={setRevertTarget}
           onRequestContact={setContactTarget}
+          onRequestPasswordReset={setResetTarget}
         />
         <UsersPagination
           page={users.data.page}
@@ -131,6 +145,8 @@ export function UsersFeature() {
       <RevertToStudentDialog user={revertTarget} onConfirm={confirmRevert} onCancel={() => setRevertTarget(null)} />
       <CohortsDialog open={cohortsOpen} onOpenChange={setCohortsOpen} />
       <UserContactDialog user={contactTarget} onClose={() => setContactTarget(null)} />
+      <ConfirmPasswordResetDialog user={resetTarget} onConfirm={confirmReset} onCancel={() => setResetTarget(null)} />
+      <ResetLinkDialog link={resetLink} onClose={() => setResetLink(null)} />
     </section>
   );
 }

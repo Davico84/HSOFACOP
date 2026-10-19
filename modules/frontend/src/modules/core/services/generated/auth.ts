@@ -8,7 +8,8 @@
 import type {
   AuthResponse,
   LoginRequest,
-  RegisterRequest
+  RegisterRequest,
+  ResetPasswordRequest
 } from './model';
 
 import { customInstance } from '../../config/httpClient';
@@ -41,6 +42,19 @@ export const refresh = (
       );
     }
   /**
+ * @summary Fijar una contraseña nueva con un enlace de restablecimiento (un solo uso; cierra todas las sesiones)
+ */
+export const resetPassword = (
+    resetPasswordRequest: ResetPasswordRequest,
+ ) => {
+      return customInstance<void>(
+      {url: `/auth/password-reset`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: resetPasswordRequest
+    },
+      );
+    }
+  /**
  * @summary Cerrar la sesión
  */
 export const logout = (
@@ -66,5 +80,6 @@ export const login = (
     }
   export type RegisterResult = NonNullable<Awaited<ReturnType<typeof register>>>
 export type RefreshResult = NonNullable<Awaited<ReturnType<typeof refresh>>>
+export type ResetPasswordResult = NonNullable<Awaited<ReturnType<typeof resetPassword>>>
 export type LogoutResult = NonNullable<Awaited<ReturnType<typeof logout>>>
 export type LoginResult = NonNullable<Awaited<ReturnType<typeof login>>>

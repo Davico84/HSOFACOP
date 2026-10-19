@@ -14,6 +14,8 @@ export const PATHS = {
   RECORD_NEW: "/historias/nueva",
   // Datos de la propia cuenta (capacidad users), todos los roles.
   PROFILE: "/mis-datos",
+  // Nueva contraseña con un enlace de restablecimiento (pública; fuera de /auth/*, que es de la API).
+  RESET_PASSWORD: "/restablecer",
 } as const;
 
 /** Ruta de una historia (paso opcional del formulario, 1–7). */
@@ -24,4 +26,9 @@ export function recordPath(id: number, step?: number): string {
 /** Vista de impresión de una historia (fuera del shell). */
 export function recordPrintPath(id: number): string {
   return `${PATHS.RECORDS}/${id}/imprimir`;
+}
+
+/** Página de restablecimiento con el token en el fragmento (no viaja al servidor ni a los logs). */
+export function passwordResetPath(token: string): string {
+  return `${PATHS.RESET_PASSWORD}#t=${encodeURIComponent(token)}`;
 }

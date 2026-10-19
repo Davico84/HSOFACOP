@@ -12,6 +12,7 @@ import type {
   ChangeUserStatusRequest,
   ListUsersParams,
   PageResponseUserSummaryResponse,
+  PasswordResetLinkResponse,
   UserSummaryResponse
 } from './model';
 
@@ -20,6 +21,17 @@ import { customInstance } from '../../config/httpClient';
 
 
 
+  /**
+ * @summary Generar un enlace de restablecimiento de contraseña de un solo uso (24 h) para una cuenta USER o COORDINATOR activa
+ */
+export const createPasswordReset = (
+    id: number,
+ ) => {
+      return customInstance<PasswordResetLinkResponse>(
+      {url: `/api/users/${id}/password-reset`, method: 'POST'
+    },
+      );
+    }
   /**
  * @summary Deshabilitar o reactivar una cuenta USER o COORDINATOR
  */
@@ -88,7 +100,8 @@ export const listUsers = (
     },
       );
     }
-  export type ChangeUserStatusResult = NonNullable<Awaited<ReturnType<typeof changeUserStatus>>>
+  export type CreatePasswordResetResult = NonNullable<Awaited<ReturnType<typeof createPasswordReset>>>
+export type ChangeUserStatusResult = NonNullable<Awaited<ReturnType<typeof changeUserStatus>>>
 export type ChangeUserRoleResult = NonNullable<Awaited<ReturnType<typeof changeUserRole>>>
 export type ChangeRecordQuotaResult = NonNullable<Awaited<ReturnType<typeof changeRecordQuota>>>
 export type ChangeUserCohortResult = NonNullable<Awaited<ReturnType<typeof changeUserCohort>>>
