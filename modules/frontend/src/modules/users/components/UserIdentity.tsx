@@ -16,7 +16,7 @@ export function UserIdentity({ user }: { user: UserSummaryResponse }) {
     <div className="flex min-w-0 items-center gap-3">
       <span
         aria-hidden="true"
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
       >
         {initials(user.fullName)}
       </span>

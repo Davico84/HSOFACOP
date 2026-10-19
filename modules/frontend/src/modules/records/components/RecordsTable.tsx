@@ -47,7 +47,7 @@ export function RecordsTable({ records, view }: RecordsTableProps) {
             const document = formatDocument(record.documentType, record.documentNumber);
             return (
               <TableRow key={record.id}>
-                <TableCell className="py-3 pl-4 whitespace-nowrap">
+                <TableCell className="py-2 pl-4 whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-semibold">
                     {record.recordNumber}
                     {record.patientLocked ? <RecordLockIcon /> : null}

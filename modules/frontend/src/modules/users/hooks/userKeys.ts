@@ -8,4 +8,4 @@ export const userKeys = {
 };
 
 /** Tamaño de página del listado (el backend recorta a 100 como máximo). */
-export const USERS_PAGE_SIZE = 20;
+export const USERS_PAGE_SIZE = 10;

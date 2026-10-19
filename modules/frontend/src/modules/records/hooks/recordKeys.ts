@@ -12,7 +12,7 @@ export const recordKeys = {
 export const RECORD_QUOTA_REACHED_TYPE = "/errors/record-quota-reached";
 
 /** Tamaño de página del listado (el backend recorta a 100 como máximo). */
-export const RECORDS_PAGE_SIZE = 20;
+export const RECORDS_PAGE_SIZE = 10;
 
 /** `type` del 409 por edición concurrente. */
 export const STALE_RECORD_TYPE = "/errors/stale-record";

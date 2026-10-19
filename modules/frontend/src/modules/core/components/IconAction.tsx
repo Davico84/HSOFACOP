@@ -20,7 +20,7 @@ interface IconActionProps {
 /**
  * Botón de solo ícono con tooltip (acciones de fila de una tabla). El nombre accesible es el
  * `aria-label`; el tooltip es solo visual (`aria-describedby` anulado para no anunciarlo dos veces).
- * 36 px con ratón y 44 px con pantalla táctil (`pointer-coarse`), el mínimo para tocar con el dedo.
+ * 32 px con ratón y 44 px con pantalla táctil (`pointer-coarse`), el mínimo para tocar con el dedo.
  */
 export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, tone = "default", loading = false }: IconActionProps) {
   const Shown = loading ? Loader2 : Icon;
@@ -37,7 +37,7 @@ export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, to
           aria-label={ariaLabel ?? label}
           aria-describedby={undefined}
           className={cn(
-            "size-9 text-muted-foreground pointer-coarse:size-11",
+            "size-8 text-muted-foreground pointer-coarse:size-11",
             tone === "danger" ? "hover:bg-destructive/10 hover:text-destructive" : "hover:text-foreground",
           )}
         >
