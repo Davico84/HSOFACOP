@@ -21,8 +21,8 @@ export function UserIdentity({ user }: { user: UserSummaryResponse }) {
         {initials(user.fullName)}
       </span>
       <div className="min-w-0">
-        <p className="truncate font-medium">{user.fullName}</p>
-        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+        <p className="font-medium wrap-break-word">{user.fullName}</p>
+        <p className="text-xs break-all text-muted-foreground">{user.email}</p>
       </div>
     </div>
   );

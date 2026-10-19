@@ -114,6 +114,7 @@ export function RecordsFeature() {
         searching={query.trim() !== ""}
         onClear={clearSearch}
         onBack={page > 0 ? () => setPage((p) => p - 1) : undefined}
+        readOnly={view === "cohorts"}
       />
     );
   } else {

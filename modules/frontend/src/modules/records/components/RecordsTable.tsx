@@ -58,15 +58,15 @@ export function RecordsTable({ records, view }: RecordsTableProps) {
                     id={record.id}
                     patientName={record.patientName}
                     readOnly={readOnly}
-                    className="block truncate font-medium text-primary underline-offset-4 hover:underline"
+                    className="block font-medium wrap-break-word text-primary underline-offset-4 hover:underline"
                   />
-                  <span className="block truncate text-xs text-muted-foreground">{document || "Sin documento"}</span>
+                  <span className="block text-xs text-muted-foreground">{document || "Sin documento"}</span>
                 </TableCell>
                 <TableCell>{record.treatingDentist ?? ""}</TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">
+                <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
                   {formatDate(record.treatmentStartDate) || "—"}
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(record.updatedAt)}</TableCell>
+                <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(record.updatedAt)}</TableCell>
                 {view === "all" || readOnly ? <TableCell>{record.authorName}</TableCell> : null}
                 {readOnly ? (
                   <TableCell>{record.cohortName ? <Badge variant="outline">{record.cohortName}</Badge> : null}</TableCell>

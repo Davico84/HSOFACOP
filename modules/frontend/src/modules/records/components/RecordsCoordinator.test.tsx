@@ -85,6 +85,17 @@ describe("cohorts — Historias de las turmas en solo lectura", () => {
     expect(printed).toBe(0);
   });
 
+  it("Sin historias en sus turmas: estado vacío sin 'Nueva historia'", async () => {
+    server.use(
+      http.get("*/api/cohorts", () => HttpResponse.json(COHORTS)),
+      http.get("*/api/orthodontic-records", () => HttpResponse.json(page([]))),
+    );
+    renderRecordRoutes("/historias", "COORDINATOR");
+
+    expect(await screen.findByText("Los alumnos de tus turmas aún no tienen historias clínicas.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Nueva historia/ })).not.toBeInTheDocument();
+  });
+
   it("Historia fuera de sus turmas: 'Historia no encontrada'", async () => {
     server.use(
       http.get("*/api/orthodontic-records/:id", () =>

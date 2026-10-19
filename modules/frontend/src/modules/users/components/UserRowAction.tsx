@@ -42,14 +42,14 @@ export function UserRowAction({
             icon={Gauge}
             label="Cupo de historias"
             ariaLabel={`Cambiar el cupo de historias de ${name}`}
-            disabled={quotaPending}
+            loading={quotaPending}
             onClick={() => onRequestQuota(user)}
           />
           <IconAction
             icon={GraduationCap}
             label="Convertir en coordinación"
             ariaLabel={`Convertir en coordinación la cuenta de ${name}`}
-            disabled={rolePending}
+            loading={rolePending}
             onClick={() => onRequestCoordination(user)}
           />
         </>
@@ -59,7 +59,7 @@ export function UserRowAction({
             icon={Layers}
             label="Turmas que coordina"
             ariaLabel={`Cambiar las turmas de ${name}`}
-            disabled={rolePending}
+            loading={rolePending}
             onClick={() => onRequestCoordination(user)}
           />
           <IconAction
@@ -76,7 +76,7 @@ export function UserRowAction({
         label={disabling ? "Deshabilitar cuenta" : "Activar cuenta"}
         ariaLabel={`${disabling ? "Deshabilitar" : "Activar"} la cuenta de ${name}`}
         tone={disabling ? "danger" : "default"}
-        disabled={pending}
+        loading={pending}
         onClick={() => onRequestChange(user)}
       />
     </div>

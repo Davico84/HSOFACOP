@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import { Loader2, type LucideIcon } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/modules/core/ui/tooltip";
 import { cn } from "@/modules/core/utils/cn";
@@ -13,13 +13,17 @@ interface IconActionProps {
   disabled?: boolean;
   /** "danger": resalta en rojo al pasar el ratón (acciones que quitan acceso). */
   tone?: "default" | "danger";
+  /** Acción en curso: deshabilitada y con el ícono girando. */
+  loading?: boolean;
 }
 
 /**
  * Botón de solo ícono con tooltip (acciones de fila de una tabla). El nombre accesible es el
  * `aria-label`; el tooltip es solo visual (`aria-describedby` anulado para no anunciarlo dos veces).
+ * 36 px con ratón y 44 px con pantalla táctil (`pointer-coarse`), el mínimo para tocar con el dedo.
  */
-export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, tone = "default" }: IconActionProps) {
+export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, tone = "default", loading = false }: IconActionProps) {
+  const Shown = loading ? Loader2 : Icon;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -28,15 +32,16 @@ export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, to
           variant="ghost"
           size="icon"
           onClick={onClick}
-          disabled={disabled}
+          disabled={disabled || loading}
+          aria-busy={loading || undefined}
           aria-label={ariaLabel ?? label}
           aria-describedby={undefined}
           className={cn(
-            "size-8 text-muted-foreground",
+            "size-9 text-muted-foreground pointer-coarse:size-11",
             tone === "danger" ? "hover:bg-destructive/10 hover:text-destructive" : "hover:text-foreground",
           )}
         >
-          <Icon className="size-4" aria-hidden="true" />
+          <Shown className={cn("size-4", loading && "animate-spin")} aria-hidden="true" />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>

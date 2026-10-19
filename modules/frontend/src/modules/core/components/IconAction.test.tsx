@@ -21,6 +21,16 @@ describe("IconAction", () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
+  it("en curso: ocupada y sin ejecutar otra vez", async () => {
+    const onClick = vi.fn();
+    renderWithProviders(<IconAction icon={Gauge} label="Cupo" onClick={onClick} loading />);
+
+    const button = screen.getByRole("button", { name: "Cupo" });
+    expect(button).toHaveAttribute("aria-busy", "true");
+    await userEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
   it("deshabilitada no ejecuta la acción", async () => {
     const onClick = vi.fn();
     renderWithProviders(<IconAction icon={Gauge} label="Cupo" onClick={onClick} disabled />);
