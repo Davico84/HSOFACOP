@@ -61,6 +61,9 @@ export function UserRowAction({
             icon={GraduationCap}
             label="Convertir en coordinación"
             ariaLabel={`Convertir en coordinación la cuenta de ${name}`}
+            disabledReason={
+              user.recordCount > 0 ? "Tiene historias clínicas: no puede pasar a coordinación" : undefined
+            }
             loading={rolePending}
             onClick={() => onRequestCoordination(user)}
           />

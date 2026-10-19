@@ -108,6 +108,26 @@ describe("users — turmas y coordinación en la pantalla Usuarios", () => {
     expect(calls.role).toEqual([{ role: "COORDINATOR", cohortIds: [1] }]);
   });
 
+  it("Cuenta con historias: 'Convertir en coordinación' no disponible y explica por qué", async () => {
+    mockBackend();
+    server.use(
+      http.get("*/api/users", () =>
+        HttpResponse.json({ content: [{ ...ANA, recordCount: 1 }], page: 0, size: 10, totalElements: 1, totalPages: 1, last: true }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<UsersFeature />);
+    await screen.findByRole("row", { name: /Ana Pérez/ });
+
+    const convert = within(row("Ana Pérez")).getByRole("button", { name: /Convertir en coordinación/ });
+    expect(convert).toHaveAttribute("aria-disabled", "true");
+    await user.hover(convert);
+    expect(await screen.findByRole("tooltip", { name: /no puede pasar a coordinación/ })).toBeInTheDocument();
+
+    await user.click(convert);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("Volver a alumno tras confirmar", async () => {
     const calls = mockBackend();
     renderWithProviders(<UsersFeature />);

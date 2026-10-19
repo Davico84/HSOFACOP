@@ -11,19 +11,40 @@ interface IconActionProps {
   ariaLabel?: string;
   onClick: () => void;
   disabled?: boolean;
+  /**
+   * Acción no disponible con su motivo: queda atenuada y sin efecto, pero enfocable
+   * (`aria-disabled`) para que el tooltip explique por qué (un `disabled` nativo no lo mostraría).
+   */
+  disabledReason?: string;
   /** "danger": resalta en rojo al pasar el ratón (acciones que quitan acceso). */
   tone?: "default" | "danger";
   /** Acción en curso: deshabilitada y con el ícono girando. */
   loading?: boolean;
 }
 
+function toneClasses(blocked: boolean, tone: "default" | "danger"): string {
+  if (blocked) return "cursor-not-allowed opacity-50 hover:bg-transparent hover:text-muted-foreground";
+  return tone === "danger" ? "hover:bg-destructive/10 hover:text-destructive" : "hover:text-foreground";
+}
+
 /**
  * Botón de solo ícono con tooltip (acciones de fila de una tabla). El nombre accesible es el
- * `aria-label`; el tooltip es solo visual (`aria-describedby` anulado para no anunciarlo dos veces).
+ * `aria-label`; el tooltip es solo visual (`aria-describedby` anulado para no anunciarlo dos veces),
+ * salvo con `disabledReason`, que el lector de pantalla sí anuncia como descripción.
  * 32 px con ratón y 44 px con pantalla táctil (`pointer-coarse`), el mínimo para tocar con el dedo.
  */
-export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, tone = "default", loading = false }: IconActionProps) {
+export function IconAction({
+  icon: Icon,
+  label,
+  ariaLabel,
+  onClick,
+  disabled,
+  disabledReason,
+  tone = "default",
+  loading = false,
+}: IconActionProps) {
   const Shown = loading ? Loader2 : Icon;
+  const blocked = disabledReason !== undefined;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -31,20 +52,18 @@ export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, to
           type="button"
           variant="ghost"
           size="icon"
-          onClick={onClick}
+          onClick={blocked ? undefined : onClick}
           disabled={disabled || loading}
+          aria-disabled={blocked || undefined}
           aria-busy={loading || undefined}
           aria-label={ariaLabel ?? label}
-          aria-describedby={undefined}
-          className={cn(
-            "size-8 text-muted-foreground pointer-coarse:size-11",
-            tone === "danger" ? "hover:bg-destructive/10 hover:text-destructive" : "hover:text-foreground",
-          )}
+          {...(blocked ? {} : { "aria-describedby": undefined })}
+          className={cn("size-8 text-muted-foreground pointer-coarse:size-11", toneClasses(blocked, tone))}
         >
           <Shown className={cn("size-4", loading && "animate-spin")} aria-hidden="true" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>{disabledReason ?? label}</TooltipContent>
     </Tooltip>
   );
 }
