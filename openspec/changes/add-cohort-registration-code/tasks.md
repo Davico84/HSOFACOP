@@ -21,7 +21,7 @@
 
 ## 3. Docs
 
-- [ ] 3.1 `docs/domain.md`: código de inscripción y apertura de la turma, datos de contacto de la cuenta
+- [x] 3.1 `docs/domain.md`: código de inscripción y apertura de la turma, datos de contacto de la cuenta
 
 ## Workflow follow-up
 
