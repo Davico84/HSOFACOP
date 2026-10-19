@@ -1,22 +1,24 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/core/ui/table";
-import type { UserSummaryResponse } from "@/modules/core/services/generated/model";
+import type { CohortResponse, UserSummaryResponse } from "@/modules/core/services/generated/model";
+import { roleLabel } from "@/modules/core/auth/roleLabel";
 import { UserStatusBadge } from "./UserStatusBadge";
-import { UserRowAction } from "./UserRowAction";
+import { UserRowAction, type UserRowHandlers } from "./UserRowAction";
+import { UserCohortCell } from "./UserCohortCell";
 import { recordUsage } from "../utils/quota";
 
-const ROLE_LABEL: Record<UserSummaryResponse["role"], string> = { ADMIN: "Administrador", USER: "Usuario" };
-
-interface UsersTableProps {
+interface UsersTableProps extends UserRowHandlers {
   users: UserSummaryResponse[];
+  /** Turmas para el selector de los alumnos. */
+  cohorts: CohortResponse[];
   /** Cuenta cuyo cambio de estado está en curso (su acción no puede repetirse). */
   pendingId: number | null;
   /** Cuenta cuyo cambio de cupo está en curso. */
   quotaPendingId: number | null;
-  onRequestChange: (user: UserSummaryResponse) => void;
-  onRequestQuota: (user: UserSummaryResponse) => void;
+  /** Cuenta cuyo cambio de rol o de turmas de coordinación está en curso. */
+  rolePendingId: number | null;
 }
 
-export function UsersTable({ users, pendingId, quotaPendingId, onRequestChange, onRequestQuota }: UsersTableProps) {
+export function UsersTable({ users, cohorts, pendingId, quotaPendingId, rolePendingId, ...handlers }: UsersTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -24,6 +26,7 @@ export function UsersTable({ users, pendingId, quotaPendingId, onRequestChange, 
           <TableHead>Nombre</TableHead>
           <TableHead>Correo</TableHead>
           <TableHead>Rol</TableHead>
+          <TableHead>Turma</TableHead>
           <TableHead>Estado</TableHead>
           <TableHead>Historias</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
@@ -34,7 +37,10 @@ export function UsersTable({ users, pendingId, quotaPendingId, onRequestChange, 
           <TableRow key={user.id}>
             <TableCell className="font-medium">{user.fullName}</TableCell>
             <TableCell>{user.email}</TableCell>
-            <TableCell>{ROLE_LABEL[user.role]}</TableCell>
+            <TableCell>{roleLabel(user.role)}</TableCell>
+            <TableCell>
+              <UserCohortCell user={user} cohorts={cohorts} />
+            </TableCell>
             <TableCell>
               <UserStatusBadge status={user.status} />
             </TableCell>
@@ -44,8 +50,8 @@ export function UsersTable({ users, pendingId, quotaPendingId, onRequestChange, 
                 user={user}
                 pending={pendingId === user.id}
                 quotaPending={quotaPendingId === user.id}
-                onRequestChange={onRequestChange}
-                onRequestQuota={onRequestQuota}
+                rolePending={rolePendingId === user.id}
+                {...handlers}
               />
             </TableCell>
           </TableRow>

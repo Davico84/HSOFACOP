@@ -8,6 +8,7 @@
 import type { UserSummaryResponseRole } from './userSummaryResponseRole';
 import type { UserSummaryResponseStatus } from './userSummaryResponseStatus';
 import type { UserSummaryResponseRecordQuota } from './userSummaryResponseRecordQuota';
+import type { CohortRef } from './cohortRef';
 
 export interface UserSummaryResponse {
   id: number;
@@ -15,8 +16,12 @@ export interface UserSummaryResponse {
   fullName: string;
   role: UserSummaryResponseRole;
   status: UserSummaryResponseStatus;
-  /** Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN) */
+  /** Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN y COORDINATOR) */
   recordQuota?: UserSummaryResponseRecordQuota;
   /** Historias clínicas creadas por la cuenta */
   recordCount: number;
+  /** Turma del alumno; nula = sin turma (siempre nula si no es USER) */
+  cohort?: CohortRef;
+  /** Turmas que supervisa (vacía si no es COORDINATOR) */
+  coordinatorCohorts: CohortRef[];
 }

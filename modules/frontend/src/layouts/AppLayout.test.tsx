@@ -107,7 +107,7 @@ describe("app-shell — Identidad en la cabecera y cierre de sesión en la barra
     renderApp("/");
     const header = await screen.findByRole("banner");
     expect(within(header).getByText("Ana Pérez")).toBeInTheDocument();
-    expect(within(header).getByText("Usuario")).toBeInTheDocument();
+    expect(within(header).getByText("Alumno")).toBeInTheDocument();
   });
 
   it("Identidad del usuario sin nombre: muestra correo y rol", async () => {

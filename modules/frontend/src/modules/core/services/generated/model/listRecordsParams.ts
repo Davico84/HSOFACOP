@@ -14,6 +14,10 @@ export type ListRecordsParams = {
  */
 q?: string;
 /**
+ * Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran
+ */
+cohortId?: number;
+/**
  * Página (base 0)
  * @minimum 0
  */

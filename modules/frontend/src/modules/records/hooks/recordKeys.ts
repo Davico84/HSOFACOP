@@ -2,7 +2,7 @@
 export const recordKeys = {
   all: ["records"] as const,
   lists: () => [...recordKeys.all, "list"] as const,
-  list: (params: { q: string; page: number; size: number }) => [...recordKeys.lists(), params] as const,
+  list: (params: { q: string; page: number; size: number; cohortId?: number | null }) => [...recordKeys.lists(), params] as const,
   details: () => [...recordKeys.all, "detail"] as const,
   detail: (id: number) => [...recordKeys.details(), id] as const,
   quota: () => [...recordKeys.all, "quota"] as const,

@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/modules/core/ui/button";
 import { buttonVariants } from "@/modules/core/ui/button-variants";
 import { ScaleToFit } from "@/modules/core/components/ScaleToFit";
-import { recordPath } from "@/routes/paths";
+import { PATHS, recordPath } from "@/routes/paths";
+import { useSessionStore } from "@/store/useSessionStore";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
 import { usePrintRecord } from "../../hooks/usePrintRecord";
 import { filledStepsOf } from "../../utils/filledSteps";
@@ -32,7 +33,8 @@ function todayIso(): string {
  * saldrán. "Imprimir" registra primero la impresión en el servidor (la primera fija los datos del
  * paciente) y recién entonces abre el diálogo; imprimir por otro medio saca solo un aviso. Las hojas
  * de una historia incompleta llevan la marca de avance con la fecha y el conteo del servidor. Fuerza
- * el tema claro mientras está abierta.
+ * el tema claro mientras está abierta. La coordinación la ve en solo lectura: sin "Imprimir" (no
+ * registra impresiones ni fija datos) y "Volver" nunca lleva al formulario.
  */
 export function RecordPrintFeature() {
   const { id: param } = useParams();
@@ -41,6 +43,7 @@ export function RecordPrintFeature() {
   // De dónde se abrió la vista (listado con su búsqueda o paso del formulario); si no, la historia.
   const returnTo = (useLocation().state as { returnTo?: string } | null)?.returnTo;
   const print = usePrintRecord();
+  const readOnly = useSessionStore((s) => s.user?.role === "COORDINATOR");
   // Marca devuelta por el servidor al registrar la impresión (fecha y avance reales).
   const [printed, setPrinted] = useState<PrintStamp | null>(null);
   // Solo mientras el botón abre el diálogo: el CSS muestra las hojas al imprimir.
@@ -117,22 +120,31 @@ export function RecordPrintFeature() {
       <style>{PAGE_CSS}</style>
       {/* En celular: "Volver" e "Imprimir" en una fila y la ayuda debajo. */}
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-background px-4 py-3 sm:px-6 print:hidden">
-        <Link to={returnTo ?? recordPath(data.id)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+        <Link
+          to={returnTo ?? (readOnly ? PATHS.RECORDS : recordPath(data.id))}
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
           <ArrowLeft className="size-4" aria-hidden="true" /> Volver
         </Link>
-        <Button onClick={onPrint} disabled={print.isPending} className="sm:order-last">
-          {print.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Printer className="size-4" aria-hidden="true" />
-          )}{" "}
-          Imprimir
-        </Button>
+        {readOnly ? null : (
+          <Button onClick={onPrint} disabled={print.isPending} className="sm:order-last">
+            {print.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Printer className="size-4" aria-hidden="true" />
+            )}{" "}
+            Imprimir
+          </Button>
+        )}
         <p className="w-full text-sm text-muted-foreground sm:w-auto sm:flex-1">
-          Vista preliminar de la historia {data.recordNumber}: revisa las hojas y pulsa Imprimir.
+          {readOnly
+            ? `Historia ${data.recordNumber} en solo lectura: la imprime su autor.`
+            : `Vista preliminar de la historia ${data.recordNumber}: revisa las hojas y pulsa Imprimir.`}
         </p>
       </div>
-      <p className="print-guard-notice p-[25mm] text-[14pt]">Usa el botón Imprimir de la vista preliminar.</p>
+      <p className="print-guard-notice p-[25mm] text-[14pt]">
+        {readOnly ? "La coordinación consulta las historias en solo lectura." : "Usa el botón Imprimir de la vista preliminar."}
+      </p>
       {/* Las hojas miden 210 mm: en pantallas más angostas se reducen para caber (al imprimir, A4 real). */}
       <div className="print-sheets">
         <PrintStampContext.Provider value={stamp}>

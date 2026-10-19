@@ -7,6 +7,7 @@
  */
 import type {
   AdminDashboardResponse,
+  CoordinatorDashboardResponse,
   UserDashboardResponse
 } from './model';
 
@@ -27,6 +28,17 @@ export const getMyDashboard = (
       );
     }
   /**
+ * @summary Avance de las turmas de la coordinación autenticada
+ */
+export const getCoordinatorDashboard = (
+    
+ ) => {
+      return customInstance<CoordinatorDashboardResponse>(
+      {url: `/api/dashboard/coordinator`, method: 'GET'
+    },
+      );
+    }
+  /**
  * @summary Métricas globales (solo ADMIN)
  */
 export const getAdminDashboard = (
@@ -38,4 +50,5 @@ export const getAdminDashboard = (
       );
     }
   export type GetMyDashboardResult = NonNullable<Awaited<ReturnType<typeof getMyDashboard>>>
+export type GetCoordinatorDashboardResult = NonNullable<Awaited<ReturnType<typeof getCoordinatorDashboard>>>
 export type GetAdminDashboardResult = NonNullable<Awaited<ReturnType<typeof getAdminDashboard>>>

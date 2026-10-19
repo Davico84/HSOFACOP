@@ -7,4 +7,6 @@ export const API = "https://api.test";
 export const handlers: RequestHandler[] = [
   // Cupo de historias: por defecto sin límite (los tests de cupo lo reemplazan).
   http.get("*/api/orthodontic-records/quota", () => HttpResponse.json({ limit: null, used: 0, reached: false })),
+  // Turmas: por defecto ninguna (los tests de turmas y coordinación lo reemplazan).
+  http.get("*/api/cohorts", () => HttpResponse.json([])),
 ];

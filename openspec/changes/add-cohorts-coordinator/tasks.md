@@ -11,12 +11,12 @@
 
 ## 2. Contrato y frontend
 
-- [ ] 2.1 Regenerar `contracts/openapi.json` y el cliente orval
-- [ ] 2.2 `Role` con `COORDINATOR`: etiqueta, inicio, menú; rutas del formulario solo `USER`/`ADMIN`
-- [ ] 2.3 Historias para coordinación: columnas Alumno y Turma, filtro por turma (`GET /api/cohorts`), sin "Nueva historia" ni cupo; en `RecordsTable` y `RecordsCardList` el paciente abre la vista preliminar y sin `RecordEditLink`; vista preliminar sin "Imprimir", "Volver" al listado sin `returnTo` y ayuda de solo lectura
-- [ ] 2.4 Usuarios (ADMIN): columna y selector de Turma, convertir/volver con turmas, diálogo de Turmas (crear y renombrar)
-- [ ] 2.5 Inicio de coordinación: tarjeta por turma con resumen y alumnos
-- [ ] 2.6 Tests (uno por scenario de la UI): listado y filtro, vista sin "Imprimir" ni formulario, rutas bloqueadas, Usuarios (turma, conversión, turmas), Inicio; `pnpm validate` en verde
+- [x] 2.1 Regenerar `contracts/openapi.json` y el cliente orval
+- [x] 2.2 `Role` con `COORDINATOR`: etiqueta, inicio, menú; rutas del formulario solo `USER`/`ADMIN`
+- [x] 2.3 Historias para coordinación: columnas Alumno y Turma, filtro por turma (`GET /api/cohorts`), sin "Nueva historia" ni cupo; en `RecordsTable` y `RecordsCardList` el paciente abre la vista preliminar y sin `RecordEditLink`; vista preliminar sin "Imprimir", "Volver" al listado sin `returnTo` y ayuda de solo lectura
+- [x] 2.4 Usuarios (ADMIN): columna y selector de Turma, convertir/volver con turmas, diálogo de Turmas (crear y renombrar)
+- [x] 2.5 Inicio de coordinación: tarjeta por turma con resumen y alumnos
+- [x] 2.6 Tests (uno por scenario de la UI): listado y filtro, vista sin "Imprimir" ni formulario, rutas bloqueadas, Usuarios (turma, conversión, turmas), Inicio; `pnpm validate` en verde
 
 ## 3. Docs
 

@@ -10,9 +10,9 @@ import { UsersFeature } from "./UsersFeature";
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));
 
-const ADMIN: UserSummaryResponse = { id: 1, email: "admin@empresa.test", fullName: "Admin Uno", role: "ADMIN", status: "ACTIVE", recordQuota: null, recordCount: 3 };
-const ANA: UserSummaryResponse = { id: 2, email: "ana@empresa.test", fullName: "Ana Pérez", role: "USER", status: "ACTIVE", recordQuota: null, recordCount: 3 };
-const LUIS: UserSummaryResponse = { id: 3, email: "luis@empresa.test", fullName: "Luis Gómez", role: "USER", status: "DISABLED", recordQuota: null, recordCount: 0 };
+const ADMIN: UserSummaryResponse = { id: 1, email: "admin@empresa.test", fullName: "Admin Uno", role: "ADMIN", status: "ACTIVE", recordQuota: null, recordCount: 3, coordinatorCohorts: [] };
+const ANA: UserSummaryResponse = { id: 2, email: "ana@empresa.test", fullName: "Ana Pérez", role: "USER", status: "ACTIVE", recordQuota: null, recordCount: 3, coordinatorCohorts: [] };
+const LUIS: UserSummaryResponse = { id: 3, email: "luis@empresa.test", fullName: "Luis Gómez", role: "USER", status: "DISABLED", recordQuota: null, recordCount: 0, coordinatorCohorts: [] };
 
 function page(content: UserSummaryResponse[], pageNumber = 0, totalPages = 1) {
   return {
@@ -66,7 +66,7 @@ describe("users — Pantalla de usuarios para administradores", () => {
 
     const ana = await screen.findByRole("row", { name: /Ana Pérez/ });
     expect(within(ana).getByText("ana@empresa.test")).toBeInTheDocument();
-    expect(within(ana).getByText("Usuario")).toBeInTheDocument();
+    expect(within(ana).getByText("Alumno")).toBeInTheDocument();
     expect(within(ana).getByText("Activa")).toBeInTheDocument();
     expect(within(ana).getByRole("button", { name: "Deshabilitar la cuenta de Ana Pérez" })).toBeInTheDocument();
     expect(within(row("Luis Gómez")).getByRole("button", { name: "Activar la cuenta de Luis Gómez" })).toBeInTheDocument();
@@ -164,7 +164,7 @@ describe("users — Pantalla de usuarios para administradores", () => {
       http.patch("*/api/users/:id/status", () =>
         HttpResponse.json(
           { type: "/errors/account-status-not-changeable", title: "Conflict", status: 409,
-            detail: "Solo se puede cambiar el estado de cuentas con rol USER.", timestamp: "2026-10-01T12:00:00Z" },
+            detail: "El estado de una cuenta ADMIN no se puede cambiar.", timestamp: "2026-10-01T12:00:00Z" },
           { status: 409, headers: { "Content-Type": "application/problem+json" } },
         ),
       ),
@@ -175,7 +175,7 @@ describe("users — Pantalla de usuarios para administradores", () => {
     await user.click(await screen.findByRole("button", { name: "Deshabilitar la cuenta de Ana Pérez" }));
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Deshabilitar" }));
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Solo se puede cambiar el estado de cuentas con rol USER."));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("El estado de una cuenta ADMIN no se puede cambiar."));
     await waitFor(() => expect(lists).toBeGreaterThanOrEqual(2));
   });
 

@@ -1,19 +1,20 @@
-import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/core/ui/table";
 import type { RecordSummaryResponse } from "@/modules/core/services/generated/model";
-import { recordPath } from "@/routes/paths";
 import { formatDate, formatDateTime, formatDocument } from "../utils/recordDisplay";
+import type { RecordsListView } from "../utils/recordsListView";
 import { RecordEditLink } from "./RecordEditLink";
 import { RecordLockIcon } from "./RecordLockIcon";
+import { RecordPatientLink } from "./RecordPatientLink";
 import { RecordPrintLink } from "./RecordPrintLink";
 
 interface RecordsTableProps {
   records: RecordSummaryResponse[];
-  /** Columna "Autor": solo para ADMIN (ve las historias de todos). */
-  showAuthor: boolean;
+  /** "all" (ADMIN) suma la columna Autor; "cohorts" (coordinación) suma Alumno y Turma y es de solo lectura. */
+  view: RecordsListView;
 }
 
-export function RecordsTable({ records, showAuthor }: RecordsTableProps) {
+export function RecordsTable({ records, view }: RecordsTableProps) {
+  const readOnly = view === "cohorts";
   return (
     <Table>
       <TableHeader>
@@ -24,7 +25,9 @@ export function RecordsTable({ records, showAuthor }: RecordsTableProps) {
           <TableHead>Odontólogo tratante</TableHead>
           <TableHead>Inicio</TableHead>
           <TableHead>Modificada</TableHead>
-          {showAuthor ? <TableHead>Autor</TableHead> : null}
+          {view === "all" ? <TableHead>Autor</TableHead> : null}
+          {readOnly ? <TableHead>Alumno</TableHead> : null}
+          {readOnly ? <TableHead>Turma</TableHead> : null}
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
@@ -38,18 +41,22 @@ export function RecordsTable({ records, showAuthor }: RecordsTableProps) {
               </span>
             </TableCell>
             <TableCell>
-              <Link to={recordPath(record.id)} className="font-medium text-primary underline-offset-4 hover:underline">
-                {record.patientName}
-              </Link>
+              <RecordPatientLink
+                id={record.id}
+                patientName={record.patientName}
+                readOnly={readOnly}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              />
             </TableCell>
             <TableCell className="whitespace-nowrap">{formatDocument(record.documentType, record.documentNumber)}</TableCell>
             <TableCell>{record.treatingDentist ?? ""}</TableCell>
             <TableCell className="whitespace-nowrap">{formatDate(record.treatmentStartDate)}</TableCell>
             <TableCell className="whitespace-nowrap">{formatDateTime(record.updatedAt)}</TableCell>
-            {showAuthor ? <TableCell>{record.authorName}</TableCell> : null}
+            {view === "all" || readOnly ? <TableCell>{record.authorName}</TableCell> : null}
+            {readOnly ? <TableCell>{record.cohortName ?? ""}</TableCell> : null}
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
-                <RecordEditLink id={record.id} recordNumber={record.recordNumber} />
+                {readOnly ? null : <RecordEditLink id={record.id} recordNumber={record.recordNumber} />}
                 <RecordPrintLink id={record.id} recordNumber={record.recordNumber} />
               </div>
             </TableCell>
