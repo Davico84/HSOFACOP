@@ -8,7 +8,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +24,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Cuenta de acceso al sistema. La contraseña se guarda siempre como hash BCrypt.
@@ -64,6 +71,21 @@ public class User {
      */
     @Column(name = "record_quota")
     private Integer recordQuota;
+
+    /**
+     * Turma del alumno (capacidad {@code cohorts}): solo cuentas USER ({@code CHECK} en la base);
+     * nula = sin turma. La cambia {@code UserAdminService} con la fila bloqueada.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cohort_id")
+    private Cohort cohort;
+
+    /** Turmas que supervisa una cuenta COORDINATOR (vacía en el resto). */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "coordinator_cohorts", joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "cohort_id"))
+    @Builder.Default
+    private Set<Cohort> coordinatorCohorts = new HashSet<>();
 
     /**
      * Bloqueo temporal por intentos fallidos: solo lectura. Lo modifican únicamente

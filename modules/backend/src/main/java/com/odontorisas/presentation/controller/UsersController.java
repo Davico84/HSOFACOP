@@ -2,6 +2,8 @@ package com.odontorisas.presentation.controller;
 
 import com.odontorisas.presentation.dto.ApiProblem;
 import com.odontorisas.presentation.dto.ChangeRecordQuotaRequest;
+import com.odontorisas.presentation.dto.ChangeUserCohortRequest;
+import com.odontorisas.presentation.dto.ChangeUserRoleRequest;
 import com.odontorisas.presentation.dto.ChangeUserStatusRequest;
 import com.odontorisas.presentation.dto.PageResponse;
 import com.odontorisas.presentation.dto.UserSummaryResponse;
@@ -66,14 +68,14 @@ public class UsersController {
         return ResponseEntity.ok(PageResponse.from(userAdmin.list(pageable).map(UserSummaryResponse::from)));
     }
 
-    @Operation(operationId = "changeUserStatus", summary = "Deshabilitar o reactivar una cuenta USER")
+    @Operation(operationId = "changeUserStatus", summary = "Deshabilitar o reactivar una cuenta USER o COORDINATOR")
     @ApiResponse(responseCode = "200", description = "Cuenta con su estado actual",
         content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserSummaryResponse.class)))
     @ApiResponse(responseCode = "400", description = "Estado ausente o inválido",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
     @ApiResponse(responseCode = "404", description = "La cuenta no existe",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
-    @ApiResponse(responseCode = "409", description = "La cuenta no es USER: su estado no se puede cambiar",
+    @ApiResponse(responseCode = "409", description = "La cuenta es ADMIN: su estado no se puede cambiar",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @PatchMapping("/{id}/status")
     public ResponseEntity<UserSummaryResponse> changeUserStatus(
@@ -94,5 +96,35 @@ public class UsersController {
     public ResponseEntity<UserSummaryResponse> changeRecordQuota(
             @PathVariable Long id, @Valid @RequestBody ChangeRecordQuotaRequest request) {
         return ResponseEntity.ok(UserSummaryResponse.from(userAdmin.changeRecordQuota(id, request.quota())));
+    }
+
+    @Operation(operationId = "changeUserCohort", summary = "Asignar, cambiar o quitar la turma de alumno de una cuenta USER")
+    @ApiResponse(responseCode = "200", description = "Cuenta con su turma actual",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserSummaryResponse.class)))
+    @ApiResponse(responseCode = "404", description = "La cuenta o la turma no existen",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @ApiResponse(responseCode = "409", description = "La cuenta no es USER: la turma de alumno no aplica (cohort-not-applicable)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PatchMapping("/{id}/cohort")
+    public ResponseEntity<UserSummaryResponse> changeUserCohort(
+            @PathVariable Long id, @Valid @RequestBody ChangeUserCohortRequest request) {
+        return ResponseEntity.ok(UserSummaryResponse.from(userAdmin.changeCohort(id, request.cohortId())));
+    }
+
+    @Operation(operationId = "changeUserRole",
+        summary = "Convertir una cuenta en coordinación (con sus turmas), cambiar sus turmas o volverla a alumno")
+    @ApiResponse(responseCode = "200", description = "Cuenta con su rol y turmas actuales",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserSummaryResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Rol ausente o inválido, o coordinación sin turmas (coordinator-without-cohorts)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
+    @ApiResponse(responseCode = "404", description = "La cuenta o alguna turma no existen",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @ApiResponse(responseCode = "409", description = "La cuenta es ADMIN (role-not-changeable) o tiene historias (account-has-records)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PatchMapping("/{id}/role")
+    public ResponseEntity<UserSummaryResponse> changeUserRole(
+            @PathVariable Long id, @Valid @RequestBody ChangeUserRoleRequest request) {
+        return ResponseEntity.ok(UserSummaryResponse.from(
+            userAdmin.changeRole(id, request.role().toRole(), request.cohortIdsOrEmpty())));
     }
 }

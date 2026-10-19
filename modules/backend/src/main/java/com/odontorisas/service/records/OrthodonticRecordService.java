@@ -8,8 +8,10 @@ import com.odontorisas.persistence.entity.RecordUnlockEvent;
 import com.odontorisas.common.UnlockAction;
 import com.odontorisas.common.Role;
 import com.odontorisas.common.text.SearchNormalizer;
+import com.odontorisas.persistence.entity.Cohort;
 import com.odontorisas.persistence.entity.OrthodonticRecord;
 import com.odontorisas.persistence.entity.User;
+import com.odontorisas.persistence.repository.CohortRepository;
 import com.odontorisas.persistence.repository.OrthodonticRecordRepository;
 import com.odontorisas.persistence.repository.UserRepository;
 import com.odontorisas.persistence.specification.OrthodonticRecordSpecifications;
@@ -23,11 +25,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Historias clínicas de ortodoncia (capacidad orthodontic-records). Aplica el alcance (D6): un
- * ADMIN alcanza todas; un USER solo las suyas, y una ajena se comporta como inexistente (404).
+ * ADMIN alcanza todas; un USER solo las suyas; un COORDINATOR, las de los alumnos de sus turmas
+ * (leídas de la base en cada petición, capacidad cohorts). Una historia fuera de alcance se comporta
+ * como inexistente (404). Las escrituras de la coordinación las cierra el controlador (403).
  * Normaliza antes de guardar (D4), exige un número de historia libre (409 si otra historia lo tiene)
  * y detecta ediciones concurrentes por versión (409).
  */
@@ -43,22 +49,26 @@ public class OrthodonticRecordService {
     private final JsonMapper json;
     private final RecordUnlockEventRepository unlockEvents;
     private final Clock clock;
+    private final CohortRepository cohorts;
 
     public OrthodonticRecordService(OrthodonticRecordRepository records, UserRepository users,
                                     RecordAgeCalculator ages, JsonMapper json,
-                                    RecordUnlockEventRepository unlockEvents, Clock clock) {
+                                    RecordUnlockEventRepository unlockEvents, Clock clock,
+                                    CohortRepository cohorts) {
         this.records = records;
         this.users = users;
         this.ages = ages;
         this.json = json;
         this.unlockEvents = unlockEvents;
         this.clock = clock;
+        this.cohorts = cohorts;
     }
 
     /**
      * Crea la historia con el número indicado. La fila del autor queda bloqueada hasta el commit: dos
      * creaciones simultáneas del mismo usuario se serializan, así que tampoco pueden superar juntas
-     * su cupo (un USER con cupo lleno recibe 409; un ADMIN no tiene cupo).
+     * su cupo (un USER con cupo lleno recibe 409; un ADMIN no tiene cupo). Solo crean USER y ADMIN
+     * según la base: una cuenta ya convertida en coordinación con su token anterior recibe 403.
      */
     @Transactional
     public RecordView create(RecordActor actor, RecordData data) {
@@ -70,6 +80,9 @@ public class OrthodonticRecordService {
     public RecordView create(RecordActor actor, RecordData data, List<Integer> filledSteps) {
         User author = users.findByIdForUpdate(actor.userId())
             .orElseThrow(() -> new IllegalStateException("El usuario autenticado no existe"));
+        if (author.getRole() != Role.USER && author.getRole() != Role.ADMIN) {
+            throw new RecordWriteForbiddenException();
+        }
         Integer quota = quotaOf(author);
         if (quota != null && records.countByAuthorId(author.getId()) >= quota) {
             throw new RecordQuotaReachedException(quota);
@@ -269,11 +282,29 @@ public class OrthodonticRecordService {
             d.patientSex(), d.birthPlace());
     }
 
-    /** Listado paginado; {@code query} busca en paciente, documento y número sin tildes ni mayúsculas. */
     @Transactional(readOnly = true)
     public Page<RecordSummaryView> list(RecordActor actor, String query, Pageable pageable) {
+        return list(actor, query, null, pageable);
+    }
+
+    /**
+     * Listado paginado; {@code query} busca en paciente, documento y número sin tildes ni mayúsculas.
+     * {@code cohortId} filtra la coordinación por una de sus turmas (una ajena = lista vacía); los demás
+     * roles lo ignoran.
+     */
+    @Transactional(readOnly = true)
+    public Page<RecordSummaryView> list(RecordActor actor, String query, Long cohortId, Pageable pageable) {
         Specification<OrthodonticRecord> spec = Specification.unrestricted();
-        if (!actor.admin()) {
+        if (actor.coordinator()) {
+            Set<Long> scope = new HashSet<>(cohorts.findCoordinatorCohortIds(actor.userId()));
+            if (cohortId != null) {
+                scope.retainAll(Set.of(cohortId));
+            }
+            if (scope.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            spec = spec.and(OrthodonticRecordSpecifications.authorInCohorts(scope));
+        } else if (!actor.admin()) {
             spec = spec.and(OrthodonticRecordSpecifications.authoredBy(actor.userId()));
         }
         String term = SearchNormalizer.normalize(query);
@@ -293,8 +324,18 @@ public class OrthodonticRecordService {
         return inScope(actor, records.findByIdForUpdate(id).orElseThrow(RecordNotFoundException::new));
     }
 
-    private static OrthodonticRecord inScope(RecordActor actor, OrthodonticRecord record) {
-        if (!actor.admin() && !record.getAuthor().getId().equals(actor.userId())) {
+    private OrthodonticRecord inScope(RecordActor actor, OrthodonticRecord record) {
+        if (actor.admin()) {
+            return record;
+        }
+        if (actor.coordinator()) {
+            Cohort cohort = record.getAuthor().getCohort();
+            if (cohort == null || !cohorts.findCoordinatorCohortIds(actor.userId()).contains(cohort.getId())) {
+                throw new RecordNotFoundException();
+            }
+            return record;
+        }
+        if (!record.getAuthor().getId().equals(actor.userId())) {
             throw new RecordNotFoundException();
         }
         return record;
@@ -342,8 +383,9 @@ public class OrthodonticRecordService {
     }
 
     private static RecordSummaryView toSummary(OrthodonticRecord r) {
+        Cohort cohort = r.getAuthor().getCohort();
         return new RecordSummaryView(r.getId(), r.getRecordNumber(), r.getPatientName(), r.getDocumentType(),
             r.getDocumentNumber(), r.getTreatingDentist(), r.getTreatmentStartDate(), r.getAuthor().getFullName(),
-            r.getUpdatedAt(), r.getPatientLockedAt() != null);
+            cohort == null ? null : cohort.getName(), r.getUpdatedAt(), r.getPatientLockedAt() != null);
     }
 }

@@ -2,12 +2,12 @@
 
 ## 1. Backend
 
-- [ ] 1.1 `V18`: `cohorts` (nombre y `name_key` único), `users.cohort_id`, `CHECK` de rol y de turma solo para `USER`, `coordinator_cohorts`; `Role.COORDINATOR`
-- [ ] 1.2 Turmas: servicio y `CohortsController` (`GET` ADMIN todas con conteos / COORDINATOR solo las suyas `{id, name}`; `POST`/`PATCH` solo ADMIN; `409` por nombre repetido, normalización del nombre)
-- [ ] 1.3 Usuarios: `PATCH /api/users/{id}/cohort` y `PATCH /api/users/{id}/role` con las reglas del design (historias, sin turmas, ADMIN, cupo); listado con `cohort` y `coordinatorCohorts`; cambio de estado admite `COORDINATOR`
-- [ ] 1.4 Historias: `RecordActor(userId, role)`; el servicio resuelve las turmas de la coordinación en `list` (filtro `cohortId`) e `inScope`; `cohortName` en el listado; `@PreAuthorize("hasAnyRole('USER','ADMIN')")` en crear, guardar, imprimir, solicitar desbloqueo y cupo (descartar y desbloquear siguen `ADMIN`); `create` rechaza en el dominio a un autor que no es `USER` ni `ADMIN`
-- [ ] 1.5 `GET /api/dashboard/coordinator` (avance por turma y por alumno)
-- [ ] 1.6 Tests: migración; turmas (crear, repetido, renombrar, 403); asignación y conversión (cada regla); alcance (lista, filtro, 404 fuera de turma, sin turma); escrituras `403` recorriendo todos los métodos de escritura; crear con token de `USER` de una cuenta ya convertida → `403`; `USER` que descarta una solicitud sigue en `403`; turmas leídas de la base (quitar turma = deja de ver al instante); Inicio de coordinación; `mvn verify` en verde
+- [x] 1.1 `V18`: `cohorts` (nombre y `name_key` único), `users.cohort_id`, `CHECK` de rol y de turma solo para `USER`, `coordinator_cohorts`; `Role.COORDINATOR`
+- [x] 1.2 Turmas: servicio y `CohortsController` (`GET` ADMIN todas con conteos / COORDINATOR solo las suyas `{id, name}`; `POST`/`PATCH` solo ADMIN; `409` por nombre repetido, normalización del nombre)
+- [x] 1.3 Usuarios: `PATCH /api/users/{id}/cohort` y `PATCH /api/users/{id}/role` con las reglas del design (historias, sin turmas, ADMIN, cupo); listado con `cohort` y `coordinatorCohorts`; cambio de estado admite `COORDINATOR`
+- [x] 1.4 Historias: `RecordActor(userId, role)`; el servicio resuelve las turmas de la coordinación en `list` (filtro `cohortId`) e `inScope`; `cohortName` en el listado; `@PreAuthorize("hasAnyRole('USER','ADMIN')")` en crear, guardar, imprimir, solicitar desbloqueo y cupo (descartar y desbloquear siguen `ADMIN`); `create` rechaza en el dominio a un autor que no es `USER` ni `ADMIN`
+- [x] 1.5 `GET /api/dashboard/coordinator` (avance por turma y por alumno)
+- [x] 1.6 Tests: migración; turmas (crear, repetido, renombrar, 403); asignación y conversión (cada regla); alcance (lista, filtro, 404 fuera de turma, sin turma); escrituras `403` recorriendo todos los métodos de escritura; crear con token de `USER` de una cuenta ya convertida → `403`; `USER` que descarta una solicitud sigue en `403`; turmas leídas de la base (quitar turma = deja de ver al instante); Inicio de coordinación; `mvn verify` en verde
 
 ## 2. Contrato y frontend
 

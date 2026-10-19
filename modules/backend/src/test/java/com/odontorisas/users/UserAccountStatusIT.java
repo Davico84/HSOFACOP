@@ -264,7 +264,11 @@ class UserAccountStatusIT extends AbstractIntegrationTest {
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
 
         JsonNode first = json.readTree(body).get("content").get(0);
-        assertThat(new HashSet<>(first.propertyNames())).isEqualTo(Set.of("id", "email", "fullName", "role", "status", "recordQuota", "recordCount"));
+        // Los campos nulos (cupo sin límite, sin turma) no se serializan.
+        assertThat(new HashSet<>(first.propertyNames()))
+            .isSubsetOf(Set.of("id", "email", "fullName", "role", "status", "recordQuota", "recordCount", "cohort",
+                "coordinatorCohorts"))
+            .contains("id", "email", "fullName", "role", "status", "recordCount", "coordinatorCohorts");
         assertThat(body).doesNotContain("passwordHash", "password_hash", "failedLoginAttempts", "lockedUntil",
             "createdAt", "updatedAt");
     }

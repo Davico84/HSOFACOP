@@ -38,9 +38,9 @@ public interface OrthodonticRecordRepository
         long getTotal();
     }
 
-    /** Listado con el autor cargado en la misma consulta (columna "Autor", sin N+1). */
+    /** Listado con el autor y su turma cargados en la misma consulta (columnas "Autor" y "Turma", sin N+1). */
     @Override
-    @EntityGraph(attributePaths = "author")
+    @EntityGraph(attributePaths = {"author", "author.cohort"})
     Page<OrthodonticRecord> findAll(Specification<OrthodonticRecord> spec, Pageable pageable);
 
     /**

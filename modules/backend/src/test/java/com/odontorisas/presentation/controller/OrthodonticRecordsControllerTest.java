@@ -3,6 +3,7 @@ package com.odontorisas.presentation.controller;
 import org.mockito.ArgumentCaptor;
 import com.odontorisas.service.records.RecordNumberTakenException;
 import com.odontorisas.TestRecordNumbers;
+import com.odontorisas.common.Role;
 import com.odontorisas.infra.security.JwtAuthenticationFilter;
 import com.odontorisas.service.records.OrthodonticRecordService;
 import com.odontorisas.service.records.RecordActor;
@@ -127,7 +128,7 @@ class OrthodonticRecordsControllerTest {
             .andExpect(jsonPath("$.recordNumber").value("AEO-0015"))
             .andExpect(jsonPath("$.ageYears").value(13))
             .andExpect(jsonPath("$.content.anamnesis").exists());
-        verify(service).create(eq(new RecordActor(1L, false)), any(RecordData.class), isNull());
+        verify(service).create(eq(new RecordActor(1L, Role.USER)), any(RecordData.class), isNull());
     }
 
     @Test
@@ -305,7 +306,7 @@ class OrthodonticRecordsControllerTest {
 
     @Test
     void get_returns_the_record() throws Exception {
-        when(service.get(new RecordActor(1L, false), 10L)).thenReturn(ANA);
+        when(service.get(new RecordActor(1L, Role.USER), 10L)).thenReturn(ANA);
         mockMvc.perform(get("/api/orthodontic-records/10").with(as(1, "USER")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.patientName").value("Ana Quispe"))
@@ -327,7 +328,7 @@ class OrthodonticRecordsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON).content("{\"version\":2,\"patientName\":\"Ana\",\"recordNumber\":\"AEO-0999\"}"))
             .andExpect(status().isOk());
         ArgumentCaptor<RecordData> data = ArgumentCaptor.forClass(RecordData.class);
-        verify(service).update(eq(new RecordActor(9L, true)), eq(10L), eq(2L), data.capture(), isNull(), isNull());
+        verify(service).update(eq(new RecordActor(9L, Role.ADMIN)), eq(10L), eq(2L), data.capture(), isNull(), isNull());
         assertThat(data.getValue().recordNumber()).isEqualTo("AEO-0999");
     }
 
@@ -335,7 +336,7 @@ class OrthodonticRecordsControllerTest {
     void update_passes_last_step() throws Exception {
         when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenReturn(ANA);
         update("{\"version\":2,\"patientName\":\"Ana\",\"lastStep\":6}").andExpect(status().isOk());
-        verify(service).update(eq(new RecordActor(1L, false)), eq(10L), eq(2L), any(RecordData.class), eq(6), isNull());
+        verify(service).update(eq(new RecordActor(1L, Role.USER)), eq(10L), eq(2L), any(RecordData.class), eq(6), isNull());
     }
 
     @Test
@@ -362,7 +363,7 @@ class OrthodonticRecordsControllerTest {
     void update_passes_filled_steps() throws Exception {
         when(service.update(any(), anyLong(), anyLong(), any(), any(), any())).thenReturn(ANA);
         update("{\"version\":2,\"patientName\":\"Ana\",\"filledSteps\":[1,2,5]}").andExpect(status().isOk());
-        verify(service).update(eq(new RecordActor(1L, false)), eq(10L), eq(2L), any(RecordData.class), isNull(),
+        verify(service).update(eq(new RecordActor(1L, Role.USER)), eq(10L), eq(2L), any(RecordData.class), isNull(),
             eq(List.of(1, 2, 5)));
     }
 
@@ -475,9 +476,9 @@ class OrthodonticRecordsControllerTest {
     @Test
     void list_uses_fixed_sort_capped_size_and_search_term() throws Exception {
         RecordSummaryView row = new RecordSummaryView(10L, "AEO-0015", "Ana Quispe", null, null, "Dra. Torres",
-            null, "Dra. Torres", Instant.parse("2026-10-01T10:00:00Z"), false);
-        when(service.list(any(), eq("quispe"), any(Pageable.class))).thenAnswer(inv ->
-            new PageImpl<>(List.of(row), inv.getArgument(2), 1));
+            null, "Dra. Torres", null, Instant.parse("2026-10-01T10:00:00Z"), false);
+        when(service.list(any(), eq("quispe"), isNull(), any(Pageable.class))).thenAnswer(inv ->
+            new PageImpl<>(List.of(row), inv.getArgument(3), 1));
 
         mockMvc.perform(get("/api/orthodontic-records").with(as(1, "USER"))
                 .param("q", "quispe").param("size", "500").param("sort", "patientName"))
@@ -485,7 +486,7 @@ class OrthodonticRecordsControllerTest {
             .andExpect(jsonPath("$.content[0].recordNumber").value("AEO-0015"))
             .andExpect(jsonPath("$.content[0].authorName").value("Dra. Torres"))
             .andExpect(jsonPath("$.size").value(100));
-        verify(service).list(eq(new RecordActor(1L, false)), eq("quispe"),
+        verify(service).list(eq(new RecordActor(1L, Role.USER)), eq("quispe"), isNull(),
             eq(org.springframework.data.domain.PageRequest.of(0, 100,
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.desc("updatedAt"),
                     org.springframework.data.domain.Sort.Order.desc("id")))));

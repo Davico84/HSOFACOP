@@ -60,7 +60,7 @@ class UsersControllerTest {
     UserAdminService userAdmin;
 
     private static final UserSummaryView ANA =
-        new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.DISABLED, 5, 3L);
+        new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.DISABLED, 5, 3L, null, List.of());
 
     private static String body(String json) {
         return json;
@@ -152,7 +152,7 @@ class UsersControllerTest {
                 .content(body("{\"status\":\"DISABLED\"}")))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.type").value("/errors/account-status-not-changeable"))
-            .andExpect(jsonPath("$.detail").value("Solo se puede cambiar el estado de cuentas con rol USER."));
+            .andExpect(jsonPath("$.detail").value("El estado de una cuenta ADMIN no se puede cambiar."));
     }
 
     // --- Cupo de historias (add-record-quota) ---
@@ -172,7 +172,7 @@ class UsersControllerTest {
     @WithMockUser(roles = "ADMIN")
     void null_quota_removes_the_limit() throws Exception {
         when(userAdmin.changeRecordQuota(2L, null)).thenReturn(
-            new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.ACTIVE, null, 3L));
+            new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.ACTIVE, null, 3L, null, List.of()));
 
         mockMvc.perform(patch("/api/users/2/record-quota").contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":null}"))
             .andExpect(status().isOk())
