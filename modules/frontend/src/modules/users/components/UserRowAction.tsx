@@ -1,4 +1,4 @@
-import { Gauge, GraduationCap, Layers, Undo2, UserCheck, UserX } from "lucide-react";
+import { Gauge, GraduationCap, IdCard, Layers, Undo2, UserCheck, UserX } from "lucide-react";
 import { IconAction } from "@/modules/core/components/IconAction";
 import type { UserSummaryResponse } from "@/modules/core/services/generated/model";
 
@@ -8,6 +8,7 @@ export interface UserRowHandlers {
   onRequestQuota: (user: UserSummaryResponse) => void;
   onRequestCoordination: (user: UserSummaryResponse) => void;
   onRequestRevert: (user: UserSummaryResponse) => void;
+  onRequestContact: (user: UserSummaryResponse) => void;
 }
 
 interface UserRowActionProps extends UserRowHandlers {
@@ -18,8 +19,9 @@ interface UserRowActionProps extends UserRowHandlers {
 }
 
 /**
- * Acciones de una fila, como íconos con tooltip: un alumno tiene cupo, coordinación y estado; una
- * coordinación, sus turmas, volver a alumno y estado. Las cuentas ADMIN no se gestionan aquí.
+ * Acciones de una fila, como íconos con tooltip: toda cuenta tiene "Ver datos"; un alumno, además,
+ * cupo, coordinación y estado; una coordinación, sus turmas, volver a alumno y estado. Las cuentas
+ * ADMIN no se gestionan aquí (solo se ven sus datos).
  */
 export function UserRowAction({
   user,
@@ -30,12 +32,22 @@ export function UserRowAction({
   onRequestQuota,
   onRequestCoordination,
   onRequestRevert,
+  onRequestContact,
 }: UserRowActionProps) {
-  if (user.role === "ADMIN") return null;
   const disabling = user.status === "ACTIVE";
   const name = user.fullName;
+  const contact = (
+    <IconAction
+      icon={IdCard}
+      label="Ver datos"
+      ariaLabel={`Ver los datos de ${name}`}
+      onClick={() => onRequestContact(user)}
+    />
+  );
+  if (user.role === "ADMIN") return <div className="flex justify-end">{contact}</div>;
   return (
     <div className="flex justify-end gap-0.5">
+      {contact}
       {user.role === "USER" ? (
         <>
           <IconAction

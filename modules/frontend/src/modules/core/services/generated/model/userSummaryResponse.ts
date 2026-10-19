@@ -9,6 +9,10 @@ import type { UserSummaryResponseRole } from './userSummaryResponseRole';
 import type { UserSummaryResponseStatus } from './userSummaryResponseStatus';
 import type { UserSummaryResponseRecordQuota } from './userSummaryResponseRecordQuota';
 import type { CohortRef } from './cohortRef';
+import type { UserSummaryResponsePhone } from './userSummaryResponsePhone';
+import type { UserSummaryResponseDocumentType } from './userSummaryResponseDocumentType';
+import type { UserSummaryResponseDocumentNumber } from './userSummaryResponseDocumentNumber';
+import type { UserSummaryResponseCopNumber } from './userSummaryResponseCopNumber';
 
 export interface UserSummaryResponse {
   id: number;
@@ -24,4 +28,12 @@ export interface UserSummaryResponse {
   cohort?: CohortRef;
   /** Turmas que supervisa (vacía si no es COORDINATOR) */
   coordinatorCohorts: CohortRef[];
+  /** Celular; nulo = sin registrar */
+  phone?: UserSummaryResponsePhone;
+  /** Tipo de documento; nulo = sin registrar */
+  documentType?: UserSummaryResponseDocumentType;
+  /** Número de documento; nulo = sin registrar */
+  documentNumber?: UserSummaryResponseDocumentNumber;
+  /** Número de colegiatura (COP); nulo = sin registrar */
+  copNumber?: UserSummaryResponseCopNumber;
 }

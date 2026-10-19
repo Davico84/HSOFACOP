@@ -7,6 +7,7 @@
  */
 import type {
   CohortNameRequest,
+  CohortRegistrationRequest,
   CohortResponse
 } from './model';
 
@@ -40,6 +41,17 @@ export const createCohort = (
       );
     }
   /**
+ * @summary Generar un código de inscripción nuevo (solo ADMIN; el anterior deja de servir)
+ */
+export const regenerateCohortCode = (
+    id: number,
+ ) => {
+      return customInstance<CohortResponse>(
+      {url: `/api/cohorts/${id}/registration-code`, method: 'POST'
+    },
+      );
+    }
+  /**
  * @summary Renombrar una turma (solo ADMIN)
  */
 export const renameCohort = (
@@ -53,6 +65,22 @@ export const renameCohort = (
     },
       );
     }
+  /**
+ * @summary Abrir o cerrar la inscripción de una turma (solo ADMIN)
+ */
+export const changeCohortRegistration = (
+    id: number,
+    cohortRegistrationRequest: CohortRegistrationRequest,
+ ) => {
+      return customInstance<CohortResponse>(
+      {url: `/api/cohorts/${id}/registration`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: cohortRegistrationRequest
+    },
+      );
+    }
   export type ListCohortsResult = NonNullable<Awaited<ReturnType<typeof listCohorts>>>
 export type CreateCohortResult = NonNullable<Awaited<ReturnType<typeof createCohort>>>
+export type RegenerateCohortCodeResult = NonNullable<Awaited<ReturnType<typeof regenerateCohortCode>>>
 export type RenameCohortResult = NonNullable<Awaited<ReturnType<typeof renameCohort>>>
+export type ChangeCohortRegistrationResult = NonNullable<Awaited<ReturnType<typeof changeCohortRegistration>>>

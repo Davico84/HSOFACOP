@@ -13,6 +13,7 @@ vi.mock("sonner", () => ({ toast }));
 const ANA: UserSummaryResponse = {
   id: 2, email: "ana@empresa.test", fullName: "Ana Pérez", role: "USER", status: "ACTIVE",
   recordQuota: 5, recordCount: 0, coordinatorCohorts: [],
+  phone: "987654321", documentType: "DNI", documentNumber: "74125896",
 };
 const CARLA: UserSummaryResponse = {
   id: 3, email: "carla@empresa.test", fullName: "Carla Ruiz", role: "COORDINATOR", status: "ACTIVE",
@@ -138,6 +139,21 @@ describe("users — turmas y coordinación en la pantalla Usuarios", () => {
 
     expect(await within(dialog).findByText("Turma 3")).toBeInTheDocument();
     expect(calls.created).toEqual(["turma 1", "Turma 3"]);
+  });
+
+  it("Ver datos: muestra celular y 'Sin registrar' en lo que falta, sin campos editables", async () => {
+    mockBackend();
+    const user = userEvent.setup();
+    renderWithProviders(<UsersFeature />);
+    await screen.findByRole("row", { name: /Ana Pérez/ });
+
+    await user.click(within(row("Ana Pérez")).getByRole("button", { name: "Ver los datos de Ana Pérez" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("987654321")).toBeInTheDocument();
+    expect(within(dialog).getByText("DNI 74125896")).toBeInTheDocument();
+    expect(within(dialog).getByText("Sin registrar")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
   });
 
   it("nombre vacío: el formulario lo rechaza sin enviar nada", async () => {

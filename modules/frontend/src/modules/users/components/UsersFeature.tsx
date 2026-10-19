@@ -13,6 +13,7 @@ import { ChangeStatusDialog } from "./ChangeStatusDialog";
 import { RecordQuotaDialog } from "./RecordQuotaDialog";
 import { CoordinationDialog } from "./CoordinationDialog";
 import { RevertToStudentDialog } from "./RevertToStudentDialog";
+import { UserContactDialog } from "./UserContactDialog";
 import { useChangeUserRole } from "../hooks/useChangeUserRole";
 import { useCohorts } from "@/modules/cohorts/hooks/useCohorts";
 import { CohortsDialog } from "@/modules/cohorts/components/CohortsDialog";
@@ -34,6 +35,7 @@ export function UsersFeature() {
   const [coordinationTarget, setCoordinationTarget] = useState<UserSummaryResponse | null>(null);
   const [revertTarget, setRevertTarget] = useState<UserSummaryResponse | null>(null);
   const [cohortsOpen, setCohortsOpen] = useState(false);
+  const [contactTarget, setContactTarget] = useState<UserSummaryResponse | null>(null);
   const changeRole = useChangeUserRole();
   const rolePendingId = changeRole.isPending ? (changeRole.variables?.id ?? null) : null;
 
@@ -88,6 +90,7 @@ export function UsersFeature() {
           onRequestQuota={setQuotaTarget}
           onRequestCoordination={setCoordinationTarget}
           onRequestRevert={setRevertTarget}
+          onRequestContact={setContactTarget}
         />
         <UsersPagination
           page={users.data.page}
@@ -127,6 +130,7 @@ export function UsersFeature() {
       />
       <RevertToStudentDialog user={revertTarget} onConfirm={confirmRevert} onCancel={() => setRevertTarget(null)} />
       <CohortsDialog open={cohortsOpen} onOpenChange={setCohortsOpen} />
+      <UserContactDialog user={contactTarget} onClose={() => setContactTarget(null)} />
     </section>
   );
 }

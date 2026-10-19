@@ -11,13 +11,13 @@
 
 ## 2. Contrato y frontend
 
-- [ ] 2.1 Regenerar `contracts/openapi.json` (`-Dcontract.update=true`) y el cliente orval; `OpenApiContractIT` y `ContractDriftIT` en verde
-- [ ] 2.2 Schema Zod compartido de los datos (`modules/users/schemas/contact.ts`, paridad con `ContactFields`, vacíos a `null`) y `modules/cohorts/utils/cohortCode.ts` (`formatCohortCode`, `cleanCohortCode`) con tests
-- [ ] 2.3 Registro: "Código de turma (opcional)" con su ayuda y bloque "Datos del alumno (opcional)"; errores de código (por `problemType`) junto al campo y sin el toast genérico
-- [ ] 2.4 Turmas (diálogo): código con copiar, nuevo código con confirmación, abrir/cerrar inscripción y badge de estado
-- [ ] 2.5 "Mis datos": sección en el menú para todos los roles y formulario con nombre, correo y rol de solo lectura
-- [ ] 2.6 Usuarios: acción "Ver datos" para toda cuenta (también ADMIN) con su diálogo de solo lectura
-- [ ] 2.7 Tests (uno por scenario de la UI): registro con código válido, inválido y cerrado, datos inválidos; Turmas (copiar, nuevo código, cerrar); Mis datos (guardar, error); Ver datos; `pnpm validate` en verde
+- [x] 2.1 Regenerar `contracts/openapi.json` (`-Dcontract.update=true`) y el cliente orval; `OpenApiContractIT` y `ContractDriftIT` en verde
+- [x] 2.2 Schema Zod compartido de los datos (`modules/users/schemas/contact.ts`, paridad con `ContactFields`, vacíos a `null`) y `modules/cohorts/utils/cohortCode.ts` (`formatCohortCode`, `cleanCohortCode`) con tests
+- [x] 2.3 Registro: "Código de turma (opcional)" con su ayuda y bloque "Datos del alumno (opcional)"; errores de código (por `problemType`) junto al campo y sin el toast genérico
+- [x] 2.4 Turmas (diálogo): código con copiar, nuevo código con confirmación, abrir/cerrar inscripción y badge de estado
+- [x] 2.5 "Mis datos": sección en el menú para todos los roles y formulario con nombre, correo y rol de solo lectura
+- [x] 2.6 Usuarios: acción "Ver datos" para toda cuenta (también ADMIN) con su diálogo de solo lectura
+- [x] 2.7 Tests (uno por scenario de la UI): registro con código válido, inválido y cerrado, datos inválidos; Turmas (copiar, nuevo código, cerrar); Mis datos (guardar, error); Ver datos; `pnpm validate` en verde
 
 ## 3. Docs
 

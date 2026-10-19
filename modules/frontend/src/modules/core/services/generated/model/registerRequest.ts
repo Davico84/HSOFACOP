@@ -5,6 +5,11 @@
  * Tu portal al conocimiento y al éxito profesional.
  * OpenAPI spec version: v1
  */
+import type { RegisterRequestCohortCode } from './registerRequestCohortCode';
+import type { RegisterRequestPhone } from './registerRequestPhone';
+import type { RegisterRequestDocumentType } from './registerRequestDocumentType';
+import type { RegisterRequestDocumentNumber } from './registerRequestDocumentNumber';
+import type { RegisterRequestCopNumber } from './registerRequestCopNumber';
 
 export interface RegisterRequest {
   /** @minLength 1 */
@@ -19,4 +24,17 @@ export interface RegisterRequest {
    * @maxLength 120
    */
   fullName: string;
+  /**
+   * Código de inscripción de la turma (sin distinguir mayúsculas, espacios ni guiones); vacío = alumno individual
+   * @minLength 0
+   * @maxLength 20
+   */
+  cohortCode?: RegisterRequestCohortCode;
+  /** Celular: 9 dígitos que empiezan con 9 */
+  phone?: RegisterRequestPhone;
+  documentType?: RegisterRequestDocumentType;
+  /** Número del documento (con su tipo) */
+  documentNumber?: RegisterRequestDocumentNumber;
+  /** Número de colegiatura del Colegio Odontológico del Perú (1 a 6 dígitos) */
+  copNumber?: RegisterRequestCopNumber;
 }

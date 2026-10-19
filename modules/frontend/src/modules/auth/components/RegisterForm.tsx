@@ -1,36 +1,64 @@
-import { useForm, useWatch } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, User, Mail, ShieldCheck } from "lucide-react";
+import { Loader2, User, Mail, ShieldCheck, Ticket } from "lucide-react";
 import { Label } from "@/modules/core/ui/label";
 import { PasswordInput } from "@/modules/core/ui/password-input";
 import { IconInput } from "@/modules/core/ui/icon-input";
 import { registerSchema, type RegisterValues } from "../schemas/auth";
-import { useRegister } from "../hooks/useAuth";
+import { COHORT_CODE_ERROR_TYPES, useRegister } from "../hooks/useAuth";
+import { ContactFieldsInputs } from "@/modules/users/components/ContactFieldsInputs";
+import { contactPayload } from "@/modules/users/schemas/contact";
+import { FieldHint } from "@/modules/core/components/form/FieldHint";
+import { applyServerFieldErrors, getUserFriendlyError, problemType } from "@/modules/core/utils/apiError";
 import { PasswordStrengthBar } from "./PasswordStrengthBar";
 import { cn } from "@/modules/core/utils/cn";
 
-/** Formulario de registro (mínimo): nombre, correo y contraseña con confirmación. */
+/**
+ * Formulario de registro: nombre, correo y contraseña con confirmación; opcionales el código de
+ * turma (lo da la institución) y los datos del alumno. Un código rechazado se pinta junto al campo.
+ */
 export function RegisterForm() {
+  const form = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: "", email: "", password: "", confirmPassword: "", cohortCode: "",
+      phone: "", documentType: "", documentNumber: "", copNumber: "",
+    },
+  });
   const {
     register: field,
     handleSubmit,
     control,
+    setError,
     formState: { errors },
-  } = useForm<RegisterValues>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
-  });
+  } = form;
   const registerMutation = useRegister();
   const passwordValue = useWatch({ control, name: "password" });
 
+  const submit = handleSubmit((values) =>
+    registerMutation.mutate(
+      {
+        fullName: values.fullName,
+        email: values.email,
+        password: values.password,
+        cohortCode: values.cohortCode || null,
+        ...contactPayload(values),
+      },
+      {
+        onError: (error) => {
+          if (COHORT_CODE_ERROR_TYPES.includes(problemType(error) ?? "")) {
+            setError("cohortCode", { type: "server", message: getUserFriendlyError(error) }, { shouldFocus: true });
+          } else {
+            applyServerFieldErrors(error, setError);
+          }
+        },
+      },
+    ),
+  );
+
   return (
-    <form
-      onSubmit={handleSubmit(({ fullName, email, password }) =>
-        registerMutation.mutate({ fullName, email, password }),
-      )}
-      className="flex flex-col gap-4"
-      noValidate
-    >
+    <FormProvider {...form}>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4" noValidate>
       {/* Nombre completo */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="reg-fullName" className="text-sm font-medium">
@@ -119,6 +147,40 @@ export function RegisterForm() {
         ) : null}
       </div>
 
+      {/* Código de turma (opcional) */}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="reg-cohortCode" className="text-sm font-medium">
+          Código de turma (opcional)
+        </Label>
+        <FieldHint id="reg-cohortCode-hint">
+          Te lo da tu institución. Sin código te registras como alumno individual.
+        </FieldHint>
+        <IconInput
+          id="reg-cohortCode"
+          autoComplete="off"
+          autoCapitalize="characters"
+          maxLength={20}
+          placeholder="K7QM-4TXR"
+          icon={<Ticket className="size-4" />}
+          hasError={!!errors.cohortCode}
+          aria-invalid={errors.cohortCode ? true : undefined}
+          aria-describedby={errors.cohortCode ? "reg-cohortCode-hint reg-cohortCode-error" : "reg-cohortCode-hint"}
+          {...field("cohortCode")}
+        />
+        {errors.cohortCode ? (
+          <p id="reg-cohortCode-error" role="alert" className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
+            {errors.cohortCode.message}
+          </p>
+        ) : null}
+      </div>
+
+      {/* Datos del alumno (opcional) */}
+      <fieldset className="flex min-w-0 flex-col gap-3 rounded-lg border border-border p-4">
+        <legend className="px-1 text-sm font-medium">Datos del alumno (opcional)</legend>
+        <p className="text-xs text-muted-foreground">Puedes completarlos después en "Mis datos".</p>
+        <ContactFieldsInputs />
+      </fieldset>
+
       {/* Nota de privacidad */}
       <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-brand-start" />
@@ -152,5 +214,6 @@ export function RegisterForm() {
         )}
       </button>
     </form>
+    </FormProvider>
   );
 }
