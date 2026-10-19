@@ -1,4 +1,5 @@
 import type { UserSummaryResponse } from "@/modules/core/services/generated/model";
+import { TruncatedText } from "@/modules/core/components/TruncatedText";
 
 /** Iniciales del nombre (máximo dos): "Ana Pérez Ruiz" → "AP". */
 function initials(fullName: string): string {
@@ -10,7 +11,7 @@ function initials(fullName: string): string {
     .join("");
 }
 
-/** Cuenta en la tabla: iniciales, nombre y correo debajo. */
+/** Cuenta en la tabla: iniciales, nombre y correo debajo, cortados con "…" (y tooltip) si no caben. */
 export function UserIdentity({ user }: { user: UserSummaryResponse }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
@@ -20,9 +21,9 @@ export function UserIdentity({ user }: { user: UserSummaryResponse }) {
       >
         {initials(user.fullName)}
       </span>
-      <div className="min-w-0">
-        <p className="font-medium wrap-break-word">{user.fullName}</p>
-        <p className="text-xs break-all text-muted-foreground">{user.email}</p>
+      <div className="w-56 min-w-0">
+        <TruncatedText text={user.fullName} className="font-medium" />
+        <TruncatedText text={user.email} className="text-xs text-muted-foreground" />
       </div>
     </div>
   );

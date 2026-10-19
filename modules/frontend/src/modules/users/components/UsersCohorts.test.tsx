@@ -154,6 +154,10 @@ describe("users — turmas y coordinación en la pantalla Usuarios", () => {
     expect(within(dialog).getByText("DNI 74125896")).toBeInTheDocument();
     expect(within(dialog).getByText("Sin registrar")).toBeInTheDocument();
     expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Copiar celular" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Celular copiado"));
+    expect(await navigator.clipboard.readText()).toBe("987654321");
   });
 
   it("nombre vacío: el formulario lo rechaza sin enviar nada", async () => {

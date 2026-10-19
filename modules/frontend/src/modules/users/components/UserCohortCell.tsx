@@ -34,7 +34,7 @@ export function UserCohortCell({ user, cohorts }: UserCohortCellProps) {
       disabled={change.isPending}
       onValueChange={(next) => change.mutate({ id: user.id, cohortId: next === NONE ? null : Number(next) })}
     >
-      <SelectTrigger size="sm" aria-label={`Turma de ${user.fullName}`} className="w-40">
+      <SelectTrigger size="sm" aria-label={`Turma de ${user.fullName}`} className="w-34">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

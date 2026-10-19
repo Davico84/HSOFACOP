@@ -1,7 +1,7 @@
 import { Copy, Lock, LockOpen, Pencil, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
 import { Badge } from "@/modules/core/ui/badge";
 import { IconAction } from "@/modules/core/components/IconAction";
+import { copyToClipboard } from "@/modules/core/utils/clipboard";
 import type { CohortResponse } from "@/modules/core/services/generated/model";
 import { formatCohortCode } from "../utils/cohortCode";
 
@@ -21,15 +21,6 @@ export function CohortRow({ cohort, pending, onRename, onRegenerate, onToggleReg
   const code = cohort.registrationCode ? formatCohortCode(cohort.registrationCode) : "";
   const open = cohort.registrationOpen ?? false;
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      toast.success("Código copiado");
-    } catch {
-      toast.error("No se pudo copiar el código. Cópialo a mano.");
-    }
-  };
-
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 px-3 py-3">
       <div className="min-w-0">
@@ -47,7 +38,7 @@ export function CohortRow({ cohort, pending, onRename, onRegenerate, onToggleReg
         </div>
       </div>
       <div className="flex gap-0.5">
-        <IconAction icon={Copy} label="Copiar código" ariaLabel={`Copiar el código de ${cohort.name}`} onClick={() => void copy()} />
+        <IconAction icon={Copy} label="Copiar código" ariaLabel={`Copiar el código de ${cohort.name}`} onClick={() => void copyToClipboard(code, "Código copiado")} />
         <IconAction
           icon={RefreshCw}
           label="Código nuevo"

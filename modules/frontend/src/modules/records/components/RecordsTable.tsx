@@ -53,14 +53,17 @@ export function RecordsTable({ records, view }: RecordsTableProps) {
                     {record.patientLocked ? <RecordLockIcon /> : null}
                   </span>
                 </TableCell>
-                <TableCell className="max-w-72">
-                  <RecordPatientLink
-                    id={record.id}
-                    patientName={record.patientName}
-                    readOnly={readOnly}
-                    className="block font-medium wrap-break-word text-primary underline-offset-4 hover:underline"
-                  />
-                  <span className="block text-xs text-muted-foreground">{document || "Sin documento"}</span>
+                <TableCell>
+                  <div className="w-56 min-w-0">
+                    <RecordPatientLink
+                      id={record.id}
+                      patientName={record.patientName}
+                      readOnly={readOnly}
+                      truncate
+                      className="block font-medium text-primary underline-offset-4 hover:underline"
+                    />
+                    <span className="block truncate text-xs text-muted-foreground">{document || "Sin documento"}</span>
+                  </div>
                 </TableCell>
                 <TableCell>{record.treatingDentist ?? ""}</TableCell>
                 <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
