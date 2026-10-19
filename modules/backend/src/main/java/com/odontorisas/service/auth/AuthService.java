@@ -4,8 +4,10 @@ import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
 import com.odontorisas.infra.config.RecordsProperties;
 import com.odontorisas.infra.security.TokenService;
+import com.odontorisas.persistence.entity.PasswordResetToken;
 import com.odontorisas.persistence.entity.RefreshToken;
 import com.odontorisas.persistence.entity.User;
+import com.odontorisas.persistence.repository.PasswordResetTokenRepository;
 import com.odontorisas.persistence.repository.RefreshTokenRepository;
 import com.odontorisas.persistence.repository.UserRepository;
 import com.odontorisas.service.cohorts.CohortCodes;
@@ -40,6 +42,7 @@ public class AuthService {
     private final TransactionOperations tx;
     private final RecordsProperties records;
     private final CohortService cohorts;
+    private final PasswordResetTokenRepository resetTokens;
 
     @Autowired
     public AuthService(UserRepository users,
@@ -49,9 +52,10 @@ public class AuthService {
                        LoginAttemptService loginAttempts,
                        PlatformTransactionManager transactionManager,
                        RecordsProperties records,
-                       CohortService cohorts) {
+                       CohortService cohorts,
+                       PasswordResetTokenRepository resetTokens) {
         this(users, refreshTokens, passwordEncoder, tokenService, loginAttempts,
-            new TransactionTemplate(transactionManager), records, cohorts);
+            new TransactionTemplate(transactionManager), records, cohorts, resetTokens);
     }
 
     AuthService(UserRepository users,
@@ -61,7 +65,8 @@ public class AuthService {
                 LoginAttemptService loginAttempts,
                 TransactionOperations tx,
                 RecordsProperties records,
-                CohortService cohorts) {
+                CohortService cohorts,
+                PasswordResetTokenRepository resetTokens) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
@@ -70,6 +75,7 @@ public class AuthService {
         this.tx = tx;
         this.records = records;
         this.cohorts = cohorts;
+        this.resetTokens = resetTokens;
     }
 
     /**
@@ -168,6 +174,67 @@ public class AuthService {
         }
         refreshTokens.findByTokenHash(tokenService.hashRefreshToken(rawRefreshToken))
             .ifPresent(refreshTokens::delete);
+    }
+
+    /**
+     * Cambio de contraseña con la sesión iniciada. Como el login, <b>no es {@code @Transactional}</b>:
+     * BCrypt corre fuera de transacción y el fallo se registra en la suya. Con la cuenta bloqueada se
+     * rechaza sin comparar; una actual incorrecta suma un intento fallido (misma protección que el
+     * login). Si vale: hash nuevo, revoca todas las sesiones renovables, quita el contador y emite
+     * una sesión nueva para este dispositivo, todo en una transacción corta.
+     */
+    public AuthResult changePassword(Long userId, String currentPassword, String newPassword) {
+        Instant now = Instant.now();
+        User user = users.findById(userId).orElseThrow(InvalidCredentialsException::new);
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
+            throw new PasswordChangeLockedException();
+        }
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            loginAttempts.recordFailure(userId, now);
+            throw new WrongCurrentPasswordException();
+        }
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new SamePasswordException();
+        }
+        String newHash = passwordEncoder.encode(newPassword);
+        return tx.execute(status -> {
+            User locked = users.findByIdForUpdate(userId).orElseThrow(InvalidCredentialsException::new);
+            locked.setPasswordHash(newHash);
+            int revoked = refreshTokens.revokeAllByUserId(userId);
+            users.clearLockout(userId);
+            log.info("Cuenta {}: contraseña cambiada; sesiones renovables revocadas: {}", userId, revoked);
+            return issueTokens(locked);
+        });
+    }
+
+    /**
+     * Restablece la contraseña con un enlace de un solo uso. Inexistente, usado, vencido o de una
+     * cuenta deshabilitada → el mismo 400. BCrypt antes de abrir la transacción; dentro, con la fila
+     * del enlace bloqueada (dos usos simultáneos se serializan): hash nuevo, enlace usado, revoca las
+     * sesiones renovables y quita el bloqueo temporal.
+     */
+    public void resetPassword(String rawToken, String newPassword) {
+        if (rawToken == null || rawToken.isBlank()) {
+            throw new InvalidPasswordResetException();
+        }
+        String tokenHash = tokenService.hashOpaqueToken(rawToken);
+        String newHash = passwordEncoder.encode(newPassword);
+        tx.executeWithoutResult(status -> {
+            Instant now = Instant.now();
+            PasswordResetToken token = resetTokens.findByTokenHashForUpdate(tokenHash)
+                .orElseThrow(InvalidPasswordResetException::new);
+            User user = token.getUser();
+            if (token.getUsedAt() != null || !token.getExpiresAt().isAfter(now)
+                    || user.getStatus() == UserStatus.DISABLED) {
+                throw new InvalidPasswordResetException();
+            }
+            user.setPasswordHash(newHash);
+            token.setUsedAt(now);
+            int revoked = refreshTokens.revokeAllByUserId(user.getId());
+            users.clearLockout(user.getId());
+            log.info("Cuenta {}: contraseña restablecida con enlace; sesiones renovables revocadas: {}",
+                user.getId(), revoked);
+        });
     }
 
     private AuthResult issueTokens(User user) {

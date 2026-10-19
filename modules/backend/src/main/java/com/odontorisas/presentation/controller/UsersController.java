@@ -6,6 +6,7 @@ import com.odontorisas.presentation.dto.ChangeUserCohortRequest;
 import com.odontorisas.presentation.dto.ChangeUserRoleRequest;
 import com.odontorisas.presentation.dto.ChangeUserStatusRequest;
 import com.odontorisas.presentation.dto.PageResponse;
+import com.odontorisas.presentation.dto.PasswordResetLinkResponse;
 import com.odontorisas.presentation.dto.UserSummaryResponse;
 import com.odontorisas.presentation.dto.ValidationProblem;
 import com.odontorisas.service.users.UserAdminService;
@@ -19,12 +20,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -126,5 +129,19 @@ public class UsersController {
             @PathVariable Long id, @Valid @RequestBody ChangeUserRoleRequest request) {
         return ResponseEntity.ok(UserSummaryResponse.from(
             userAdmin.changeRole(id, request.role().toRole(), request.cohortIdsOrEmpty())));
+    }
+
+    @Operation(operationId = "createPasswordReset",
+        summary = "Generar un enlace de restablecimiento de contraseña de un solo uso (24 h) para una cuenta USER o COORDINATOR activa")
+    @ApiResponse(responseCode = "201", description = "Enlace generado; el token solo se entrega aquí",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = PasswordResetLinkResponse.class)))
+    @ApiResponse(responseCode = "404", description = "La cuenta no existe",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @ApiResponse(responseCode = "409", description = "La cuenta es ADMIN o está deshabilitada (password-reset-not-applicable)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PostMapping(value = "/{id}/password-reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PasswordResetLinkResponse> createPasswordReset(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(PasswordResetLinkResponse.from(
+            userAdmin.createPasswordReset(OrthodonticRecordsController.currentActor().userId(), id)));
     }
 }

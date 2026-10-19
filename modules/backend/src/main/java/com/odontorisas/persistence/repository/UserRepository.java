@@ -63,6 +63,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     int resetFailedLogins(@Param("id") Long id, @Param("now") Instant now);
 
     /**
+     * Quita el bloqueo temporal y pone el contador en 0 sin condiciones: al cambiar o restablecer la
+     * contraseña (a diferencia de {@link #resetFailedLogins}, que no toca una cuenta bloqueada).
+     */
+    @Modifying
+    @Query(value = "UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = :id", nativeQuery = true)
+    int clearLockout(@Param("id") Long id);
+
+    /**
      * Carga la cuenta con la fila bloqueada ({@code SELECT … FOR UPDATE}): el cambio de estado
      * decide 404/409 y escribe sobre una lectura que no puede quedar obsoleta.
      */
