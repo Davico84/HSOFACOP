@@ -139,6 +139,32 @@ public class DashboardQueries {
                 rs.getLong("total")));
     }
 
+    /**
+     * Avance de las turmas de una coordinación: una fila por alumno (USER) de cada turma, o una fila
+     * sin alumno si la turma no tiene ninguno. Turmas por nombre; alumnos por nombre.
+     */
+    public List<CohortStudentRow> coordinatorProgress(long coordinatorId) {
+        String sql = "SELECT c.id AS cohort_id, c.name AS cohort_name, u.id AS user_id, u.full_name,"
+            + " count(r.id) AS records,"
+            + " count(r.id) FILTER (WHERE r.filled_steps IS NOT NULL AND (r.filled_steps & 127) = 127) AS complete,"
+            + " count(r.id) FILTER (WHERE r.filled_steps IS NOT NULL AND (r.filled_steps & 127) <> 127) AS in_progress,"
+            + " count(r.id) FILTER (WHERE r.filled_steps IS NULL) AS not_computed"
+            + " FROM coordinator_cohorts cc JOIN cohorts c ON c.id = cc.cohort_id"
+            + " LEFT JOIN users u ON u.cohort_id = c.id AND u.role = 'USER'"
+            + " LEFT JOIN orthodontic_records r ON r.author_id = u.id"
+            + " WHERE cc.user_id = :coordinatorId"
+            + " GROUP BY c.id, u.id"
+            + " ORDER BY c.name_key, c.id, u.full_name, u.id";
+        return jdbc.query(sql, new MapSqlParameterSource("coordinatorId", coordinatorId),
+            (rs, i) -> {
+                long userId = rs.getLong("user_id");
+                boolean student = !rs.wasNull();
+                return new CohortStudentRow(rs.getLong("cohort_id"), rs.getString("cohort_name"),
+                    student ? userId : null, rs.getString("full_name"), rs.getLong("records"),
+                    rs.getLong("complete"), rs.getLong("in_progress"), rs.getLong("not_computed"));
+            });
+    }
+
     private static Integer nullableInt(ResultSet rs, String column) throws SQLException {
         int value = rs.getInt(column);
         return rs.wasNull() ? null : value;
@@ -164,6 +190,11 @@ public class DashboardQueries {
     }
 
     public record QuotaRow(long userId, String fullName, long used, int quota, long total) {
+    }
+
+    /** Alumno de una turma con sus historias; {@code userId} nulo = la turma no tiene alumnos. */
+    public record CohortStudentRow(long cohortId, String cohortName, Long userId, String fullName, long records,
+                                   long complete, long inProgress, long notComputed) {
     }
 
     public record UnlockRequestRow(long recordId, String recordNumber, String patientName, String authorName,

@@ -48,7 +48,7 @@ export const updateRecord = (
       );
     }
   /**
- * @summary Listar historias (las propias; todas si es ADMIN)
+ * @summary Listar historias (las propias; todas si es ADMIN; las de sus turmas si es COORDINATOR)
  */
 export const listRecords = (
     params?: ListRecordsParams,

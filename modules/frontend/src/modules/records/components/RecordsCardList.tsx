@@ -1,22 +1,23 @@
-import { Link } from "react-router-dom";
 import type { RecordSummaryResponse } from "@/modules/core/services/generated/model";
-import { recordPath } from "@/routes/paths";
 import { formatDate, formatDateTime, formatDocument } from "../utils/recordDisplay";
+import type { RecordsListView } from "../utils/recordsListView";
 import { RecordEditLink } from "./RecordEditLink";
 import { RecordLockIcon } from "./RecordLockIcon";
+import { RecordPatientLink } from "./RecordPatientLink";
 import { RecordPrintLink } from "./RecordPrintLink";
 
 interface RecordsCardListProps {
   records: RecordSummaryResponse[];
-  /** Autor: solo para ADMIN (ve las historias de todos). */
-  showAuthor: boolean;
+  /** "all" (ADMIN) suma el autor; "cohorts" (coordinación) suma alumno y turma y es de solo lectura. */
+  view: RecordsListView;
 }
 
 /**
  * Listado en tarjetas para celular y tablet: los mismos datos que la tabla, con "Editar" y "Vista
  * previa" siempre visibles (en la tabla quedaban fuera de la pantalla).
  */
-export function RecordsCardList({ records, showAuthor }: RecordsCardListProps) {
+export function RecordsCardList({ records, view }: RecordsCardListProps) {
+  const readOnly = view === "cohorts";
   return (
     <ul className="flex flex-col gap-3" aria-label="Historias clínicas">
       {records.map((record) => {
@@ -25,7 +26,13 @@ export function RecordsCardList({ records, showAuthor }: RecordsCardListProps) {
           ["Odontólogo tratante", record.treatingDentist ?? ""],
           ["Inicio", formatDate(record.treatmentStartDate)],
           ["Modificada", formatDateTime(record.updatedAt)],
-          ...(showAuthor ? ([["Autor", record.authorName]] as [string, string][]) : []),
+          ...(view === "all" ? ([["Autor", record.authorName]] as [string, string][]) : []),
+          ...(readOnly
+            ? ([
+                ["Alumno", record.authorName],
+                ["Turma", record.cohortName ?? ""],
+              ] as [string, string][])
+            : []),
         ];
         return (
           <li key={record.id} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
@@ -35,9 +42,12 @@ export function RecordsCardList({ records, showAuthor }: RecordsCardListProps) {
                 {record.patientLocked ? <RecordLockIcon /> : null}
               </span>
               <h3 className="text-base font-semibold">
-                <Link to={recordPath(record.id)} className="text-primary underline-offset-4 hover:underline">
-                  {record.patientName}
-                </Link>
+                <RecordPatientLink
+                  id={record.id}
+                  patientName={record.patientName}
+                  readOnly={readOnly}
+                  className="text-primary underline-offset-4 hover:underline"
+                />
               </h3>
             </div>
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
@@ -49,7 +59,7 @@ export function RecordsCardList({ records, showAuthor }: RecordsCardListProps) {
               ))}
             </dl>
             <div className="flex flex-wrap gap-2">
-              <RecordEditLink id={record.id} recordNumber={record.recordNumber} />
+              {readOnly ? null : <RecordEditLink id={record.id} recordNumber={record.recordNumber} />}
               <RecordPrintLink id={record.id} recordNumber={record.recordNumber} />
             </div>
           </li>

@@ -20,14 +20,19 @@ export interface SectionConfig {
 
 export const sections: readonly SectionConfig[] = [
   { id: "home", path: PATHS.ROOT },
-  { id: "moduleA", path: PATHS.MODULE_A },
+  // La coordinación solo ve Inicio e Historias clínicas.
+  { id: "moduleA", path: PATHS.MODULE_A, roles: ["ADMIN", "USER"] },
   // Ejemplo de sección restringida: solo administradores.
   { id: "moduleB", path: PATHS.MODULE_B, roles: ["ADMIN"] },
   // Gestión de cuentas (capacidad users).
   { id: "users", path: PATHS.USERS, roles: ["ADMIN"] },
-  // Historias clínicas: todos los autenticados; el alcance (las propias / todas) lo aplica el backend.
+  // Historias clínicas: todos los autenticados; el alcance (las propias / todas / las de sus turmas)
+  // lo aplica el backend. El formulario solo para quienes escriben (RECORD_EDITOR_ROLES).
   { id: "records", path: PATHS.RECORDS },
 ];
+
+/** Roles que crean y editan historias: la coordinación es de solo lectura (vista preliminar). */
+export const RECORD_EDITOR_ROLES: readonly Role[] = ["ADMIN", "USER"];
 
 export function sectionById(id: SectionId): SectionConfig {
   const section = sections.find((s) => s.id === id);

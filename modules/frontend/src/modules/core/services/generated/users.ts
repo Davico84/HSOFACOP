@@ -7,6 +7,8 @@
  */
 import type {
   ChangeRecordQuotaRequest,
+  ChangeUserCohortRequest,
+  ChangeUserRoleRequest,
   ChangeUserStatusRequest,
   ListUsersParams,
   PageResponseUserSummaryResponse,
@@ -19,7 +21,7 @@ import { customInstance } from '../../config/httpClient';
 
 
   /**
- * @summary Deshabilitar o reactivar una cuenta USER
+ * @summary Deshabilitar o reactivar una cuenta USER o COORDINATOR
  */
 export const changeUserStatus = (
     id: number,
@@ -29,6 +31,20 @@ export const changeUserStatus = (
       {url: `/api/users/${id}/status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: changeUserStatusRequest
+    },
+      );
+    }
+  /**
+ * @summary Convertir una cuenta en coordinación (con sus turmas), cambiar sus turmas o volverla a alumno
+ */
+export const changeUserRole = (
+    id: number,
+    changeUserRoleRequest: ChangeUserRoleRequest,
+ ) => {
+      return customInstance<UserSummaryResponse>(
+      {url: `/api/users/${id}/role`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: changeUserRoleRequest
     },
       );
     }
@@ -47,6 +63,20 @@ export const changeRecordQuota = (
       );
     }
   /**
+ * @summary Asignar, cambiar o quitar la turma de alumno de una cuenta USER
+ */
+export const changeUserCohort = (
+    id: number,
+    changeUserCohortRequest: ChangeUserCohortRequest,
+ ) => {
+      return customInstance<UserSummaryResponse>(
+      {url: `/api/users/${id}/cohort`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: changeUserCohortRequest
+    },
+      );
+    }
+  /**
  * @summary Listar las cuentas (paginado, máximo 100 por página)
  */
 export const listUsers = (
@@ -59,5 +89,7 @@ export const listUsers = (
       );
     }
   export type ChangeUserStatusResult = NonNullable<Awaited<ReturnType<typeof changeUserStatus>>>
+export type ChangeUserRoleResult = NonNullable<Awaited<ReturnType<typeof changeUserRole>>>
 export type ChangeRecordQuotaResult = NonNullable<Awaited<ReturnType<typeof changeRecordQuota>>>
+export type ChangeUserCohortResult = NonNullable<Awaited<ReturnType<typeof changeUserCohort>>>
 export type ListUsersResult = NonNullable<Awaited<ReturnType<typeof listUsers>>>

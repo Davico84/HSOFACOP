@@ -15,21 +15,32 @@ import { RecordsPagination } from "./RecordsPagination";
 import { RecordsEmptyState } from "./RecordsEmptyState";
 import { NewRecordLink } from "./NewRecordLink";
 import { RecordQuotaNotice } from "./RecordQuotaNotice";
+import { RecordsCohortFilter } from "./RecordsCohortFilter";
+import { recordsListViewFor } from "../utils/recordsListView";
+
+const SUBTITLE = {
+  own: "Tus historias clínicas de ortodoncia.",
+  all: "Historias de ortodoncia de todos los tratantes.",
+  cohorts: "Historias de los alumnos de tus turmas, en solo lectura.",
+} as const;
 
 /**
- * Historias clínicas: búsqueda, listado paginado y acceso a crear, abrir e imprimir. La búsqueda y
- * la página viven en la URL (`?q=…&pagina=N`): volver de la vista previa o recargar las conserva.
+ * Historias clínicas: búsqueda, listado paginado y acceso a crear, abrir e imprimir. La búsqueda,
+ * la página y la turma (coordinación) viven en la URL (`?q=…&pagina=N&turma=id`): volver de la vista
+ * previa o recargar las conserva. La coordinación ve las historias de sus turmas en solo lectura.
  */
 export function RecordsFeature() {
   const [params, setParams] = useSearchParams();
   const query = params.get("q") ?? "";
   const page = Math.max(0, (Number(params.get("pagina")) || 1) - 1);
+  const cohortId = Number(params.get("turma")) || null;
   const [search, setSearch] = useState(query);
   const debounced = useDebouncedValue(search, 300);
-  const records = useRecords(query, page);
+  const role = useSessionStore((s) => s.user?.role);
+  const view = recordsListViewFor(role);
+  const records = useRecords(query, page, view === "cohorts" ? cohortId : null);
   // Tabla desde 1024 px; debajo, tarjetas (la tabla dejaba las acciones fuera de la pantalla).
   const desktop = useMediaQuery("(min-width: 1024px)", true);
-  const isAdmin = useSessionStore((s) => s.user?.role === "ADMIN");
   const userId = useSessionStore((s) => s.user?.id);
   const { pathname, search: urlSearch } = useLocation();
   const setListUrl = useRecordsListStore((s) => s.setListUrl);
@@ -65,6 +76,16 @@ export function RecordsFeature() {
     });
   };
 
+  const setCohort = (next: number | null) => {
+    setParams((prev) => {
+      const out = new URLSearchParams(prev);
+      if (next == null) out.delete("turma");
+      else out.set("turma", String(next));
+      out.delete("pagina");
+      return out;
+    });
+  };
+
   const onSearch = (value: string) => setSearch(value);
   const clearSearch = () => {
     setSearch("");
@@ -93,15 +114,16 @@ export function RecordsFeature() {
         searching={query.trim() !== ""}
         onClear={clearSearch}
         onBack={page > 0 ? () => setPage((p) => p - 1) : undefined}
+        readOnly={view === "cohorts"}
       />
     );
   } else {
     content = (
       <>
         {desktop ? (
-          <RecordsTable records={records.data.content} showAuthor={isAdmin} />
+          <RecordsTable records={records.data.content} view={view} />
         ) : (
-          <RecordsCardList records={records.data.content} showAuthor={isAdmin} />
+          <RecordsCardList records={records.data.content} view={view} />
         )}
         <RecordsPagination
           page={records.data.page}
@@ -122,13 +144,14 @@ export function RecordsFeature() {
             Historias clínicas
           </h1>
           <p className="text-muted-foreground">
-            {isAdmin ? "Historias de ortodoncia de todos los tratantes." : "Tus historias clínicas de ortodoncia."}
+            {SUBTITLE[view]}
           </p>
         </div>
-        <NewRecordLink />
+        {view === "cohorts" ? null : <NewRecordLink />}
       </header>
-      {isAdmin ? null : <RecordQuotaNotice />}
-      <div className="max-w-md">
+      {view === "own" ? <RecordQuotaNotice /> : null}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="w-full max-w-md">
         <IconInput
           type="search"
           aria-label="Buscar historias"
@@ -137,6 +160,8 @@ export function RecordsFeature() {
           value={search}
           onChange={(e) => onSearch(e.target.value)}
         />
+        </div>
+        {view === "cohorts" ? <RecordsCohortFilter value={cohortId} onChange={setCohort} /> : null}
       </div>
       {content}
     </section>

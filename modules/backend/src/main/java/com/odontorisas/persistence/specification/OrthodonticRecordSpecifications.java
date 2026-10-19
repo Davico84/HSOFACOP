@@ -3,6 +3,8 @@ package com.odontorisas.persistence.specification;
 import com.odontorisas.persistence.entity.OrthodonticRecord;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Collection;
+
 /** Filtros del listado de historias (design D5/D6). */
 public final class OrthodonticRecordSpecifications {
 
@@ -12,6 +14,11 @@ public final class OrthodonticRecordSpecifications {
     /** Solo las historias de ese autor (alcance de un USER). */
     public static Specification<OrthodonticRecord> authoredBy(Long authorId) {
         return (root, query, cb) -> cb.equal(root.get("author").get("id"), authorId);
+    }
+
+    /** Historias cuyos autores son alumnos de alguna de esas turmas (alcance de un COORDINATOR). */
+    public static Specification<OrthodonticRecord> authorInCohorts(Collection<Long> cohortIds) {
+        return (root, query, cb) -> root.get("author").get("cohort").get("id").in(cohortIds);
     }
 
     /**

@@ -1,4 +1,4 @@
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, SearchX } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
 import { NewRecordLink } from "./NewRecordLink";
 
@@ -8,12 +8,15 @@ interface RecordsEmptyStateProps {
   onClear: () => void;
   /** Si no es la primera página, ofrece volver a la anterior (la página quedó vacía). */
   onBack?: () => void;
+  /** Solo lectura (coordinación): sin "Nueva historia" y con un texto propio. */
+  readOnly?: boolean;
 }
 
-export function RecordsEmptyState({ searching, onClear, onBack }: RecordsEmptyStateProps) {
+export function RecordsEmptyState({ searching, onClear, onBack, readOnly = false }: RecordsEmptyStateProps) {
   if (searching) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <SearchX className="size-10 text-muted-foreground" aria-hidden="true" />
         <p className="text-muted-foreground">No hay historias que coincidan.</p>
         <Button variant="outline" size="sm" onClick={onClear}>
           Limpiar búsqueda
@@ -34,8 +37,10 @@ export function RecordsEmptyState({ searching, onClear, onBack }: RecordsEmptySt
   return (
     <div className="flex flex-col items-center gap-3 py-12 text-center">
       <ClipboardList className="size-10 text-muted-foreground" aria-hidden="true" />
-      <p className="text-muted-foreground">Todavía no hay historias clínicas.</p>
-      <NewRecordLink />
+      <p className="text-muted-foreground">
+        {readOnly ? "Los alumnos de tus turmas aún no tienen historias clínicas." : "Todavía no hay historias clínicas."}
+      </p>
+      {readOnly ? null : <NewRecordLink />}
     </div>
   );
 }

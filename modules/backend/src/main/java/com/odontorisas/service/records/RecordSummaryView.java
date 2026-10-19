@@ -15,6 +15,7 @@ public record RecordSummaryView(
     String treatingDentist,
     LocalDate treatmentStartDate,
     String authorName,
+    String cohortName,
     Instant updatedAt,
     boolean patientLocked) {
 }

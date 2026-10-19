@@ -11,6 +11,8 @@ import { LoginView } from "@/screens/auth/LoginView";
 import { RegisterView } from "@/screens/auth/RegisterView";
 import { RequireAuth } from "@/modules/core/auth/RequireAuth";
 import { RequireGuest } from "@/modules/core/auth/RequireGuest";
+import { RequireRole } from "@/modules/core/auth/RequireRole";
+import { RECORD_EDITOR_ROLES } from "@/modules/core/config/sections";
 import { RouteError } from "@/modules/core/components/RouteError";
 import { PATHS } from "./paths";
 import { sectionRoute } from "./sectionRoute";
@@ -43,8 +45,14 @@ export const appRoutes: RouteObject[] = [
           sectionRoute("users", [{ index: true, element: <UsersScreen /> }]),
           sectionRoute("records", [
             { index: true, element: <RecordsListScreen /> },
-            { path: "nueva", element: <RecordFormScreen /> },
-            { path: ":id", element: <RecordFormScreen /> },
+            {
+              // El formulario: solo USER y ADMIN (la coordinación abre la vista preliminar).
+              element: <RequireRole roles={RECORD_EDITOR_ROLES} />,
+              children: [
+                { path: "nueva", element: <RecordFormScreen /> },
+                { path: ":id", element: <RecordFormScreen /> },
+              ],
+            },
           ]),
         ],
       },

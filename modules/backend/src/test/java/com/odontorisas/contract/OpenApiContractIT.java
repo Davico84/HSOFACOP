@@ -230,7 +230,8 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         assertThat(ids).doesNotHaveDuplicates()
             .containsExactlyInAnyOrder("register", "login", "refresh", "logout", "listUsers", "changeUserStatus",
                 "listRecords", "createRecord", "getRecord", "updateRecord", "changeRecordQuota", "getRecordQuota",
-                "getMyDashboard", "getAdminDashboard",
+                "getMyDashboard", "getAdminDashboard", "getCoordinatorDashboard",
+                "listCohorts", "createCohort", "renameCohort", "changeUserCohort", "changeUserRole",
                 "printRecord", "unlockPatient", "requestPatientUnlock", "discardPatientUnlockRequest");
     }
 
@@ -247,7 +248,8 @@ class OpenApiContractIT extends AbstractIntegrationTest {
         assertThat(strings(page.get("required")))
             .containsExactlyInAnyOrder("content", "page", "size", "totalElements", "totalPages", "last");
         assertThat(names(schemaByName("UserSummaryResponse").get("properties")))
-            .isEqualTo(Set.of("id", "email", "fullName", "role", "status", "recordQuota", "recordCount"));
+            .isEqualTo(Set.of("id", "email", "fullName", "role", "status", "recordQuota", "recordCount", "cohort",
+                "coordinatorCohorts"));
 
         String status = "/api/users/{id}/status";
         assertThat(schemaName(status, "patch", "200", MediaType.APPLICATION_JSON_VALUE)).isEqualTo("UserSummaryResponse");

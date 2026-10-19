@@ -13,4 +13,5 @@ export type UserSummaryResponseRole = typeof UserSummaryResponseRole[keyof typeo
 export const UserSummaryResponseRole = {
   ADMIN: 'ADMIN',
   USER: 'USER',
+  COORDINATOR: 'COORDINATOR',
 } as const;

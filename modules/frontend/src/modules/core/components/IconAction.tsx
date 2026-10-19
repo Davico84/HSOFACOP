@@ -1,0 +1,50 @@
+import { Loader2, type LucideIcon } from "lucide-react";
+import { Button } from "@/modules/core/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/modules/core/ui/tooltip";
+import { cn } from "@/modules/core/utils/cn";
+
+interface IconActionProps {
+  icon: LucideIcon;
+  /** Texto del tooltip (lo que hace la acción, corto). */
+  label: string;
+  /** Nombre accesible completo (p. ej. con el nombre de la fila); por defecto, `label`. */
+  ariaLabel?: string;
+  onClick: () => void;
+  disabled?: boolean;
+  /** "danger": resalta en rojo al pasar el ratón (acciones que quitan acceso). */
+  tone?: "default" | "danger";
+  /** Acción en curso: deshabilitada y con el ícono girando. */
+  loading?: boolean;
+}
+
+/**
+ * Botón de solo ícono con tooltip (acciones de fila de una tabla). El nombre accesible es el
+ * `aria-label`; el tooltip es solo visual (`aria-describedby` anulado para no anunciarlo dos veces).
+ * 36 px con ratón y 44 px con pantalla táctil (`pointer-coarse`), el mínimo para tocar con el dedo.
+ */
+export function IconAction({ icon: Icon, label, ariaLabel, onClick, disabled, tone = "default", loading = false }: IconActionProps) {
+  const Shown = loading ? Loader2 : Icon;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onClick}
+          disabled={disabled || loading}
+          aria-busy={loading || undefined}
+          aria-label={ariaLabel ?? label}
+          aria-describedby={undefined}
+          className={cn(
+            "size-9 text-muted-foreground pointer-coarse:size-11",
+            tone === "danger" ? "hover:bg-destructive/10 hover:text-destructive" : "hover:text-foreground",
+          )}
+        >
+          <Shown className={cn("size-4", loading && "animate-spin")} aria-hidden="true" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}

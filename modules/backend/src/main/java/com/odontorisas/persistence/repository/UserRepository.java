@@ -2,6 +2,9 @@ package com.odontorisas.persistence.repository;
 
 import com.odontorisas.persistence.entity.User;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,6 +17,11 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
+
+    /** Listado de administración con la turma del alumno cargada en la misma consulta (sin N+1). */
+    @Override
+    @EntityGraph(attributePaths = "cohort")
+    Page<User> findAll(Pageable pageable);
 
     boolean existsByEmail(String email);
 

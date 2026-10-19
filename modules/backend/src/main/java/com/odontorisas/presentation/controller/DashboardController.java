@@ -2,6 +2,7 @@ package com.odontorisas.presentation.controller;
 
 import com.odontorisas.presentation.dto.AdminDashboardResponse;
 import com.odontorisas.presentation.dto.ApiProblem;
+import com.odontorisas.presentation.dto.CoordinatorDashboardResponse;
 import com.odontorisas.presentation.dto.UserDashboardResponse;
 import com.odontorisas.service.dashboard.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Métricas de Inicio: las del tratante (solo USER) y las globales (solo ADMIN). */
+/** Métricas de Inicio: las del tratante (solo USER), las globales (solo ADMIN) y las de las turmas (solo COORDINATOR). */
 @RestController
 @RequestMapping("/api/dashboard")
 @Tag(name = "dashboard", description = "Métricas de Inicio")
@@ -38,6 +39,18 @@ public class DashboardController {
     public ResponseEntity<UserDashboardResponse> getMyDashboard() {
         return ResponseEntity.ok(UserDashboardResponse.from(
             service.forUser(OrthodonticRecordsController.currentActor())));
+    }
+
+    @Operation(operationId = "getCoordinatorDashboard", summary = "Avance de las turmas de la coordinación autenticada")
+    @ApiResponse(responseCode = "200", description = "Métricas",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CoordinatorDashboardResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Solo para cuentas COORDINATOR",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PreAuthorize("hasRole('COORDINATOR')")
+    @GetMapping(value = "/coordinator", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CoordinatorDashboardResponse> getCoordinatorDashboard() {
+        return ResponseEntity.ok(CoordinatorDashboardResponse.from(
+            service.forCoordinator(OrthodonticRecordsController.currentActor())));
     }
 
     @Operation(operationId = "getAdminDashboard", summary = "Métricas globales (solo ADMIN)")

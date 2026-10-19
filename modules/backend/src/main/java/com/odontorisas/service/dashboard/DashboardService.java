@@ -19,6 +19,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -106,6 +107,35 @@ public class DashboardService {
             new Completeness(totals.complete(), totals.inProgress(), totals.notComputed(),
                 round(totals.averageFilled())),
             perMonth, topAuthors, new AdminDashboardView.Quotas(quotaTotal, quotaItems), unlockRequests);
+    }
+
+    /**
+     * Avance de las turmas de la coordinación (leídas de la base): por turma, alumnos, historias
+     * (completas, en progreso y sin calcular), alumnos sin historias y el detalle por alumno.
+     */
+    @Transactional(readOnly = true)
+    public CoordinatorDashboardView forCoordinator(RecordActor actor) {
+        Map<Long, List<DashboardQueries.CohortStudentRow>> byCohort = new LinkedHashMap<>();
+        for (var row : queries.coordinatorProgress(actor.userId())) {
+            byCohort.computeIfAbsent(row.cohortId(), id -> new ArrayList<>()).add(row);
+        }
+        List<CoordinatorDashboardView.CohortProgress> result = new ArrayList<>();
+        for (var rows : byCohort.values()) {
+            List<CoordinatorDashboardView.StudentProgress> students = rows.stream()
+                .filter(r -> r.userId() != null)
+                .map(r -> new CoordinatorDashboardView.StudentProgress(r.userId(), r.fullName(), r.records(),
+                    r.complete()))
+                .toList();
+            result.add(new CoordinatorDashboardView.CohortProgress(rows.getFirst().cohortId(),
+                rows.getFirst().cohortName(), students.size(),
+                rows.stream().mapToLong(DashboardQueries.CohortStudentRow::records).sum(),
+                rows.stream().mapToLong(DashboardQueries.CohortStudentRow::complete).sum(),
+                rows.stream().mapToLong(DashboardQueries.CohortStudentRow::inProgress).sum(),
+                rows.stream().mapToLong(DashboardQueries.CohortStudentRow::notComputed).sum(),
+                students.stream().filter(st -> st.records() == 0).count(),
+                students));
+        }
+        return new CoordinatorDashboardView(result);
     }
 
     private ZoneId zone() {

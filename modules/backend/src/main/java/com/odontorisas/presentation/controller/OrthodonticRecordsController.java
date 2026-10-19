@@ -5,6 +5,7 @@ import com.odontorisas.presentation.dto.UnlockRequestRequest;
 import com.odontorisas.presentation.dto.PrintRecordResponse;
 import com.odontorisas.presentation.dto.PrintRecordRequest;
 import com.odontorisas.presentation.dto.RecordQuotaResponse;
+import com.odontorisas.common.Role;
 import com.odontorisas.presentation.dto.ApiProblem;
 import com.odontorisas.presentation.dto.CreateRecordRequest;
 import com.odontorisas.presentation.dto.PageResponse;
@@ -41,9 +42,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Historias clínicas de ortodoncia (capacidad orthodontic-records). Cualquier usuario autenticado;
- * el alcance (USER: las suyas; ADMIN: todas) lo aplica el service, y una historia fuera de
- * alcance responde 404. Los 401/403/500 transversales los documenta {@code OpenApiErrorsConfig}.
+ * Historias clínicas de ortodoncia (capacidad orthodontic-records). Leer: cualquier usuario
+ * autenticado; el alcance (USER: las suyas; ADMIN: todas; COORDINATOR: las de sus turmas) lo aplica
+ * el service, y una historia fuera de alcance responde 404. Escribir: solo USER y ADMIN, cerrado
+ * método a método (la coordinación es de solo lectura: 403). Los 401/403/500 transversales los
+ * documenta {@code OpenApiErrorsConfig}.
  */
 @RestController
 @RequestMapping("/api/orthodontic-records")
@@ -61,7 +64,7 @@ public class OrthodonticRecordsController {
     }
 
     /** Orden fijo en el servidor (última modificación primero): el cliente no elige propiedades. */
-    @Operation(operationId = "listRecords", summary = "Listar historias (las propias; todas si es ADMIN)")
+    @Operation(operationId = "listRecords", summary = "Listar historias (las propias; todas si es ADMIN; las de sus turmas si es COORDINATOR)")
     @ApiResponse(responseCode = "200", description = "Página de historias")
     @ApiResponse(responseCode = "400", description = "Página, tamaño o búsqueda inválidos",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
@@ -69,13 +72,15 @@ public class OrthodonticRecordsController {
     public ResponseEntity<PageResponse<RecordSummaryResponse>> listRecords(
             @Parameter(description = "Busca en paciente, documento y número (sin distinguir tildes ni mayúsculas)")
             @RequestParam(required = false) @Size(max = 120) String q,
+            @Parameter(description = "Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran")
+            @RequestParam(required = false) Long cohortId,
             @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") @Min(0) int page,
             @Parameter(description = "Tamaño (1–100; uno mayor se recorta a 100)")
             @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) @Min(1) int size) {
         PageRequest pageable = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE),
             Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));
         return ResponseEntity.ok(PageResponse.from(
-            service.list(currentActor(), q, pageable).map(RecordSummaryResponse::from)));
+            service.list(currentActor(), q, cohortId, pageable).map(RecordSummaryResponse::from)));
     }
 
     @Operation(operationId = "createRecord", summary = "Crear una historia (borrador) con el número que asignan los docentes")
@@ -85,6 +90,7 @@ public class OrthodonticRecordsController {
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
     @ApiResponse(responseCode = "409", description = "El tratante llegó a su cupo de historias (record-quota-reached) o el número ya lo tiene otra historia (record-number-taken)",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping
     public ResponseEntity<RecordResponse> createRecord(
             @Valid @RequestBody CreateRecordRequest request) {
@@ -95,6 +101,7 @@ public class OrthodonticRecordsController {
     @Operation(operationId = "getRecordQuota", summary = "Cupo de historias del usuario autenticado y cuántas creó")
     @ApiResponse(responseCode = "200", description = "Cupo y uso",
         content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = RecordQuotaResponse.class)))
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping(value = "/quota", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RecordQuotaResponse> getRecordQuota() {
         return ResponseEntity.ok(RecordQuotaResponse.from(service.quota(currentActor())));
@@ -119,6 +126,7 @@ public class OrthodonticRecordsController {
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @ApiResponse(responseCode = "409", description = "La historia cambió desde que se cargó (stale-record), cambia datos del paciente fijos (patient-locked) o el número ya lo tiene otra historia (record-number-taken)",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<RecordResponse> updateRecord(
             @PathVariable Long id, @Valid @RequestBody UpdateRecordRequest request) {
@@ -135,6 +143,7 @@ public class OrthodonticRecordsController {
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
     @ApiResponse(responseCode = "404", description = "No existe o no está a tu alcance",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping(value = "/{id}/print", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PrintRecordResponse> printRecord(
             @PathVariable Long id, @Valid @RequestBody(required = false) PrintRecordRequest request) {
@@ -163,6 +172,7 @@ public class OrthodonticRecordsController {
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @ApiResponse(responseCode = "409", description = "Datos no fijos (patient-not-locked) o solicitud ya pendiente (unlock-already-requested)",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping("/{id}/unlock-request")
     public ResponseEntity<Void> requestPatientUnlock(
             @PathVariable Long id, @Valid @RequestBody UnlockRequestRequest request) {
@@ -181,12 +191,16 @@ public class OrthodonticRecordsController {
         return ResponseEntity.noContent().build();
     }
 
-    /** El filtro JWT deja el id del usuario en los {@code details} y el rol como autoridad. */
+    /** El filtro JWT deja el id del usuario en los {@code details} y el rol como autoridad ({@code ROLE_*}). */
     static RecordActor currentActor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long userId = (Long) authentication.getDetails();
-        boolean admin = authentication.getAuthorities().stream()
-            .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
-        return new RecordActor(userId, admin);
+        Role role = authentication.getAuthorities().stream()
+            .map(a -> a.getAuthority())
+            .filter(a -> a != null && a.startsWith("ROLE_"))
+            .map(a -> Role.valueOf(a.substring("ROLE_".length())))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("La sesión no tiene rol"));
+        return new RecordActor(userId, role);
     }
 }

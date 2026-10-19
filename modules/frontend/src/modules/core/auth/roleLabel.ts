@@ -2,7 +2,8 @@ import type { Role } from "@/store/useSessionStore";
 
 const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Administrador",
-  USER: "Usuario",
+  USER: "Alumno",
+  COORDINATOR: "Coordinación",
 };
 
 /** Nombre legible del rol para mostrar en la UI. */

@@ -2,6 +2,8 @@ package com.odontorisas.service.users;
 
 import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
+import com.odontorisas.infra.config.RecordsProperties;
+import com.odontorisas.persistence.repository.CohortRepository;
 import com.odontorisas.persistence.entity.User;
 import com.odontorisas.persistence.repository.OrthodonticRecordRepository;
 import com.odontorisas.persistence.repository.RefreshTokenRepository;
@@ -28,12 +30,13 @@ class UserAdminServiceTest {
     @Mock UserRepository users;
     @Mock RefreshTokenRepository refreshTokens;
     @Mock OrthodonticRecordRepository records;
+    @Mock CohortRepository cohorts;
 
     UserAdminService service;
 
     @BeforeEach
     void setUp() {
-        service = new UserAdminService(users, refreshTokens, records);
+        service = new UserAdminService(users, refreshTokens, records, cohorts, new RecordsProperties(10));
     }
 
     private static User account(Role role, UserStatus status) {

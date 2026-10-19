@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { RecordSummaryResponseDocumentType } from './recordSummaryResponseDocumentType';
+import type { RecordSummaryResponseCohortName } from './recordSummaryResponseCohortName';
 
 export interface RecordSummaryResponse {
   id: number;
@@ -16,6 +17,8 @@ export interface RecordSummaryResponse {
   treatingDentist?: string;
   treatmentStartDate?: string;
   authorName: string;
+  /** Turma del autor; nula si no tiene */
+  cohortName?: RecordSummaryResponseCohortName;
   updatedAt: string;
   /** Datos del paciente fijos (ya se imprimió) */
   patientLocked: boolean;

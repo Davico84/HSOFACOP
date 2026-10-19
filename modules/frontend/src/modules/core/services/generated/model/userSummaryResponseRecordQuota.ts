@@ -7,6 +7,6 @@
  */
 
 /**
- * Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN)
+ * Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN y COORDINATOR)
  */
 export type UserSummaryResponseRecordQuota = number | null;

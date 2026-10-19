@@ -13,6 +13,10 @@
   ],
   "tags": [
     {
+      "name": "cohorts",
+      "description": "Turmas"
+    },
+    {
       "name": "auth",
       "description": "Autenticación"
     },
@@ -434,7 +438,7 @@
         "tags": [
           "orthodontic-records"
         ],
-        "summary": "Listar historias (las propias; todas si es ADMIN)",
+        "summary": "Listar historias (las propias; todas si es ADMIN; las de sus turmas si es COORDINATOR)",
         "operationId": "listRecords",
         "parameters": [
           {
@@ -446,6 +450,16 @@
               "type": "string",
               "maxLength": 120,
               "minLength": 0
+            }
+          },
+          {
+            "name": "cohortId",
+            "in": "query",
+            "description": "Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
             }
           },
           {
@@ -855,12 +869,145 @@
         }
       }
     },
+    "/api/cohorts": {
+      "get": {
+        "tags": [
+          "cohorts"
+        ],
+        "summary": "Listar turmas (ADMIN: todas, con alumnos y coordinaciones; COORDINATOR: solo las suyas)",
+        "operationId": "listCohorts",
+        "responses": {
+          "200": {
+            "description": "Turmas por nombre",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CohortResponse"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "cohorts"
+        ],
+        "summary": "Crear una turma (solo ADMIN)",
+        "operationId": "createCohort",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CohortNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Turma creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nombre ausente, vacío o de más de 80 caracteres",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe una turma con ese nombre (cohort-name-taken)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/{id}/status": {
       "patch": {
         "tags": [
           "users"
         ],
-        "summary": "Deshabilitar o reactivar una cuenta USER",
+        "summary": "Deshabilitar o reactivar una cuenta USER o COORDINATOR",
         "operationId": "changeUserStatus",
         "parameters": [
           {
@@ -915,7 +1062,109 @@
             }
           },
           "409": {
-            "description": "La cuenta no es USER: su estado no se puede cambiar",
+            "description": "La cuenta es ADMIN: su estado no se puede cambiar",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/role": {
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Convertir una cuenta en coordinación (con sus turmas), cambiar sus turmas o volverla a alumno",
+        "operationId": "changeUserRole",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeUserRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Cuenta con su rol y turmas actuales",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Rol ausente o inválido, o coordinación sin turmas (coordinator-without-cohorts)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La cuenta o alguna turma no existen",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La cuenta es ADMIN (role-not-changeable) o tiene historias (account-has-records)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1018,6 +1267,200 @@
           },
           "409": {
             "description": "La cuenta no es USER: el cupo no aplica",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/cohort": {
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Asignar, cambiar o quitar la turma de alumno de una cuenta USER",
+        "operationId": "changeUserCohort",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeUserCohortRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Cuenta con su turma actual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La cuenta o la turma no existen",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La cuenta no es USER: la turma de alumno no aplica (cohort-not-applicable)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cohorts/{id}": {
+      "patch": {
+        "tags": [
+          "cohorts"
+        ],
+        "summary": "Renombrar una turma (solo ADMIN)",
+        "operationId": "renameCohort",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CohortNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Turma renombrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nombre ausente, vacío o de más de 80 caracteres",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La turma no existe",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe una turma con ese nombre (cohort-name-taken)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1217,6 +1660,57 @@
           },
           "403": {
             "description": "Solo para cuentas USER (el ADMIN ve las globales)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/coordinator": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Avance de las turmas de la coordinación autenticada",
+        "operationId": "getCoordinatorDashboard",
+        "responses": {
+          "200": {
+            "description": "Métricas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoordinatorDashboardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Solo para cuentas COORDINATOR",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2925,7 +3419,8 @@
             "type": "string",
             "enum": [
               "ADMIN",
-              "USER"
+              "USER",
+              "COORDINATOR"
             ]
           },
           "fullName": {
@@ -3093,6 +3588,53 @@
           "record"
         ]
       },
+      "CohortNameRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Turma 1",
+            "maxLength": 80,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CohortResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "example": "Turma 1"
+          },
+          "students": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Alumnos de la turma (solo ADMIN)"
+          },
+          "coordinators": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Coordinaciones de la turma (solo ADMIN)"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "ChangeUserStatusRequest": {
         "type": "object",
         "properties": {
@@ -3106,6 +3648,23 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "CohortRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "example": "Turma 1"
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ]
       },
       "UserSummaryResponse": {
@@ -3125,7 +3684,8 @@
             "type": "string",
             "enum": [
               "ADMIN",
-              "USER"
+              "USER",
+              "COORDINATOR"
             ]
           },
           "status": {
@@ -3141,21 +3701,59 @@
               "null"
             ],
             "format": "int32",
-            "description": "Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN)"
+            "description": "Cupo de historias clínicas; nulo = sin límite (siempre nulo en cuentas ADMIN y COORDINATOR)"
           },
           "recordCount": {
             "type": "integer",
             "format": "int64",
             "description": "Historias clínicas creadas por la cuenta"
+          },
+          "cohort": {
+            "type": "null",
+            "$ref": "#/components/schemas/CohortRef",
+            "description": "Turma del alumno; nula = sin turma (siempre nula si no es USER)"
+          },
+          "coordinatorCohorts": {
+            "type": "array",
+            "description": "Turmas que supervisa (vacía si no es COORDINATOR)",
+            "items": {
+              "$ref": "#/components/schemas/CohortRef"
+            }
           }
         },
         "required": [
+          "coordinatorCohorts",
           "email",
           "fullName",
           "id",
           "recordCount",
           "role",
           "status"
+        ]
+      },
+      "ChangeUserRoleRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "COORDINATOR"
+            ]
+          },
+          "cohortIds": {
+            "type": "array",
+            "description": "Turmas de la coordinación (al menos una si el rol es COORDINATOR; se ignoran para USER)",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "role"
         ]
       },
       "ChangeRecordQuotaRequest": {
@@ -3170,6 +3768,19 @@
             "description": "Cupo de historias (entero 0–9999); nulo = sin límite",
             "maximum": 9999,
             "minimum": 0
+          }
+        }
+      },
+      "ChangeUserCohortRequest": {
+        "type": "object",
+        "properties": {
+          "cohortId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Turma del alumno; nulo = sin turma"
           }
         }
       },
@@ -3289,6 +3900,13 @@
           },
           "authorName": {
             "type": "string"
+          },
+          "cohortName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Turma del autor; nula si no tiene"
           },
           "updatedAt": {
             "type": "string",
@@ -3501,6 +4119,104 @@
           "quota",
           "records",
           "resume"
+        ]
+      },
+      "CoordinatorCohortProgress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "example": "Turma 1"
+          },
+          "students": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Alumnos de la turma"
+          },
+          "records": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Historias de sus alumnos"
+          },
+          "complete": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notComputed": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Guardadas antes de registrar los pasos con datos"
+          },
+          "studentsWithoutRecords": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "studentList": {
+            "type": "array",
+            "description": "Alumnos por nombre",
+            "items": {
+              "$ref": "#/components/schemas/CoordinatorStudentProgress"
+            }
+          }
+        },
+        "required": [
+          "complete",
+          "id",
+          "inProgress",
+          "name",
+          "notComputed",
+          "records",
+          "studentList",
+          "students",
+          "studentsWithoutRecords"
+        ]
+      },
+      "CoordinatorDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "cohorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoordinatorCohortProgress"
+            }
+          }
+        },
+        "required": [
+          "cohorts"
+        ]
+      },
+      "CoordinatorStudentProgress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "records": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "complete": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "complete",
+          "fullName",
+          "id",
+          "records"
         ]
       },
       "AdminDashboardQuotas": {

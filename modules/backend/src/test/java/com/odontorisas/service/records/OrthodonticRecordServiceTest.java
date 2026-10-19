@@ -6,6 +6,7 @@ import com.odontorisas.common.PatientSex;
 import com.odontorisas.common.Role;
 import com.odontorisas.persistence.entity.OrthodonticRecord;
 import com.odontorisas.persistence.entity.User;
+import com.odontorisas.persistence.repository.CohortRepository;
 import com.odontorisas.persistence.repository.OrthodonticRecordRepository;
 import com.odontorisas.persistence.repository.UserRepository;
 import com.odontorisas.service.records.content.Anamnesis;
@@ -41,20 +42,21 @@ class OrthodonticRecordServiceTest {
     @Mock OrthodonticRecordRepository records;
     @Mock UserRepository users;
     @Mock RecordUnlockEventRepository unlockEvents;
+    @Mock CohortRepository cohorts;
 
     OrthodonticRecordService service;
 
     private final User torres = user(1L, "Dra. María Torres");
     private final User medina = user(2L, "Dr. Carlos Medina");
-    private final RecordActor torresActor = new RecordActor(1L, false);
-    private final RecordActor medinaActor = new RecordActor(2L, false);
-    private final RecordActor admin = new RecordActor(9L, true);
+    private final RecordActor torresActor = new RecordActor(1L, Role.USER);
+    private final RecordActor medinaActor = new RecordActor(2L, Role.USER);
+    private final RecordActor admin = new RecordActor(9L, Role.ADMIN);
 
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
         service = new OrthodonticRecordService(records, users, new RecordAgeCalculator(clock), JsonMapper.builder().build(),
-            unlockEvents, clock);
+            unlockEvents, clock, cohorts);
     }
 
     private static User user(Long id, String name) {
