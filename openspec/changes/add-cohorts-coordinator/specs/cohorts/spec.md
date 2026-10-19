@@ -5,7 +5,7 @@ Agrupa a los alumnos en turmas y da a la coordinación de una institución acces
 ## ADDED Requirements
 
 ### Requirement: Turmas gestionadas por el ADMIN
-Un `ADMIN` SHALL poder crear turmas con un nombre (1 a 80 caracteres, único sin distinguir mayúsculas ni espacios sobrantes) y renombrarlas, y SHALL ver la lista de turmas con la cantidad de alumnos y de coordinadores de cada una. Cualquier otro rol SHALL recibir `403`. Un nombre repetido SHALL rechazarse con `409` sin cambiar nada.
+Un `ADMIN` SHALL poder crear turmas con un nombre (1 a 80 caracteres, único sin distinguir mayúsculas ni espacios sobrantes) y renombrarlas, y SHALL ver la lista de turmas con la cantidad de alumnos y de coordinadores de cada una. Una cuenta `COORDINATOR` SHALL recibir solo sus turmas (id y nombre, sin conteos); un `USER`, `403`. Crear o renombrar SHALL ser solo del `ADMIN`. Un nombre repetido SHALL rechazarse con `409` sin cambiar nada.
 
 #### Scenario: Crear una turma
 - **WHEN** un `ADMIN` crea la turma "Turma 1"
@@ -19,8 +19,12 @@ Un `ADMIN` SHALL poder crear turmas con un nombre (1 a 80 caracteres, único sin
 - **WHEN** un `ADMIN` renombra "Turma 2" a "Turma 2 – 2026"
 - **THEN** sus alumnos y coordinadores siguen en ella con el nombre nuevo
 
+#### Scenario: La coordinación lista sus turmas
+- **WHEN** la coordinación de "Turma 1" y "Turma 2" pide la lista de turmas
+- **THEN** recibe solo esas dos, con id y nombre
+
 #### Scenario: Otro rol intenta gestionar turmas
-- **WHEN** un `USER` o un `COORDINATOR` intenta listar, crear o renombrar turmas
+- **WHEN** un `USER` intenta listar turmas, o un `USER` o un `COORDINATOR` intenta crearlas o renombrarlas
 - **THEN** el sistema responde `403`
 
 ### Requirement: Turma del alumno
@@ -39,7 +43,7 @@ Un `ADMIN` SHALL poder asignar a una cuenta `USER` una turma o ninguna, y cambia
 - **THEN** el sistema responde `409` sin cambiar nada
 
 ### Requirement: Cuentas de coordinación
-Un `ADMIN` SHALL poder convertir una cuenta `USER` sin historias en `COORDINATOR`, asignándole una o más turmas, cambiar sus turmas y volverla a `USER`. Una cuenta con historias NO SHALL convertirse en `COORDINATOR`. Al convertirse, la cuenta SHALL perder su turma de alumno y su cupo. Una cuenta `COORDINATOR` NO SHALL crear historias. El rol nuevo SHALL valer desde la siguiente renovación de la sesión.
+Un `ADMIN` SHALL poder convertir una cuenta `USER` sin historias en `COORDINATOR`, asignándole una o más turmas, cambiar sus turmas y volverla a `USER`. Una cuenta con historias NO SHALL convertirse en `COORDINATOR`. Al convertirse, la cuenta SHALL perder su turma de alumno y su cupo. Una cuenta `COORDINATOR` NO SHALL crear historias, aunque su sesión aún tenga el rol anterior. El rol nuevo SHALL valer desde la siguiente renovación de la sesión.
 
 #### Scenario: Convertir en coordinación
 - **WHEN** un `ADMIN` convierte en `COORDINATOR` una cuenta `USER` sin historias con las turmas "Turma 1" y "Turma 2"
@@ -49,6 +53,10 @@ Un `ADMIN` SHALL poder convertir una cuenta `USER` sin historias en `COORDINATOR
 - **WHEN** un `ADMIN` intenta convertir en `COORDINATOR` una cuenta que tiene historias
 - **THEN** el sistema responde `409` con el mensaje "La cuenta tiene historias clínicas: no puede pasar a coordinación." y no cambia nada
 
+#### Scenario: Sesión con el rol anterior
+- **WHEN** una cuenta recién convertida en `COORDINATOR` intenta crear una historia con su sesión de alumno aún vigente
+- **THEN** el sistema responde `403` y no crea nada
+
 #### Scenario: Coordinación sin turmas
 - **WHEN** un `ADMIN` deja una cuenta `COORDINATOR` sin ninguna turma
 - **THEN** el sistema responde `400` y la cuenta conserva sus turmas
@@ -56,28 +64,6 @@ Un `ADMIN` SHALL poder convertir una cuenta `USER` sin historias en `COORDINATOR
 #### Scenario: Volver a alumno
 - **WHEN** un `ADMIN` vuelve a `USER` una cuenta `COORDINATOR`
 - **THEN** la cuenta pierde sus turmas de coordinación, queda sin turma de alumno y recibe el cupo inicial configurado
-
-### Requirement: Estado de las cuentas de coordinación
-Un `ADMIN` SHALL poder deshabilitar y reactivar cuentas `COORDINATOR` con las mismas reglas que las cuentas `USER`: al deshabilitarla se revocan sus sesiones renovables y no se restauran al reactivarla.
-
-#### Scenario: Deshabilitar una cuenta de coordinación
-- **WHEN** un `ADMIN` deshabilita una cuenta `COORDINATOR`
-- **THEN** la cuenta no puede iniciar ni renovar sesión y conserva sus turmas para cuando se reactive
-
-### Requirement: Turmas y coordinación en la pantalla Usuarios
-En "Usuarios", el `ADMIN` SHALL ver la turma de cada alumno y el rol de cada cuenta ("Alumno", "Coordinación", "Administrador"), con acciones para asignar la turma de un alumno, convertir una cuenta en coordinación o volverla a alumno, y elegir las turmas de una coordinación; y SHALL poder crear y renombrar turmas desde la misma pantalla.
-
-#### Scenario: Asignar la turma desde la lista
-- **WHEN** el `ADMIN` elige "Turma 2" para un alumno en "Usuarios"
-- **THEN** la fila del alumno muestra "Turma 2"
-
-#### Scenario: Convertir en coordinación desde la lista
-- **WHEN** el `ADMIN` convierte una cuenta en coordinación y marca "Turma 1"
-- **THEN** la fila muestra el rol "Coordinación" y sus turmas, y ya no ofrece cupo ni turma de alumno
-
-#### Scenario: Gestionar turmas
-- **WHEN** el `ADMIN` crea la turma "Turma 3" desde "Usuarios"
-- **THEN** la turma queda disponible para asignar a alumnos y a coordinaciones
 
 ### Requirement: Historias de las turmas en solo lectura
 Una cuenta `COORDINATOR` SHALL ver en "Historias clínicas" solo las historias cuyos autores son alumnos de sus turmas, con columnas Alumno y Turma, búsqueda y filtro por turma, y sin "Nueva historia". Al abrir una historia SHALL verla en la vista preliminar A4, de solo lectura y sin "Imprimir"; NO SHALL ver el formulario de edición.

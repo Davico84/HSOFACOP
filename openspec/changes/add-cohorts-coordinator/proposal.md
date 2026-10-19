@@ -28,10 +28,11 @@ La propuesta institucional promete "acceso de coordinación", y hoy no existe: s
 
 ### Modified Capabilities
 - `orthodontic-records`: "Acceso por autor y administrador" suma el alcance de solo lectura del coordinador.
+- `users`: el listado suma la turma y las turmas de coordinación; el cambio de estado admite cuentas `COORDINATOR`; la pantalla Usuarios suma turma, rol y gestión de turmas.
 
 ## Impact
 
-- Backend: migración `V18` (turmas, turma del alumno, turmas del coordinador); `Role.COORDINATOR`; `RecordActor` con el rol y las turmas; servicios y controladores de turmas, usuarios, historias y dashboard; tests.
+- Backend: migración `V18` (turmas, turma del alumno, turmas del coordinador); `Role.COORDINATOR`; `RecordActor` con el rol (las turmas las resuelve el servicio); servicios y controladores de turmas, usuarios, historias y dashboard; tests.
 - Contrato `contracts/openapi.json` y cliente orval.
 - Frontend: `Role` con `COORDINATOR` (etiqueta, inicio y menú), pantalla Usuarios (turma, rol, turmas), listado de historias, vista preliminar sin "Imprimir", Inicio del coordinador.
 - Docs: `docs/domain.md` (turma, coordinador), `docs/vision.md`.
