@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Layers, Loader2 } from "lucide-react";
 import { Button } from "@/modules/core/ui/button";
 import type { UserSummaryResponse } from "@/modules/core/services/generated/model";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
@@ -113,7 +113,7 @@ export function UsersFeature() {
           </p>
         </div>
         <Button variant="outline" onClick={() => setCohortsOpen(true)}>
-          Turmas
+          <Layers className="size-4" aria-hidden="true" /> Turmas
         </Button>
       </header>
       {content}

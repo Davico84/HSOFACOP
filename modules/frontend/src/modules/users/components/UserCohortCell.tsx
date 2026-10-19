@@ -1,3 +1,4 @@
+import { Badge } from "@/modules/core/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/core/ui/select";
 import type { CohortResponse, UserSummaryResponse } from "@/modules/core/services/generated/model";
 import { useChangeUserCohort } from "../hooks/useChangeUserCohort";
@@ -16,7 +17,15 @@ interface UserCohortCellProps {
 export function UserCohortCell({ user, cohorts }: UserCohortCellProps) {
   const change = useChangeUserCohort();
   if (user.role === "COORDINATOR") {
-    return <span>{user.coordinatorCohorts.map((c) => c.name).join(", ")}</span>;
+    return (
+      <ul className="flex max-w-48 flex-wrap gap-1" aria-label={`Turmas que coordina ${user.fullName}`}>
+        {user.coordinatorCohorts.map((c) => (
+          <li key={c.id}>
+            <Badge variant="outline">{c.name}</Badge>
+          </li>
+        ))}
+      </ul>
+    );
   }
   if (user.role !== "USER") return <span className="text-muted-foreground">—</span>;
   return (

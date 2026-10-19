@@ -1,4 +1,5 @@
-import { Button } from "@/modules/core/ui/button";
+import { Gauge, GraduationCap, Layers, Undo2, UserCheck, UserX } from "lucide-react";
+import { IconAction } from "@/modules/core/components/IconAction";
 import type { UserSummaryResponse } from "@/modules/core/services/generated/model";
 
 /** Acciones que abre una fila (cada una con su diálogo en `UsersFeature`). */
@@ -17,8 +18,8 @@ interface UserRowActionProps extends UserRowHandlers {
 }
 
 /**
- * Acciones de una fila: un alumno tiene cupo, coordinación y estado; una coordinación, sus turmas,
- * volver a alumno y estado. Las cuentas ADMIN no se gestionan aquí.
+ * Acciones de una fila, como íconos con tooltip: un alumno tiene cupo, coordinación y estado; una
+ * coordinación, sus turmas, volver a alumno y estado. Las cuentas ADMIN no se gestionan aquí.
  */
 export function UserRowAction({
   user,
@@ -32,61 +33,52 @@ export function UserRowAction({
 }: UserRowActionProps) {
   if (user.role === "ADMIN") return null;
   const disabling = user.status === "ACTIVE";
-  const verb = disabling ? "Deshabilitar" : "Activar";
+  const name = user.fullName;
   return (
-    <div className="flex flex-wrap justify-end gap-2">
+    <div className="flex justify-end gap-0.5">
       {user.role === "USER" ? (
         <>
-          <Button
-            variant="outline"
-            size="sm"
+          <IconAction
+            icon={Gauge}
+            label="Cupo de historias"
+            ariaLabel={`Cambiar el cupo de historias de ${name}`}
             disabled={quotaPending}
             onClick={() => onRequestQuota(user)}
-            aria-label={`Cambiar el cupo de historias de ${user.fullName}`}
-          >
-            Cupo
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+          />
+          <IconAction
+            icon={GraduationCap}
+            label="Convertir en coordinación"
+            ariaLabel={`Convertir en coordinación la cuenta de ${name}`}
             disabled={rolePending}
             onClick={() => onRequestCoordination(user)}
-            aria-label={`Convertir en coordinación la cuenta de ${user.fullName}`}
-          >
-            Coordinación
-          </Button>
+          />
         </>
       ) : (
         <>
-          <Button
-            variant="outline"
-            size="sm"
+          <IconAction
+            icon={Layers}
+            label="Turmas que coordina"
+            ariaLabel={`Cambiar las turmas de ${name}`}
             disabled={rolePending}
             onClick={() => onRequestCoordination(user)}
-            aria-label={`Cambiar las turmas de ${user.fullName}`}
-          >
-            Turmas
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+          />
+          <IconAction
+            icon={Undo2}
+            label="Volver a alumno"
+            ariaLabel={`Volver a alumno la cuenta de ${name}`}
             disabled={rolePending}
             onClick={() => onRequestRevert(user)}
-            aria-label={`Volver a alumno la cuenta de ${user.fullName}`}
-          >
-            A alumno
-          </Button>
+          />
         </>
       )}
-      <Button
-        variant={disabling ? "outline" : "secondary"}
-        size="sm"
+      <IconAction
+        icon={disabling ? UserX : UserCheck}
+        label={disabling ? "Deshabilitar cuenta" : "Activar cuenta"}
+        ariaLabel={`${disabling ? "Deshabilitar" : "Activar"} la cuenta de ${name}`}
+        tone={disabling ? "danger" : "default"}
         disabled={pending}
         onClick={() => onRequestChange(user)}
-        aria-label={`${verb} la cuenta de ${user.fullName}`}
-      >
-        {verb}
-      </Button>
+      />
     </div>
   );
 }
