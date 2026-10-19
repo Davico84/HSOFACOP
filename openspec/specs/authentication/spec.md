@@ -3,9 +3,11 @@
 ## Purpose
 
 Gestiona la identidad y el acceso de los usuarios: registro de cuenta, inicio y cierre de sesión con credenciales, persistencia y renovación de la sesión mediante tokens, y protección de rutas según autenticación y rol.
+
 ## Requirements
+
 ### Requirement: Registro de usuario
-El sistema SHALL permitir crear una cuenta con nombre completo, correo y contraseña (con confirmación de contraseña en el cliente), iniciar sesión automáticamente tras el alta, y rechazar correos duplicados o datos que no cumplan las validaciones mínimas. Otros datos de perfil (nombre de usuario, teléfono, país) se capturan más adelante en la gestión de perfil (capacidad `users`).
+El sistema SHALL permitir crear una cuenta con nombre completo, correo y contraseña (con confirmación de contraseña en el cliente), y opcionalmente un código de turma (capacidad `cohorts`) y los datos del alumno (celular, documento y COP, capacidad `users`); SHALL iniciar sesión automáticamente tras el alta y rechazar correos duplicados, códigos no válidos o datos que no cumplan las validaciones, sin crear la cuenta.
 
 #### Scenario: Registro exitoso
 - **WHEN** un visitante envía el formulario con nombre completo, correo válido y una contraseña de al menos 8 caracteres cuya confirmación coincide, con un correo no registrado
@@ -28,6 +30,18 @@ El sistema SHALL permitir crear una cuenta con nombre completo, correo y contras
 - **WHEN** un visitante escribe una contraseña y una confirmación distintas
 - **THEN** el frontend muestra un error de validación en el campo de confirmación
 - **AND** no envía la petición al backend
+
+#### Scenario: Registro sin código ni datos opcionales
+- **WHEN** un visitante se registra dejando vacíos el código de turma, el celular, el documento y el COP
+- **THEN** la cuenta se crea como alumno individual, sin turma y sin esos datos
+
+#### Scenario: Registro con datos del alumno
+- **WHEN** un visitante se registra con celular "987654321", DNI "74125896" y COP "12345"
+- **THEN** la cuenta se crea con esos datos y el alumno los ve en "Mis datos"
+
+#### Scenario: Dato opcional con formato inválido
+- **WHEN** un visitante escribe un celular de 8 dígitos o un DNI de 7
+- **THEN** el formulario muestra el error junto al campo y no envía la petición; si llega al servidor, este responde `400` sin crear la cuenta
 
 ### Requirement: Inicio de sesión con credenciales
 El sistema SHALL autenticar a un usuario existente por correo y contraseña cuando la cuenta no esté bloqueada temporalmente ni deshabilitada, establecer su sesión al validarlas y rechazar credenciales inválidas sin revelar cuál campo falló.
@@ -214,4 +228,3 @@ El sistema SHALL negarse a arrancar si el secreto con el que firma los tokens (`
 #### Scenario: Tests con secreto propio
 - **WHEN** se ejecutan los tests de contexto completo, haya o no `secrets.properties` local, `JWT_SECRET` en el entorno o una propiedad de sistema `JWT_SECRET`
 - **THEN** usan el secreto de test definido por la suite, no el placeholder literal ni ningún valor externo
-
