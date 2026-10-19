@@ -38,7 +38,7 @@ export function UsersTable({ users, cohorts, pendingId, quotaPendingId, rolePend
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.id} className={user.status === "DISABLED" ? "bg-muted/30" : undefined}>
-              <TableCell className="max-w-72 py-3 pl-4">
+              <TableCell className="py-2 pl-4">
                 <UserIdentity user={user} />
               </TableCell>
               <TableCell>

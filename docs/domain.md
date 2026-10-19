@@ -48,6 +48,8 @@ Dimensión de **negocio** (sustituible por proyecto). Base de conocimiento del d
 | Datos fijos del paciente | Nombre, documento, fecha y lugar de nacimiento y sexo: quedan fijos al imprimir la historia por primera vez; solo el ADMIN los desbloquea (a pedido del tratante). |
 | Avance impreso | Impresión de una ficha incompleta: lleva la marca "AVANCE · N de 7". |
 | Turma | Grupo de alumnos de la institución (Turma 1, Turma 2…). Un alumno está en una turma o en ninguna; una coordinación supervisa una o más. Hoy hay una sola institución (no se modela). |
+| Código de turma | Código de inscripción de 8 caracteres (`K7QM-4TXR`, sin 0/O/1/I) que el ADMIN comparte; quien se registra con él queda en esa turma. Opcional: sin código, alumno individual. |
+| COP | Número de colegiatura del Colegio Odontológico del Perú (1 a 6 dígitos), opcional en la cuenta. |
 
 ---
 
@@ -82,7 +84,8 @@ Cuenta de acceso al sistema.
 - Cupo de historias (`users` + `orthodontic-records`, `add-record-quota`): `recordQuota` (entero 0–9999 o nulo = sin límite). Las cuentas nuevas nacen con el cupo inicial del despliegue (`app.records.default-quota` / `RECORDS_DEFAULT_QUOTA`, 1 por defecto; vacío = sin límite; `update-default-record-quota`); las cuentas anteriores conservan el suyo. Solo aplica a cuentas `USER` y solo lo cambia un `ADMIN` (a una cuenta `ADMIN` responde 409); el `ADMIN` nunca se limita. El uso es la cantidad de historias con ese `author` (no se guarda). Se controla al crear, bajo el mismo bloqueo de la fila del autor que el correlativo (dos creaciones simultáneas no pasan el tope); cupo lleno → 409 `record-quota-reached` ("1 historia clínica" en singular). La numeración `AEO-NNN` es independiente por tratante. Un cupo por debajo de lo creado se permite y no toca las existentes; editar no consulta el cupo.
 - Turma del alumno (`cohorts`, `add-cohorts-coordinator`): `cohort` (FK `Cohort`, nula = sin turma). Solo cuentas `USER` (`CHECK ck_users_cohort_only_user`); la asigna el `ADMIN` y no toca historias ni cupo.
 - Turmas de coordinación: `coordinatorCohorts` (tabla `coordinator_cohorts`, una o más). Solo un `USER` **sin historias** pasa a `COORDINATOR` (pierde su turma y su cupo); volver a `USER` borra sus turmas y le da el cupo inicial. El rol nuevo llega al token en la siguiente renovación (≤ 15 min); las turmas se leen de la base en cada petición, y crear historias exige en la base el rol `USER` o `ADMIN`, así el token anterior no sirve para crear.
-- Candidatos para cambios posteriores de `users` (perfil, alta por admin): `username`, `phone`.
+- Datos de contacto e identificación (`users`, `add-cohort-registration-code`), todos opcionales: `phone` (celular, 9 dígitos que empiezan con 9), `documentType` + `documentNumber` (mismo `DocumentType` y reglas que el paciente, siempre juntos) y `copNumber` (1–6 dígitos), con `CHECK` en V19; vacío = nulo. Se piden en el registro y la propia cuenta los corrige en "Mis datos" (`/api/me/profile`, la cuenta sale del token); el ADMIN los ve en "Usuarios" ("Ver datos", solo lectura); la coordinación no. Sin unicidad (dos cuentas de una persona = soporte).
+- Candidatos para cambios posteriores de `users` (perfil, alta por admin): `username`.
 
 ### `authentication` → **RefreshToken** *(construida)*
 Token de refresco persistido para rotación y revocación real (logout). Se guarda el **hash** del token, nunca el valor en claro.
@@ -107,6 +110,7 @@ Historia clínica de ortodoncia de un paciente. Columnas para lo que se lista o 
 ### `cohorts` → **Cohort** *(construida)*
 Turma de alumnos (`add-cohorts-coordinator`).
 - `name` (1–80, sin espacios sobrantes) y `nameKey` (nombre en minúsculas con espacios colapsados, único: `ux_cohorts_name_key`; repetido → 409 `cohort-name-taken`), `createdAt`. La crea y renombra el `ADMIN`; no se borra.
+- Inscripción (`add-cohort-registration-code`): `registrationCode` (8 caracteres del alfabeto sin 0/O/1/I, único, generado con `SecureRandom`; V19 dio uno a cada turma existente) y `registrationOpen` (nace abierta). El ADMIN genera un código nuevo (el anterior deja de servir) y abre o cierra la inscripción. Registro con código: sin distinguir mayúsculas, espacios ni guiones; inexistente → 400 `invalid-cohort-code`, turma cerrada → 400 `cohort-registration-closed`, sin crear la cuenta. Cerrada no toca alumnos, coordinación ni la asignación manual. La coordinación no ve el código.
 - Inicio de la coordinación: por turma, alumnos, historias (completas, en progreso, sin calcular), alumnos sin historias y el detalle por alumno.
 
 ---
@@ -135,11 +139,17 @@ erDiagram
         String status
         Integer recordQuota
         Long cohortId FK
+        String phone
+        String documentType
+        String documentNumber
+        String copNumber
     }
     Cohort {
         Long id PK
         String name
         String nameKey UK
+        String registrationCode UK
+        Boolean registrationOpen
     }
     RefreshToken {
         Long id PK

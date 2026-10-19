@@ -17,6 +17,10 @@
       "description": "Turmas"
     },
     {
+      "name": "profile",
+      "description": "Datos de la propia cuenta"
+    },
+    {
       "name": "auth",
       "description": "Autenticación"
     },
@@ -206,6 +210,126 @@
         }
       }
     },
+    "/api/me/profile": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Datos de la cuenta autenticada",
+        "operationId": "getMyProfile",
+        "responses": {
+          "200": {
+            "description": "Datos de la cuenta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Cambiar el celular, el documento y el COP de la cuenta autenticada",
+        "operationId": "updateMyProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Datos guardados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Celular, documento o COP con formato inválido",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/register": {
       "post": {
         "tags": [
@@ -235,7 +359,7 @@
             }
           },
           "400": {
-            "description": "Datos inválidos",
+            "description": "Datos inválidos, código de turma que no es de ninguna turma (invalid-cohort-code) o turma cerrada a la inscripción (cohort-registration-closed)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1002,6 +1126,78 @@
         }
       }
     },
+    "/api/cohorts/{id}/registration-code": {
+      "post": {
+        "tags": [
+          "cohorts"
+        ],
+        "summary": "Generar un código de inscripción nuevo (solo ADMIN; el anterior deja de servir)",
+        "operationId": "regenerateCohortCode",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Turma con su código nuevo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La turma no existe",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/{id}/status": {
       "patch": {
         "tags": [
@@ -1461,6 +1657,98 @@
           },
           "409": {
             "description": "Ya existe una turma con ese nombre (cohort-name-taken)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cohorts/{id}/registration": {
+      "patch": {
+        "tags": [
+          "cohorts"
+        ],
+        "summary": "Abrir o cerrar la inscripción de una turma (solo ADMIN)",
+        "operationId": "changeCohortRegistration",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CohortRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Turma con su estado de inscripción",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Estado ausente",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La turma no existe",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3365,6 +3653,103 @@
           "type"
         ]
       },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Celular: 9 dígitos que empiezan con 9",
+            "example": "987654321"
+          },
+          "documentType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Número del documento (con su tipo)"
+          },
+          "copNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Número de colegiatura del Colegio Odontológico del Perú (1 a 6 dígitos)"
+          }
+        }
+      },
+      "ProfileResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "USER",
+              "COORDINATOR"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "987654321"
+          },
+          "documentType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "copNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "fullName",
+          "id",
+          "role"
+        ]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -3382,6 +3767,49 @@
             "type": "string",
             "maxLength": 120,
             "minLength": 2
+          },
+          "cohortCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Código de inscripción de la turma (sin distinguir mayúsculas, espacios ni guiones); vacío = alumno individual",
+            "example": "K7QM-4TXR",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Celular: 9 dígitos que empiezan con 9",
+            "example": "987654321"
+          },
+          "documentType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Número del documento (con su tipo)"
+          },
+          "copNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Número de colegiatura del Colegio Odontológico del Perú (1 a 6 dígitos)"
           }
         },
         "required": [
@@ -3628,6 +4056,21 @@
             ],
             "format": "int64",
             "description": "Coordinaciones de la turma (solo ADMIN)"
+          },
+          "registrationCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Código de inscripción, 8 caracteres sin guion (solo ADMIN)",
+            "example": "K7QM4TXR"
+          },
+          "registrationOpen": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Su código acepta registros (solo ADMIN)"
           }
         },
         "required": [
@@ -3719,6 +4162,40 @@
             "items": {
               "$ref": "#/components/schemas/CohortRef"
             }
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Celular; nulo = sin registrar",
+            "example": "987654321"
+          },
+          "documentType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipo de documento; nulo = sin registrar",
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Número de documento; nulo = sin registrar"
+          },
+          "copNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Número de colegiatura (COP); nulo = sin registrar"
           }
         },
         "required": [
@@ -3783,6 +4260,17 @@
             "description": "Turma del alumno; nulo = sin turma"
           }
         }
+      },
+      "CohortRegistrationRequest": {
+        "type": "object",
+        "properties": {
+          "open": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "open"
+        ]
       },
       "PageResponseUserSummaryResponse": {
         "type": "object",

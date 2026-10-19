@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface CohortRepository extends JpaRepository<Cohort, Long> {
 
@@ -14,8 +15,12 @@ public interface CohortRepository extends JpaRepository<Cohort, Long> {
     @Query("select count(c) > 0 from Cohort c where c.nameKey = :nameKey and (:id is null or c.id <> :id)")
     boolean existsNameKeyInOther(@Param("nameKey") String nameKey, @Param("id") Long id);
 
-    /** Todas las turmas con sus alumnos y coordinaciones, por nombre. */
-    @Query("select c.id as id, c.name as name,"
+    /** Turma por su código de inscripción (ya normalizado). */
+    Optional<Cohort> findByRegistrationCode(String registrationCode);
+
+    /** Todas las turmas con su código, si están abiertas y sus alumnos y coordinaciones, por nombre. */
+    @Query("select c.id as id, c.name as name, c.registrationCode as registrationCode,"
+        + " c.registrationOpen as registrationOpen,"
         + " (select count(u) from User u where u.cohort = c) as students,"
         + " (select count(k) from User k join k.coordinatorCohorts kc where kc = c) as coordinators"
         + " from Cohort c order by c.nameKey, c.id")
@@ -39,6 +44,10 @@ public interface CohortRepository extends JpaRepository<Cohort, Long> {
         Long getId();
 
         String getName();
+
+        String getRegistrationCode();
+
+        boolean isRegistrationOpen();
 
         long getStudents();
 

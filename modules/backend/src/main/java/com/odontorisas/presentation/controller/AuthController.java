@@ -50,13 +50,14 @@ public class AuthController {
     @Operation(operationId = "register", summary = "Registrar una cuenta e iniciar sesión")
     @ApiResponse(responseCode = "201", description = "Cuenta creada; sesión iniciada",
         content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = AuthResponse.class)))
-    @ApiResponse(responseCode = "400", description = "Datos inválidos",
+    @ApiResponse(responseCode = "400", description = "Datos inválidos, código de turma que no es de ninguna turma (invalid-cohort-code) o turma cerrada a la inscripción (cohort-registration-closed)",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
     @ApiResponse(responseCode = "409", description = "El correo ya está registrado",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        RegisterCommand command = new RegisterCommand(request.email(), request.password(), request.fullName());
+        RegisterCommand command = new RegisterCommand(request.email(), request.password(), request.fullName(),
+            request.cohortCode(), request.toContact());
         return authResponse(authService.register(command), HttpStatus.CREATED);
     }
 

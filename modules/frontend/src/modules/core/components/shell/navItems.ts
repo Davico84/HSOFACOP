@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Boxes, ClipboardList, FolderKanban, LayoutDashboard, Users } from "lucide-react";
+import { Boxes, ClipboardList, FolderKanban, IdCard, LayoutDashboard, Users } from "lucide-react";
 import { canAccess, sectionById, type SectionId } from "@/modules/core/config/sections";
 import type { Role } from "@/store/useSessionStore";
 
@@ -31,6 +31,7 @@ const navEntries: readonly NavEntry[] = [
   { sectionId: "moduleB", label: "Módulo B", icon: Boxes },
   { sectionId: "records", label: "Historias clínicas", icon: ClipboardList },
   { sectionId: "users", label: "Usuarios", icon: Users },
+  { sectionId: "profile", label: "Mis datos", icon: IdCard },
 ];
 
 /** Ítems que ve un rol (los de secciones sin `roles` los ven todos). */

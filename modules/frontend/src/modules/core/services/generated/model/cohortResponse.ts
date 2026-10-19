@@ -7,6 +7,8 @@
  */
 import type { CohortResponseStudents } from './cohortResponseStudents';
 import type { CohortResponseCoordinators } from './cohortResponseCoordinators';
+import type { CohortResponseRegistrationCode } from './cohortResponseRegistrationCode';
+import type { CohortResponseRegistrationOpen } from './cohortResponseRegistrationOpen';
 
 export interface CohortResponse {
   id: number;
@@ -15,4 +17,8 @@ export interface CohortResponse {
   students?: CohortResponseStudents;
   /** Coordinaciones de la turma (solo ADMIN) */
   coordinators?: CohortResponseCoordinators;
+  /** Código de inscripción, 8 caracteres sin guion (solo ADMIN) */
+  registrationCode?: CohortResponseRegistrationCode;
+  /** Su código acepta registros (solo ADMIN) */
+  registrationOpen?: CohortResponseRegistrationOpen;
 }

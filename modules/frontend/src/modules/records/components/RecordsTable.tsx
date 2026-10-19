@@ -47,20 +47,23 @@ export function RecordsTable({ records, view }: RecordsTableProps) {
             const document = formatDocument(record.documentType, record.documentNumber);
             return (
               <TableRow key={record.id}>
-                <TableCell className="py-3 pl-4 whitespace-nowrap">
+                <TableCell className="py-2 pl-4 whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-semibold">
                     {record.recordNumber}
                     {record.patientLocked ? <RecordLockIcon /> : null}
                   </span>
                 </TableCell>
-                <TableCell className="max-w-72">
-                  <RecordPatientLink
-                    id={record.id}
-                    patientName={record.patientName}
-                    readOnly={readOnly}
-                    className="block font-medium wrap-break-word text-primary underline-offset-4 hover:underline"
-                  />
-                  <span className="block text-xs text-muted-foreground">{document || "Sin documento"}</span>
+                <TableCell>
+                  <div className="w-56 min-w-0">
+                    <RecordPatientLink
+                      id={record.id}
+                      patientName={record.patientName}
+                      readOnly={readOnly}
+                      truncate
+                      className="block font-medium text-primary underline-offset-4 hover:underline"
+                    />
+                    <span className="block truncate text-xs text-muted-foreground">{document || "Sin documento"}</span>
+                  </div>
                 </TableCell>
                 <TableCell>{record.treatingDentist ?? ""}</TableCell>
                 <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">

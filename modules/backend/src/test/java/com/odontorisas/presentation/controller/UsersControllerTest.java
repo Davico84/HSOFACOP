@@ -7,6 +7,7 @@ import com.odontorisas.service.users.AccountStatusNotChangeableException;
 import com.odontorisas.service.users.QuotaNotApplicableException;
 import com.odontorisas.service.users.UserAdminService;
 import com.odontorisas.service.users.UserNotFoundException;
+import com.odontorisas.service.users.ContactData;
 import com.odontorisas.service.users.UserSummaryView;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,7 @@ class UsersControllerTest {
     UserAdminService userAdmin;
 
     private static final UserSummaryView ANA =
-        new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.DISABLED, 5, 3L, null, List.of());
+        new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.DISABLED, 5, 3L, null, List.of(), ContactData.EMPTY);
 
     private static String body(String json) {
         return json;
@@ -172,7 +173,7 @@ class UsersControllerTest {
     @WithMockUser(roles = "ADMIN")
     void null_quota_removes_the_limit() throws Exception {
         when(userAdmin.changeRecordQuota(2L, null)).thenReturn(
-            new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.ACTIVE, null, 3L, null, List.of()));
+            new UserSummaryView(2L, "ana@empresa.test", "Ana Pérez", Role.USER, UserStatus.ACTIVE, null, 3L, null, List.of(), ContactData.EMPTY));
 
         mockMvc.perform(patch("/api/users/2/record-quota").contentType(MediaType.APPLICATION_JSON).content("{\"recordQuota\":null}"))
             .andExpect(status().isOk())

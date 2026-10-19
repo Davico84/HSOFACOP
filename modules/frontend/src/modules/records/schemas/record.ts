@@ -322,7 +322,7 @@ const signatures = z.object({
   treatingSignatureName: text(SHORT_TEXT),
 });
 
-const DOCUMENT_PATTERNS: Record<CreateRecordRequestDocumentType, { regex: RegExp; message: string }> = {
+export const DOCUMENT_PATTERNS: Record<CreateRecordRequestDocumentType, { regex: RegExp; message: string }> = {
   DNI: { regex: /^\d{8}$/, message: "El DNI debe tener 8 dígitos." },
   FOREIGNER_CARD: { regex: /^\d{9}$/, message: "El carné de extranjería debe tener 9 dígitos." },
   PASSPORT: { regex: /^\d{6,12}$/, message: "El pasaporte debe tener entre 6 y 12 dígitos." },

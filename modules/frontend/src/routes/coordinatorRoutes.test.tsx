@@ -34,13 +34,14 @@ beforeEach(() => {
 });
 
 describe("cohorts — rutas y menú de la coordinación", () => {
-  it("el menú muestra solo Inicio e Historias clínicas, y el rol 'Coordinación'", async () => {
+  it("el menú muestra solo Inicio, Historias clínicas y Mis datos, y el rol 'Coordinación'", async () => {
     renderAs("/");
 
     const nav = await screen.findByRole("navigation", { name: "Navegación principal" });
     expect(within(nav).getAllByRole("link").map((l) => l.getAttribute("aria-label") ?? l.textContent)).toEqual([
       "Inicio",
       "Historias clínicas",
+      "Mis datos",
     ]);
     expect(within(screen.getByRole("banner")).getByText("Coordinación")).toBeInTheDocument();
   });

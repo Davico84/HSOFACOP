@@ -202,8 +202,11 @@ class CohortsCoordinatorIT extends AbstractIntegrationTest {
             .hasMessageContaining("ck_users_role");
         assertThatThrownBy(() -> jdbc.update("UPDATE users SET cohort_id = ? WHERE id = ?", cohort, admin.id()))
             .hasMessageContaining("ck_users_cohort_only_user");
-        assertThatThrownBy(() -> jdbc.update("INSERT INTO cohorts (name, name_key) VALUES ('X', ?)",
-                jdbc.queryForObject("SELECT name_key FROM cohorts WHERE id = ?", String.class, cohort)))
+        // Mismo nombre normalizado con un código propio (V19 lo exige): choca solo con el índice del nombre.
+        String freeCode = jdbc.queryForObject("SELECT string_agg(substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789',"
+            + " 1 + floor(random() * 32)::int, 1), '') FROM generate_series(1, 8)", String.class);
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO cohorts (name, name_key, registration_code) VALUES ('X', ?, ?)",
+                jdbc.queryForObject("SELECT name_key FROM cohorts WHERE id = ?", String.class, cohort), freeCode))
             .hasMessageContaining("ux_cohorts_name_key");
     }
 

@@ -12,6 +12,8 @@ export const PATHS = {
   // Historias clínicas de ortodoncia (capacidad orthodontic-records).
   RECORDS: "/historias",
   RECORD_NEW: "/historias/nueva",
+  // Datos de la propia cuenta (capacidad users), todos los roles.
+  PROFILE: "/mis-datos",
 } as const;
 
 /** Ruta de una historia (paso opcional del formulario, 1–7). */

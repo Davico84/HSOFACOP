@@ -4,6 +4,7 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { DashboardScreen } from "@/screens/dashboard/DashboardScreen";
 import { ComingSoonScreen } from "@/screens/ComingSoonScreen";
 import { UsersScreen } from "@/screens/users/UsersScreen";
+import { ProfileScreen } from "@/screens/users/ProfileScreen";
 import { RecordsListScreen } from "@/screens/records/RecordsListScreen";
 import { RecordFormScreen } from "@/screens/records/RecordFormScreen";
 import { RecordPrintScreen } from "@/screens/records/RecordPrintScreen";
@@ -43,6 +44,7 @@ export const appRoutes: RouteObject[] = [
           sectionRoute("moduleA", [{ index: true, element: <ComingSoonScreen title="Módulo A" /> }]),
           sectionRoute("moduleB", [{ index: true, element: <ComingSoonScreen title="Módulo B" /> }]),
           sectionRoute("users", [{ index: true, element: <UsersScreen /> }]),
+          sectionRoute("profile", [{ index: true, element: <ProfileScreen /> }]),
           sectionRoute("records", [
             { index: true, element: <RecordsListScreen /> },
             {

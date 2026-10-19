@@ -60,7 +60,7 @@ beforeEach(() => {
 });
 
 describe("users — Pantalla de usuarios para administradores", () => {
-  it("Listado en pantalla: nombre, correo, rol y estado; filas ADMIN sin acción", async () => {
+  it("Listado en pantalla: nombre, correo, rol y estado; filas ADMIN solo con 'Ver datos'", async () => {
     mockBackend();
     renderWithProviders(<UsersFeature />);
 
@@ -70,7 +70,9 @@ describe("users — Pantalla de usuarios para administradores", () => {
     expect(within(ana).getByText("Activa")).toBeInTheDocument();
     expect(within(ana).getByRole("button", { name: "Deshabilitar la cuenta de Ana Pérez" })).toBeInTheDocument();
     expect(within(row("Luis Gómez")).getByRole("button", { name: "Activar la cuenta de Luis Gómez" })).toBeInTheDocument();
-    expect(within(row("Admin Uno")).queryByRole("button")).not.toBeInTheDocument();
+    expect(within(row("Admin Uno")).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Ver los datos de Admin Uno",
+    ]);
   });
 
   it("Cambio de página: muestra la página pedida y 'Siguiente' se deshabilita en la última", async () => {

@@ -13,6 +13,7 @@ vi.mock("sonner", () => ({ toast }));
 const ANA: UserSummaryResponse = {
   id: 2, email: "ana@empresa.test", fullName: "Ana Pérez", role: "USER", status: "ACTIVE",
   recordQuota: 5, recordCount: 0, coordinatorCohorts: [],
+  phone: "987654321", documentType: "DNI", documentNumber: "74125896",
 };
 const CARLA: UserSummaryResponse = {
   id: 3, email: "carla@empresa.test", fullName: "Carla Ruiz", role: "COORDINATOR", status: "ACTIVE",
@@ -107,6 +108,26 @@ describe("users — turmas y coordinación en la pantalla Usuarios", () => {
     expect(calls.role).toEqual([{ role: "COORDINATOR", cohortIds: [1] }]);
   });
 
+  it("Cuenta con historias: 'Convertir en coordinación' no disponible y explica por qué", async () => {
+    mockBackend();
+    server.use(
+      http.get("*/api/users", () =>
+        HttpResponse.json({ content: [{ ...ANA, recordCount: 1 }], page: 0, size: 10, totalElements: 1, totalPages: 1, last: true }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<UsersFeature />);
+    await screen.findByRole("row", { name: /Ana Pérez/ });
+
+    const convert = within(row("Ana Pérez")).getByRole("button", { name: /Convertir en coordinación/ });
+    expect(convert).toHaveAttribute("aria-disabled", "true");
+    await user.hover(convert);
+    expect(await screen.findByRole("tooltip", { name: /no puede pasar a coordinación/ })).toBeInTheDocument();
+
+    await user.click(convert);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("Volver a alumno tras confirmar", async () => {
     const calls = mockBackend();
     renderWithProviders(<UsersFeature />);
@@ -138,6 +159,25 @@ describe("users — turmas y coordinación en la pantalla Usuarios", () => {
 
     expect(await within(dialog).findByText("Turma 3")).toBeInTheDocument();
     expect(calls.created).toEqual(["turma 1", "Turma 3"]);
+  });
+
+  it("Ver datos: muestra celular y 'Sin registrar' en lo que falta, sin campos editables", async () => {
+    mockBackend();
+    const user = userEvent.setup();
+    renderWithProviders(<UsersFeature />);
+    await screen.findByRole("row", { name: /Ana Pérez/ });
+
+    await user.click(within(row("Ana Pérez")).getByRole("button", { name: "Ver los datos de Ana Pérez" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("987654321")).toBeInTheDocument();
+    expect(within(dialog).getByText("DNI 74125896")).toBeInTheDocument();
+    expect(within(dialog).getByText("Sin registrar")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Copiar celular" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Celular copiado"));
+    expect(await navigator.clipboard.readText()).toBe("987654321");
   });
 
   it("nombre vacío: el formulario lo rechaza sin enviar nada", async () => {

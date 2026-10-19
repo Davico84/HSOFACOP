@@ -1,5 +1,6 @@
 package com.odontorisas.presentation.dto;
 
+import com.odontorisas.common.DocumentType;
 import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
 import com.odontorisas.service.cohorts.CohortRef;
@@ -26,7 +27,11 @@ public record UserSummaryResponse(
     @Schema(description = "Turma del alumno; nula = sin turma (siempre nula si no es USER)", nullable = true)
     CohortRefResponse cohort,
     @Schema(requiredMode = REQUIRED, description = "Turmas que supervisa (vacía si no es COORDINATOR)")
-    List<CohortRefResponse> coordinatorCohorts) {
+    List<CohortRefResponse> coordinatorCohorts,
+    @Schema(description = "Celular; nulo = sin registrar", example = "987654321", nullable = true) String phone,
+    @Schema(description = "Tipo de documento; nulo = sin registrar", nullable = true) DocumentType documentType,
+    @Schema(description = "Número de documento; nulo = sin registrar", nullable = true) String documentNumber,
+    @Schema(description = "Número de colegiatura (COP); nulo = sin registrar", nullable = true) String copNumber) {
 
     /** Turma por id y nombre. */
     @Schema(name = "CohortRef")
@@ -42,6 +47,7 @@ public record UserSummaryResponse(
     public static UserSummaryResponse from(UserSummaryView view) {
         return new UserSummaryResponse(view.id(), view.email(), view.fullName(), view.role(), view.status(),
             view.recordQuota(), view.recordCount(), CohortRefResponse.from(view.cohort()),
-            view.coordinatorCohorts().stream().map(CohortRefResponse::from).toList());
+            view.coordinatorCohorts().stream().map(CohortRefResponse::from).toList(), view.contact().phone(),
+            view.contact().documentType(), view.contact().documentNumber(), view.contact().copNumber());
     }
 }

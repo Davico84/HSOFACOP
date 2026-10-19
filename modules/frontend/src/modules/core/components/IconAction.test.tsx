@@ -31,6 +31,21 @@ describe("IconAction", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  it("no disponible con motivo: enfocable, sin efecto y el tooltip explica por qué", async () => {
+    const onClick = vi.fn();
+    renderWithProviders(
+      <IconAction icon={Gauge} label="Convertir" onClick={onClick} disabledReason="Tiene historias clínicas" />,
+    );
+
+    const button = screen.getByRole("button", { name: "Convertir" });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    await userEvent.tab();
+    expect(button).toHaveFocus();
+    expect(await screen.findByRole("tooltip", { name: "Tiene historias clínicas" })).toBeInTheDocument();
+    await userEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
   it("deshabilitada no ejecuta la acción", async () => {
     const onClick = vi.fn();
     renderWithProviders(<IconAction icon={Gauge} label="Cupo" onClick={onClick} disabled />);

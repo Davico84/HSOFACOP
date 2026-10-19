@@ -26,13 +26,14 @@ describe("sections — una sola fuente de verdad", () => {
   });
 
   it("navItemsFor filtra por rol y toma la ruta de la sección", () => {
-    expect(navItemsFor("USER").map((i) => i.label)).toEqual(["Inicio", "Módulo A", "Historias clínicas"]);
+    expect(navItemsFor("USER").map((i) => i.label)).toEqual(["Inicio", "Módulo A", "Historias clínicas", "Mis datos"]);
     expect(navItemsFor("ADMIN").map((i) => [i.label, i.to])).toEqual([
       ["Inicio", "/"],
       ["Módulo A", "/modulo-a"],
       ["Módulo B", "/modulo-b"],
       ["Historias clínicas", "/historias"],
       ["Usuarios", "/usuarios"],
+      ["Mis datos", "/mis-datos"],
     ]);
   });
 });
