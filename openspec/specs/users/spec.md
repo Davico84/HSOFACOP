@@ -2,7 +2,9 @@
 
 ## Purpose
 Gestiona las cuentas de usuario desde la administración: el estado de cada cuenta (`ACTIVE`/`DISABLED`), el listado paginado de cuentas y el cambio de estado de las cuentas `USER` por un `ADMIN`, con su pantalla "Usuarios" en la zona privada. Las consecuencias del estado sobre el inicio y la renovación de sesión viven en `authentication`.
+
 ## Requirements
+
 ### Requirement: Estado de la cuenta
 El sistema SHALL mantener para cada cuenta un estado `ACTIVE` o `DISABLED`, independiente del bloqueo temporal por intentos fallidos. Las cuentas nuevas SHALL crearse `ACTIVE`.
 
@@ -19,7 +21,7 @@ El sistema SHALL mantener para cada cuenta un estado `ACTIVE` o `DISABLED`, inde
 - **THEN** el registro se rechaza como correo ya registrado
 
 ### Requirement: Listado de usuarios para administradores
-El sistema SHALL permitir a un usuario `ADMIN` consultar las cuentas paginadas (20 por página por defecto, como máximo 100), con exactamente id, nombre, correo, rol, estado, cupo de historias clínicas (`recordQuota`, nulo = sin límite) y cantidad de historias creadas (`recordCount`) de cada una, y SHALL denegarlo a cualquier otro rol.
+El sistema SHALL permitir a un usuario `ADMIN` consultar las cuentas paginadas (20 por página por defecto, como máximo 100), con exactamente id, nombre, correo, rol, estado, cupo de historias clínicas (`recordQuota`, nulo = sin límite), cantidad de historias creadas (`recordCount`), turma del alumno (`cohort`, nula si no tiene) y turmas de la coordinación (`coordinatorCohorts`, vacía si no es `COORDINATOR`) de cada una, y SHALL denegarlo a cualquier otro rol.
 
 #### Scenario: Primera página
 - **WHEN** un `ADMIN` consulta el listado de usuarios
@@ -39,14 +41,14 @@ El sistema SHALL permitir a un usuario `ADMIN` consultar las cuentas paginadas (
 
 #### Scenario: Solo los datos necesarios
 - **WHEN** se devuelve una cuenta en el listado
-- **THEN** contiene exactamente id, correo, nombre, rol, estado, cupo de historias y cantidad de historias creadas, y nunca el hash de la contraseña, el contador de intentos, el bloqueo temporal ni fechas internas
+- **THEN** contiene exactamente id, correo, nombre, rol, estado, cupo de historias, cantidad de historias creadas, turma del alumno y turmas de la coordinación, y nunca el hash de la contraseña, el contador de intentos, el bloqueo temporal ni fechas internas
 
 #### Scenario: Usuario sin rol de administrador
-- **WHEN** un usuario `USER` consulta el listado de usuarios
+- **WHEN** un usuario `USER` o `COORDINATOR` consulta el listado de usuarios
 - **THEN** la API responde `403`
 
 ### Requirement: Cambio de estado de cuentas USER
-El sistema SHALL permitir a un `ADMIN` deshabilitar y reactivar cuentas con rol `USER`, SHALL rechazar el cambio de estado de cuentas `ADMIN`, SHALL revocar las sesiones renovables de una cuenta al deshabilitarla y SHALL NOT restaurarlas al reactivarla.
+El sistema SHALL permitir a un `ADMIN` deshabilitar y reactivar cuentas con rol `USER` o `COORDINATOR`, SHALL rechazar el cambio de estado de cuentas `ADMIN`, SHALL revocar las sesiones renovables de una cuenta al deshabilitarla y SHALL NOT restaurarlas al reactivarla.
 
 #### Scenario: Deshabilitar una cuenta USER
 - **WHEN** un `ADMIN` deshabilita una cuenta `USER` activa
@@ -75,11 +77,15 @@ El sistema SHALL permitir a un `ADMIN` deshabilitar y reactivar cuentas con rol 
 - **THEN** la API responde `400` y la cuenta no cambia
 
 #### Scenario: Usuario sin rol de administrador
-- **WHEN** un usuario `USER` intenta cambiar el estado de una cuenta
+- **WHEN** un usuario `USER` o `COORDINATOR` intenta cambiar el estado de una cuenta
 - **THEN** la API responde `403` y la cuenta no cambia
 
+#### Scenario: Deshabilitar una cuenta de coordinación
+- **WHEN** un `ADMIN` deshabilita una cuenta `COORDINATOR` activa
+- **THEN** la cuenta queda `DISABLED` con sus tokens de refresco revocados y conserva sus turmas para cuando se reactive
+
 ### Requirement: Pantalla de usuarios para administradores
-El sistema SHALL ofrecer a los `ADMIN` una sección "Usuarios" dentro del shell con el listado paginado y, en cada cuenta `USER`, la acción para deshabilitarla o reactivarla tras una confirmación. La sección SHALL estar restringida a `ADMIN`.
+El sistema SHALL ofrecer a los `ADMIN` una sección "Usuarios" dentro del shell con el listado paginado, la turma de cada alumno y el rol ("Alumno", "Coordinación", "Administrador"); en cada cuenta `USER` o `COORDINATOR`, la acción para deshabilitarla o reactivarla tras una confirmación; las acciones de turma y de coordinación de la capacidad `cohorts`; y la gestión de turmas. La sección SHALL estar restringida a `ADMIN`.
 
 #### Scenario: Listado en pantalla
 - **WHEN** un `ADMIN` abre la sección "Usuarios"
@@ -108,8 +114,20 @@ El sistema SHALL ofrecer a los `ADMIN` una sección "Usuarios" dentro del shell 
 - **THEN** esas filas no ofrecen ninguna acción de estado
 
 #### Scenario: Sección restringida
-- **WHEN** un usuario `USER` abre el shell o navega a la ruta de "Usuarios"
+- **WHEN** un usuario `USER` o `COORDINATOR` abre el shell o navega a la ruta de "Usuarios"
 - **THEN** la sección no aparece en su navegación y la ruta muestra el acceso denegado del shell
+
+#### Scenario: Asignar la turma desde la lista
+- **WHEN** el `ADMIN` elige "Turma 2" para un alumno en "Usuarios"
+- **THEN** la fila del alumno muestra "Turma 2"
+
+#### Scenario: Convertir en coordinación desde la lista
+- **WHEN** el `ADMIN` convierte una cuenta en coordinación y marca "Turma 1"
+- **THEN** la fila muestra el rol "Coordinación" y sus turmas, y ya no ofrece cupo ni turma de alumno
+
+#### Scenario: Gestionar turmas
+- **WHEN** el `ADMIN` crea la turma "Turma 3" desde "Usuarios"
+- **THEN** la turma queda disponible para asignar a alumnos y a coordinaciones
 
 ### Requirement: Cupo de historias clínicas por usuario
 Un `ADMIN` SHALL poder asignar, cambiar o quitar el cupo de historias clínicas de una cuenta `USER`: un entero entre 0 y 9999, o sin límite. El cupo SHALL poder quedar por debajo de las historias ya creadas, sin afectarlas. El sistema SHALL denegar el cambio a cualquier otro rol y rechazarlo para cuentas `ADMIN`. En "Usuarios", cada cuenta `USER` SHALL mostrar sus historias creadas y su cupo, con una acción para cambiarlo.
@@ -160,4 +178,3 @@ Toda cuenta nueva SHALL nacer con el cupo inicial configurado en el despliegue (
 #### Scenario: Cuentas existentes
 - **WHEN** se despliega este cambio y había cuentas sin límite
 - **THEN** siguen sin límite hasta que un `ADMIN` les asigne un cupo
-

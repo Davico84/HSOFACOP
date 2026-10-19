@@ -277,7 +277,7 @@ El formulario SHALL cubrir los campos de las págs. 1–4 y 10–13 del PDF. Don
 - **THEN** el campo queda vacío y se imprime con todas sus opciones sin marcar
 
 ### Requirement: Acceso por autor y administrador
-Un `USER` SHALL ver, editar e imprimir solo las historias de las que es autor; un `ADMIN` SHALL ver, editar e imprimir todas. Para un `USER`, una historia de otro autor SHALL comportarse como inexistente. Ningún rol SHALL poder borrar historias en esta fase.
+Un `USER` SHALL ver, editar e imprimir solo las historias de las que es autor; un `ADMIN` SHALL ver, editar e imprimir todas; un `COORDINATOR` SHALL solo ver, sin editar ni imprimir, las historias de los alumnos de sus turmas (capacidad `cohorts`). Para un `USER` o un `COORDINATOR`, una historia fuera de su alcance SHALL comportarse como inexistente. Ningún rol SHALL poder borrar historias en esta fase.
 
 #### Scenario: Autor accede a su historia
 - **WHEN** un `USER` abre una historia que creó
@@ -295,6 +295,10 @@ Un `USER` SHALL ver, editar e imprimir solo las historias de las que es autor; u
 #### Scenario: Historia inexistente
 - **WHEN** se pide una historia con un identificador que no existe
 - **THEN** el sistema responde `404`
+
+#### Scenario: COORDINATOR abre una historia de su turma
+- **WHEN** un `COORDINATOR` lee una historia de un alumno de sus turmas
+- **THEN** el sistema la devuelve, y guardarla o imprimirla responde `403`
 
 ### Requirement: Listado y búsqueda de historias
 El sistema SHALL ofrecer la sección "Historias clínicas" con un listado paginado, ordenado por última modificación (más reciente primero), con número, paciente, documento, odontólogo tratante, fecha de inicio y última modificación. SHALL permitir buscar por nombre del paciente, número de documento o número de historia, sin distinguir mayúsculas ni tildes. Un `USER` SHALL ver solo sus historias; un `ADMIN`, todas, con una columna de autor.
