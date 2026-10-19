@@ -18,7 +18,7 @@
 
 ## 3. Docs
 
-- [ ] 3.1 `docs/domain.md`: enlace de restablecimiento y reglas de cambio de contraseña
+- [x] 3.1 `docs/domain.md`: enlace de restablecimiento y reglas de cambio de contraseña
 
 ## Workflow follow-up
 

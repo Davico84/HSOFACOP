@@ -85,7 +85,13 @@ Cuenta de acceso al sistema.
 - Turma del alumno (`cohorts`, `add-cohorts-coordinator`): `cohort` (FK `Cohort`, nula = sin turma). Solo cuentas `USER` (`CHECK ck_users_cohort_only_user`); la asigna el `ADMIN` y no toca historias ni cupo.
 - Turmas de coordinación: `coordinatorCohorts` (tabla `coordinator_cohorts`, una o más). Solo un `USER` **sin historias** pasa a `COORDINATOR` (pierde su turma y su cupo); volver a `USER` borra sus turmas y le da el cupo inicial. El rol nuevo llega al token en la siguiente renovación (≤ 15 min); las turmas se leen de la base en cada petición, y crear historias exige en la base el rol `USER` o `ADMIN`, así el token anterior no sirve para crear.
 - Datos de contacto e identificación (`users`, `add-cohort-registration-code`), todos opcionales: `phone` (celular, 9 dígitos que empiezan con 9), `documentType` + `documentNumber` (mismo `DocumentType` y reglas que el paciente, siempre juntos) y `copNumber` (1–6 dígitos), con `CHECK` en V19; vacío = nulo. Se piden en el registro y la propia cuenta los corrige en "Mis datos" (`/api/me/profile`, la cuenta sale del token); el ADMIN los ve en "Usuarios" ("Ver datos", solo lectura); la coordinación no. Sin unicidad (dos cuentas de una persona = soporte).
+- Contraseña (`authentication`, `add-password-change-reset`): la cuenta la cambia en "Mis datos" con la actual (incorrecta → 400 y suma al bloqueo por intentos; bloqueada → 400 sin comparar; la nueva ≥ 8 y distinta). Cambiarla revoca todas las sesiones renovables, quita el contador y emite una sesión nueva para ese dispositivo. Si la olvida, el ADMIN genera un enlace de restablecimiento (ver `PasswordResetToken`); sin envío por correo hasta la venta institucional.
 - Candidatos para cambios posteriores de `users` (perfil, alta por admin): `username`.
+
+### `authentication` + `users` → **PasswordResetToken** *(construida)*
+Enlace de restablecimiento de contraseña (`add-password-change-reset`).
+- `user` (FK), `tokenHash` (SHA-256 del token, único; el valor en claro solo se entrega al ADMIN al generarlo), `expiresAt` (24 h), `usedAt` (nulo = sin usar), `createdBy` (ADMIN), `createdAt`.
+- Solo para cuentas `USER`/`COORDINATOR` activas (si no, 409). Generar uno nuevo borra los no usados de la cuenta. El enlace es `/restablecer#t=<token>` (en el fragmento: no llega al servidor ni a los logs). Usarlo fija la contraseña, lo marca usado, revoca las sesiones renovables y quita el bloqueo temporal; usado, vencido, anulado o de una cuenta deshabilitada → el mismo 400.
 
 ### `authentication` → **RefreshToken** *(construida)*
 Token de refresco persistido para rotación y revocación real (logout). Se guarda el **hash** del token, nunca el valor en claro.
@@ -122,6 +128,7 @@ Turma de alumnos (`add-cohorts-coordinator`).
 ```mermaid
 erDiagram
     User ||--o{ RefreshToken : "tiene"
+    User ||--o{ PasswordResetToken : "restablece con"
     User ||--o{ OrthodonticRecord : "es autor de"
     OrthodonticRecord ||--o{ RecordUnlockEvent : "desbloqueos"
     User ||--o{ RecordUnlockEvent : "desbloquea (ADMIN)"
@@ -150,6 +157,14 @@ erDiagram
         String nameKey UK
         String registrationCode UK
         Boolean registrationOpen
+    }
+    PasswordResetToken {
+        Long id PK
+        Long userId FK
+        String tokenHash UK
+        DateTime expiresAt
+        DateTime usedAt
+        Long createdBy FK
     }
     RefreshToken {
         Long id PK
