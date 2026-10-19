@@ -5,14 +5,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
-/** Turma; los conteos solo los recibe el ADMIN (nulos para la coordinación). */
+/** Turma; los conteos, el código y el estado de la inscripción solo los recibe el ADMIN (nulos para la coordinación). */
 public record CohortResponse(
     @Schema(requiredMode = REQUIRED) Long id,
     @Schema(requiredMode = REQUIRED, example = "Turma 1") String name,
     @Schema(description = "Alumnos de la turma (solo ADMIN)", nullable = true) Long students,
-    @Schema(description = "Coordinaciones de la turma (solo ADMIN)", nullable = true) Long coordinators) {
+    @Schema(description = "Coordinaciones de la turma (solo ADMIN)", nullable = true) Long coordinators,
+    @Schema(description = "Código de inscripción, 8 caracteres sin guion (solo ADMIN)", example = "K7QM4TXR", nullable = true)
+    String registrationCode,
+    @Schema(description = "Su código acepta registros (solo ADMIN)", nullable = true) Boolean registrationOpen) {
 
     public static CohortResponse from(CohortView view) {
-        return new CohortResponse(view.id(), view.name(), view.students(), view.coordinators());
+        return new CohortResponse(view.id(), view.name(), view.students(), view.coordinators(),
+            view.registrationCode(), view.registrationOpen());
     }
 }

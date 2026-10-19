@@ -267,7 +267,7 @@ class UserAccountStatusIT extends AbstractIntegrationTest {
         // Los campos nulos (cupo sin límite, sin turma) no se serializan.
         assertThat(new HashSet<>(first.propertyNames()))
             .isSubsetOf(Set.of("id", "email", "fullName", "role", "status", "recordQuota", "recordCount", "cohort",
-                "coordinatorCohorts"))
+                "coordinatorCohorts", "phone", "documentType", "documentNumber", "copNumber"))
             .contains("id", "email", "fullName", "role", "status", "recordCount", "coordinatorCohorts");
         assertThat(body).doesNotContain("passwordHash", "password_hash", "failedLoginAttempts", "lockedUntil",
             "createdAt", "updatedAt");

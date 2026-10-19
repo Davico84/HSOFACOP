@@ -176,6 +176,6 @@ public class UserAdminService {
         Cohort cohort = user.getCohort();
         return new UserSummaryView(user.getId(), user.getEmail(), user.getFullName(), user.getRole(), user.getStatus(),
             user.getRecordQuota(), recordCount, cohort == null ? null : new CohortRef(cohort.getId(), cohort.getName()),
-            coordinatorCohorts);
+            coordinatorCohorts, ContactData.of(user));
     }
 }

@@ -8,6 +8,8 @@ import com.odontorisas.persistence.entity.RefreshToken;
 import com.odontorisas.persistence.entity.User;
 import com.odontorisas.persistence.repository.RefreshTokenRepository;
 import com.odontorisas.persistence.repository.UserRepository;
+import com.odontorisas.service.cohorts.CohortCodes;
+import com.odontorisas.service.cohorts.CohortService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,7 @@ public class AuthService {
     private final LoginAttemptService loginAttempts;
     private final TransactionOperations tx;
     private final RecordsProperties records;
+    private final CohortService cohorts;
 
     @Autowired
     public AuthService(UserRepository users,
@@ -45,9 +48,10 @@ public class AuthService {
                        TokenService tokenService,
                        LoginAttemptService loginAttempts,
                        PlatformTransactionManager transactionManager,
-                       RecordsProperties records) {
+                       RecordsProperties records,
+                       CohortService cohorts) {
         this(users, refreshTokens, passwordEncoder, tokenService, loginAttempts,
-            new TransactionTemplate(transactionManager), records);
+            new TransactionTemplate(transactionManager), records, cohorts);
     }
 
     AuthService(UserRepository users,
@@ -56,7 +60,8 @@ public class AuthService {
                 TokenService tokenService,
                 LoginAttemptService loginAttempts,
                 TransactionOperations tx,
-                RecordsProperties records) {
+                RecordsProperties records,
+                CohortService cohorts) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
@@ -64,21 +69,31 @@ public class AuthService {
         this.loginAttempts = loginAttempts;
         this.tx = tx;
         this.records = records;
+        this.cohorts = cohorts;
     }
 
+    /**
+     * Alta como alumno ({@code USER}) con el cupo inicial. Con código de turma, el alumno queda en esa
+     * turma (400 si el código no es de ninguna o si la turma está cerrada, sin crear la cuenta); con
+     * datos de contacto, los guarda.
+     */
     @Transactional
     public AuthResult register(RegisterCommand cmd) {
         if (users.existsByEmail(cmd.email())) {
             throw new EmailAlreadyExistsException(cmd.email());
         }
-        User user = users.save(User.builder()
+        String code = CohortCodes.clean(cmd.cohortCode());
+        User user = User.builder()
             .email(cmd.email())
             .passwordHash(passwordEncoder.encode(cmd.password()))
             .role(Role.USER)
             .fullName(cmd.fullName())
             // Cupo inicial de historias (configurable; nulo = sin límite).
             .recordQuota(records.defaultQuota())
-            .build());
+            .cohort(code == null ? null : cohorts.forRegistration(code))
+            .build();
+        cmd.contact().applyTo(user);
+        user = users.save(user);
         return issueTokens(user);
     }
 

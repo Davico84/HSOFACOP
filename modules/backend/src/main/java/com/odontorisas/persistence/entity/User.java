@@ -1,5 +1,6 @@
 package com.odontorisas.persistence.entity;
 
+import com.odontorisas.common.DocumentType;
 import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
 import jakarta.persistence.Column;
@@ -79,6 +80,24 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cohort_id")
     private Cohort cohort;
+
+    /**
+     * Datos de contacto e identificación (capacidad {@code users}), todos opcionales: celular de 9
+     * dígitos, documento (tipo y número juntos, mismas reglas que el del paciente) y COP. Los fija el
+     * registro o "Mis datos"; los {@code CHECK} de V19 repiten el formato.
+     */
+    @Column(length = 9)
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_type", length = 20)
+    private DocumentType documentType;
+
+    @Column(name = "document_number", length = 12)
+    private String documentNumber;
+
+    @Column(name = "cop_number", length = 6)
+    private String copNumber;
 
     /** Turmas que supervisa una cuenta COORDINATOR (vacía en el resto). */
     @ManyToMany(fetch = FetchType.LAZY)

@@ -38,6 +38,15 @@ public class Cohort {
     @Column(name = "name_key", nullable = false, length = 80)
     private String nameKey;
 
+    /** Código de inscripción (8 caracteres sin 0/O/1/I, sin guion), único. Lo genera {@code CohortService}. */
+    @Column(name = "registration_code", nullable = false, length = 8)
+    private String registrationCode;
+
+    /** Abierta = su código acepta registros. */
+    @Column(name = "registration_open", nullable = false)
+    @Builder.Default
+    private boolean registrationOpen = true;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
