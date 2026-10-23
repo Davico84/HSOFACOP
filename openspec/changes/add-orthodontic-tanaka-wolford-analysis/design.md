@@ -37,7 +37,7 @@ record WolfordAnalysis(BigDecimal upper12Sum, BigDecimal lower12Sum,
 
 ### Paneles y estado del paso
 - Panel "Fórmula de Tanaka-Johnston" tras Moyers y "Análisis de Wolford" tras Bolton, con su resultado calculado (como `MoyersSpaceTable`/`BoltonRatioBlock`) y la interpretación (`TextAreaField`).
-- `FilledStatus.name` se amplía con `content.models.tanaka` y `content.models.wolford`. `filled.ts` usa para estos bloques una función propia que cuenta solo sumas escritas (no nulas) e interpretación, ignorando los valores efectivos derivados; las sugeridas no marcan el paso "con datos".
+- `FilledStatus.name` se amplía con `content.models.tanaka` y `content.models.wolford`. `filled.ts` no necesita una función propia: el formulario solo contiene lo escrito (las sumas sugeridas quedan nulas), así que `countFilled` y `hasAnyData` cuentan solo sumas escritas e interpretación; las sugeridas no marcan el paso "con datos".
 
 ### Impresión
 - `PrintTanakaSection` tras `PrintMoyersSection` y `PrintWolfordSection` tras `PrintBoltonSection`, cada una en página nueva con el título de la guía, nombre y edad, las fórmulas como en la guía (`MAX (___ / 2) + 11 = ___`, `Discrepancia total = Suma 12 Max ___ − (Suma 12 Mand ___ × 1,1)`) con los valores efectivos y la interpretación en renglones. Sin una suma, la fila y la fórmula se imprimen con las sumas disponibles y el resultado "—", sin signo.

@@ -12,17 +12,17 @@
 
 ## 2. Contrato y frontend
 
-- [ ] 2.1 Regenerar `contracts/openapi.json` y el cliente orval; `tanaka` y `wolford` con la misma obligatoriedad/nulabilidad efectiva que los bloques existentes; `ContractDriftIT` en verde
-- [ ] 2.2 Schema Zod (paridad exacta de rangos y mensajes por campo) con tests de rango y decimales
-- [ ] 2.3 `tanaka.ts` / `wolford.ts` con tests por scenario: "Espacio previsto", "Redondeo", "Sin suma", "Discrepancias", "Falta una suma", "Piezas de cada suma", "Faltan anchos", "Ancho fuente fuera de rango", "Tanaka no usa los incisivos de Nance ni de Bolton", redondeo de negativos
-- [ ] 2.4 `SuggestedMeasureField` genérico en `core/components/form` con su test: sugerida con nota, "Suma escrita por el tratante", "Usar el de …" fija nulo, "Borrar una suma escrita", nota con `aria-describedby`
-- [ ] 2.5 Paneles "Fórmula de Tanaka-Johnston" (tras Moyers) y "Análisis de Wolford" (tras Bolton); `FilledStatus` con los dos bloques y función propia en `filled.ts`. Tests: "Suma tomada de Moyers", "El valor sugerido sigue a la medición", "Lo sugerido no cuenta como dato" (panel vacío, solo sugerencia, suma escrita, interpretación), "Ver una sugerencia no modifica la historia" (`isDirty`, `filledSteps` y autoguardado sin cambios)
-- [ ] 2.6 Hojas impresas `PrintTanakaSection` (tras Moyers) y `PrintWolfordSection` (tras Bolton) con los valores efectivos. Tests: "Hoja de Tanaka-Johnston", "Hoja de Wolford", "Grilla de anchos en la hoja de Wolford", "Hoja con una suma vacía" (resultado "—"), "Hoja impresa de Nance" (tras Tanaka)
-- [ ] 2.7 Impresión real con Edge headless + PDF: dos páginas físicas más que antes, Tanaka inmediatamente tras Moyers y Wolford tras Bolton, fórmulas y celdas vacías, y la marca "AVANCE · N de 7" con el mismo N ("Dos hojas más"); `pnpm validate` en verde
+- [x] 2.1 Regenerar `contracts/openapi.json` y el cliente orval; `tanaka` y `wolford` con la misma obligatoriedad/nulabilidad efectiva que los bloques existentes; `ContractDriftIT` en verde
+- [x] 2.2 Schema Zod (paridad exacta de rangos y mensajes por campo) con tests de rango y decimales
+- [x] 2.3 `tanaka.ts` / `wolford.ts` con tests por scenario: "Espacio previsto", "Redondeo", "Sin suma", "Discrepancias", "Falta una suma", "Piezas de cada suma", "Faltan anchos", "Ancho fuente fuera de rango", "Tanaka no usa los incisivos de Nance ni de Bolton", redondeo de negativos
+- [x] 2.4 `SuggestedMeasureField` genérico en `core/components/form` con su test: sugerida con nota, "Suma escrita por el tratante", "Usar el de …" fija nulo, "Borrar una suma escrita", nota con `aria-describedby`
+- [x] 2.5 Paneles "Fórmula de Tanaka-Johnston" (tras Moyers) y "Análisis de Wolford" (tras Bolton); `FilledStatus` con los dos bloques (`filled.ts` ya cuenta solo lo escrito). Tests: "Suma tomada de Moyers", "El valor sugerido sigue a la medición", "Lo sugerido no cuenta como dato" (panel vacío, solo sugerencia, suma escrita, interpretación), "Ver una sugerencia no modifica la historia" (`isDirty`, `filledSteps` y autoguardado sin cambios)
+- [x] 2.6 Hojas impresas `PrintTanakaSection` (tras Moyers) y `PrintWolfordSection` (tras Bolton) con los valores efectivos. Tests: "Hoja de Tanaka-Johnston", "Hoja de Wolford", "Grilla de anchos en la hoja de Wolford", "Hoja con una suma vacía" (resultado "—"), "Hoja impresa de Nance" (tras Tanaka)
+- [x] 2.7 Impresión real con Edge headless + PDF: dos páginas físicas más que antes, Tanaka inmediatamente tras Moyers y Wolford tras Bolton, fórmulas y celdas vacías, y la marca "AVANCE · N de 7" con el mismo N ("Dos hojas más"); `pnpm validate` en verde
 
 ## 3. Docs
 
-- [ ] 3.1 `docs/domain.md`: Tanaka-Johnston y Wolford en el glosario y en el contenido de la historia (`schemaVersion` 11)
+- [x] 3.1 `docs/domain.md`: Tanaka-Johnston y Wolford en el glosario y en el contenido de la historia (`schemaVersion` 11)
 
 ## Workflow follow-up
 
