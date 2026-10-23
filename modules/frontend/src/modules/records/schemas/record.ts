@@ -63,6 +63,8 @@ export const MAX_MM = 30;
 export const MIN_MIDLINE_MM = 0.5;
 /** Medidas de los análisis de modelos: 0–99,9 mm con un decimal (paridad con `MAX_MODEL_MM`). */
 export const MAX_MODEL_MM = 99.9;
+/** Suma de los anchos de 12 piezas de una arcada (Wolford): 0–199,9 mm (paridad con `MAX_ARCH_SUM_MM`). */
+export const MAX_ARCH_SUM_MM = 199.9;
 /** Ancho mesiodistal de una pieza: 4,0–13,0 mm (como `ContentLimits.MIN/MAX_TOOTH_MM`). */
 export const MIN_TOOTH_MM = 4;
 export const MAX_TOOTH_MM = 13;
@@ -289,7 +291,22 @@ const bolton = z.object({
   interpretation: text(LONG_TEXT),
 });
 
-const models = z.object({ transversal, moyers, nance, bolton });
+/** Suma nula = se usa la sugerida (no se guarda); con valor, la escrita por el tratante. */
+const tanaka = z.object({
+  incisorSum: modelMm,
+  interpretation: text(LONG_TEXT),
+});
+
+const archSumMm = decimal(0, MAX_ARCH_SUM_MM, "mm");
+const wolford = z.object({
+  upper12Sum: archSumMm,
+  lower12Sum: archSumMm,
+  upper6Sum: modelMm,
+  lower6Sum: modelMm,
+  interpretation: text(LONG_TEXT),
+});
+
+const models = z.object({ transversal, moyers, nance, bolton, tanaka, wolford });
 
 const radiographic = z.object({
   panoramicDiagnosis: text(LONG_TEXT),

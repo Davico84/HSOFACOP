@@ -21,10 +21,12 @@ import { ArchDiagram } from "../ArchDiagram";
 import { BoltonRatioBlock } from "../fields/BoltonRatioBlock";
 import { BoltonWidthsGrid } from "../fields/BoltonWidthsGrid";
 import { BOLTON_RATIOS } from "../../config/bolton";
+import { TanakaFields } from "../fields/TanakaFields";
+import { WolfordFields } from "../fields/WolfordFields";
 
 /**
- * Paso 5 (págs. 5–9): los cuatro análisis de modelos (transversal, Moyers, Nance y Bolton), uno
- * por panel plegable para no recorrerlos todos. Se abre el transversal;
+ * Paso 5 (págs. 5–9): los análisis de modelos (transversal, Moyers, Tanaka-Johnston, Nance, Bolton
+ * y Wolford), uno por panel plegable para no recorrerlos todos. Se abre el transversal;
  * un análisis con errores de validación se abre solo para que el error no quede oculto. Paciente,
  * edad y sexo se toman del paso 1.
  */
@@ -86,8 +88,19 @@ export function Step5Models() {
       </AccordionSection>
 
       <AccordionSection
-        value="nance"
+        value="tanaka"
         index={3}
+        title="Fórmula de Tanaka-Johnston"
+        description="espacio previsto para canino y premolares a partir de los incisivos inferiores"
+        status={<FilledStatus name="content.models.tanaka" />}
+      >
+        <TanakaFields />
+        <TextAreaField name="content.models.tanaka.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
+      </AccordionSection>
+
+      <AccordionSection
+        value="nance"
+        index={4}
         title="Análisis de Nance"
         description="pág. 7 · discrepancia óseo dentaria: espacio disponible (SA) frente al requerido (ST)"
         status={<FilledStatus name="content.models.nance" />}
@@ -109,7 +122,7 @@ export function Step5Models() {
 
       <AccordionSection
         value="bolton"
-        index={4}
+        index={5}
         title="Análisis de Bolton"
         description="pág. 9 · discrepancia de tamaño dentario entre arcadas: relación total y anterior"
         status={<FilledStatus name="content.models.bolton" />}
@@ -125,6 +138,17 @@ export function Step5Models() {
           <BoltonRatioBlock key={def.key} def={def} />
         ))}
         <TextAreaField name="content.models.bolton.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
+      </AccordionSection>
+
+      <AccordionSection
+        value="wolford"
+        index={6}
+        title="Análisis de Wolford"
+        description="discrepancia de tamaño dentario total (12 piezas) y parcial (6 piezas)"
+        status={<FilledStatus name="content.models.wolford" />}
+      >
+        <WolfordFields />
+        <TextAreaField name="content.models.wolford.interpretation" label="Interpretación" rows={3} maxLength={LONG_TEXT} />
       </AccordionSection>
     </Accordion>
   );

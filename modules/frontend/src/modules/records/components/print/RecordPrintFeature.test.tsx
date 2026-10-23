@@ -171,7 +171,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
 
   it("hoja del análisis transversal tras el oclusal, con las diferencias calculadas", async () => {
     serve(withContent(
-      { models: { transversal: { intermolarUpper: 50.1, intermolarLower: 45.8, walaToEv: { firstMolar: 2.6 }, interpretation: "Compresión leve" }, moyers: {}, nance: {}, bolton: {} } },
+      { models: { tanaka: {}, wolford: {}, transversal: { intermolarUpper: 50.1, intermolarLower: 45.8, walaToEv: { firstMolar: 2.6 }, interpretation: "Compresión leve" }, moyers: {}, nance: {}, bolton: {} } },
       { patientSex: "FEMALE", ageYears: 13 },
     ));
     renderRecordRoutes("/historias/10/imprimir");
@@ -190,7 +190,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
 
   it("hoja de Moyers tras la del transversal, con requerido y diferencias calculados y la predisposición escrita", async () => {
     serve(withContent(
-      { models: { transversal: {}, moyers: {
+      { models: { tanaka: {}, wolford: {}, transversal: {}, moyers: {
         analysisDate: "2026-09-01",
         lowerIncisors: { tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 },
         availableSpace: { mandibleRight: 21.0, mandibleLeft: 22.6, maxillaRight: 23.5, maxillaLeft: 22.6 },
@@ -217,9 +217,9 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(within(moyers).getByText("Discrepancia negativa leve")).toBeInTheDocument();
   });
 
-  it("hoja de Nance tras la de Moyers, con ST y discrepancia calculados, el dibujo y la conclusión escrita", async () => {
+  it("hoja de Nance tras la de Tanaka-Johnston, con ST y discrepancia calculados, el dibujo y la conclusión escrita", async () => {
     serve(withContent(
-      { models: { transversal: {}, moyers: {}, nance: {
+      { models: { tanaka: {}, wolford: {}, transversal: {}, moyers: {}, nance: {
         analysisDate: "2026-09-01",
         availableUpper: 70.5,
         upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
@@ -234,7 +234,7 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
 
     const titles = sheets.map((sheet) => within(sheet).queryAllByRole("heading", { level: 2 })[0]?.textContent ?? "");
     const index = titles.indexOf("Análisis de Nance · discrepancia óseo dentaria");
-    expect(index).toBe(titles.indexOf("Ficha para el análisis de Moyers") + 1);
+    expect(index).toBe(titles.indexOf("Fórmula de Tanaka-Johnston") + 1);
     const nance = sheets[index];
     expect(within(nance).getByRole("img", { name: /Arcada superior/ })).toBeInTheDocument();
     expect(within(nance).getByLabelText("Pieza 11")).toHaveTextContent("8,6");
@@ -249,6 +249,8 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
 
   it("hoja de Bolton tras la de Nance, en español, con las relaciones calculadas", async () => {
     const boltonModels = {
+      tanaka: {},
+      wolford: {},
       transversal: {},
       moyers: {},
       nance: {
@@ -271,6 +273,90 @@ describe("orthodontic-records — Impresión con presentación del PDF", () => {
     expect(within(total).getByLabelText("Relación total (%)")).toHaveTextContent("92,9 %");
     expect(within(total).getAllByRole("row").map((r) => r.textContent)).toContain("87,5 mm86,0 mm+1,5 mm");
     expect(within(bolton).getByText("Exceso mandibular leve")).toBeInTheDocument();
+  });
+
+  describe("Tanaka-Johnston y Wolford", () => {
+    const measured = {
+      transversal: {},
+      moyers: { lowerIncisors: { tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 } },
+      nance: {
+        upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
+        lowerWidths: { tooth45: 7.2, tooth44: 7.0, tooth43: 6.9, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1, tooth33: 6.8, tooth34: 7.1, tooth35: 7.3 },
+      },
+      bolton: { firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, incisors: { tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 } },
+      tanaka: { interpretation: "Espacio suficiente en ambas arcadas" },
+      wolford: { upper6Sum: 46.0, interpretation: "Leve exceso mandibular" },
+    };
+
+    async function sheetsByTitle() {
+      const sheets = await screen.findAllByRole("article");
+      const titles = sheets.map((sheet) => within(sheet).queryAllByRole("heading", { level: 2 })[0]?.textContent ?? "");
+      return { sheets, titles };
+    }
+
+    it("Hoja de Tanaka-Johnston: tras Moyers, con nombre, edad, las dos fórmulas con la suma usada y la interpretación", async () => {
+      serve(withContent({ models: measured }, { ageYears: 13 }));
+      renderRecordRoutes("/historias/10/imprimir");
+      const { sheets, titles } = await sheetsByTitle();
+
+      const index = titles.indexOf("Fórmula de Tanaka-Johnston");
+      expect(index).toBe(titles.indexOf("Ficha para el análisis de Moyers") + 1);
+      const tanaka = sheets[index];
+      expect(within(tanaka).getByText("Ana Quispe")).toBeInTheDocument();
+      expect(within(tanaka).getByText("13 años")).toBeInTheDocument();
+      expect(within(tanaka).getByLabelText("Tanaka-Johnston MAX")).toHaveTextContent("MAX (23,0 / 2) + 11 = 22,5 mm");
+      expect(within(tanaka).getByLabelText("Tanaka-Johnston MAND")).toHaveTextContent("MAND (23,0 / 2) + 10,5 = 22,0 mm");
+      expect(within(tanaka).getByText("Espacio suficiente en ambas arcadas")).toBeInTheDocument();
+    });
+
+    it("Hoja de Wolford y su grilla: tras Bolton, anchos de Bolton y Nance por pieza y discrepancias con las sumas usadas", async () => {
+      serve(withContent({ models: measured }, { ageYears: 13 }));
+      renderRecordRoutes("/historias/10/imprimir");
+      const { sheets, titles } = await sheetsByTitle();
+
+      const index = titles.indexOf("Análisis de Wolford");
+      expect(index).toBe(titles.indexOf("Análisis de Bolton") + 1);
+      const wolford = sheets[index];
+      expect(within(wolford).getByText("Ancho mesiodistal de las 12 piezas")).toBeInTheDocument();
+      const rows = within(wolford).getAllByRole("row").map((r) => r.textContent);
+      expect(rows).toContain("Maxilar161514131211212223242526");
+      expect(rows).toContain("Mandíbula464544434241313233343536");
+      expect(within(wolford).getByLabelText("Wolford, pieza 16")).toHaveTextContent("10,2");
+      expect(within(wolford).getByLabelText("Wolford, pieza 13")).toHaveTextContent("7,8");
+      expect(within(wolford).getByLabelText("Wolford, pieza 36")).toHaveTextContent("11,2");
+      // 94,2 − 87,5 × 1,1 = −2,05 → −2,1 · con la 6 maxilar escrita: 46,0 − 36,7 × 1,3 = −1,71 → −1,7.
+      expect(within(wolford).getByLabelText("Discrepancia total")).toHaveTextContent(
+        "Discrepancia total = Suma 12 Max 94,2 − (Suma 12 Mand 87,5 × 1,1)Discrepancia total: −2,1 mm",
+      );
+      expect(within(wolford).getByLabelText("Discrepancia parcial")).toHaveTextContent(
+        "Discrepancia parcial = Suma 6 Max 46,0 − (Suma 6 Mand 36,7 × 1,3)Discrepancia parcial: −1,7 mm",
+      );
+      expect(within(wolford).getByText("Leve exceso mandibular")).toBeInTheDocument();
+    });
+
+    it("Hoja con una suma vacía: la fórmula sale con lo disponible y el resultado '—', sin signo; casilla vacía si falta el ancho", async () => {
+      const missing = { ...measured, nance: { ...measured.nance, lowerWidths: { ...measured.nance.lowerWidths, tooth33: undefined } } };
+      serve(withContent({ models: missing }, { ageYears: 13 }));
+      renderRecordRoutes("/historias/10/imprimir");
+      const { sheets, titles } = await sheetsByTitle();
+
+      const wolford = sheets[titles.indexOf("Análisis de Wolford")];
+      expect(within(wolford).getByLabelText("Wolford, pieza 33")).toHaveTextContent("");
+      expect(within(wolford).getByLabelText("Discrepancia parcial")).toHaveTextContent(
+        "Discrepancia parcial = Suma 6 Max 46,0 − (Suma 6 Mand ___ × 1,3)Discrepancia parcial: —",
+      );
+      expect(within(wolford).getByLabelText("Discrepancia total")).toHaveTextContent("Discrepancia total: —");
+    });
+
+    it("Hoja de Tanaka-Johnston sin suma: las fórmulas con '___' y el resultado '—'", async () => {
+      serve(withContent({ models: { ...measured, moyers: {} } }));
+      renderRecordRoutes("/historias/10/imprimir");
+      const { sheets, titles } = await sheetsByTitle();
+
+      const tanaka = sheets[titles.indexOf("Fórmula de Tanaka-Johnston")];
+      expect(within(tanaka).getByLabelText("Tanaka-Johnston MAX")).toHaveTextContent("MAX (___ / 2) + 11 = —");
+      expect(within(tanaka).getByLabelText("Tanaka-Johnston MAND")).toHaveTextContent("MAND (___ / 2) + 10,5 = —");
+    });
   });
 
   it("la menstruación no se imprime si el paciente no es de sexo femenino", async () => {

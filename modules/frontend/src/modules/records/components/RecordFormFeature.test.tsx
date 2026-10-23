@@ -693,6 +693,8 @@ describe("orthodontic-records — Análisis de Nance (paso 5)", { timeout: 15_00
 
 describe("orthodontic-records — Análisis de Bolton (paso 5)", { timeout: 15_000 }, () => {
   const boltonModels = {
+    tanaka: {},
+    wolford: {},
     transversal: {},
     moyers: {},
     nance: {
@@ -896,5 +898,134 @@ describe("orthodontic-records — Navegación entre pasos con estado y progreso"
     await waitFor(() => expect(screen.getByLabelText("Pieza 42")).toHaveFocus());
     expect(toast.error).toHaveBeenCalledWith("Corrige los campos marcados del paso actual antes de cambiar de paso.");
     expect(calls.put).toHaveLength(0);
+  });
+});
+
+describe("orthodontic-records — Tanaka-Johnston y Wolford (paso 5)", { timeout: 15_000 }, () => {
+  const measured = {
+    transversal: {},
+    moyers: { lowerIncisors: { tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 } },
+    nance: {
+      upperWidths: { tooth15: 7.0, tooth14: 7.1, tooth13: 7.8, tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth23: 7.7, tooth24: 7.0, tooth25: 6.9 },
+      lowerWidths: { tooth45: 7.2, tooth44: 7.0, tooth43: 6.9, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1, tooth33: 6.8, tooth34: 7.1, tooth35: 7.3 },
+    },
+    bolton: { firstMolars: { tooth16: 10.2, tooth26: 10.1, tooth46: 11.0, tooth36: 11.2 }, incisors: { tooth12: 6.7, tooth11: 8.6, tooth21: 8.5, tooth22: 6.6, tooth42: 6.0, tooth41: 5.5, tooth31: 5.4, tooth32: 6.1 } },
+    tanaka: {},
+    wolford: {},
+  };
+  const WOLFORD_NOTE = "Tomada de Bolton (incisivos y 1eros molares) y Nance (caninos y premolares).";
+
+  async function openPanel(name: RegExp) {
+    await userEvent.click(await screen.findByRole("button", { name }));
+  }
+
+  it("Suma tomada de Moyers: se sugiere, calcula el espacio y ni cuenta como dato ni modifica la historia", async () => {
+    const { calls } = mockRecord({ content: { ...recordResponse().content, models: measured } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Fórmula de Tanaka-Johnston/);
+
+    const sum = screen.getByLabelText("Suma de los incisivos inferiores (42, 41, 31, 32)");
+    expect(sum).toHaveValue(null);
+    expect(sum).toHaveAttribute("placeholder", "23,0");
+    expect(sum).toHaveAccessibleDescription("Se usa 23,0 mm. Tomada de los incisivos de Moyers.");
+    expect(screen.getByText("22,5 mm")).toBeInTheDocument();
+    expect(screen.getByText("22,0 mm")).toBeInTheDocument();
+    // Lo sugerido no cuenta como dato y verlo no deja cambios sin guardar.
+    expect(screen.getByRole("button", { name: /^Fórmula de Tanaka-Johnston/ })).toHaveTextContent("Sin datos");
+    expect(screen.getByRole("button", { name: /^Análisis de Wolford/ })).toHaveTextContent("Sin datos");
+    expect(screen.queryByText(/Cambios sin guardar/)).not.toBeInTheDocument();
+    expect(calls.put).toHaveLength(0);
+  });
+
+  it("Tanaka no usa los incisivos de Nance ni de Bolton", async () => {
+    mockRecord({ content: { ...recordResponse().content, models: { ...measured, moyers: {} } } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Fórmula de Tanaka-Johnston/);
+
+    expect(screen.getByLabelText("Suma de los incisivos inferiores (42, 41, 31, 32)")).toHaveAccessibleDescription(
+      "Completa los incisivos en Moyers o escribe la suma.",
+    );
+    const line = (text: string) => screen.getByText((_, el) => el?.tagName === "P" && el.textContent === text);
+    expect(line("MAX (___ / 2) + 11 = —")).toBeInTheDocument();
+    expect(line("MAND (___ / 2) + 10,5 = —")).toBeInTheDocument();
+  });
+
+  it("Suma escrita por el tratante: se usa y se guarda; 'Usar el de Moyers' vuelve a la sugerida", async () => {
+    const { calls } = mockRecord({ content: { ...recordResponse().content, models: measured } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Fórmula de Tanaka-Johnston/);
+
+    await fill("Suma de los incisivos inferiores (42, 41, 31, 32)", "23.5");
+    expect(screen.getByText("Valor escrito por ti · Moyers da 23,0 mm.")).toBeInTheDocument();
+    expect(screen.getByText("22,8 mm")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Fórmula de Tanaka-Johnston/ })).toHaveTextContent("1 dato");
+
+    await userEvent.click(screen.getByRole("button", { name: /Guardar/ }));
+    await waitFor(() => expect(calls.put).toHaveLength(1));
+    expect(calls.put[0].content?.models.tanaka.incisorSum).toBe(23.5);
+
+    await userEvent.click(screen.getByRole("button", { name: "Usar la suma calculada de Moyers (23,0 mm)" }));
+    expect(screen.getByLabelText("Suma de los incisivos inferiores (42, 41, 31, 32)")).toHaveValue(null);
+    expect(screen.getByText("22,5 mm")).toBeInTheDocument();
+  });
+
+  it("Wolford toma las sumas de Bolton y Nance, calcula las discrepancias y sigue a la medición", async () => {
+    mockRecord({ content: { ...recordResponse().content, models: measured } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+    await openPanel(/^Análisis de Wolford/);
+
+    const upper12 = screen.getByLabelText("Suma 12 maxilares (16 → 26)");
+    expect(upper12).toHaveAttribute("placeholder", "94,2");
+    expect(upper12).toHaveAccessibleDescription(`Se usa 94,2 mm. ${WOLFORD_NOTE}`);
+    expect(screen.getByLabelText("Suma 12 mandibulares (46 → 36)")).toHaveAttribute("placeholder", "87,5");
+    expect(screen.getByLabelText("Suma 6 maxilares (13 → 23)")).toHaveAttribute("placeholder", "45,9");
+    expect(screen.getByLabelText("Suma 6 mandibulares (43 → 33)")).toHaveAttribute("placeholder", "36,7");
+    // 94,2 − 87,5 × 1,1 = −2,05 → −2,1 · 45,9 − 36,7 × 1,3 = −1,81 → −1,8.
+    expect(screen.getByText("−2,1 mm")).toBeInTheDocument();
+    expect(screen.getByText("−1,8 mm")).toBeInTheDocument();
+
+    await userEvent.clear(screen.getByLabelText("Bolton, pieza 26 (mm)"));
+    await fill("Bolton, pieza 26 (mm)", "10.3");
+    expect(upper12).toHaveAttribute("placeholder", "94,4");
+    expect(screen.getByText("−1,9 mm")).toBeInTheDocument();
+  });
+
+  it("Faltan anchos: las sumas de Wolford quedan vacías con la nota de qué completar", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Wolford/);
+
+    expect(screen.getByLabelText("Suma 12 maxilares (16 → 26)")).toHaveAccessibleDescription(
+      "Completa los anchos en Bolton y Nance o escribe la suma.",
+    );
+    expect(screen.getByLabelText("Suma 12 maxilares (16 → 26)")).not.toHaveAttribute("placeholder");
+  });
+
+  it("Ancho fuente fuera de rango: la suma que lo usa queda vacía y el ancho guardado no cambia", async () => {
+    const outOfRange = { ...measured, bolton: { ...measured.bolton, incisors: { ...measured.bolton.incisors, tooth11: 0.3 } } };
+    mockRecord({ content: { ...recordResponse().content, models: outOfRange } });
+    renderRecordRoutes("/historias/10?paso=5");
+    await openPanel(/^Análisis de Bolton/);
+    await openPanel(/^Análisis de Wolford/);
+
+    const note = "Corrige los anchos fuera de rango o escribe la suma.";
+    expect(screen.getByLabelText("Suma 12 maxilares (16 → 26)")).toHaveAccessibleDescription(note);
+    expect(screen.getByLabelText("Suma 6 maxilares (13 → 23)")).toHaveAccessibleDescription(note);
+    expect(screen.getByLabelText("Suma 12 mandibulares (46 → 36)")).toHaveAccessibleDescription(`Se usa 87,5 mm. ${WOLFORD_NOTE}`);
+    expect(screen.getByLabelText("Bolton, pieza 11 (mm)")).toHaveValue(0.3);
+  });
+
+  it("los paneles nuevos van tras Moyers y tras Bolton", async () => {
+    mockRecord();
+    renderRecordRoutes("/historias/10?paso=5");
+    await stepHeading(/Análisis de modelos/);
+
+    const titles = ["Análisis transversal", "Análisis de Moyers", "Fórmula de Tanaka-Johnston", "Análisis de Nance", "Análisis de Bolton", "Análisis de Wolford"];
+    const panels = screen
+      .getAllByRole("button")
+      .map((b) => titles.find((t) => b.textContent?.includes(t)))
+      .filter(Boolean);
+    expect(panels).toEqual(titles);
   });
 });

@@ -5,12 +5,19 @@ import { countFilled, filledLabel } from "../../utils/filled";
 
 interface FilledStatusProps {
   /** Análisis de modelos cuyo avance se muestra. */
-  name: "content.models.transversal" | "content.models.moyers" | "content.models.nance" | "content.models.bolton";
+  name:
+    | "content.models.transversal"
+    | "content.models.moyers"
+    | "content.models.tanaka"
+    | "content.models.nance"
+    | "content.models.bolton"
+    | "content.models.wolford";
 }
 
 /**
  * Cuántos datos tiene registrados un análisis. Vigila solo su análisis: así escribir en un campo
- * redibuja esta píldora y no todo el paso.
+ * redibuja esta píldora y no todo el paso. Las sumas sugeridas de Tanaka y Wolford no están en el
+ * formulario (son nulas), así que no cuentan: solo lo escrito por el tratante.
  */
 export function FilledStatus({ name }: FilledStatusProps) {
   const { control } = useFormContext<RecordFormValues>();
