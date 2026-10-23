@@ -2,6 +2,7 @@ package com.odontorisas.service.auth;
 
 import org.mockito.ArgumentCaptor;
 import com.odontorisas.infra.config.RecordsProperties;
+import com.odontorisas.persistence.repository.PasswordResetTokenRepository;
 import com.odontorisas.service.cohorts.CohortService;
 import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
@@ -45,6 +46,7 @@ class AuthServiceTest {
     @Mock TokenService tokenService;
     @Mock LoginAttemptService loginAttempts;
     @Mock CohortService cohorts;
+    @Mock PasswordResetTokenRepository resetTokens;
 
     AuthService authService;
 
@@ -55,7 +57,7 @@ class AuthServiceTest {
 
     private AuthService service(Integer defaultQuota) {
         return new AuthService(users, refreshTokens, passwordEncoder, tokenService, loginAttempts,
-            TransactionOperations.withoutTransaction(), new RecordsProperties(defaultQuota), cohorts);
+            TransactionOperations.withoutTransaction(), new RecordsProperties(defaultQuota), cohorts, resetTokens);
     }
 
     /** Registra con el cupo inicial dado y devuelve la cuenta guardada. */

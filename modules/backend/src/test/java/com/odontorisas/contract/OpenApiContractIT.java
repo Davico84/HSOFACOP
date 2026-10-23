@@ -233,6 +233,7 @@ class OpenApiContractIT extends AbstractIntegrationTest {
                 "getMyDashboard", "getAdminDashboard", "getCoordinatorDashboard",
                 "listCohorts", "createCohort", "renameCohort", "changeUserCohort", "changeUserRole",
                 "regenerateCohortCode", "changeCohortRegistration", "getMyProfile", "updateMyProfile",
+                "changeMyPassword", "createPasswordReset", "resetPassword",
                 "printRecord", "unlockPatient", "requestPatientUnlock", "discardPatientUnlockRequest");
     }
 

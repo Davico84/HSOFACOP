@@ -180,6 +180,51 @@ describe("users — turmas y coordinación en la pantalla Usuarios", () => {
     expect(await navigator.clipboard.readText()).toBe("987654321");
   });
 
+  it("Restablecer contraseña: confirmar genera el enlace, se copia y muestra cuándo vence", async () => {
+    mockBackend();
+    let created = 0;
+    server.use(
+      http.post("*/api/users/:id/password-reset", () => {
+        created += 1;
+        return HttpResponse.json({ token: "tok-123", expiresAt: "2026-10-20T15:00:00Z" }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<UsersFeature />);
+    await screen.findByRole("row", { name: /Ana Pérez/ });
+
+    await user.click(within(row("Ana Pérez")).getByRole("button", { name: "Restablecer la contraseña de Ana Pérez" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Generar enlace" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByLabelText("Enlace de restablecimiento")).toHaveTextContent("/restablecer#t=tok-123");
+    expect(within(dialog).getByText(/vence el/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Copiar enlace" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Enlace copiado"));
+    expect(await navigator.clipboard.readText()).toMatch(/\/restablecer#t=tok-123$/);
+    expect(created).toBe(1);
+  });
+
+  it("Restablecer contraseña: cancelar no genera nada", async () => {
+    mockBackend();
+    let created = 0;
+    server.use(
+      http.post("*/api/users/:id/password-reset", () => {
+        created += 1;
+        return HttpResponse.json({ token: "x", expiresAt: "2026-10-20T15:00:00Z" }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<UsersFeature />);
+    await screen.findByRole("row", { name: /Ana Pérez/ });
+
+    await user.click(within(row("Ana Pérez")).getByRole("button", { name: "Restablecer la contraseña de Ana Pérez" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(created).toBe(0);
+  });
+
   it("nombre vacío: el formulario lo rechaza sin enviar nada", async () => {
     const calls = mockBackend();
     renderWithProviders(<UsersFeature />);

@@ -6,6 +6,8 @@
  * OpenAPI spec version: v1
  */
 import type {
+  AuthResponse,
+  ChangePasswordRequest,
   ProfileResponse,
   UpdateProfileRequest
 } from './model';
@@ -39,5 +41,19 @@ export const updateMyProfile = (
     },
       );
     }
+  /**
+ * @summary Cambiar la contraseña de la cuenta autenticada (cierra sus demás sesiones y renueva la actual)
+ */
+export const changeMyPassword = (
+    changePasswordRequest: ChangePasswordRequest,
+ ) => {
+      return customInstance<AuthResponse>(
+      {url: `/api/me/password`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: changePasswordRequest
+    },
+      );
+    }
   export type GetMyProfileResult = NonNullable<Awaited<ReturnType<typeof getMyProfile>>>
 export type UpdateMyProfileResult = NonNullable<Awaited<ReturnType<typeof updateMyProfile>>>
+export type ChangeMyPasswordResult = NonNullable<Awaited<ReturnType<typeof changeMyPassword>>>

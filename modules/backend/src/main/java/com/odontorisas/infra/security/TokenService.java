@@ -76,6 +76,19 @@ public class TokenService {
         }
     }
 
+    /**
+     * Valor en claro de un token opaco de un solo uso (enlace de restablecimiento de contraseña):
+     * mismo formato que el refresh, 32 bytes aleatorios en base64url.
+     */
+    public String generateOpaqueToken() {
+        return generateRefreshTokenValue();
+    }
+
+    /** Hash SHA-256 (hex) de un token opaco; es lo único que se persiste. */
+    public String hashOpaqueToken(String rawToken) {
+        return hashRefreshToken(rawToken);
+    }
+
     /** Instante de expiración de un nuevo refresh token. */
     public Instant refreshExpiry() {
         return Instant.now().plus(props.jwt().refreshTtl());

@@ -3,10 +3,13 @@ package com.odontorisas.service.users;
 import com.odontorisas.common.Role;
 import com.odontorisas.common.UserStatus;
 import com.odontorisas.infra.config.RecordsProperties;
+import com.odontorisas.infra.security.TokenService;
+import com.odontorisas.persistence.entity.PasswordResetToken;
 import com.odontorisas.persistence.entity.Cohort;
 import com.odontorisas.persistence.entity.User;
 import com.odontorisas.persistence.repository.CohortRepository;
 import com.odontorisas.persistence.repository.OrthodonticRecordRepository;
+import com.odontorisas.persistence.repository.PasswordResetTokenRepository;
 import com.odontorisas.persistence.repository.RefreshTokenRepository;
 import com.odontorisas.persistence.repository.UserRepository;
 import com.odontorisas.service.cohorts.CohortNotFoundException;
@@ -18,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -38,19 +43,27 @@ public class UserAdminService {
 
     private static final Logger log = LoggerFactory.getLogger(UserAdminService.class);
 
+    /** Vigencia del enlace de restablecimiento de contraseña. */
+    static final Duration PASSWORD_RESET_TTL = Duration.ofHours(24);
+
     private final UserRepository users;
     private final RefreshTokenRepository refreshTokens;
     private final OrthodonticRecordRepository records;
     private final CohortRepository cohorts;
     private final RecordsProperties recordsProperties;
+    private final PasswordResetTokenRepository resetTokens;
+    private final TokenService tokenService;
 
     public UserAdminService(UserRepository users, RefreshTokenRepository refreshTokens, OrthodonticRecordRepository records,
-                            CohortRepository cohorts, RecordsProperties recordsProperties) {
+                            CohortRepository cohorts, RecordsProperties recordsProperties,
+                            PasswordResetTokenRepository resetTokens, TokenService tokenService) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.records = records;
         this.cohorts = cohorts;
         this.recordsProperties = recordsProperties;
+        this.resetTokens = resetTokens;
+        this.tokenService = tokenService;
     }
 
     /** Página de cuentas con sus historias creadas y sus turmas, contadas en consultas por página (sin N+1). */
@@ -162,6 +175,31 @@ public class UserAdminService {
         }
         users.flush();
         return toView(user);
+    }
+
+    /**
+     * Enlace de restablecimiento de contraseña de un solo uso (24 h) para una cuenta USER o
+     * COORDINATOR activa, con la fila bloqueada: 404 si no existe, 409 si es ADMIN o está
+     * deshabilitada. Borra los enlaces sin usar de la cuenta (uno nuevo anula el anterior). El token
+     * en claro solo sale en la respuesta; se guarda su hash. Nunca se escribe en el log.
+     */
+    @Transactional
+    public PasswordResetLink createPasswordReset(Long adminId, Long id) {
+        User user = users.findByIdForUpdate(id).orElseThrow(UserNotFoundException::new);
+        if (user.getRole() == Role.ADMIN || user.getStatus() != UserStatus.ACTIVE) {
+            throw new PasswordResetNotApplicableException();
+        }
+        resetTokens.deleteUnusedByUserId(id);
+        String token = tokenService.generateOpaqueToken();
+        Instant expiresAt = Instant.now().plus(PASSWORD_RESET_TTL);
+        resetTokens.save(PasswordResetToken.builder()
+            .user(user)
+            .tokenHash(tokenService.hashOpaqueToken(token))
+            .expiresAt(expiresAt)
+            .createdBy(users.getReferenceById(adminId))
+            .build());
+        log.info("Cuenta {}: enlace de restablecimiento de contraseña generado por la cuenta {}", id, adminId);
+        return new PasswordResetLink(token, expiresAt);
     }
 
     private UserSummaryView toView(User user) {

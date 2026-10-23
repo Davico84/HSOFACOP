@@ -1,4 +1,4 @@
-import { Gauge, GraduationCap, IdCard, Layers, Undo2, UserCheck, UserX } from "lucide-react";
+import { Gauge, GraduationCap, IdCard, KeyRound, Layers, Undo2, UserCheck, UserX } from "lucide-react";
 import { IconAction } from "@/modules/core/components/IconAction";
 import type { UserSummaryResponse } from "@/modules/core/services/generated/model";
 
@@ -9,6 +9,7 @@ export interface UserRowHandlers {
   onRequestCoordination: (user: UserSummaryResponse) => void;
   onRequestRevert: (user: UserSummaryResponse) => void;
   onRequestContact: (user: UserSummaryResponse) => void;
+  onRequestPasswordReset: (user: UserSummaryResponse) => void;
 }
 
 interface UserRowActionProps extends UserRowHandlers {
@@ -33,6 +34,7 @@ export function UserRowAction({
   onRequestCoordination,
   onRequestRevert,
   onRequestContact,
+  onRequestPasswordReset,
 }: UserRowActionProps) {
   const disabling = user.status === "ACTIVE";
   const name = user.fullName;
@@ -86,6 +88,13 @@ export function UserRowAction({
           />
         </>
       )}
+      <IconAction
+        icon={KeyRound}
+        label="Restablecer contraseña"
+        ariaLabel={`Restablecer la contraseña de ${name}`}
+        disabledReason={disabling ? undefined : "Actívala para restablecer su contraseña"}
+        onClick={() => onRequestPasswordReset(user)}
+      />
       <IconAction
         icon={disabling ? UserX : UserCheck}
         label={disabling ? "Deshabilitar cuenta" : "Activar cuenta"}

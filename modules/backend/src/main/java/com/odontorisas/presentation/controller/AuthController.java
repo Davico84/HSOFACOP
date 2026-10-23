@@ -5,6 +5,7 @@ import com.odontorisas.presentation.dto.ApiProblem;
 import com.odontorisas.presentation.dto.AuthResponse;
 import com.odontorisas.presentation.dto.LoginRequest;
 import com.odontorisas.presentation.dto.RegisterRequest;
+import com.odontorisas.presentation.dto.ResetPasswordRequest;
 import com.odontorisas.presentation.dto.ValidationProblem;
 import com.odontorisas.service.auth.AuthResult;
 import com.odontorisas.service.auth.AuthService;
@@ -97,6 +98,17 @@ public class AuthController {
         return ResponseEntity.noContent()
             .header(HttpHeaders.SET_COOKIE, refreshCookieFactory.clear().toString())
             .build();
+    }
+
+    @Operation(operationId = "resetPassword",
+        summary = "Fijar una contraseña nueva con un enlace de restablecimiento (un solo uso; cierra todas las sesiones)")
+    @ApiResponse(responseCode = "204", description = "Contraseña restablecida")
+    @ApiResponse(responseCode = "400", description = "Datos inválidos o enlace usado, vencido, anulado o inexistente (invalid-password-reset)",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
+    @PostMapping("/password-reset")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.noContent().build();
     }
 
     private ResponseEntity<AuthResponse> authResponse(AuthResult result, HttpStatus status) {
