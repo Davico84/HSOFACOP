@@ -1,6 +1,6 @@
 ## Why
 
-La guía del módulo de ortodoncia interceptiva (`docs/HISTORIA CLINICA PARA MODULO ORTODONCIA INTERCEPTIVA Temp26.docx`) pide dos análisis de modelos que la historia aún no tiene: la **fórmula de Tanaka-Johnston** (predicción del espacio para caninos y premolares a partir de los incisivos inferiores) y el **análisis de Wolford** (discrepancia de tamaño dentario total y parcial). Hoy el alumno los haría a mano en papel aparte, aunque los anchos que usan ya están medidos en Moyers y Bolton.
+La guía del módulo de ortodoncia interceptiva (`docs/pdf/HISTORIA CLINICA PARA MODULO ORTODONCIA INTERCEPTIVA Temp26.docx`, fuera del repo como los demás PDF clínicos) pide dos análisis de modelos que la historia aún no tiene: la **fórmula de Tanaka-Johnston** (predicción del espacio para caninos y premolares a partir de los incisivos inferiores) y el **análisis de Wolford** (discrepancia de tamaño dentario total y parcial). Hoy el alumno los haría a mano en papel aparte, aunque los anchos que usan ya están medidos en Moyers y Bolton.
 
 ## What Changes
 
