@@ -9,10 +9,14 @@ import type { TransversalAnalysis } from './transversalAnalysis';
 import type { MoyersAnalysis } from './moyersAnalysis';
 import type { NanceAnalysis } from './nanceAnalysis';
 import type { BoltonAnalysis } from './boltonAnalysis';
+import type { TanakaAnalysis } from './tanakaAnalysis';
+import type { WolfordAnalysis } from './wolfordAnalysis';
 
 export interface ModelAnalysis {
   transversal: TransversalAnalysis;
   moyers: MoyersAnalysis;
   nance: NanceAnalysis;
   bolton: BoltonAnalysis;
+  tanaka: TanakaAnalysis;
+  wolford: WolfordAnalysis;
 }

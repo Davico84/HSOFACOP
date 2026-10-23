@@ -35,7 +35,9 @@ import com.odontorisas.service.records.content.RecordContent;
 import com.odontorisas.service.records.content.Side;
 import com.odontorisas.service.records.content.SideRelations;
 import com.odontorisas.service.records.content.Signatures;
+import com.odontorisas.service.records.content.TanakaAnalysis;
 import com.odontorisas.service.records.content.TransversalAnalysis;
+import com.odontorisas.service.records.content.WolfordAnalysis;
 import com.odontorisas.service.records.content.UpperArchWidths;
 import com.odontorisas.service.records.content.WalaToEv;
 import com.odontorisas.service.records.content.YesNo;
@@ -298,7 +300,7 @@ class RecordNormalizerTest {
 
         TransversalAnalysis t = new TransversalAnalysis(new BigDecimal("34.5"), null, new BigDecimal("50.1"), null,
             null, null, null, new BigDecimal("50.0"), null, "  Compresión maxilar leve ");
-        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t, null, null, null)).transversal();
+        TransversalAnalysis kept = RecordNormalizer.models(new ModelAnalysis(t, null, null, null, null, null)).transversal();
         assertThat(kept.intermolarUpper()).isEqualByComparingTo("50.1");
         assertThat(kept.xIdealWidth()).isEqualByComparingTo("50.0");
         assertThat(kept.walaToEv()).isEqualTo(WalaToEv.empty());
@@ -307,13 +309,13 @@ class RecordNormalizerTest {
 
     @Test
     void moyers_subsection_is_filled_when_missing_and_its_parts_kept() {
-        ModelAnalysis withoutMoyers = new ModelAnalysis(TransversalAnalysis.empty(), null, null, null);
+        ModelAnalysis withoutMoyers = new ModelAnalysis(TransversalAnalysis.empty(), null, null, null, null, null);
         assertThat(RecordNormalizer.models(withoutMoyers).moyers()).isEqualTo(MoyersAnalysis.empty());
 
         LowerIncisors incisors = new LowerIncisors(new BigDecimal("6.0"), new BigDecimal("5.5"), null, null);
         MoyersAnalysis y = new MoyersAnalysis(LocalDate.of(2026, 9, 1), incisors, null, " ", null, " Mandíbula derecho ",
             "  Discrepancia negativa ");
-        MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y, null, null)).moyers();
+        MoyersAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, y, null, null, null, null)).moyers();
         assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
         assertThat(kept.lowerIncisors()).isEqualTo(incisors);
         assertThat(kept.availableSpace()).isEqualTo(AvailableSpace.empty());
@@ -324,11 +326,11 @@ class RecordNormalizerTest {
 
     @Test
     void nance_subsection_is_filled_when_missing_and_texts_trimmed() {
-        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null, null)).nance()).isEqualTo(NanceAnalysis.empty());
+        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null, null, null, null)).nance()).isEqualTo(NanceAnalysis.empty());
 
         NanceAnalysis n = new NanceAnalysis(LocalDate.of(2026, 9, 1), new BigDecimal("70.5"), null, null, null,
             "  Falta de espacio leve ", " ", " Discrepancia negativa ");
-        NanceAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, n, null)).nance();
+        NanceAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, n, null, null, null)).nance();
         assertThat(kept.availableUpper()).isEqualByComparingTo("70.5");
         assertThat(kept.upperWidths()).isEqualTo(UpperArchWidths.empty());
         assertThat(kept.lowerWidths()).isEqualTo(LowerArchWidths.empty());
@@ -338,11 +340,28 @@ class RecordNormalizerTest {
     }
 
     @Test
+    void tanaka_and_wolford_are_filled_when_missing_and_sums_kept() {
+        ModelAnalysis old = new ModelAnalysis(null, null, null, null, null, null);
+        assertThat(RecordNormalizer.models(old).tanaka()).isEqualTo(TanakaAnalysis.empty());
+        assertThat(RecordNormalizer.models(old).wolford()).isEqualTo(WolfordAnalysis.empty());
+
+        ModelAnalysis written = new ModelAnalysis(null, null, null, null,
+            new TanakaAnalysis(new BigDecimal("23.5"), "  Coincide con Moyers "),
+            new WolfordAnalysis(new BigDecimal("96.0"), null, new BigDecimal("46.0"), null, " "));
+        ModelAnalysis kept = RecordNormalizer.models(written);
+        assertThat(kept.tanaka().incisorSum()).isEqualByComparingTo("23.5");
+        assertThat(kept.tanaka().interpretation()).isEqualTo("Coincide con Moyers");
+        assertThat(kept.wolford().upper12Sum()).isEqualByComparingTo("96.0");
+        assertThat(kept.wolford().lower12Sum()).isNull();
+        assertThat(kept.wolford().interpretation()).isNull();
+    }
+
+    @Test
     void bolton_subsection_is_filled_when_missing_and_interpretation_trimmed() {
-        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null, null)).bolton()).isEqualTo(BoltonAnalysis.empty());
+        assertThat(RecordNormalizer.models(new ModelAnalysis(null, null, null, null, null, null)).bolton()).isEqualTo(BoltonAnalysis.empty());
 
         BoltonAnalysis b = new BoltonAnalysis(LocalDate.of(2026, 9, 1), null, null, "  Exceso mandibular ");
-        BoltonAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, null, b)).bolton();
+        BoltonAnalysis kept = RecordNormalizer.models(new ModelAnalysis(null, null, null, b, null, null)).bolton();
         assertThat(kept.analysisDate()).isEqualTo(LocalDate.of(2026, 9, 1));
         assertThat(kept.firstMolars()).isEqualTo(FirstMolarWidths.empty());
         assertThat(kept.incisors()).isEqualTo(BoltonIncisors.empty());

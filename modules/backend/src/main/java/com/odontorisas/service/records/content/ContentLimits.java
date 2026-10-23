@@ -18,6 +18,8 @@ public final class ContentLimits {
     public static final String MAX_LIP_SEAL_MM = "20.0";
     /** Medidas de los análisis de modelos: 0–99,9 mm con un decimal. */
     public static final String MAX_MODEL_MM = "99.9";
+    /** Suma de los anchos de 12 piezas de una arcada (Wolford): 0–199,9 mm con un decimal. */
+    public static final String MAX_ARCH_SUM_MM = "199.9";
     /** Ancho mesiodistal de una pieza: 4,0–13,0 mm con un decimal (lo que mide un diente real). */
     public static final String MIN_TOOTH_MM = "4.0";
     public static final String MAX_TOOTH_MM = "13.0";

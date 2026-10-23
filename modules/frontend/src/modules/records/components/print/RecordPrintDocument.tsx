@@ -11,6 +11,8 @@ import { PrintOcclusalSection } from "./PrintOcclusalSection";
 import { PrintPatientSection } from "./PrintPatientSection";
 import { PrintRadiographicSection } from "./PrintRadiographicSection";
 import { PrintSignaturesSection } from "./PrintSignaturesSection";
+import { PrintTanakaSection } from "./PrintTanakaSection";
+import { PrintWolfordSection } from "./PrintWolfordSection";
 
 interface RecordPrintDocumentProps {
   record: RecordResponse;
@@ -29,8 +31,10 @@ export function RecordPrintDocument({ record }: RecordPrintDocumentProps) {
       <PrintOcclusalSection record={record} />
       <PrintModelsSection record={record} />
       <PrintMoyersSection record={record} />
+      <PrintTanakaSection record={record} />
       <PrintNanceSection record={record} />
       <PrintBoltonSection record={record} />
+      <PrintWolfordSection record={record} />
       <PrintRadiographicSection record={record} />
       <PrintDiagnosisSection record={record} />
       <PrintSignaturesSection record={record} />

@@ -3013,13 +3013,21 @@
           },
           "bolton": {
             "$ref": "#/components/schemas/BoltonAnalysis"
+          },
+          "tanaka": {
+            "$ref": "#/components/schemas/TanakaAnalysis"
+          },
+          "wolford": {
+            "$ref": "#/components/schemas/WolfordAnalysis"
           }
         },
         "required": [
           "bolton",
           "moyers",
           "nance",
-          "transversal"
+          "tanaka",
+          "transversal",
+          "wolford"
         ]
       },
       "MoyersAnalysis": {
@@ -3352,6 +3360,21 @@
           }
         }
       },
+      "TanakaAnalysis": {
+        "type": "object",
+        "properties": {
+          "incisorSum": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "interpretation": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          }
+        }
+      },
       "TransversalAnalysis": {
         "type": "object",
         "properties": {
@@ -3582,6 +3605,36 @@
             "type": "number",
             "maximum": 99.9,
             "minimum": 0
+          }
+        }
+      },
+      "WolfordAnalysis": {
+        "type": "object",
+        "properties": {
+          "upper12Sum": {
+            "type": "number",
+            "maximum": 199.9,
+            "minimum": 0
+          },
+          "lower12Sum": {
+            "type": "number",
+            "maximum": 199.9,
+            "minimum": 0
+          },
+          "upper6Sum": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "lower6Sum": {
+            "type": "number",
+            "maximum": 99.9,
+            "minimum": 0
+          },
+          "interpretation": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
           }
         }
       },

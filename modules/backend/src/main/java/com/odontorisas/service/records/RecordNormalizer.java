@@ -19,6 +19,8 @@ import com.odontorisas.service.records.content.LowerArchWidths;
 import com.odontorisas.service.records.content.LowerIncisors;
 import com.odontorisas.service.records.content.Midline;
 import com.odontorisas.service.records.content.ModelAnalysis;
+import com.odontorisas.service.records.content.TanakaAnalysis;
+import com.odontorisas.service.records.content.WolfordAnalysis;
 import com.odontorisas.service.records.content.MoyersAnalysis;
 import com.odontorisas.service.records.content.NanceAnalysis;
 import com.odontorisas.service.records.content.OcclusalAnalysis;
@@ -184,6 +186,8 @@ public final class RecordNormalizer {
         MoyersAnalysis y = m.moyers() != null ? m.moyers() : MoyersAnalysis.empty();
         NanceAnalysis n = m.nance() != null ? m.nance() : NanceAnalysis.empty();
         BoltonAnalysis b = m.bolton() != null ? m.bolton() : BoltonAnalysis.empty();
+        TanakaAnalysis k = m.tanaka() != null ? m.tanaka() : TanakaAnalysis.empty();
+        WolfordAnalysis w = m.wolford() != null ? m.wolford() : WolfordAnalysis.empty();
         return new ModelAnalysis(
             new TransversalAnalysis(
                 t.intercanineUpper(), t.intercanineLower(), t.intermolarUpper(), t.intermolarLower(),
@@ -205,7 +209,10 @@ public final class RecordNormalizer {
                 b.analysisDate(),
                 b.firstMolars() != null ? b.firstMolars() : FirstMolarWidths.empty(),
                 b.incisors() != null ? b.incisors() : BoltonIncisors.empty(),
-                text(b.interpretation())));
+                text(b.interpretation())),
+            new TanakaAnalysis(k.incisorSum(), text(k.interpretation())),
+            new WolfordAnalysis(w.upper12Sum(), w.lower12Sum(), w.upper6Sum(), w.lower6Sum(),
+                text(w.interpretation())));
     }
 
     static RadiographicAnalysis radiographic(RadiographicAnalysis r) {

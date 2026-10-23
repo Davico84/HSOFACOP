@@ -15,4 +15,20 @@ describe("orthodontic-records — Pasos con datos guardados con la historia", ()
 
     expect(filledStepsOf(values)).toEqual([1, 2, 7]);
   });
+
+  it("Lo sugerido no cuenta como dato: Tanaka y Wolford solo cuentan sumas escritas e interpretación", () => {
+    // Las sumas sugeridas nunca entran al formulario: sin escribir, quedan nulas.
+    const suggestedOnly = emptyRecordValues();
+    suggestedOnly.content.models.tanaka = { incisorSum: null, interpretation: "" };
+    suggestedOnly.content.models.wolford = { upper12Sum: null, lower12Sum: null, upper6Sum: null, lower6Sum: null, interpretation: "" };
+    expect(filledStepsOf(suggestedOnly)).toEqual([]);
+
+    const written = emptyRecordValues();
+    written.content.models.wolford = { upper12Sum: 94.2 };
+    expect(filledStepsOf(written)).toEqual([5]);
+
+    const interpreted = emptyRecordValues();
+    interpreted.content.models.tanaka = { interpretation: "Espacio suficiente" };
+    expect(filledStepsOf(interpreted)).toEqual([5]);
+  });
 });
