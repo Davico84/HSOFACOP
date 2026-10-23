@@ -554,7 +554,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(t.get("intermolarUpper").decimalValue()).isEqualByComparingTo("50.1");
         assertThat(t.get("walaToEv").get("firstMolar").decimalValue()).isEqualByComparingTo("2.6");
         assertThat(t.get("interpretation").stringValue()).isEqualTo("Compresión leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(11);
     }
 
     @Test
@@ -588,7 +588,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(y.get("crowdingNegative").stringValue()).isEqualTo("Mandíbula derecho");
         assertThat(y.get("crowdingPositive").isNull()).isTrue();
         assertThat(y.get("interpretation").stringValue()).isEqualTo("Discrepancia negativa");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(11);
         assertThat(jdbc.queryForObject("SELECT content->'models'->'moyers'->>'analysisDate' FROM orthodontic_records WHERE id = ?",
             String.class, id)).isEqualTo("2026-09-01");
     }
@@ -618,7 +618,7 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(n.get("upperWidths").get("tooth25").decimalValue()).isEqualByComparingTo("6.9");
         assertThat(n.get("lowerWidths").get("tooth31").decimalValue()).isEqualByComparingTo("5.4");
         assertThat(n.get("conclusionUpper").stringValue()).isEqualTo("Falta de espacio leve");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(11);
     }
 
     @Test
@@ -651,7 +651,128 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(b.get("incisors").get("tooth11").decimalValue()).isEqualByComparingTo("8.7");
         assertThat(saved.get("content").get("models").get("nance").get("upperWidths").get("tooth11").decimalValue())
             .isEqualByComparingTo("8.6");
-        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(10);
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(11);
+    }
+
+    // --- Tanaka-Johnston y Wolford (add-orthodontic-tanaka-wolford-analysis) ---
+
+    /** Cuerpo de guardado con el contenido dado (y el número que la historia ya tiene). */
+    private String bodyWith(JsonNode current, ObjectNode content) throws Exception {
+        ObjectNode body = json.createObjectNode();
+        body.put("version", current.get("version").asLong());
+        body.put("patientName", "Ana");
+        body.set("content", content);
+        return json.writeValueAsString(body);
+    }
+
+    @Test
+    void tanaka_and_wolford_are_saved_with_written_sums() throws Exception {
+        Session torres = register("Dra. Torres");
+        JsonNode created = createOk(torres, "Ana");
+        long id = created.get("id").asLong();
+        ObjectNode content = json.createObjectNode();
+        ObjectNode models = content.putObject("models");
+        models.putObject("tanaka").put("incisorSum", 23.0).put("interpretation", " Coincide con Moyers ");
+        models.putObject("wolford").put("upper12Sum", 96.0).put("lower12Sum", 88.0).put("upper6Sum", 46.0)
+            .putNull("lower6Sum").put("interpretation", "Leve exceso mandibular");
+
+        JsonNode saved = read(save(torres, id, bodyWith(created, content)));
+
+        JsonNode k = saved.get("content").get("models").get("tanaka");
+        assertThat(k.get("incisorSum").decimalValue()).isEqualByComparingTo("23.0");
+        assertThat(k.get("interpretation").stringValue()).isEqualTo("Coincide con Moyers");
+        JsonNode w = saved.get("content").get("models").get("wolford");
+        assertThat(w.get("upper12Sum").decimalValue()).isEqualByComparingTo("96.0");
+        assertThat(w.get("lower12Sum").decimalValue()).isEqualByComparingTo("88.0");
+        assertThat(w.get("upper6Sum").decimalValue()).isEqualByComparingTo("46.0");
+        assertThat(isEmpty(w.get("lower6Sum"))).isTrue();
+        assertThat(w.get("interpretation").stringValue()).isEqualTo("Leve exceso mandibular");
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(11);
+    }
+
+    @Test
+    void tanaka_and_wolford_sums_out_of_range_are_400_per_field() throws Exception {
+        Session torres = register("Dra. Torres");
+        JsonNode created = createOk(torres, "Ana");
+        long id = created.get("id").asLong();
+        ObjectNode content = json.createObjectNode();
+        ObjectNode models = content.putObject("models");
+        models.putObject("tanaka").put("incisorSum", 100.0);
+        models.putObject("wolford").put("upper12Sum", 200.0).put("lower12Sum", -1.0).put("upper6Sum", 100.0)
+            .put("lower6Sum", 35.25);
+
+        MvcResult bad = save(torres, id, bodyWith(created, content));
+
+        assertThat(bad.getResponse().getStatus()).isEqualTo(400);
+        JsonNode problem = read(bad);
+        for (String field : List.of("content.models.tanaka.incisorSum", "content.models.wolford.upper12Sum",
+                "content.models.wolford.lower12Sum", "content.models.wolford.upper6Sum", "content.models.wolford.lower6Sum")) {
+            assertThat(fieldError(problem, field)).as(field).isNotBlank();
+        }
+        // El límite de 12 piezas admite 199,9.
+        models.putObject("tanaka");
+        models.putObject("wolford").put("upper12Sum", 199.9).put("lower12Sum", 0.0);
+        assertThat(save(torres, id, bodyWith(created, content)).getResponse().getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void a_schema_10_record_keeps_every_field_and_rejects_only_its_out_of_range_width() throws Exception {
+        Session torres = register("Dra. Torres");
+        JsonNode created = createOk(torres, "Ana");
+        long id = created.get("id").asLong();
+        ObjectNode content = json.createObjectNode();
+        ObjectNode models = content.putObject("models");
+        models.putObject("moyers").put("interpretation", "Moyers previo")
+            .putObject("lowerIncisors").put("tooth42", 6.0).put("tooth41", 5.5).put("tooth31", 5.4).put("tooth32", 6.1);
+        models.putObject("nance").put("availableUpper", 70.5).putObject("upperWidths").put("tooth13", 7.9);
+        models.putObject("bolton").put("interpretation", "Bolton previo").putObject("firstMolars").put("tooth16", 10.8);
+        read(save(torres, id, bodyWith(created, content)));
+
+        // Historia del formato anterior: sin Tanaka ni Wolford, schemaVersion 10 y un ancho histórico fuera de rango.
+        jdbc.update("UPDATE orthodontic_records SET content = jsonb_set(jsonb_set(content #- '{models,tanaka}' #- '{models,wolford}',"
+            + " '{schemaVersion}', '10'), '{models,bolton,firstMolars,tooth16}', '14.5') WHERE id = ?", id);
+        JsonNode stored = json.readTree(jdbc.queryForObject(
+            "SELECT content::text FROM orthodontic_records WHERE id = ?", String.class, id)).get("models");
+
+        JsonNode opened = read(getRecord(torres, id));
+
+        JsonNode openedModels = opened.get("content").get("models");
+        for (String block : List.of("moyers", "nance", "bolton")) {
+            assertThat(openedModels.get(block)).as(block).isEqualTo(json.readTree(json.writeValueAsString(
+                normalizedBlock(stored.get(block), openedModels.get(block)))));
+        }
+        assertThat(openedModels.get("bolton").get("firstMolars").get("tooth16").decimalValue()).isEqualByComparingTo("14.5");
+        assertThat(isEmpty(openedModels.get("tanaka").get("incisorSum"))).isTrue();
+        assertThat(isEmpty(openedModels.get("wolford").get("upper12Sum"))).isTrue();
+
+        // Guardar tal cual: solo el ancho fuera de rango falla.
+        ObjectNode again = (ObjectNode) opened.get("content").deepCopy();
+        MvcResult rejected = save(torres, id, bodyWith(opened, again));
+        assertThat(rejected.getResponse().getStatus()).isEqualTo(400);
+        JsonNode problem = read(rejected);
+        assertThat(fieldError(problem, "content.models.bolton.firstMolars.tooth16")).isNotBlank();
+        assertThat(problem.get("errors")).hasSize(1);
+
+        // Corregido, se guarda sin perder nada.
+        ((ObjectNode) again.get("models").get("bolton").get("firstMolars")).put("tooth16", 10.8);
+        JsonNode saved = read(save(torres, id, bodyWith(opened, again)));
+        assertThat(saved.get("content").get("models").get("moyers").get("interpretation").stringValue()).isEqualTo("Moyers previo");
+        assertThat(saved.get("content").get("models").get("nance").get("upperWidths").get("tooth13").decimalValue())
+            .isEqualByComparingTo("7.9");
+        assertThat(saved.get("content").get("schemaVersion").asInt()).isEqualTo(11);
+    }
+
+    /** El bloque guardado, completado con los campos que el normalizador devuelve vacíos (nulos u objetos vacíos). */
+    private JsonNode normalizedBlock(JsonNode stored, JsonNode opened) {
+        ObjectNode merged = (ObjectNode) opened.deepCopy();
+        stored.properties().forEach(e -> {
+            if (e.getValue().isObject()) {
+                merged.set(e.getKey(), normalizedBlock(e.getValue(), opened.get(e.getKey())));
+            } else {
+                merged.set(e.getKey(), e.getValue());
+            }
+        });
+        return merged;
     }
 
     @Test

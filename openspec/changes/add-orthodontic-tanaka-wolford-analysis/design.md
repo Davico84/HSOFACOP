@@ -41,6 +41,7 @@ record WolfordAnalysis(BigDecimal upper12Sum, BigDecimal lower12Sum,
 
 ### Impresión
 - `PrintTanakaSection` tras `PrintMoyersSection` y `PrintWolfordSection` tras `PrintBoltonSection`, cada una en página nueva con el título de la guía, nombre y edad, las fórmulas como en la guía (`MAX (___ / 2) + 11 = ___`, `Discrepancia total = Suma 12 Max ___ − (Suma 12 Mand ___ × 1,1)`) con los valores efectivos y la interpretación en renglones. Sin una suma, la fila y la fórmula se imprimen con las sumas disponibles y el resultado "—", sin signo.
+- Decisiones de la revisión (0.1, HTML `docs/pdf/revision-fase3-0N-*.html`): Tanaka sin comparación con Moyers; título "FÓRMULA DE TANAKA-JOHNSTON"; interpretación en 3 renglones en ambas hojas; la hoja no indica si la suma fue sugerida o escrita; sin ayuda fija para interpretar Wolford. La hoja de Wolford incluye la grilla de la guía "Ancho mesiodistal de las 12 piezas" (dos filas: 16 → 26 y 46 → 36, con números de pieza) llena con los anchos de Bolton y Nance, solo lectura (casilla vacía si falta).
 - La impresión gana exactamente dos páginas físicas; se mide con Edge headless antes y después (no se declara un total fijo).
 - Antes de codear las hojas: revisión página por página con un HTML local generado en `docs/pdf/` (fuera del repo, como los PDF; guía, campos y preview), como en Moyers y Nance.
 

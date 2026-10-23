@@ -105,6 +105,10 @@ La impresión SHALL incluir cada análisis en su propia hoja, con nombre y edad:
 - **WHEN** se imprime una historia
 - **THEN** después de la hoja de Bolton sale "ANÁLISIS DE WOLFORD" con la discrepancia total y la parcial, sus fórmulas y la interpretación
 
+#### Scenario: Grilla de anchos en la hoja de Wolford
+- **WHEN** se imprime una historia
+- **THEN** la hoja de Wolford incluye la grilla "Ancho mesiodistal de las 12 piezas" con los números de pieza 16 a 26 y 46 a 36 y los anchos registrados en Bolton y Nance (casilla vacía si falta el ancho), sin pedirlos de nuevo en el formulario
+
 #### Scenario: Hoja con una suma vacía
 - **WHEN** se imprime una historia sin la suma de 6 mandibulares
 - **THEN** la fila de la discrepancia parcial sale con su fórmula, la suma de 6 maxilares y el resultado "—", sin signo
