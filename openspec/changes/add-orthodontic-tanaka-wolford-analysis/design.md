@@ -21,22 +21,28 @@ record WolfordAnalysis(BigDecimal upper12Sum, BigDecimal lower12Sum,
                        BigDecimal upper6Sum, BigDecimal lower6Sum,
                        @Size(max = LONG_TEXT) String interpretation)
 ```
-- En `ModelAnalysis` como `tanaka` y `wolford` (con `empty()`); `schemaVersion` 11. Validación: `@DecimalMin("0")`, `@Digits(integer = 2/3, fraction = 1)` y `@DecimalMax` 99,9 (incisivos, 6 piezas) o 199,9 (12 piezas, constante nueva `MAX_ARCH_SUM_MM`).
+- En `ModelAnalysis` como `tanaka` y `wolford` (con `empty()`), con la misma obligatoriedad en el contrato que los bloques existentes; `schemaVersion` 11. Sin migración de base de datos ni del JSON: solo normalización al leer y versión 11 al guardar.
+- Validación backend: `MAX_ARCH_SUM_MM = "199.9"`; `@DecimalMin("0")` en todas; `@DecimalMax(MAX_MODEL_MM)` + `@Digits(integer = 2, fraction = 1)` en la suma de Tanaka y en las de 6 piezas; `@DecimalMax(MAX_ARCH_SUM_MM)` + `@Digits(integer = 3, fraction = 1)` en las de 12. Frontend: `MAX_ARCH_SUM_MM = 199.9` y los mismos límites en Zod (nullish), con mensajes por campo "Mínimo 0 mm.", "Máximo 99,9 mm.", "Máximo 199,9 mm." y "Máximo un decimal." en la ruta exacta.
+- **Compatibilidad**: al leer una historia `schemaVersion` 10, `RecordNormalizer` conserva todos los campos existentes sin corregir ni descartar nada, añade `tanaka` y `wolford` vacíos y devuelve versión 11. Un ancho histórico fuera de rango se muestra tal cual; al guardar, la validación marca solo ese campo y no se guarda hasta corregirlo (comportamiento vigente de Bolton).
 - **Nulo = seguir la sugerencia; con valor = escrito por el tratante.** No se guarda la suma sugerida: así una corrección de un ancho de Moyers o Bolton se refleja sola mientras el tratante no haya escrito la suya. Historias anteriores: los bloques llegan nulos → sumas sugeridas, interpretación vacía; ningún dato existente cambia.
 
 ### Sumas sugeridas (frontend, `records/utils/tanaka.ts` y `wolford.ts`)
-- Tanaka: suma de 42, 41, 31 y 32 de `models.moyers.lowerIncisors` (la misma suma que ya muestra Moyers); vacía si falta alguno.
-- Wolford: 12 maxilares = 16 y 26 (Bolton) + 11, 12, 21, 22 (Bolton) + 13–15 y 23–25 (Nance); 12 mandibulares igual con 46/36, 41/42/31/32 y 33–35/43–45; 6 = de canino a canino (13–23 y 33–43) con las mismas fuentes. Vacía si falta cualquier pieza.
-- Valor efectivo = escrito ?? sugerido. Cálculos con aritmética en décimas (enteros) para no arrastrar errores de coma flotante; redondeo a un decimal, la mitad hacia arriba (`23,3 → 22,7 / 22,2`).
-- Campo `SuggestedMeasureField` (genérico en `core/components/form`, sobre `MeasureField`): muestra el valor efectivo; escribir fija el valor; bajo el campo, `FieldHint` "Tomada de …" o "Valor editado · <fuente> da 23,0 mm" con el botón "Usar el de <fuente>" (pone nulo). Borrar el campo vuelve a la sugerencia (no se puede dejar vacía una suma que tiene sugerencia; se acepta).
+- Tanaka lee **solo** `models.moyers.lowerIncisors` (42, 41, 31, 32): es la fuente clínica vigente de la suma de incisivos inferiores de Moyers; no lee los duplicados de Nance ni los incisivos propios de Bolton.
+- Wolford sigue la convención de piezas de Bolton (`UPPER_BOLTON_TEETH`, `LOWER_BOLTON_TEETH` y sus anteriores): 12 maxilares 16,15,14,13,12,11,21,22,23,24,25,26; 12 mandibulares 46,45,44,43,42,41,31,32,33,34,35,36; 6 maxilares 13,12,11,21,22,23; 6 mandibulares 43,42,41,31,32,33. Incisivos y primeros molares salen de `models.bolton`, caninos y premolares de `models.nance` (piezas compartidas).
+- Una pieza fuente sirve solo si es numérica, finita y está en 4,0–13,0 mm. Si alguna requerida falta → sugerencia nula con "Completa los anchos en … o escribe la suma"; si alguna está fuera de rango → nula con "Corrige los anchos fuera de rango o escribe la suma". El valor guardado nunca se modifica al abrir.
+- Valor efectivo = escrito ?? sugerido. Cálculos en décimas (enteros) para no arrastrar errores de coma flotante; redondeo a un decimal con la mitad hacia arriba en magnitud (`23,3 → 22,7 / 22,2`; −0,85 → −0,9), sin `Math.round` directo sobre negativos. Constantes internas 10.5 / 1.1 / 1.3; en pantalla e impresión "10,5", "1,1" y "1,3".
+- **Suma vacía**: no existe un "vacío a propósito" cuando hay sugerencia: nulo siempre significa usar la sugerencia. Para que una suma quede vacía deben faltar (o estar fuera de rango) anchos fuente. Borrar el campo pone nulo y vuelve a la sugerencia.
+- **La sugerencia se deriva al pintar y nunca se escribe en react-hook-form.** Solo el teclado del tratante o "Usar el de …" llaman a `setValue`, y "Usar el de …" fija nulo, no el número. Con solo sugerencias, `isDirty`, `filledSteps` y el autoguardado no cambian.
+- `SuggestedMeasureField` (genérico en `core/components/form`, sobre `MeasureField`): recibe `suggestedValue`, `sourceLabel` ("Moyers"), `sourceDescription` (la nota) y `onUseSuggested` además de las props de `MeasureField`; no importa nada de `records` ni conoce piezas. `tanaka.ts` / `wolford.ts` arman los textos. La nota va enlazada con `aria-describedby`; "Usar el de <fuente>" es un `type="button"` con nombre accesible completo ("Usar la suma calculada de Moyers").
 
 ### Paneles y estado del paso
 - Panel "Fórmula de Tanaka-Johnston" tras Moyers y "Análisis de Wolford" tras Bolton, con su resultado calculado (como `MoyersSpaceTable`/`BoltonRatioBlock`) y la interpretación (`TextAreaField`).
-- `filled.ts`: solo cuentan las sumas escritas (no nulas) y la interpretación; las sugeridas no marcan el paso "con datos".
+- `FilledStatus.name` se amplía con `content.models.tanaka` y `content.models.wolford`. `filled.ts` usa para estos bloques una función propia que cuenta solo sumas escritas (no nulas) e interpretación, ignorando los valores efectivos derivados; las sugeridas no marcan el paso "con datos".
 
 ### Impresión
-- `PrintTanakaSection` tras `PrintMoyersSection` y `PrintWolfordSection` tras `PrintBoltonSection`, cada una en página nueva con el título de la guía, nombre y edad, las fórmulas como en la guía (`MAX (___ / 2) + 11 = ___`, `Discrepancia total = Suma 12 Max ___ − (Suma 12 Mand ___ × 1,1)`) con los valores efectivos y la interpretación en renglones. Las hojas impresas pasan de 13 a 15.
-- Antes de codear las hojas: revisión página por página con el HTML local (`docs/pdf/revision-pag-NN.html`: guía, campos y preview), como en Moyers y Nance.
+- `PrintTanakaSection` tras `PrintMoyersSection` y `PrintWolfordSection` tras `PrintBoltonSection`, cada una en página nueva con el título de la guía, nombre y edad, las fórmulas como en la guía (`MAX (___ / 2) + 11 = ___`, `Discrepancia total = Suma 12 Max ___ − (Suma 12 Mand ___ × 1,1)`) con los valores efectivos y la interpretación en renglones. Sin una suma, la fila y la fórmula se imprimen con las sumas disponibles y el resultado "—", sin signo.
+- La impresión gana exactamente dos páginas físicas; se mide con Edge headless antes y después (no se declara un total fijo).
+- Antes de codear las hojas: revisión página por página con un HTML local generado en `docs/pdf/` (fuera del repo, como los PDF; guía, campos y preview), como en Moyers y Nance.
 
 ## Risks / Trade-offs
 

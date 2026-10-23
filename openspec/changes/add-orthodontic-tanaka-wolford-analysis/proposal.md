@@ -8,7 +8,8 @@ La guía del módulo de ortodoncia interceptiva (`docs/pdf/HISTORIA CLINICA PARA
 - **Wolford** (panel nuevo tras Bolton): suma de 12 y de 6 piezas maxilares y mandibulares; discrepancia total = suma 12 max − suma 12 mand × 1,1 y parcial = suma 6 max − suma 6 mand × 1,3, calculadas, e interpretación escrita.
 - **Sumas sugeridas y editables**: cada suma se toma sola de lo ya medido (Tanaka de los incisivos de Moyers; Wolford de las piezas de Bolton y Nance) con una nota que dice de dónde sale. El tratante puede escribir otro valor; entonces la nota lo indica y ofrece volver al valor calculado.
 - **Impresión**: cada análisis en su propia hoja, como Moyers y Nance: "FÓRMULA DE TANAKA-JOHNSTON" tras la hoja de Moyers y "ANÁLISIS DE WOLFORD" tras la de Bolton.
-- **Historias existentes**: no pierden nada; los análisis nuevos aparecen con las sumas sugeridas y sin interpretación (`schemaVersion` 11, sin migración de datos).
+- **Historias existentes**: no pierden nada; los análisis nuevos aparecen con las sumas sugeridas y sin interpretación. Sin migración de base de datos ni del JSON: solo normalización al leer y `schemaVersion` 11 al guardar.
+- **Impresión de Nance**: pasa a salir tras la hoja de Tanaka-Johnston (antes, tras Moyers).
 
 ### Non-goals
 
