@@ -763,17 +763,6 @@
         "operationId": "listRecords",
         "parameters": [
           {
-            "name": "q",
-            "in": "query",
-            "description": "Busca en paciente, documento y número (sin distinguir tildes ni mayúsculas)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "maxLength": 120,
-              "minLength": 0
-            }
-          },
-          {
             "name": "cohortId",
             "in": "query",
             "description": "Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran",
@@ -820,7 +809,7 @@
             }
           },
           "400": {
-            "description": "Página, tamaño o búsqueda inválidos",
+            "description": "Página o tamaño inválidos",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1153,6 +1142,113 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso para realizar esta acción",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orthodontic-records/search": {
+      "post": {
+        "tags": [
+          "orthodontic-records"
+        ],
+        "summary": "Buscar historias por texto (el texto va en el cuerpo, no en la URL)",
+        "operationId": "searchRecords",
+        "parameters": [
+          {
+            "name": "cohortId",
+            "in": "query",
+            "description": "Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Página (base 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Tamaño (1–100; uno mayor se recorta a 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRecordsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Página de historias que coinciden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseRecordSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cuerpo, texto (más de 120 caracteres), página o tamaño inválidos",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4322,6 +4418,121 @@
           "record"
         ]
       },
+      "SearchRecordsRequest": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Busca en paciente, documento y número (sin distinguir tildes ni mayúsculas); vacío lista sin filtrar",
+            "maxLength": 120,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "q"
+        ]
+      },
+      "PageResponseRecordSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Página actual (base 0)"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Tamaño aplicado (máximo 100)"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean",
+            "description": "¿Es la última página?"
+          }
+        },
+        "required": [
+          "content",
+          "last",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "RecordSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recordNumber": {
+            "type": "string",
+            "example": "AEO-0015"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "DNI",
+              "FOREIGNER_CARD",
+              "PASSPORT"
+            ]
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "treatingDentist": {
+            "type": "string"
+          },
+          "treatmentStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "cohortName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Turma del autor; nula si no tiene"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "patientLocked": {
+            "type": "boolean",
+            "description": "Datos del paciente fijos (ya se imprimió)"
+          }
+        },
+        "required": [
+          "authorName",
+          "id",
+          "patientLocked",
+          "patientName",
+          "recordNumber",
+          "updatedAt"
+        ]
+      },
       "CohortNameRequest": {
         "type": "object",
         "properties": {
@@ -4617,107 +4828,6 @@
           "size",
           "totalElements",
           "totalPages"
-        ]
-      },
-      "PageResponseRecordSummaryResponse": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecordSummaryResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Página actual (base 0)"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Tamaño aplicado (máximo 100)"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean",
-            "description": "¿Es la última página?"
-          }
-        },
-        "required": [
-          "content",
-          "last",
-          "page",
-          "size",
-          "totalElements",
-          "totalPages"
-        ]
-      },
-      "RecordSummaryResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "recordNumber": {
-            "type": "string",
-            "example": "AEO-0015"
-          },
-          "patientName": {
-            "type": "string"
-          },
-          "documentType": {
-            "type": "string",
-            "enum": [
-              "DNI",
-              "FOREIGNER_CARD",
-              "PASSPORT"
-            ]
-          },
-          "documentNumber": {
-            "type": "string"
-          },
-          "treatingDentist": {
-            "type": "string"
-          },
-          "treatmentStartDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "authorName": {
-            "type": "string"
-          },
-          "cohortName": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Turma del autor; nula si no tiene"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "patientLocked": {
-            "type": "boolean",
-            "description": "Datos del paciente fijos (ya se imprimió)"
-          }
-        },
-        "required": [
-          "authorName",
-          "id",
-          "patientLocked",
-          "patientName",
-          "recordNumber",
-          "updatedAt"
         ]
       },
       "RecordQuotaResponse": {

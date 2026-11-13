@@ -89,11 +89,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
-    /** Red de seguridad: cualquier error inesperado → 500 (con log del stacktrace y traceId). */
+    /**
+     * Red de seguridad: cualquier error inesperado → 500. Registra solo metadatos técnicos
+     * (traceId, clases de la excepción y de su causa raíz, y el punto donde se lanzó): nunca el
+     * mensaje ni el stacktrace, porque los errores de base de datos suelen incluir valores de
+     * pacientes (p. ej. el detalle de una violación de unicidad). Ver docs/backend.md §10.
+     */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUncaught(Exception ex) {
         String traceId = MDC.get(TraceIdFilter.TRACE_ID_KEY);
-        log.error("[trace {}] Excepción no controlada: {}", traceId, ex.getMessage(), ex);
+        Throwable root = rootCause(ex);
+        log.error("[trace {}] Excepción no controlada: {} (causa raíz: {}) en {}",
+            traceId, ex.getClass().getName(), root.getClass().getName(), origin(root));
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error inesperado.");
         problem.setType(URI.create("/errors/internal-server-error"));
@@ -145,6 +152,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             addExtensions(problem);
         }
         return super.handleExceptionInternal(ex, enriched, headers, statusCode, request);
+    }
+
+    private static Throwable rootCause(Throwable ex) {
+        Throwable current = ex;
+        // Límite por si la cadena de causas es cíclica.
+        for (int i = 0; i < 20 && current.getCause() != null && current.getCause() != current; i++) {
+            current = current.getCause();
+        }
+        return current;
+    }
+
+    /** Clase, método y línea donde se lanzó la excepción (sin mensaje); "desconocido" si no hay traza. */
+    private static String origin(Throwable ex) {
+        StackTraceElement[] trace = ex.getStackTrace();
+        if (trace.length == 0) {
+            return "desconocido";
+        }
+        StackTraceElement top = trace[0];
+        return top.getClassName() + "." + top.getMethodName() + ":" + top.getLineNumber();
     }
 
     private static final URI ABOUT_BLANK = URI.create("about:blank");

@@ -2,8 +2,11 @@ package com.odontorisas.records;
 
 import com.odontorisas.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** Scenarios de orthodontic-records de punta a punta (JWT real, service, PostgreSQL). */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ExtendWith(OutputCaptureExtension.class)
 class OrthodonticRecordsIT extends AbstractIntegrationTest {
 
     private static final String PASSWORD = "password123";
@@ -115,11 +119,13 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
     }
 
     private JsonNode list(Session as, String q) throws Exception {
-        var request = get(BASE).header("Authorization", "Bearer " + as.token());
+        // Con texto, la búsqueda va por POST con el texto en el cuerpo (nunca en la URL).
         if (q != null) {
-            request.param("q", q);
+            return read(mockMvc.perform(post(BASE + "/search").header("Authorization", "Bearer " + as.token())
+                .contentType(MediaType.APPLICATION_JSON).content(json.createObjectNode().put("q", q).toString()))
+                .andReturn());
         }
-        return read(mockMvc.perform(request).andReturn());
+        return read(mockMvc.perform(get(BASE).header("Authorization", "Bearer " + as.token())).andReturn());
     }
 
     private static List<String> numbers(JsonNode page) {
@@ -921,5 +927,14 @@ class OrthodonticRecordsIT extends AbstractIntegrationTest {
         assertThat(row).isNotNull();
         assertThat(row.get("recordQuota").asInt()).isEqualTo(5);
         assertThat(row.get("recordCount").asLong()).isEqualTo(3);
+    }
+
+    /** Scenario "Petición con datos en el cuerpo" (project-foundation): guardar no deja el cuerpo en los registros. */
+    @Test
+    void saving_a_record_leaves_no_patient_values_in_the_logs(CapturedOutput output) throws Exception {
+        Session user = register("Dra. Registro");
+        String marker = "Pac-Marcador-" + UUID.randomUUID();
+        createOk(user, marker);
+        assertThat(output.getAll()).doesNotContain(marker);
     }
 }

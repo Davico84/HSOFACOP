@@ -128,7 +128,7 @@ describe("app-shell — Identidad en la cabecera y cierre de sesión en la barra
       }),
     );
     signIn();
-    useRecordsListStore.getState().setListUrl("/historias?q=quispe", 1);
+    useRecordsListStore.getState().setListUrl("/historias?pagina=3", 1);
     const user = userEvent.setup();
     renderApp("/");
 

@@ -466,6 +466,16 @@ en despliegue).
 - **Caché**: Spring Cache + Caffeine. `@Cacheable`/`@CacheEvict` con nombres de caché explícitos; cachea solo lo que aporta (lecturas costosas y estables).
 - **Logging**: SLF4J. Se prefiere Lombok `@Slf4j`; `LoggerFactory.getLogger(...)` es válido cuando la clase no usa Lombok o necesita un logger especial (el código actual lo usa). Mensajes en español (§2). Niveles adecuados (`info`, `warn`, `error`, `debug`). Log estructurado con contexto (ids), **sin** secretos ni datos personales (PII) de usuarios o clientes.
 
+### 13.1 Política de registros — sin datos de pacientes
+
+Capacidad: [`project-foundation`](../openspec/specs/project-foundation/spec.md), requisito "Registros del backend sin datos de pacientes".
+
+- **Sí se registra:** marca de tiempo, nivel, `traceId`, clase de la excepción y de su causa raíz, punto donde se lanzó (clase, método y línea) e identificadores numéricos de cuenta.
+- **No se registra:** cuerpos de petición, valores de campos de historias, el **mensaje** de una excepción (los errores de base de datos suelen incluir valores, p. ej. el detalle de una violación de unicidad) ni su stacktrace (repite los mensajes). `GlobalExceptionHandler.handleUncaught` aplica esto: nunca pasa `ex` ni `ex.getMessage()` al logger.
+- **Hibernate:** `org.hibernate.SQL` y `org.hibernate.orm.jdbc.bind` fijados en `WARN` en `application.yml`; no subirlos ni siquiera en local.
+- **URLs:** el texto buscado de un paciente no viaja en la URL (la búsqueda es `POST /api/orthodontic-records/search`, con el texto en el cuerpo), porque la URL sí queda en los registros de acceso.
+- **Fuera de nuestro alcance:** los registros de acceso del proveedor de alojamiento o de un proxy son externos; este código no los controla. Por eso nada sensible debe ir en la URL ni en cabeceras.
+
 ---
 
 ## 14. Lombok — uso recomendado

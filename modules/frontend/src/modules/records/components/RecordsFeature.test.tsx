@@ -5,18 +5,34 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
 import { page, recordResponse, summary } from "../test/fixtures";
 import { renderRecordRoutes } from "../test/renderRecordRoutes";
+import { useRecordsSearchStore } from "@/store/useRecordsSearchStore";
 
-/** Backend de listado: registra la búsqueda pedida y responde según ella. */
+/**
+ * Backend de listado: sin texto responde el `GET`; con texto, el `POST /search` (el texto va en el
+ * cuerpo). Registra el texto pedido (`null` = listado sin búsqueda) y las URL de las peticiones.
+ */
 function mockList(respond: (q: string | null) => ReturnType<typeof page>) {
+  console.log('MOCKLIST CALLED');
   const queries: (string | null)[] = [];
+  const urls: string[] = [];
+  console.log('LIST', server.listHandlers().length);
+  server.events.on('request:unhandled', ({request}) => console.log('UNHANDLED', request.method, request.url));
+  server.events.on('request:match', ({request}) => console.log('MATCH', request.method, request.url));
   server.use(
     http.get("*/api/orthodontic-records", ({ request }) => {
-      const q = new URL(request.url).searchParams.get("q");
+      console.log('HIT GET');
+      urls.push(request.url);
+      queries.push(null);
+      return HttpResponse.json(respond(null));
+    }),
+    http.post("*/api/orthodontic-records/search", async ({ request }) => {
+      urls.push(request.url);
+      const { q } = (await request.json()) as { q: string };
       queries.push(q);
       return HttpResponse.json(respond(q));
     }),
   );
-  return queries;
+  return Object.assign(queries, { urls });
 }
 
 describe("orthodontic-records — Listado y búsqueda de historias", () => {
@@ -51,6 +67,8 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
     expect(await screen.findByText("Ana QUÍSPE")).toBeInTheDocument();
     expect(queries).toContain("quispe");
     expect(queries.filter((q) => q !== null && q !== "quispe")).toEqual([]);
+    // Scenario "Buscar por nombre": ninguna URL de la API lleva el texto.
+    expect(queries.urls.filter((u) => u.includes("quispe"))).toEqual([]);
   });
 
   it("sin resultados: estado vacío con 'Limpiar búsqueda'", async () => {
@@ -88,23 +106,49 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
     await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     await waitFor(() => expect(screen.getByRole("row", { name: /AEO-0001/ })).toBeInTheDocument());
   });
-  it("la búsqueda y la página quedan en la URL", async () => {
+  it("la página queda en la URL y el texto buscado no", async () => {
     mockList((q) => page([summary({ patientName: q ? "Ana QUÍSPE" : "Ana Quispe" })], 0, 3));
     const { router } = renderRecordRoutes("/historias");
     await screen.findByRole("row", { name: /AEO-0001/ });
 
     await userEvent.type(screen.getByRole("searchbox", { name: "Buscar historias" }), "quispe");
     await screen.findByText("Ana QUÍSPE");
-    expect(router.state.location.search).toBe("?q=quispe");
+    expect(router.state.location.search).toBe("");
 
     await userEvent.click(screen.getByRole("button", { name: "Siguiente" }));
-    await waitFor(() => expect(router.state.location.search).toBe("?q=quispe&pagina=2"));
+    await waitFor(() => expect(router.state.location.search).toBe("?pagina=2"));
+    expect(router.state.location.search).not.toContain("quispe");
+    expect(screen.getByRole("searchbox", { name: "Buscar historias" })).toHaveValue("quispe");
+  });
+
+  it("la búsqueda de otra cuenta en la misma pestaña no se hereda", async () => {
+    const queries = mockList((q) => page([summary({ patientName: q ? "Ana QUÍSPE" : "Ana Quispe" })]));
+    useRecordsSearchStore.getState().setText("quispe", 99);
+    renderRecordRoutes("/historias");
+
+    await screen.findByRole("row", { name: /AEO-0001/ });
+    expect(screen.getByRole("searchbox", { name: "Buscar historias" })).toHaveValue("");
+    expect([...queries]).toEqual([null]);
+  });
+
+  it("limpiar la búsqueda borra el texto guardado en la pestaña", async () => {
+    mockList((q) => page(q ? [] : [summary()]));
+    renderRecordRoutes("/historias");
+    await screen.findByRole("row", { name: /AEO-0001/ });
+
+    await userEvent.type(screen.getByRole("searchbox", { name: "Buscar historias" }), "zzz");
+    await userEvent.click(await screen.findByRole("button", { name: "Limpiar búsqueda" }));
+    await screen.findByRole("row", { name: /AEO-0001/ });
+
+    expect(useRecordsSearchStore.getState().text).toBe("");
+    expect(JSON.parse(sessionStorage.getItem("hsfacop.records-search") ?? "{}").state.text).toBe("");
   });
 
   it("la vista previa se abre en la misma pestaña y 'Volver' regresa al listado con su búsqueda", async () => {
     mockList((q) => page(q ? [summary({ patientName: "Ana QUÍSPE" })] : [summary()]));
     server.use(http.get("*/api/orthodontic-records/:id", () => HttpResponse.json(recordResponse())));
-    const { router } = renderRecordRoutes("/historias?q=quispe");
+    useRecordsSearchStore.getState().setText("quispe", 1);
+    const { router } = renderRecordRoutes("/historias");
 
     const row = await screen.findByRole("row", { name: /AEO-0001/ });
     expect(screen.getByRole("searchbox", { name: "Buscar historias" })).toHaveValue("quispe");
@@ -117,7 +161,7 @@ describe("orthodontic-records — Listado y búsqueda de historias", () => {
 
     await userEvent.click(screen.getByRole("link", { name: "Volver" }));
     await screen.findByText("Ana QUÍSPE");
-    expect(router.state.location.search).toBe("?q=quispe");
+    expect(router.state.location.search).toBe("");
     expect(screen.getByRole("searchbox", { name: "Buscar historias" })).toHaveValue("quispe");
   });
   it("'Editar' abre la historia en el formulario, paso 1", async () => {

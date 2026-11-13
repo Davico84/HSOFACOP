@@ -13,6 +13,8 @@ import type {
   PrintRecordResponse,
   RecordQuotaResponse,
   RecordResponse,
+  SearchRecordsParams,
+  SearchRecordsRequest,
   UnlockRequestRequest,
   UpdateRecordRequest
 } from './model';
@@ -112,6 +114,21 @@ export const printRecord = (
       );
     }
   /**
+ * @summary Buscar historias por texto (el texto va en el cuerpo, no en la URL)
+ */
+export const searchRecords = (
+    searchRecordsRequest: SearchRecordsRequest,
+    params?: SearchRecordsParams,
+ ) => {
+      return customInstance<PageResponseRecordSummaryResponse>(
+      {url: `/api/orthodontic-records/search`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: searchRecordsRequest,
+        params
+    },
+      );
+    }
+  /**
  * @summary Cupo de historias del usuario autenticado y cuántas creó
  */
 export const getRecordQuota = (
@@ -140,5 +157,6 @@ export type CreateRecordResult = NonNullable<Awaited<ReturnType<typeof createRec
 export type RequestPatientUnlockResult = NonNullable<Awaited<ReturnType<typeof requestPatientUnlock>>>
 export type DiscardPatientUnlockRequestResult = NonNullable<Awaited<ReturnType<typeof discardPatientUnlockRequest>>>
 export type PrintRecordResult = NonNullable<Awaited<ReturnType<typeof printRecord>>>
+export type SearchRecordsResult = NonNullable<Awaited<ReturnType<typeof searchRecords>>>
 export type GetRecordQuotaResult = NonNullable<Awaited<ReturnType<typeof getRecordQuota>>>
 export type UnlockPatientResult = NonNullable<Awaited<ReturnType<typeof unlockPatient>>>

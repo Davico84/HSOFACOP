@@ -8,6 +8,7 @@ import { useMediaQuery } from "@/modules/core/hooks/useMediaQuery";
 import { getUserFriendlyError } from "@/modules/core/utils/apiError";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useRecordsListStore } from "@/store/useRecordsListStore";
+import { useRecordsSearchStore } from "@/store/useRecordsSearchStore";
 import { useRecords } from "../hooks/useRecords";
 import { RecordsCardList } from "./RecordsCardList";
 import { RecordsTable } from "./RecordsTable";
@@ -26,12 +27,18 @@ const SUBTITLE = {
 
 /**
  * Historias clínicas: búsqueda, listado paginado y acceso a crear, abrir e imprimir. La búsqueda,
- * la página y la turma (coordinación) viven en la URL (`?q=…&pagina=N&turma=id`): volver de la vista
- * previa o recargar las conserva. La coordinación ve las historias de sus turmas en solo lectura.
+ * la página y la turma (coordinación) se conservan al volver de la vista previa o al recargar. La
+ * página y la turma viven en la URL (`?pagina=N&turma=id`); el texto buscado NO: puede ser el nombre
+ * de un paciente y queda solo en la pestaña (`useRecordsSearchStore`). La coordinación ve las
+ * historias de sus turmas en solo lectura.
  */
 export function RecordsFeature() {
   const [params, setParams] = useSearchParams();
-  const query = params.get("q") ?? "";
+  const userId = useSessionStore((s) => s.user?.id);
+  const storedText = useRecordsSearchStore((s) => s.text);
+  const storedOwner = useRecordsSearchStore((s) => s.userId);
+  const setStoredText = useRecordsSearchStore((s) => s.setText);
+  const query = userId != null && storedOwner === userId ? storedText : "";
   const page = Math.max(0, (Number(params.get("pagina")) || 1) - 1);
   const cohortId = Number(params.get("turma")) || null;
   const [search, setSearch] = useState(query);
@@ -41,30 +48,29 @@ export function RecordsFeature() {
   const records = useRecords(query, page, view === "cohorts" ? cohortId : null);
   // Tabla desde 1024 px; debajo, tarjetas (la tabla dejaba las acciones fuera de la pantalla).
   const desktop = useMediaQuery("(min-width: 1024px)", true);
-  const userId = useSessionStore((s) => s.user?.id);
   const { pathname, search: urlSearch } = useLocation();
   const setListUrl = useRecordsListStore((s) => s.setListUrl);
 
-  // Recuerda esta URL (búsqueda y página) para "← Historias clínicas" desde una historia.
+  // Recuerda esta URL (página y turma; sin el texto buscado) para "← Historias clínicas" desde una historia.
   useEffect(() => {
     if (userId != null) setListUrl(`${pathname}${urlSearch}`, userId);
   }, [pathname, urlSearch, userId, setListUrl]);
 
-  // Lo escrito pasa a la URL al dejar de teclear (y vuelve a la página 1).
+  // Lo escrito pasa al almacén de la pestaña al dejar de teclear (no a la URL) y vuelve a la página 1.
   useEffect(() => {
     // Solo un término ya asentado (si aún se escribe o se acaba de limpiar, no se pisa la URL).
     if (debounced !== search || debounced.trim() === query.trim()) return;
+    if (userId == null) return;
+    setStoredText(debounced.trim(), userId);
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (debounced.trim()) next.set("q", debounced.trim());
-        else next.delete("q");
         next.delete("pagina");
         return next;
       },
       { replace: true },
     );
-  }, [debounced, search, query, setParams]);
+  }, [debounced, search, query, userId, setStoredText, setParams]);
 
   const setPage = (next: number | ((current: number) => number)) => {
     const value = typeof next === "function" ? next(page) : next;
@@ -89,6 +95,7 @@ export function RecordsFeature() {
   const onSearch = (value: string) => setSearch(value);
   const clearSearch = () => {
     setSearch("");
+    if (userId != null) setStoredText("", userId);
     setParams({}, { replace: true });
   };
 

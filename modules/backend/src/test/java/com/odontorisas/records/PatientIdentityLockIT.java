@@ -169,7 +169,9 @@ class PatientIdentityLockIT extends AbstractIntegrationTest {
     // --- Número de historia tras imprimir ---
 
     private JsonNode search(Session as, String q) throws Exception {
-        return read(mockMvc.perform(get(BASE).param("q", q).header("Authorization", "Bearer " + as.token())).andReturn());
+        return read(mockMvc.perform(post(BASE + "/search").header("Authorization", "Bearer " + as.token())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json.createObjectNode().put("q", q).toString())).andReturn());
     }
 
     @Test

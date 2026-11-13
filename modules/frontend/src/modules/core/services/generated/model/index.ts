@@ -141,6 +141,8 @@ export * from './registerRequestDocumentNumber';
 export * from './registerRequestDocumentType';
 export * from './registerRequestPhone';
 export * from './resetPasswordRequest';
+export * from './searchRecordsParams';
+export * from './searchRecordsRequest';
 export * from './sideRelations';
 export * from './signatures';
 export * from './tanakaAnalysis';

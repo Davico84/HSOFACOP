@@ -11,6 +11,7 @@ import com.odontorisas.presentation.dto.CreateRecordRequest;
 import com.odontorisas.presentation.dto.PageResponse;
 import com.odontorisas.presentation.dto.RecordResponse;
 import com.odontorisas.presentation.dto.RecordSummaryResponse;
+import com.odontorisas.presentation.dto.SearchRecordsRequest;
 import com.odontorisas.presentation.dto.UpdateRecordRequest;
 import com.odontorisas.presentation.dto.ValidationProblem;
 import com.odontorisas.service.records.OrthodonticRecordService;
@@ -23,7 +24,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -66,21 +66,38 @@ public class OrthodonticRecordsController {
     /** Orden fijo en el servidor (última modificación primero): el cliente no elige propiedades. */
     @Operation(operationId = "listRecords", summary = "Listar historias (las propias; todas si es ADMIN; las de sus turmas si es COORDINATOR)")
     @ApiResponse(responseCode = "200", description = "Página de historias")
-    @ApiResponse(responseCode = "400", description = "Página, tamaño o búsqueda inválidos",
+    @ApiResponse(responseCode = "400", description = "Página o tamaño inválidos",
         content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ApiProblem.class)))
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PageResponse<RecordSummaryResponse>> listRecords(
-            @Parameter(description = "Busca en paciente, documento y número (sin distinguir tildes ni mayúsculas)")
-            @RequestParam(required = false) @Size(max = 120) String q,
             @Parameter(description = "Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran")
             @RequestParam(required = false) Long cohortId,
             @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") @Min(0) int page,
             @Parameter(description = "Tamaño (1–100; uno mayor se recorta a 100)")
             @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) @Min(1) int size) {
+        return ResponseEntity.ok(page(null, cohortId, page, size));
+    }
+
+    /** Misma salida y mismo acceso por rol que el listado; el texto va en el cuerpo, nunca en la URL. */
+    @Operation(operationId = "searchRecords", summary = "Buscar historias por texto (el texto va en el cuerpo, no en la URL)")
+    @ApiResponse(responseCode = "200", description = "Página de historias que coinciden")
+    @ApiResponse(responseCode = "400", description = "Cuerpo, texto (más de 120 caracteres), página o tamaño inválidos",
+        content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ValidationProblem.class)))
+    @PostMapping(value = "/search", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PageResponse<RecordSummaryResponse>> searchRecords(
+            @Valid @RequestBody SearchRecordsRequest request,
+            @Parameter(description = "Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran")
+            @RequestParam(required = false) Long cohortId,
+            @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Tamaño (1–100; uno mayor se recorta a 100)")
+            @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) @Min(1) int size) {
+        return ResponseEntity.ok(page(request.getQ(), cohortId, page, size));
+    }
+
+    private PageResponse<RecordSummaryResponse> page(String q, Long cohortId, int page, int size) {
         PageRequest pageable = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE),
             Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));
-        return ResponseEntity.ok(PageResponse.from(
-            service.list(currentActor(), q, cohortId, pageable).map(RecordSummaryResponse::from)));
+        return PageResponse.from(service.list(currentActor(), q, cohortId, pageable).map(RecordSummaryResponse::from));
     }
 
     @Operation(operationId = "createRecord", summary = "Crear una historia (borrador) con el número que asignan los docentes")

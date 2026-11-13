@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { cleanup, configure } from "@testing-library/react";
 import { server } from "./mocks/server";
+import { useRecordsSearchStore } from "@/store/useRecordsSearchStore";
 
 // Shims de jsdom para librerías de UI (APIs de puntero/scroll/resize no implementadas).
 Element.prototype.scrollIntoView = () => {};
@@ -25,6 +26,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
 afterEach(() => {
   server.resetHandlers();
+  useRecordsSearchStore.getState().clear(); // el texto buscado vive en sessionStorage: no pasa de un test a otro.
   cleanup(); // con globals desactivados, RTL no limpia solo entre tests.
 });
 

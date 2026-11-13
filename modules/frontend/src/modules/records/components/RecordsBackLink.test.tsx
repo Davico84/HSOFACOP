@@ -43,7 +43,7 @@ const location = (router: { state: { location: { pathname: string; search: strin
 describe("orthodontic-records — Volver al listado desde la historia", () => {
   it("vuelve con la búsqueda y la página aunque se haya cambiado de paso", async () => {
     mockBackend();
-    const { router } = renderRecordRoutes("/historias?q=quispe&pagina=2");
+    const { router } = renderRecordRoutes("/historias?pagina=2");
     const row = await screen.findByRole("row", { name: /AEO-0001/ });
 
     await userEvent.click(within(row).getByRole("link", { name: "Editar historia AEO-0001" }));
@@ -53,12 +53,12 @@ describe("orthodontic-records — Volver al listado desde la historia", () => {
 
     await userEvent.click(await backLink());
     await screen.findByRole("row", { name: /AEO-0001/ });
-    expect(location(router)).toBe("/historias?q=quispe&pagina=2");
+    expect(location(router)).toBe("/historias?pagina=2");
   });
 
   it("después de crear una historia vuelve al listado con la búsqueda", async () => {
     mockBackend();
-    const { router } = renderRecordRoutes("/historias?q=quispe");
+    const { router } = renderRecordRoutes("/historias?pagina=3");
     await screen.findByRole("row", { name: /AEO-0001/ });
 
     await act(() => router.navigate("/historias/nueva"));
@@ -69,12 +69,12 @@ describe("orthodontic-records — Volver al listado desde la historia", () => {
 
     await userEvent.click(await backLink());
     await screen.findByRole("row", { name: /AEO-0001/ });
-    expect(location(router)).toBe("/historias?q=quispe");
+    expect(location(router)).toBe("/historias?pagina=3");
   });
 
   it("después de la vista previa vuelve al listado con su búsqueda y página", async () => {
     mockBackend();
-    const { router } = renderRecordRoutes("/historias?q=quispe&pagina=2");
+    const { router } = renderRecordRoutes("/historias?pagina=2");
     await screen.findByRole("row", { name: /AEO-0001/ });
 
     await act(() => router.navigate("/historias/10?paso=1"));
@@ -84,7 +84,7 @@ describe("orthodontic-records — Volver al listado desde la historia", () => {
 
     await userEvent.click(await backLink());
     await screen.findByRole("row", { name: /AEO-0001/ });
-    expect(location(router)).toBe("/historias?q=quispe&pagina=2");
+    expect(location(router)).toBe("/historias?pagina=2");
   });
 
   it("sin listado previo en la pestaña vuelve a /historias (también en una historia nueva)", async () => {
@@ -99,7 +99,7 @@ describe("orthodontic-records — Volver al listado desde la historia", () => {
 
   it("con cambios sin guardar pide confirmación: quedarse conserva los cambios y salir va al listado", async () => {
     mockBackend();
-    const { router } = renderRecordRoutes("/historias?q=quispe");
+    const { router } = renderRecordRoutes("/historias?pagina=3");
     await screen.findByRole("row", { name: /AEO-0001/ });
     await act(() => router.navigate("/historias/10?paso=1"));
     await stepHeading(/Paciente y anamnesis/);
@@ -114,27 +114,27 @@ describe("orthodontic-records — Volver al listado desde la historia", () => {
     await userEvent.click(await backLink());
     await userEvent.click(await screen.findByRole("button", { name: "Salir sin guardar" }));
     await screen.findByRole("row", { name: /AEO-0001/ });
-    expect(location(router)).toBe("/historias?q=quispe");
+    expect(location(router)).toBe("/historias?pagina=3");
   });
 
   it("'Historia no encontrada' vuelve al listado recordado", async () => {
     mockBackend();
-    const { router } = renderRecordRoutes("/historias?q=quispe&pagina=2");
+    const { router } = renderRecordRoutes("/historias?pagina=2");
     await screen.findByRole("row", { name: /AEO-0001/ });
 
     await act(() => router.navigate("/historias/99"));
     await userEvent.click(await screen.findByRole("link", { name: "Volver a las historias" }));
     await screen.findByRole("row", { name: /AEO-0001/ });
-    expect(location(router)).toBe("/historias?q=quispe&pagina=2");
+    expect(location(router)).toBe("/historias?pagina=2");
   });
 
   it("otra cuenta en la misma pestaña no hereda la búsqueda", async () => {
     mockBackend();
-    const { router } = renderRecordRoutes("/historias?q=quispe");
+    const { router } = renderRecordRoutes("/historias?pagina=3");
     await screen.findByRole("row", { name: /AEO-0001/ });
 
     await act(() => router.navigate("/historias/10?paso=1"));
-    expect(await backLink()).toHaveAttribute("href", "/historias?q=quispe");
+    expect(await backLink()).toHaveAttribute("href", "/historias?pagina=3");
 
     // Entra otra cuenta en la pestaña (p. ej. tras expirar la sesión sin cerrarla).
     act(() => useSessionStore.setState({ user: { id: 2, email: "otra@empresa.test", role: "USER", fullName: "Otra" } }));
@@ -146,13 +146,13 @@ describe("useRecordsListStore", () => {
   it("guarda solo rutas del listado y se borra con clear (cierre de sesión)", () => {
     const store = useRecordsListStore.getState();
     store.clear();
-    store.setListUrl("/historias?q=quispe&pagina=2", 1);
-    expect(useRecordsListStore.getState()).toMatchObject({ listUrl: "/historias?q=quispe&pagina=2", userId: 1 });
-    expect(JSON.parse(sessionStorage.getItem("hsfacop.records-list") ?? "{}").state.listUrl).toBe("/historias?q=quispe&pagina=2");
+    store.setListUrl("/historias?pagina=2", 1);
+    expect(useRecordsListStore.getState()).toMatchObject({ listUrl: "/historias?pagina=2", userId: 1 });
+    expect(JSON.parse(sessionStorage.getItem("hsfacop.records-list") ?? "{}").state.listUrl).toBe("/historias?pagina=2");
 
     store.setListUrl("https://otro.sitio/historias", 1);
     store.setListUrl("/historias/10", 1);
-    expect(useRecordsListStore.getState().listUrl).toBe("/historias?q=quispe&pagina=2");
+    expect(useRecordsListStore.getState().listUrl).toBe("/historias?pagina=2");
 
     store.clear();
     expect(useRecordsListStore.getState()).toMatchObject({ listUrl: null, userId: null });
