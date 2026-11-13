@@ -473,22 +473,107 @@ class OrthodonticRecordsControllerTest {
 
     // --- Listado ---
 
-    @Test
-    void list_uses_fixed_sort_capped_size_and_search_term() throws Exception {
-        RecordSummaryView row = new RecordSummaryView(10L, "AEO-0015", "Ana Quispe", null, null, "Dra. Torres",
-            null, "Dra. Torres", null, Instant.parse("2026-10-01T10:00:00Z"), false);
-        when(service.list(any(), eq("quispe"), isNull(), any(Pageable.class))).thenAnswer(inv ->
+    private static final org.springframework.data.domain.PageRequest FIXED_SORT_FIRST_PAGE =
+        org.springframework.data.domain.PageRequest.of(0, 100,
+            org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.desc("updatedAt"),
+                org.springframework.data.domain.Sort.Order.desc("id")));
+
+    private void stubListWith(RecordSummaryView row) {
+        when(service.list(any(), any(), any(), any(Pageable.class))).thenAnswer(inv ->
             new PageImpl<>(List.of(row), inv.getArgument(3), 1));
+    }
+
+    private static RecordSummaryView sampleRow() {
+        return new RecordSummaryView(10L, "AEO-0015", "Ana Quispe", null, null, "Dra. Torres",
+            null, "Dra. Torres", null, Instant.parse("2026-10-01T10:00:00Z"), false);
+    }
+
+    private org.springframework.test.web.servlet.ResultActions search(String body, String role, String... query)
+            throws Exception {
+        var req = post("/api/orthodontic-records/search" + (query.length == 0 ? "" : "?" + query[0]))
+            .with(as(1, role)).contentType(MediaType.APPLICATION_JSON);
+        return mockMvc.perform(body == null ? req : req.content(body));
+    }
+
+    @Test
+    void list_uses_fixed_sort_and_capped_size_and_never_searches() throws Exception {
+        stubListWith(sampleRow());
 
         mockMvc.perform(get("/api/orthodontic-records").with(as(1, "USER"))
-                .param("q", "quispe").param("size", "500").param("sort", "patientName"))
+                .param("size", "500").param("sort", "patientName"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].recordNumber").value("AEO-0015"))
             .andExpect(jsonPath("$.content[0].authorName").value("Dra. Torres"))
             .andExpect(jsonPath("$.size").value(100));
-        verify(service).list(eq(new RecordActor(1L, Role.USER)), eq("quispe"), isNull(),
-            eq(org.springframework.data.domain.PageRequest.of(0, 100,
+        verify(service).list(eq(new RecordActor(1L, Role.USER)), isNull(), isNull(), eq(FIXED_SORT_FIRST_PAGE));
+    }
+
+    /** Scenario "Parámetro q retirado": el GET ignora q y lista sin filtrar por ese texto. */
+    @Test
+    void list_ignores_the_retired_q_parameter() throws Exception {
+        stubListWith(sampleRow());
+
+        mockMvc.perform(get("/api/orthodontic-records").with(as(1, "USER")).param("q", "quispe"))
+            .andExpect(status().isOk());
+        verify(service).list(any(), isNull(), isNull(), any(Pageable.class));
+        verify(service, never()).list(any(), eq("quispe"), any(), any(Pageable.class));
+    }
+
+    /** Scenario "Buscar por nombre": el texto llega en el cuerpo y la URL no lo contiene. */
+    @Test
+    void search_takes_the_text_from_the_body_and_keeps_the_same_output() throws Exception {
+        stubListWith(sampleRow());
+
+        search("{\"q\":\"quispe\"}", "USER", "size=500")
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].recordNumber").value("AEO-0015"))
+            .andExpect(jsonPath("$.content[0].authorName").value("Dra. Torres"))
+            .andExpect(jsonPath("$.size").value(100));
+        verify(service).list(eq(new RecordActor(1L, Role.USER)), eq("quispe"), isNull(), eq(FIXED_SORT_FIRST_PAGE));
+    }
+
+    /** Scenario "Paginación y turma": página y turma siguen como parámetros de la operación. */
+    @Test
+    void search_keeps_page_and_cohort_as_parameters() throws Exception {
+        stubListWith(sampleRow());
+
+        search("{\"q\":\"\"}", "COORDINATOR", "page=2&cohortId=7").andExpect(status().isOk());
+        verify(service).list(eq(new RecordActor(1L, Role.COORDINATOR)), eq(""), eq(7L),
+            eq(org.springframework.data.domain.PageRequest.of(2, 20,
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.desc("updatedAt"),
                     org.springframework.data.domain.Sort.Order.desc("id")))));
+    }
+
+    /** Scenario "Acceso por rol en la búsqueda": se pasa el actor autenticado; el alcance lo aplica el servicio. */
+    @Test
+    void search_passes_the_authenticated_actor_to_the_service() throws Exception {
+        stubListWith(sampleRow());
+
+        search("{\"q\":\"quispe\"}", "USER").andExpect(status().isOk());
+        verify(service).list(eq(new RecordActor(1L, Role.USER)), eq("quispe"), isNull(), any(Pageable.class));
+    }
+
+    /** Scenario "Texto en el límite": 120 caracteres pasan, 121 devuelven 400 sin buscar. */
+    @Test
+    void search_text_limit_is_120_characters() throws Exception {
+        stubListWith(sampleRow());
+
+        search("{\"q\":\"" + "a".repeat(120) + "\"}", "USER").andExpect(status().isOk());
+        verify(service).list(any(), eq("a".repeat(120)), any(), any(Pageable.class));
+
+        org.mockito.Mockito.clearInvocations(service);
+        search("{\"q\":\"" + "a".repeat(121) + "\"}", "USER").andExpect(status().isBadRequest());
+        verify(service, never()).list(any(), any(), any(), any(Pageable.class));
+    }
+
+    /** Scenario "Cuerpo inválido": vacío, no objeto o con campos desconocidos responden 400. */
+    @Test
+    void search_rejects_empty_non_object_and_unknown_field_bodies() throws Exception {
+        search(null, "USER").andExpect(status().isBadRequest());
+        search("[]", "USER").andExpect(status().isBadRequest());
+        search("\"quispe\"", "USER").andExpect(status().isBadRequest());
+        search("{}", "USER").andExpect(status().isBadRequest());
+        search("{\"q\":\"quispe\",\"extra\":1}", "USER").andExpect(status().isBadRequest());
+        verify(service, never()).list(any(), any(), any(), any(Pageable.class));
     }
 }

@@ -1,7 +1,11 @@
 package com.odontorisas.presentation;
 
 import com.odontorisas.infra.security.JwtAuthenticationFilter;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,5 +94,33 @@ class ErrorFallbackTest {
             .andExpect(jsonPath("$.type").value("/errors/internal-server-error"))
             .andExpect(jsonPath("$.timestamp").isNotEmpty())
             .andExpect(content().string(not(containsString("secreto"))));
+    }
+
+    /** Scenarios "Error no controlada" y "Causa raíz con datos": ni el valor ni el stacktrace llegan al registro. */
+    @Test
+    void uncaught_error_logs_classes_but_not_messages_or_values() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            mockMvc.perform(get("/__test/boom-with-cause"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.detail").value("Ocurrió un error inesperado."))
+                .andExpect(jsonPath("$.type").value("/errors/internal-server-error"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        assertThat(appender.list).hasSize(1);
+        ILoggingEvent event = appender.list.get(0);
+        String line = event.getFormattedMessage();
+        assertThat(line)
+            .contains("java.lang.IllegalStateException")
+            .contains("java.sql.SQLException")
+            .doesNotContain("valor-externo-12345678")
+            .doesNotContain("valor-raiz-87654321");
+        // Sin throwable adjunto: el stacktrace repetiría los mensajes.
+        assertThat(event.getThrowableProxy()).isNull();
     }
 }

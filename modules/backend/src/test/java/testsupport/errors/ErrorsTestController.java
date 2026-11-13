@@ -24,4 +24,11 @@ public class ErrorsTestController {
     public void boom() {
         throw new IllegalStateException("secreto");
     }
+
+    /** Excepción cuyo mensaje y el de su causa raíz llevan un valor de paciente (para el test de registros). */
+    @GetMapping("/__test/boom-with-cause")
+    public void boomWithCause() {
+        throw new IllegalStateException("fallo con valor-externo-12345678",
+            new java.sql.SQLException("Key (document)=(valor-raiz-87654321) already exists"));
+    }
 }
