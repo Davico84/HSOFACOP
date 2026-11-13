@@ -18,8 +18,8 @@
 
 ## 3. Integración
 
-- [ ] 3.1 `openspec validate update-backend-logging-no-patient-data --strict`, `mvn verify` y `pnpm validate` en verde; verificar la salida de los tres
-- [ ] 3.2 Marcar el change en `docs/vision.md` ("Estado de capacidades"); verificar que enlaza su `proposal.md`
+- [x] 3.1 `openspec validate update-backend-logging-no-patient-data --strict`, `mvn verify` y `pnpm validate` en verde; verificar la salida de los tres
+- [x] 3.2 Marcar el change en `docs/vision.md` ("Estado de capacidades"); verificar que enlaza su `proposal.md`
 
 ## Workflow follow-up
 
