@@ -8,12 +8,6 @@
 
 export type ListRecordsParams = {
 /**
- * Busca en paciente, documento y número (sin distinguir tildes ni mayúsculas)
- * @minLength 0
- * @maxLength 120
- */
-q?: string;
-/**
  * Solo COORDINATOR: una de sus turmas (otra = lista vacía); los demás roles lo ignoran
  */
 cohortId?: number;

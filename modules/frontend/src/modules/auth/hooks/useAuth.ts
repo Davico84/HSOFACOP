@@ -4,6 +4,7 @@ import { login, register, logout } from "@/modules/core/services/generated/auth"
 import type { LoginRequest, RegisterRequest } from "@/modules/core/services/generated/model";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useRecordsListStore } from "@/store/useRecordsListStore";
+import { useRecordsSearchStore } from "@/store/useRecordsSearchStore";
 import { getUserFriendlyError, problemType } from "@/modules/core/utils/apiError";
 
 /** Inicia sesión: al éxito guarda la sesión (access en memoria); errores → toast. */
@@ -36,6 +37,7 @@ export function useRegister() {
 export function useLogout() {
   const clear = useSessionStore((s) => s.clear);
   const clearRecordsList = useRecordsListStore((s) => s.clear);
+  const clearRecordsSearch = useRecordsSearchStore((s) => s.clear);
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => logout(),
@@ -43,6 +45,7 @@ export function useLogout() {
       clear();
       // La búsqueda del listado puede tener nombres o documentos de pacientes.
       clearRecordsList();
+      clearRecordsSearch();
       queryClient.clear();
     },
   });
